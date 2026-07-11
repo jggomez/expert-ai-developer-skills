@@ -4,8 +4,7 @@
   "description": "Premium developer skills and quality-gate plugins for Google Antigravity (AGY) agent sessions.",
   "main": "bin/cli.js",
   "bin": {
-    "expert-ai-developer-skills": "bin/cli.js",
-    "skills": "bin/cli.js"
+    "expert-ai-developer-skills": "bin/cli.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

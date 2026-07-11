@@ -9,32 +9,38 @@ This directory contains a premium catalog of **18 agent skills** designed to aut
 
 ## 1. Quick Installation & Setup
 
-You can list, add, and manage these modular agent skills instantly using simple `npx` commands.
+These skills fully comply with the [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, you can install any of these 18 skills out-of-the-box using Vercel's official, standard `skills` CLI.
 
-### Option A: Local Project Installation
-To install skills locally inside the `.agents/` folder of your active project:
+### Option A: Standard Installation (Recommended)
+This is the simplest way for other teams or users to install and manage these skills. They don't need any local setups, just the standard command:
 
 ```bash
-# Add a single skill locally
-npx expert-ai-developer-skills add python-expert
+# List all 18 skills available in our repository
+npx skills add jggomez/expert-ai-developer-skills --list
 
-# Add multiple skills locally
-npx expert-ai-developer-skills add python-expert commit-expert
+# Install a specific skill (e.g. python-expert) in the active project (.agents/skills)
+npx skills add jggomez/expert-ai-developer-skills --skill python-expert
 
-# Add ALL 18 skills locally to your project
-npx expert-ai-developer-skills add all
+# Install a skill globally on your system (so all your workspaces can load it)
+npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
+
+# Install ALL 18 skills in the active project
+npx skills add jggomez/expert-ai-developer-skills
 ```
 
-### Option B: Global Installation (Recommended)
-To make all 18 developer skills automatically available in all active workspace sessions:
+### Option B: Advanced Installation (Using our Custom CLI)
+If you want to use the custom, zero-dependency bulk copy CLI bundled directly in this repository:
 
 ```bash
-# Add ALL 18 skills globally to ~/.gemini/config/skills/
+# Add ALL 18 skills locally to your project in bulk
+npx expert-ai-developer-skills add all
+
+# Add ALL 18 skills globally
 npx expert-ai-developer-skills add all --global
 ```
 
-### Option C: Manual Installation (Fallback)
-If you prefer not to use the CLI, you can copy the directories manually:
+### Option C: Manual Copy (Fallback)
+If you prefer to copy the directories manually:
 
 ```bash
 # Manual global installation

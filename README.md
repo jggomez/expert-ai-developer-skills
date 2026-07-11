@@ -105,38 +105,44 @@ Intercepts editor actions and terminal executions to protect critical assets:
 
 ## 5. Comprehensive Installation Guide
 
-This repository includes a custom, zero-dependency CLI tool so you can discover, add, and configure all developer skills and plugins instantly using simple `npx` commands.
+This repository fully adheres to the official [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, you can install any of these 18 skills out-of-the-box using Vercel's official, standard `skills` CLI.
 
-### 5.1 Local Installation (Recommended for Teams)
-To install skills locally inside the `.agents/` folder of your active project:
+### 5.1 Standard Installation (Using Vercel's Official `npx skills`)
+This is the simplest way for other teams or users to install and manage these skills. They don't need any local setups, just the standard command:
 
 ```bash
-# Add a specific skill locally
-npx expert-ai-developer-skills add python-expert
+# List all 18 skills available in our repository
+npx skills add jggomez/expert-ai-developer-skills --list
 
-# Add multiple skills locally
-npx expert-ai-developer-skills add python-expert commit-expert
+# Install a specific skill (e.g. python-expert) in the active project (.agents/skills)
+npx skills add jggomez/expert-ai-developer-skills --skill python-expert
 
-# Add ALL 18 skills locally to your project
-npx expert-ai-developer-skills add all
+# Install a skill globally on your system (so all your workspaces can load it)
+npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
+
+# Install ALL 18 skills in the active project
+npx skills add jggomez/expert-ai-developer-skills
 ```
 
-### 5.2 Global Installation (Recommended for Personal Devs)
-To install skills globally so they are active automatically across all of your local workspaces:
+### 5.2 Advanced Installation (Using our Custom `package.json` CLI)
+We also bundle a custom CLI in this repository to facilitate bulk copies and package-specific installations (such as the `python-backend` quality-gate plugin, which is not part of the standard `skills` folders):
 
 ```bash
+# Add ALL 18 skills locally to your project in bulk
+npx expert-ai-developer-skills add all
+
 # Add ALL 18 skills globally to ~/.gemini/config/skills/
 npx expert-ai-developer-skills add all --global
 
-# Install the custom python-backend quality-gate plugin globally
+# Install the unified python-backend quality-gate plugin globally
 npx expert-ai-developer-skills plugin install --global
 ```
 
-### 5.3 Manual Installation (Fallback)
-If you prefer not to use the CLI, you can copy the directories manually:
+### 5.3 Manual Copy (Fallback)
+If you prefer to copy the directories manually:
 
 ```bash
-# Manual global installation
+# Manual global installation of all skills and plugins
 mkdir -p ~/.gemini/config/skills ~/.gemini/config/plugins/python-backend
 cp -r ./skills/* ~/.gemini/config/skills/
 cp -r ./plugins/python-backend/* ~/.gemini/config/plugins/python-backend/
