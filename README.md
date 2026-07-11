@@ -105,34 +105,41 @@ Intercepts editor actions and terminal executions to protect critical assets:
 
 ## 5. Comprehensive Installation Guide
 
-### Option A: Install Everything (Skills + Plugin) Globally
-This is the recommended setup. It installs all 18 skills and the custom Python Backend plugin globally so they are automatically loaded by Antigravity in all your development projects:
+This repository includes a custom, zero-dependency CLI tool so you can discover, add, and configure all developer skills and plugins instantly using simple `npx` commands.
+
+### 5.1 Local Installation (Recommended for Teams)
+To install skills locally inside the `.agents/` folder of your active project:
 
 ```bash
-# Create local Antigravity directories
-mkdir -p ~/.gemini/config/skills
-mkdir -p ~/.gemini/config/plugins/python-backend
+# Add a specific skill locally
+npx expert-ai-developer-skills add python-expert
 
-# Copy skills globally
-cp -r ./skills/* ~/.gemini/config/skills/
+# Add multiple skills locally
+npx expert-ai-developer-skills add python-expert commit-expert
 
-# Copy plugin globally
-cp -r ./plugins/python-backend/* ~/.gemini/config/plugins/python-backend/
+# Add ALL 18 skills locally to your project
+npx expert-ai-developer-skills add all
 ```
 
-### Option B: Local Project Installation
-To install the skills and plugins locally inside a single repository (e.g., if you only want these custom quality gates inside a specific project):
+### 5.2 Global Installation (Recommended for Personal Devs)
+To install skills globally so they are active automatically across all of your local workspaces:
 
 ```bash
-# Create local agent directory in your target repository root
-mkdir -p /path/to/your-target-project/.agents/skills
-mkdir -p /path/to/your-target-project/.agents/plugins/python-backend
+# Add ALL 18 skills globally to ~/.gemini/config/skills/
+npx expert-ai-developer-skills add all --global
 
-# Copy selected skills or everything
-cp -r ./skills/* /path/to/your-target-project/.agents/skills/
+# Install the custom python-backend quality-gate plugin globally
+npx expert-ai-developer-skills plugin install --global
+```
 
-# Copy the plugin
-cp -r ./plugins/python-backend/* /path/to/your-target-project/.agents/plugins/python-backend/
+### 5.3 Manual Installation (Fallback)
+If you prefer not to use the CLI, you can copy the directories manually:
+
+```bash
+# Manual global installation
+mkdir -p ~/.gemini/config/skills ~/.gemini/config/plugins/python-backend
+cp -r ./skills/* ~/.gemini/config/skills/
+cp -r ./plugins/python-backend/* ~/.gemini/config/plugins/python-backend/
 ```
 
 ---

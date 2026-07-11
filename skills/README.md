@@ -9,22 +9,37 @@ This directory contains a premium catalog of **18 agent skills** designed to aut
 
 ## 1. Quick Installation & Setup
 
-To use these skills with your Antigravity agent sessions, you can install them globally or locally.
+You can list, add, and manage these modular agent skills instantly using simple `npx` commands.
 
-### Option A: Global Installation (Recommended)
-Copy all skills into your global Antigravity configuration directory to make them discoverable automatically in all active workspaces:
+### Option A: Local Project Installation
+To install skills locally inside the `.agents/` folder of your active project:
 
 ```bash
-mkdir -p ~/.gemini/config/skills
-cp -r ./skills/* ~/.gemini/config/skills/
+# Add a single skill locally
+npx expert-ai-developer-skills add python-expert
+
+# Add multiple skills locally
+npx expert-ai-developer-skills add python-expert commit-expert
+
+# Add ALL 18 skills locally to your project
+npx expert-ai-developer-skills add all
 ```
 
-### Option B: Local Project Installation
-If you want to bundle selected skills inside a specific repository for your team, copy them into the project's hidden `.agents/` directory:
+### Option B: Global Installation (Recommended)
+To make all 18 developer skills automatically available in all active workspace sessions:
 
 ```bash
-mkdir -p .agents/skills
-cp -r /path/to/expert-ai-developer-skills/skills/<selected-skill> .agents/skills/
+# Add ALL 18 skills globally to ~/.gemini/config/skills/
+npx expert-ai-developer-skills add all --global
+```
+
+### Option C: Manual Installation (Fallback)
+If you prefer not to use the CLI, you can copy the directories manually:
+
+```bash
+# Manual global installation
+mkdir -p ~/.gemini/config/skills
+cp -r ./skills/* ~/.gemini/config/skills/
 ```
 
 ---
