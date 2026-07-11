@@ -103,8 +103,7 @@ yarn-error.log*
 # ==============================================================================
 # Local Antigravity / AI Session Artifacts & Temporary Logs
 # ==============================================================================
-.agents/scratch/
-.agents/logs/
+.agents/
 *.log
 logs/
 tmp/
