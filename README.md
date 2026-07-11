@@ -105,10 +105,10 @@ Intercepts editor actions and terminal executions to protect critical assets:
 
 ## 5. Comprehensive Installation Guide
 
-This repository fully adheres to the official [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, you can install any of these 18 skills out-of-the-box using Vercel's official, standard `skills` CLI.
+This repository fully adheres to the official [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, other teams or users can install any of these 18 skills out-of-the-box using Vercel's official, standard `skills` CLI.
 
-### 5.1 Standard Installation (Using Vercel's Official `npx skills`)
-This is the simplest way for other teams or users to install and manage these skills. They don't need any local setups, just the standard command:
+### 5.1 Standard Skills Installation (Using Vercel's `npx skills`)
+This is the recommended and simplest way to discover, add, and manage these skills. They don't need any local setups, just run:
 
 ```bash
 # List all 18 skills available in our repository
@@ -117,34 +117,21 @@ npx skills add jggomez/expert-ai-developer-skills --list
 # Install a specific skill (e.g. python-expert) in the active project (.agents/skills)
 npx skills add jggomez/expert-ai-developer-skills --skill python-expert
 
-# Install a skill globally on your system (so all your workspaces can load it)
+# Install a specific skill globally on your system (so all your workspaces can load it)
 npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
 
 # Install ALL 18 skills in the active project
 npx skills add jggomez/expert-ai-developer-skills
 ```
 
-### 5.2 Advanced Installation (Using our Custom `package.json` CLI)
-We also bundle a custom CLI in this repository to facilitate bulk copies and package-specific installations (such as the `python-backend` quality-gate plugin, which is not part of the standard `skills` folders):
+### 5.2 Plugin & Hooks Installation (Manual Setup)
+Since the `python-backend` plugin includes advanced runtime hooks (`hooks.json`, `PreToolUse` gates) that are separate from standard agent skills, you can configure it globally by copying its directory:
 
 ```bash
-# Add ALL 18 skills locally to your project in bulk
-npx expert-ai-developer-skills add all
+# 1. Create the global plugin directory
+mkdir -p ~/.gemini/config/plugins/python-backend
 
-# Add ALL 18 skills globally to ~/.gemini/config/skills/
-npx expert-ai-developer-skills add all --global
-
-# Install the unified python-backend quality-gate plugin globally
-npx expert-ai-developer-skills plugin install --global
-```
-
-### 5.3 Manual Copy (Fallback)
-If you prefer to copy the directories manually:
-
-```bash
-# Manual global installation of all skills and plugins
-mkdir -p ~/.gemini/config/skills ~/.gemini/config/plugins/python-backend
-cp -r ./skills/* ~/.gemini/config/skills/
+# 2. Copy the plugin folder to your global config
 cp -r ./plugins/python-backend/* ~/.gemini/config/plugins/python-backend/
 ```
 

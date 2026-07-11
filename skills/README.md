@@ -12,7 +12,7 @@ This directory contains a premium catalog of **18 agent skills** designed to aut
 These skills fully comply with the [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, you can install any of these 18 skills out-of-the-box using Vercel's official, standard `skills` CLI.
 
 ### Option A: Standard Installation (Recommended)
-This is the simplest way for other teams or users to install and manage these skills. They don't need any local setups, just the standard command:
+This is the recommended and simplest way to discover, add, and manage these skills. There's no need for local configuration or downloading extra packages. Simply run:
 
 ```bash
 # List all 18 skills available in our repository
@@ -21,25 +21,14 @@ npx skills add jggomez/expert-ai-developer-skills --list
 # Install a specific skill (e.g. python-expert) in the active project (.agents/skills)
 npx skills add jggomez/expert-ai-developer-skills --skill python-expert
 
-# Install a skill globally on your system (so all your workspaces can load it)
+# Install a specific skill globally on your system (so all your workspaces can load it)
 npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
 
 # Install ALL 18 skills in the active project
 npx skills add jggomez/expert-ai-developer-skills
 ```
 
-### Option B: Advanced Installation (Using our Custom CLI)
-If you want to use the custom, zero-dependency bulk copy CLI bundled directly in this repository:
-
-```bash
-# Add ALL 18 skills locally to your project in bulk
-npx expert-ai-developer-skills add all
-
-# Add ALL 18 skills globally
-npx expert-ai-developer-skills add all --global
-```
-
-### Option C: Manual Copy (Fallback)
+### Option B: Manual Copy (Fallback)
 If you prefer to copy the directories manually:
 
 ```bash
