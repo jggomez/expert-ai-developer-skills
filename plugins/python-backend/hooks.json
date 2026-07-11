@@ -1,0 +1,40 @@
+{
+  "python-backend-activation": {
+    "enabled": true,
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/python-backend-activate.js\"",
+            "timeout": 5,
+            "statusMessage": "Loading python-backend rules..."
+          }
+        ]
+      }
+    ]
+  },
+  "python-backend-safety-gates": {
+    "enabled": true,
+    "PreToolUse": [
+      {
+        "matcher": "run_command|call_mcp_tool",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-gate.js\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/stop-gate.js\"",
+        "timeout": 30
+      }
+    ]
+  }
+}
