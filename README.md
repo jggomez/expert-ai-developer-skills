@@ -21,7 +21,7 @@ cd expert-ai-developer-skills
 
 ## 2. Directory Structure & Sitemap
 
-The workspace is cleanly structured into modular **skills** (discrete instructions and automation scripts), **rules** (system constraints for AI agents), and a **plugin** (integrated lifecycle hooks and custom rules):
+The workspace is cleanly structured into modular **skills** (discrete instructions and automation scripts), **rules** (system constraints for AI agents), **workflows** (playbooks for SDLC processes), and a **plugin** (integrated lifecycle hooks and custom rules):
 
 ```
 expert-ai-developer-skills/
@@ -37,6 +37,14 @@ expert-ai-developer-skills/
 │   ├── context-and-token-optimization.md # Prompt token minimization and local script execution
 │   ├── documentation-and-diagrams.md   # Comment, docstring, README, and Mermaid integrity
 │   └── pull-requests.md                # Pull Request line limits and self-review checklists
+├── workflows/
+│   ├── README.md                       # Guide on executing workflows with AI agents
+│   ├── pull-request-workflow.md        # Branch creation and PR preparation playbook
+│   ├── commit-workflow.md              # Staging, semantic committing, and pushing workflow
+│   ├── test-execution-workflow.md      # Locating, running, and debugging test suites
+│   ├── code-smell-review-workflow.md   # Static analysis and SOLID refactoring playbook
+│   ├── secure-code-review-workflow.md  # SAST scanning and credentials auditing workflow
+│   └── feature-development-workflow.md # End-to-end SDLC new feature development cycle
 ├── skills/
 │   ├── README.md                       # Detailed skills catalog & usage instructions
 │   ├── python-expert/                  # PEP 8 patterns, AST optimizations, memory checks
@@ -132,11 +140,26 @@ This workspace provides a root-level [**`rules/`**](file:///Users/jggomez/Docume
 
 ---
 
-## 6. Comprehensive Installation Guide
+## 6. Generic AI Developer Workflows (6 Execution Playbooks)
+
+This workspace provides a root-level [**`workflows/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows) directory containing step-by-step developer execution playbooks. These workflows guide developers and AI Agents sequentially through complex tasks:
+
+| Workflow File | Core Execution Sequence | Primary Quality Gate |
+| :--- | :--- | :--- |
+| [**`pull-request-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/pull-request-workflow.md) | Branch creation, self-audit sweeps, conflict rebase, and template compilation. | Conflict-free rebase + linted PR template documentation. |
+| [**`commit-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/commit-workflow.md) | Selective file staging, conventional commit header validation, and push triggers. | Pre-commit quality hooks + Conventional Commit alignment. |
+| [**`test-execution-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/test-execution-workflow.md) | Test runner discovery, isolated local targeted runs, and coverage report sweeps. | 100% test pass rate + coverage threshold met. |
+| [**`code-smell-review-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/code-smell-review-workflow.md) | Static metrics scans, class/method size checks, and TDD-backed refactoring. | Cyclomatic Complexity score < 10 (A/B rating). |
+| [**`secure-code-review-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/secure-code-review-workflow.md) | Credentials leaks scanning, SAST tool triggers, and dependency CVE analysis. | 0 credentials staged + 0 SAST severity findings. |
+| [**`feature-development-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/feature-development-workflow.md) | End-to-end SDLC lifecycle from planning/spec design to staging, TDD, and merge. | SDD specifications + full regression checks. |
+
+---
+
+## 7. Comprehensive Installation Guide
 
 This repository fully adheres to the official [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, other teams or users can install any of these 18 skills out-of-the-box using Vercel's official, standard `skills` CLI.
 
-### 6.1 Standard Skills Installation (Using Vercel's `npx skills`)
+### 7.1 Standard Skills Installation (Using Vercel's `npx skills`)
 This is the recommended and simplest way to discover, add, and manage these skills. They don't need any local setups, just run:
 
 ```bash
@@ -153,7 +176,7 @@ npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
 npx skills add jggomez/expert-ai-developer-skills
 ```
 
-### 6.2 Plugin & Hooks Installation (Manual Setup)
+### 7.2 Plugin & Hooks Installation (Manual Setup)
 Since the `python-backend` plugin includes advanced runtime hooks (`hooks.json`, `PreToolUse` gates) that are separate from standard agent skills, you can configure it globally by copying its directory:
 
 ```bash
@@ -166,7 +189,7 @@ cp -r ./plugins/python-backend/* ~/.gemini/config/plugins/python-backend/
 
 ---
 
-## 7. Usage and Workflows
+## 8. Usage and Workflows
 
 Once installed, the agent skills and hooks are completely automatic:
 1. **Writing Code**: When you prompt the agent to perform edits or checkouts, the rules in `python-backend-rules.md` guide the coding standard (PEP 8, strict types).
@@ -175,5 +198,5 @@ Once installed, the agent skills and hooks are completely automatic:
 
 ---
 
-## 8. License
+## 9. License
 This repository is open-sourced under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for more details.
