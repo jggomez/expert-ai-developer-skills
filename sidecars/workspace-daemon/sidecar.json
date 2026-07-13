@@ -1,0 +1,9 @@
+{
+  "display_name": "Workspace Daemon Monitor",
+  "description": "Background file watcher daemon that automatically lints and formats changed code files.",
+  "command": "python3",
+  "args": [
+    "daemon_monitor.py"
+  ],
+  "restart_policy": "always"
+}

@@ -21,7 +21,7 @@ cd expert-ai-developer-skills
 
 ## 2. Directory Structure & Sitemap
 
-The workspace is cleanly structured into modular **skills** (discrete instructions and automation scripts), **rules** (system constraints for AI agents), **workflows** (playbooks for SDLC processes), and a **plugin** (integrated lifecycle hooks and custom rules):
+The workspace is cleanly structured into modular **skills** (discrete instructions and automation scripts), **rules** (system constraints for AI agents), **workflows** (playbooks for SDLC processes), **sidecars** (background processes and schedules), and a **plugin** (integrated lifecycle hooks and custom rules):
 
 ```
 expert-ai-developer-skills/
@@ -46,6 +46,11 @@ expert-ai-developer-skills/
 │   ├── secure-code-review-workflow.md  # SAST scanning and credentials auditing workflow
 │   ├── feature-development-workflow.md # End-to-end SDLC new feature development cycle
 │   └── grill-me-alignment-workflow.md   # Interactive design review and requirements gathering playbook
+├── sidecars/
+│   ├── README.md                       # Guide on deploying Antigravity sidecar daemons
+│   ├── pr-reviewer-cron/               # Hourly scheduled PR diff auditor configuration
+│   ├── incoming-reviews-alert/         # 30-min scheduled review request monitor configuration
+│   └── workspace-daemon/               # Persistent file-watching and auto-formatting daemon
 ├── skills/
 │   ├── README.md                       # Detailed skills catalog & usage instructions
 │   ├── python-expert/                  # PEP 8 patterns, AST optimizations, memory checks
@@ -200,5 +205,19 @@ Once installed, the agent skills and hooks are completely automatic:
 
 ---
 
-## 9. License
+## 9. Antigravity Sidecars (Loop Engineering Background Processes)
+
+This workspace provides a root-level [**`sidecars/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/sidecars) directory containing configurations for background processes and schedules that run alongside Antigravity:
+
+| Sidecar Directory | Type / Schedule | Primary Automation Goal |
+| :--- | :--- | :--- |
+| [**`pr-reviewer-cron`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/sidecars/pr-reviewer-cron/sidecar.json) | Cron (`0 * * * *`) | Automatically scans open PR branches for credentials leakage and TODO declarations every hour. |
+| [**`incoming-reviews-alert`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/sidecars/incoming-reviews-alert/sidecar.json) | Cron (`*/30 * * * *`) | Prompts the agent to fetch pending review requests from GitHub, keeping the developer up to date. |
+| [**`workspace-daemon`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/sidecars/workspace-daemon/sidecar.json) | Daemon (Continuous) | Monitored by Antigravity; uses Python (`daemon_monitor.py`) to auto-format and lint modified code. |
+
+To install sidecars globally or per-plugin, review the [**Sidecars Installation Guide**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/sidecars/README.md#2-installation-guide).
+
+---
+
+## 10. License
 This repository is open-sourced under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for more details.

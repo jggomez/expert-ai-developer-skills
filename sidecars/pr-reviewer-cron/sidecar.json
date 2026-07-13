@@ -1,0 +1,11 @@
+{
+  "display_name": "PR Review Auditor Cron",
+  "description": "Orchestrates an hourly review of open pull requests for styling issues, security leaks, and untested branches.",
+  "builtin": "schedule",
+  "args": [
+    "0 * * * *",
+    "agentapi",
+    "new-conversation",
+    "Search the repository for open PR branches. Audit their diffs for security vulnerabilities, TODO leftovers, and styling violations, and output the report."
+  ]
+}

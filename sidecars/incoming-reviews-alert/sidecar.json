@@ -1,0 +1,11 @@
+{
+  "display_name": "Incoming Review Requests Alert",
+  "description": "Checks for pending review requests assigned to the active developer or agent every 30 minutes.",
+  "builtin": "schedule",
+  "args": [
+    "*/30 * * * *",
+    "agentapi",
+    "new-conversation",
+    "Fetch and display a list of all incoming code review requests or PR assignments from the remote git repository."
+  ]
+}
