@@ -34,7 +34,9 @@ expert-ai-developer-skills/
 │   ├── deployment-restrictions.md     # Production protection and deployment guidelines
 │   ├── skills-and-mcp-awareness.md     # Rules for discovering/using Skills & MCP servers
 │   ├── secure-coding-and-secrets.md    # Secrets protection and secure coding rules
-│   └── context-and-token-optimization.md # Prompt token minimization and local script execution
+│   ├── context-and-token-optimization.md # Prompt token minimization and local script execution
+│   ├── documentation-and-diagrams.md   # Comment, docstring, README, and Mermaid integrity
+│   └── pull-requests.md                # Pull Request line limits and self-review checklists
 ├── skills/
 │   ├── README.md                       # Detailed skills catalog & usage instructions
 │   ├── python-expert/                  # PEP 8 patterns, AST optimizations, memory checks
@@ -112,7 +114,7 @@ Intercepts editor actions and terminal executions to protect critical assets:
 
 ---
 
-## 5. Generic AI Developer Rules (8 Constraint Profiles)
+## 5. Generic AI Developer Rules (9 Constraint Profiles)
 
 This workspace provides a root-level [**`rules/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules) directory containing generic, modular developer rules. These rules are designed to be copied directly into AI Agent configuration files (like Cursor `.cursorrules` or Claude Code `.claudecodesettings`) to govern coding, testing, and deployment behavior:
 
@@ -126,6 +128,7 @@ This workspace provides a root-level [**`rules/`**](file:///Users/jggomez/Docume
 | [**`secure-coding-and-secrets.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/secure-coding-and-secrets.md) | Prevents committing credentials/API tokens and aligns code with OWASP secure design. | Secrets scanning + parameterized SQL injections prevention. |
 | [**`context-and-token-optimization.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/context-and-token-optimization.md) | Optimizes token-window consumption through incremental surgical edits and local scripts. | Minimal file views + offloading logic parsing to local runs. |
 | [**`documentation-and-diagrams.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/documentation-and-diagrams.md) | Ensures docstrings, README files, and Mermaid diagrams are updated concurrently with changes. | Mermaid diagram validation + comment alignment. |
+| [**`pull-requests.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/pull-requests.md) | Mandates PR size limits, structured templates, and agent self-review checklist boundaries. | Local lint/test sweeps + 200-line change target limits. |
 
 ---
 

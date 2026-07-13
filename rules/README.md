@@ -19,6 +19,7 @@ These rules are modularized by concern. You can use them individually or compile
 * [**secure-coding-and-secrets.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/secure-coding-and-secrets.md): Rules for credentials protection, preventing leaked secrets, and adhering to OWASP security standards.
 * [**context-and-token-optimization.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/context-and-token-optimization.md): Rule for minimizing prompt token bloat, managing session context efficiently, and working modularly.
 * [**documentation-and-diagrams.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/documentation-and-diagrams.md): Rule for maintaining code comments, docstrings, README files, and Mermaid architecture diagrams.
+* [**pull-requests.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/pull-requests.md): Rule governing Pull Request quality, line-change guidelines, and agent self-review checklists.
 
 ---
 
