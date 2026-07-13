@@ -42,8 +42,20 @@ To load these rules in **Claude Code**, add them as custom instructions. You can
 }
 ```
 
-### C. Google Antigravity & AGY Plugins
-In **Antigravity (AGY)**, rules can be linked to Editor Execution Hooks (such as `PreToolUse` or `Stop`). For example, you can configure your plugin's `rules/` directory to inject these constraints into the model system prompt automatically on every session start.
+### C. Google Antigravity (AGY) Rules Integration
+
+In **Antigravity**, rules are loaded automatically based on their location and configured activation policies.
+
+#### 1. Rule Locations
+*   **Global Rules**: Live under `~/.gemini/GEMINI.md` and are applied across all of your workspaces.
+*   **Workspace Rules**: Live under the `.agents/rules/` directory of your active workspace or Git repository root.
+
+#### 2. Rule Activation Policies
+For each rule, you can define how it gets activated:
+*   **Manual**: The rule is manually activated via an `@` mention (e.g., typing `@rules/testing-after-changes.md`) in the Agent's chat box.
+*   **Always On**: The rule is always loaded and applied in the session context.
+*   **Model Decision**: Based on the natural language description, the model intelligently decides whether to apply the rule to the current task.
+*   **Glob**: Applied to all files matching a specific glob pattern (e.g. `*.js`, `src/**/*.ts`).
 
 ---
 
