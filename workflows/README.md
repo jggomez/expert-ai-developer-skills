@@ -31,3 +31,22 @@ When an agent loads a workflow file, it must:
 2. Follow the **Workflow Steps** chronologically.
 3. Validate each step against the specified **Quality Gates**.
 4. Report back the execution summary with verification logs.
+
+---
+
+## 3. Registering Workflows as Slash Commands in Antigravity
+
+In the **Google Antigravity** TUI and GUI environment, workflows stored inside the workspace configuration directory are automatically registered as native slash commands (e.g. typing `/feature-development-workflow` in the chat).
+
+To enable these playbooks as active slash commands in your own project workspace:
+
+1. Create a local workflows folder in your project's ignored configuration directory:
+   ```bash
+   mkdir -p .agents/workflows
+   ```
+2. Copy the desired workflow markdown file into it:
+   ```bash
+   cp workflows/feature-development-workflow.md .agents/workflows/
+   ```
+3. Open a new conversation session. The Antigravity agent will automatically index the workflow, allowing you to trigger it directly in the chat panel by typing `/feature-development-workflow`.
+
