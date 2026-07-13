@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "python-expert": {
+      "source": "jggomez/expert-ai-developer-skills",
+      "sourceType": "github",
+      "skillPath": "skills/python-expert/SKILL.md",
+      "computedHash": "58033fda21bbd38f5eab787f7fac3e92ab2f6ff850d2f25211f9c7e0bca2ba85"
+    }
+  }
+}

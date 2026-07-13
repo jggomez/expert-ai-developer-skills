@@ -21,11 +21,20 @@ cd expert-ai-developer-skills
 
 ## 2. Directory Structure & Sitemap
 
-The workspace is cleanly structured into modular **skills** (discrete instructions and automation scripts) and a **plugin** (integrated lifecycle hooks and custom rules):
+The workspace is cleanly structured into modular **skills** (discrete instructions and automation scripts), **rules** (system constraints for AI agents), and a **plugin** (integrated lifecycle hooks and custom rules):
 
 ```
 expert-ai-developer-skills/
 ├── README.md                           # Main community reference guide (this file)
+├── rules/
+│   ├── README.md                       # Guide on integrating rules into AI agents
+│   ├── testing-after-changes.md        # Enforcement rules for running automated tests
+│   ├── conventional-commits.md        # Rules for semantic conventional commits and branch safety
+│   ├── clean-code-and-principles.md   # Guidelines for SOLID, DRY, KISS, and code smells
+│   ├── deployment-restrictions.md     # Production protection and deployment guidelines
+│   ├── skills-and-mcp-awareness.md     # Rules for discovering/using Skills & MCP servers
+│   ├── secure-coding-and-secrets.md    # Secrets protection and secure coding rules
+│   └── context-and-token-optimization.md # Prompt token minimization and local script execution
 ├── skills/
 │   ├── README.md                       # Detailed skills catalog & usage instructions
 │   ├── python-expert/                  # PEP 8 patterns, AST optimizations, memory checks
@@ -103,11 +112,28 @@ Intercepts editor actions and terminal executions to protect critical assets:
 
 ---
 
-## 5. Comprehensive Installation Guide
+## 5. Generic AI Developer Rules (8 Constraint Profiles)
+
+This workspace provides a root-level [**`rules/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules) directory containing generic, modular developer rules. These rules are designed to be copied directly into AI Agent configuration files (like Cursor `.cursorrules` or Claude Code `.claudecodesettings`) to govern coding, testing, and deployment behavior:
+
+| Rule File | Key Enforcement Constraint | Primary Quality Gate |
+| :--- | :--- | :--- |
+| [**`testing-after-changes.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/testing-after-changes.md) | Enforces running unit and integration tests after any code edit or feature addition. | Mandatory regression testing + 100% success rate. |
+| [**`conventional-commits.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/conventional-commits.md) | Enforces structured semantic commit messages and isolates changes to feature branches. | Gitflow validation + Conventional Commit 1.0 specifications. |
+| [**`clean-code-and-principles.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/clean-code-and-principles.md) | Mandates SOLID, DRY, and KISS compliance, actively preventing Fowler/Beck code smells. | God class detection, method length limits, complexity checks. |
+| [**`deployment-restrictions.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/deployment-restrictions.md) | Restricts direct local deployment to production/staging and requires sandboxed verification. | Clean workspace verification + environment checks. |
+| [**`skills-and-mcp-awareness.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/skills-and-mcp-awareness.md) | Mandates active lookup of local Skills catalog and integration of connected MCP servers. | Prioritizing existing tools over ad-hoc script generation. |
+| [**`secure-coding-and-secrets.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/secure-coding-and-secrets.md) | Prevents committing credentials/API tokens and aligns code with OWASP secure design. | Secrets scanning + parameterized SQL injections prevention. |
+| [**`context-and-token-optimization.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/context-and-token-optimization.md) | Optimizes token-window consumption through incremental surgical edits and local scripts. | Minimal file views + offloading logic parsing to local runs. |
+| [**`documentation-and-diagrams.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/documentation-and-diagrams.md) | Ensures docstrings, README files, and Mermaid diagrams are updated concurrently with changes. | Mermaid diagram validation + comment alignment. |
+
+---
+
+## 6. Comprehensive Installation Guide
 
 This repository fully adheres to the official [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, other teams or users can install any of these 18 skills out-of-the-box using Vercel's official, standard `skills` CLI.
 
-### 5.1 Standard Skills Installation (Using Vercel's `npx skills`)
+### 6.1 Standard Skills Installation (Using Vercel's `npx skills`)
 This is the recommended and simplest way to discover, add, and manage these skills. They don't need any local setups, just run:
 
 ```bash
@@ -124,7 +150,7 @@ npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
 npx skills add jggomez/expert-ai-developer-skills
 ```
 
-### 5.2 Plugin & Hooks Installation (Manual Setup)
+### 6.2 Plugin & Hooks Installation (Manual Setup)
 Since the `python-backend` plugin includes advanced runtime hooks (`hooks.json`, `PreToolUse` gates) that are separate from standard agent skills, you can configure it globally by copying its directory:
 
 ```bash
@@ -137,7 +163,7 @@ cp -r ./plugins/python-backend/* ~/.gemini/config/plugins/python-backend/
 
 ---
 
-## 6. Usage and Workflows
+## 7. Usage and Workflows
 
 Once installed, the agent skills and hooks are completely automatic:
 1. **Writing Code**: When you prompt the agent to perform edits or checkouts, the rules in `python-backend-rules.md` guide the coding standard (PEP 8, strict types).
@@ -146,5 +172,5 @@ Once installed, the agent skills and hooks are completely automatic:
 
 ---
 
-## 7. License
+## 8. License
 This repository is open-sourced under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for more details.
