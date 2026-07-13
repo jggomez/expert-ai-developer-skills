@@ -26,6 +26,7 @@ The workspace is cleanly structured into modular **skills** (discrete instructio
 ```
 expert-ai-developer-skills/
 ├── README.md                           # Main community reference guide (this file)
+├── images/                             # Instagram post design graphics (Overview, Skills, Rules, etc.)
 ├── rules/
 │   ├── README.md                       # Guide on integrating rules into AI agents
 │   ├── testing-after-changes.md        # Enforcement rules for running automated tests
