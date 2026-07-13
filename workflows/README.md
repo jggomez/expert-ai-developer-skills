@@ -17,6 +17,7 @@ These workflows cover the entire software development lifecycle (SDLC) and can b
 * [**code-smell-review-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/code-smell-review-workflow.md): Review playbook to scan for cognitive complexity, duplication, SOLID violations, and refactoring candidates.
 * [**secure-code-review-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/secure-code-review-workflow.md): Playbook for scanning credentials leakage, verifying injection preventions, and compliance checks.
 * [**feature-development-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/feature-development-workflow.md): End-to-end development cycle combining design specs, TDD, code review, and merge procedures.
+* [**grill-me-alignment-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/grill-me-alignment-workflow.md): Playbook for structured requirements gathering and design interviews.
 
 ---
 

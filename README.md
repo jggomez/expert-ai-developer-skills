@@ -44,7 +44,8 @@ expert-ai-developer-skills/
 │   ├── test-execution-workflow.md      # Locating, running, and debugging test suites
 │   ├── code-smell-review-workflow.md   # Static analysis and SOLID refactoring playbook
 │   ├── secure-code-review-workflow.md  # SAST scanning and credentials auditing workflow
-│   └── feature-development-workflow.md # End-to-end SDLC new feature development cycle
+│   ├── feature-development-workflow.md # End-to-end SDLC new feature development cycle
+│   └── grill-me-alignment-workflow.md   # Interactive design review and requirements gathering playbook
 ├── skills/
 │   ├── README.md                       # Detailed skills catalog & usage instructions
 │   ├── python-expert/                  # PEP 8 patterns, AST optimizations, memory checks
@@ -140,7 +141,7 @@ This workspace provides a root-level [**`rules/`**](file:///Users/jggomez/Docume
 
 ---
 
-## 6. Generic AI Developer Workflows (6 Execution Playbooks)
+## 6. Generic AI Developer Workflows (7 Execution Playbooks)
 
 This workspace provides a root-level [**`workflows/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows) directory containing step-by-step developer execution playbooks. These workflows guide developers and AI Agents sequentially through complex tasks:
 
@@ -152,6 +153,7 @@ This workspace provides a root-level [**`workflows/`**](file:///Users/jggomez/Do
 | [**`code-smell-review-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/code-smell-review-workflow.md) | Static metrics scans, class/method size checks, and TDD-backed refactoring. | Cyclomatic Complexity score < 10 (A/B rating). |
 | [**`secure-code-review-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/secure-code-review-workflow.md) | Credentials leaks scanning, SAST tool triggers, and dependency CVE analysis. | 0 credentials staged + 0 SAST severity findings. |
 | [**`feature-development-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/feature-development-workflow.md) | End-to-end SDLC lifecycle from planning/spec design to staging, TDD, and merge. | SDD specifications + full regression checks. |
+| [**`grill-me-alignment-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/grill-me-alignment-workflow.md) | Codebase pre-research, sequential design tree interview, recommendation matching. | Codebase context verification + resolved design ADR/SDD. |
 
 ---
 
