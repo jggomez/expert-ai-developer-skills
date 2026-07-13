@@ -1,7 +1,7 @@
 # Workflow: End-to-End Feature Development Cycle
 
 **Identifier**: `feature-development-workflow`  
-**Purpose**: Playbook for executing the complete software development lifecycle (SDLC) for new features, ensuring high quality, alignment with design patterns, testing, and branch safety.
+**Purpose**: Playbook for executing the complete software development lifecycle (SDLC) for new features, incorporating Google Antigravity (AGY) CLI commands, subagents, and context-optimization practices.
 
 ---
 
@@ -14,20 +14,18 @@ graph TD
     C --> D[Phase 3: Test-Driven Development]
     D --> E[Phase 4: Code Quality & Security Audits]
     E --> F[Phase 5: Conventional Commit]
-    F --> G[Phase 6: PR Description & Submission]
+    F --> G[Phase 6: PR Submission]
     G --> H[Phase 7: Merge & Cleanup]
 ```
 
 ---
 
-## Phase 1: Plan & Design
+## Phase 1: Plan & Design (Antigravity Optimization)
 
-1. **Understand Requirements**: Clarify the scope of the feature. Identify any ambiguities before writing code.
-2. **Draft Design Specification**: For complex features, write a Software Design Document (SDD) or Architecture Decision Record (ADR) detailing:
-   * Architecture design changes.
-   * Data models & schema alterations.
-   * Internal/External API changes.
-3. **Draft Verification Plan**: Explicitly define what test files will be added and what commands will verify success.
+1. **Understand Requirements & Align**: If there are design decisions or parameters to verify, recommend the user trigger the `/grill-me` slash command to run an interactive design review.
+2. **Draft the Implementation Plan**: Trigger the `/plan` slash command to draft a structured, step-by-step checklist of tasks.
+3. **Reference Workspace Context**: Use the `@` mention menu in the Antigravity Chat Canvas to attach context files (e.g., schemas, related components, or specialized rules like `@rules/clean-code-and-principles.md`).
+4. **Draft Verification Plan**: Explicitly define what test files will be added and what commands will verify success.
 
 ---
 
@@ -45,10 +43,14 @@ graph TD
 
 ---
 
-## Phase 3: Test-Driven Development (TDD)
+## Phase 3: Test-Driven Development (TDD) with Subagents
 
-Follow the Red-Green-Refactor sequence:
-1. **Write Schemas & Models**: Setup the structural objects (Pydantic models, TS interfaces, Database schemas).
+Follow the Red-Green-Refactor sequence. For complex modules, consider defining and invoking a specialized subagent to focus solely on test generation:
+1. **Delegate Test Writing (Optional)**: Invoke a subagent using the `define_subagent` and `invoke_subagent` tools:
+   ```python
+   # Example: Spawn a test-writer subagent
+   subagent.chat("Write unit tests for the registration schemas located in @src/schemas.py")
+   ```
 2. **Write Unit Tests (Red)**: Write unit tests covering happy path inputs, invalid payloads, and boundary limits. Run tests and verify they fail:
    ```bash
    pytest tests/test_new_feature.py  # Verify failures
@@ -65,30 +67,28 @@ Follow the Red-Green-Refactor sequence:
 
 1. **Format & Lint**: Format the codebase and check for static analysis issues:
    ```bash
-   # Python Example
    ruff format . && ruff check .
    ```
 2. **Run Security Sweeps**: Scan for hardcoded credentials and execute static security checks:
    ```bash
-   # Scan secrets and code safety
    bandit -r src/
    ```
-3. **Run Full Test Suite**: Execute all existing tests to ensure no regressions:
-   ```bash
-   pytest
+3. **Run Full Test Suite in Background**: If the suite is large, run it as a background task. Monitor its execution or schedule a one-shot notification timer so you don't poll the terminal:
+   ```python
+   # Schedule check in 60 seconds
+   schedule(DurationSeconds="60", Prompt="Check if background test suite finished", TimerCondition="task-123")
    ```
 
 ---
 
-## Phase 5: Conventional Commit
+## Phase 5: Conventional Commit (Branch Safety Gates)
 
-1. **Selectively Stage**: Check `git status` and stage only files related to the feature. Do not use `git add .` if unnecessary files are changed:
+1. **Selectively Stage**: Check `git status` and stage only files related to the feature. Do not use `git add .` if unnecessary files are changed.
+   * *Note*: The Antigravity `PreToolUse` hook will block commits if you are accidentally on the `main` or `develop` branches.
+2. **Commit Semantically**: Write commit messages matching the Conventional Commits specification.
+3. **Analyze Token Savings**: Confirm the Claude Code hook ran commands through the `rtk` proxy to minimize session token usage:
    ```bash
-   git add src/new_feature.py tests/test_new_feature.py
-   ```
-2. **Commit Semantically**: Write commit messages matching the Conventional Commits specification:
-   ```bash
-   git commit -m "feat(api): add user registration endpoint"
+   rtk gain
    ```
 
 ---
@@ -104,7 +104,7 @@ Follow the Red-Green-Refactor sequence:
    ```bash
    git push origin feature/issue-id-short-description
    ```
-3. **Open Pull Request**: Author a detailed PR description using the project's Pull Request template, documenting the exact commands to run the verification tests.
+3. **Open Pull Request**: Author a detailed PR description using the project's Pull Request template, documenting the exact commands to run the verification tests. Attach the template using the `@` mention menu if editing or drafting.
 
 ---
 

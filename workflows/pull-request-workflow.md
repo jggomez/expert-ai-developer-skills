@@ -1,7 +1,7 @@
 # Workflow: Pull Request Preparation & Submission
 
 **Identifier**: `pull-request-workflow`  
-**Purpose**: Guide developers and agents through creating, checking, documenting, and submitting Pull Requests (PRs) that meet high quality standards.
+**Purpose**: Guide developers and agents through creating, checking, documenting, and submitting Pull Requests (PRs) that meet high quality standards, using Antigravity context references and branch safety hooks.
 
 ---
 
@@ -25,27 +25,26 @@ graph TD
     G --> H[Verification Gate: CI Pass]
 ```
 
-### Step 1: Perform Self-Audit
+### Step 1: Perform Self-Audit (AI Review Helper)
 * Review the git diff of your changes (`git diff main...HEAD`).
+* **Antigravity Best Practice**: If the changes are large, define a reviewer subagent using `define_subagent` to audit the diff for over-engineering or code smells:
+  ```python
+  # Spawn a reviewer subagent
+  subagent.chat("Audit this diff file @scratch/diff.patch for readability, styling issues, or over-engineering.")
+  ```
 * Scan for leftovers: remove `print()`, `console.log()`, temporary helper files, or unused imports.
 * Ensure no hardcoded tokens, secret files, or local keys are staged.
 
 ### Step 2: Format & Lint Code
 * Run formatting tools to match repository conventions:
   ```bash
-  # Python example
   ruff format . && ruff check .
-  # JavaScript/TypeScript example
-  npm run lint -- --fix
   ```
 
 ### Step 3: Run Test Suite
 * Verify that your changes did not introduce regressions by running the test suite locally.
   ```bash
-  # Python
   pytest
-  # Node.js
-  npm test
   ```
 
 ### Step 4: Rebase and Resolve Conflicts
@@ -57,9 +56,11 @@ graph TD
   git rebase main
   ```
 * Resolve conflicts immediately, re-run tests if conflicts were resolved.
+* **PreToolUse Hook Safety**: Note that the Antigravity workspace plugin contains hooks that actively block staging or committing changes to the `main` or `develop` branches directly.
 
 ### Step 5: Draft the Pull Request Description
-* Copy the PR template structure. Create a local draft or populate the PR creation prompt:
+* Copy the PR template structure. Create a local draft or populate the PR creation prompt.
+* **Ref/Link Clickability**: Make sure to use the `@` mention menu or absolute file URLs to link any modified files, database schemas, or API docs in your description so they are clickable.
   * **Title**: `feat(auth): add google login oauth integration`
   * **Body**: Detail *Why* this change is needed, *What* changed, and *How* it was verified.
   * **Related Issue**: Ensure it includes `Closes #123`.
@@ -71,7 +72,6 @@ graph TD
   ```
 * Open the PR using the GitHub CLI or the GitHub web interface:
   ```bash
-  # Create a PR using GitHub CLI (if installed)
   gh pr create --title "feat(auth): add google oauth integration" --body-file pr-description.md
   ```
 

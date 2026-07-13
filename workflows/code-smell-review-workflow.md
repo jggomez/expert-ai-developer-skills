@@ -1,7 +1,7 @@
 # Workflow: Code Smell Auditing & SOLID Refactoring
 
 **Identifier**: `code-smell-review-workflow`  
-**Purpose**: Guide developers and agents through static code analysis, detecting Fowler/Beck code smells, assessing SOLID compliance, and applying risk-free refactoring patterns.
+**Purpose**: Guide developers and agents through static code analysis, detecting Fowler/Beck code smells, assessing SOLID compliance, and applying risk-free refactoring patterns, utilizing Antigravity skills and hooks.
 
 ---
 
@@ -29,28 +29,26 @@ graph TD
 ```
 
 ### Step 1: Run Static Analysis & Metrics
-* Run AST static analysis, linter checks, and complexity parsers to get raw metric baselines:
+* **Antigravity Best Practice**: Prioritize running the AST-based smell detector from the local skills catalog instead of writing custom parser scripts:
   ```bash
-  # Python (Complexity scanning with Radon/Ruff)
+  # Execute the pre-configured code smells skill detector
+  python skills/code-smells-expert/detect_smells.py --path src/
+  ```
+* Run additional metrics if necessary (e.g. Radon for Cyclomatic Complexity):
+  ```bash
   radon cc src/ -a
-  ruff check src/
-  # JS/TS
-  npm run lint
   ```
 
 ### Step 2: Identify Code Smells
 Review the code for these specific structural defects:
-1. **Large Classes / God Modules**: Any class file with >300 lines or handling unrelated domains (e.g., handling both DB access and user email notifications).
+1. **Large Classes / God Modules**: Any class file with >300 lines or handling unrelated domains.
 2. **Long Methods**: Any function exceeding 30-50 lines or containing nested loops/if-conditions deeper than 3 levels (High Cognitive Complexity).
 3. **Duplicated Code**: Blocks of identical or highly similar code across modules.
 4. **Shotgun Surgery**: Changes in one feature requiring file additions or tweaks across multiple packages.
 
 ### Step 3: Plan Refactoring Steps
 * Break the refactoring down into tiny, single-focus steps.
-* *Example Plan*: 
-  1. Extract helper functions out of the main controller module.
-  2. Relocate database configurations to a dedicated settings file.
-  3. Introduce interface patterns to abstract external API requests.
+* **Workspace Isolation (Optional)**: If testing alternative refactor implementations, spawn an isolated subagent in `branch` or `share` mode using `invoke_subagent` so the main chat session remains clean.
 
 ### Step 4: Establish Green Baseline
 * Before modifying any line, run the unit test suite covering the target files:
@@ -59,7 +57,7 @@ Review the code for these specific structural defects:
   ```
 * Ensure 100% of tests are passing. *If there are no tests, write unit tests first before refactoring.*
 
-### Step 5: Apply Surgical Refactoring
+### Step 5: Apply Surgical Refactoring (Karpathy Alignment)
 * Execute one single step from your refactoring plan at a time.
 * **Extraction Pattern**: Extract methods or classes without changing any variable names or interface contracts. Keep changes minimal.
 * **Cleanup Dead Code**: Remove old imports, unused parameters, and redundant helper variables that were replaced.
@@ -72,7 +70,7 @@ Review the code for these specific structural defects:
 * If tests fail, immediately revert the changes using `git checkout` or `git restore`, isolate what contract broke, and try again with a smaller step.
 
 ### Step 7: Re-evaluate Complexity
-* Re-run static metrics or Radon analysis. Confirm that Cyclomatic Complexity score is in the A/B range (Score < 10 per function).
+* Re-run the AST code smells script (`detect_smells.py`). Confirm that Cyclomatic Complexity score is in the A/B range (Score < 10 per function).
 
 ---
 

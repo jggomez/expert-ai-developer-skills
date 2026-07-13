@@ -1,13 +1,13 @@
 # Workflow: Staging, Committing & Pushing Code
 
 **Identifier**: `commit-workflow`  
-**Purpose**: Playbook to guide developers and agents on how to selectively stage changes, write semantic commit messages, validate syntax, and safely push work to version control.
+**Purpose**: Playbook to guide developers and agents on how to selectively stage changes, write semantic commit messages, validate syntax, and safely push work to version control, incorporating Antigravity safety gates and RTK token optimization.
 
 ---
 
 ## 1. Prerequisites
 * Current code is fully working and verified locally via linting/tests.
-* Development must be active on an isolated branch (e.g. `feature/name`), never on `main`.
+* Development must be active on an isolated branch (e.g., `feature/name`), never on `main`.
 
 ---
 
@@ -18,11 +18,11 @@ graph TD
     A[Start: Code Modified] --> B[Step 1: Check Git Status]
     B --> C[Step 2: Inspect Changes / Diff]
     C --> D[Step 3: Selective Staging]
-    D --> E[Step 4: Draft Semantic Message]
+    D --> E[Step 4: Validate Commit Message]
     E --> F[Step 5: Execute Commit & Run Hooks]
     F -->|Hook Fails| G[Fix Issues & Re-stage]
     G --> D
-    F -->|Hook Passes| H[Step 6: Push to Origin]
+    F -->|Hook Passes| H[Step 6: Pull & Push to Origin]
 ```
 
 ### Step 1: Check Git Status
@@ -44,10 +44,14 @@ graph TD
   git add tests/test_changed_file.py
   ```
 
-### Step 4: Draft Conventional Commit Message
-* Draft the message adhering to the Conventional Commit structure:
+### Step 4: Validate Commit Message
+* **Antigravity Best Practice**: Run the AST commit-message validator from the local commit skill to verify formatting before committing:
+  ```bash
+  python skills/commit-expert/validate_commit_msg.py --msg "feat(auth): add google oauth provider"
+  ```
+* Ensure the message follows the Conventional Commit structure:
   * **Header**: `<type>(<scope>): <description>` (max 72 chars, lowercase, imperative mood, no ending period).
-  * **Body (Optional)**: Detail *Why* the change was made and *What* is the implementation rationale.
+  * **Body (Optional)**: Detail *Why* the change was made.
   * **Footer (Optional)**: Link issue numbers (`Closes #14`).
 
 ### Step 5: Execute Commit and Run Hooks
@@ -55,6 +59,7 @@ graph TD
   ```bash
   git commit -m "feat(auth): add google oauth provider integration"
   ```
+* **Gitflow Hook Validation**: If the workspace `PreToolUse` hook detects you are on `main` or `develop`, it will automatically block the commit.
 * If pre-commit hooks (linters, formatting gates) fail:
   1. Read the hook error output.
   2. Fix formatting/linting issues in the codebase.
@@ -62,11 +67,12 @@ graph TD
   4. Run the commit command again.
 
 ### Step 6: Safely Push Changes
-* Synchronize with remote origin. Always pull before pushing to resolve simple head changes:
+* Synchronize with remote origin. Pull with rebase before pushing to resolve simple head changes:
   ```bash
   git pull origin feature/your-branch-name --rebase
   git push origin feature/your-branch-name
   ```
+* **RTK Token Optimization**: The push and pull operations are transparently intercepted and proxied by the `rtk` hook to minimize prompt token consumption.
 
 ---
 
