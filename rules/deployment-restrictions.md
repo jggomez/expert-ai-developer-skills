@@ -1,4 +1,9 @@
-# Rule: Deployment Restrictions (No Unauthorised Deploys)
+---
+trigger: model_decision
+description: Restrict production builds and deployments, enforce build safety gates, and prevent accidental deployments.
+---
+
+# Rule: Deployment Restrictions & Production Safety
 
 **Identifier**: `deployment-restrictions`  
 **Purpose**: Protect staging and production environments by restricting deployment commands, enforcing safety gates, and preventing unauthorized or accidental code deployments from developer terminals or AI agent processes.

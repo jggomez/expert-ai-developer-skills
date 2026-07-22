@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: Optimize prompt context, prevent token bloat, leverage local processing scripts, and minimize unnecessary file reading.
+---
+
 # Rule: Context & Token Optimization
 
 **Identifier**: `context-and-token-optimization`  

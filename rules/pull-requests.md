@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: Guidelines and quality gates for Pull Request creation, line-change thresholds, and self-review checklists.
+---
+
 # Rule: Pull Request Standards & AI Agent Self-Audit
 
 **Identifier**: `pull-requests`  

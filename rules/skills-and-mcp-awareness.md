@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: Rules for discovering, registering, and integrating local skills and Model Context Protocol (MCP) servers.
+---
+
 # Rule: Skills Catalog & Model Context Protocol (MCP) Awareness
 
 **Identifier**: `skills-and-mcp-awareness`  

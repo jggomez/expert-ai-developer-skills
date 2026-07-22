@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: Protect credentials, prevent hardcoded secrets, validate input parameters, and adhere to OWASP security standards.
+---
+
 # Rule: Secure Coding & Secrets Prevention
 
 **Identifier**: `secure-coding-and-secrets`  

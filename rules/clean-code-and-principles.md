@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: Enforce SOLID, DRY, and KISS principles, code smell prevention, clean naming conventions, and refactoring strategies.
+---
+
 # Rule: Clean Code, SOLID Principles & Code Smell Prevention
 
 **Identifier**: `clean-code-and-principles`  

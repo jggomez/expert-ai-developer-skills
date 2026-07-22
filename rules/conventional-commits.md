@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: Enforce structured semantic conventional commits, atomic commits, branch naming rules, and git safety gates.
+---
+
 # Rule: Conventional Commits & Git Branching Constraints
 
 **Identifier**: `conventional-commits`  

@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: Enforce documentation standards for code comments, docstrings, README files, project context, and Mermaid architecture diagrams.
+---
+
 # Rule: Documentation & Diagram Integrity
 
 **Identifier**: `documentation-and-diagrams`  

@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: Enforcement rule requiring mandatory automated testing and verification after code generation, feature additions, or modifications.
+---
+
 # Rule: Testing After Code Changes and Feature Creation
 
 **Identifier**: `testing-after-changes`  
