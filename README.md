@@ -38,7 +38,14 @@ expert-ai-developer-skills/
 │   ├── context-and-token-optimization.md # Prompt token minimization and local script execution
 │   ├── documentation-and-diagrams.md   # Comment, docstring, README, and Mermaid integrity
 │   ├── pull-requests.md                # Pull Request line limits and self-review checklists
-│   └── loop-engineering-workflow.md    # 7-stage cycle with subagent parallelization & auditing
+│   ├── loop-engineering-workflow.md    # 7-stage cycle with subagent parallelization & auditing
+│   └── tdd-best-practices.md           # TDD Red-Green-Refactor enforcement & agent verification
+├── tests/
+│   ├── README.md                       # Test architecture, subdirectories, & pytest commands
+│   ├── structure/                      # Static YAML frontmatter, broken links, & path leak tests
+│   ├── unit/                           # Script unit tests (commit-expert, secret_scanner, etc.)
+│   ├── behavioral/                     # Trigger description coverage & catalog sync tests
+│   └── integration/                    # End-to-end multi-skill integration tests
 ├── workflows/
 │   ├── README.md                       # Guide on executing workflows with AI agents
 │   ├── pull-request-workflow.md        # Branch creation and PR preparation playbook
@@ -146,6 +153,7 @@ This workspace provides a root-level [**`rules/`**](file:///Users/jggomez/Docume
 | [**`documentation-and-diagrams.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/documentation-and-diagrams.md) | Ensures docstrings, README files, and Mermaid diagrams are updated concurrently with changes. | Mermaid diagram validation + comment alignment. |
 | [**`pull-requests.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/pull-requests.md) | Mandates PR size limits, structured templates, and agent self-review checklist boundaries. | Local lint/test sweeps + 200-line change target limits. |
 | [**`loop-engineering-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/loop-engineering-workflow.md) | Mandates 7-stage cycle (`PLAN->TASK->BUILD->TEST->VERIFICATION->DOCUMENTATION->COMMIT`) with subagent parallelization. | Manager audit checklist + empirical runtime validation. |
+| [**`tdd-best-practices.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/tdd-best-practices.md) | Enforces TDD Red-Green-Refactor cycles, empirical runtime verification, and clean mock boundaries. | 100% test pass + empirical execution proof. |
 
 ---
 
