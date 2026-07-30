@@ -21,6 +21,7 @@ These rules are modularized by concern. You can use them individually or compile
 * [**documentation-and-diagrams.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/documentation-and-diagrams.md): Rule for maintaining code comments, docstrings, README files, and Mermaid architecture diagrams.
 * [**pull-requests.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/pull-requests.md): Rule governing Pull Request quality, line-change guidelines, and agent self-review checklists.
 * [**loop-engineering-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/loop-engineering-workflow.md): Mandatory 7-stage cycle (PLAN->TASK->BUILD->TEST->VERIFICATION->DOCUMENTATION->COMMIT) with subagent parallelization and manager auditing.
+* [**tdd-best-practices.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/tdd-best-practices.md): Enforcement rule requiring Test-Driven Development (TDD) best practices, Red-Green-Refactor cycles, unit/integration testing strategies, mock boundaries, and agent verification standards.
 
 ---
 
