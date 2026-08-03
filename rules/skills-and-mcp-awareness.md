@@ -3,60 +3,27 @@ trigger: model_decision
 description: Rules for discovering, registering, and integrating local skills and Model Context Protocol (MCP) servers.
 ---
 
-# Rule: Skills Catalog & Model Context Protocol (MCP) Awareness
+# Rule: Skills Catalog & MCP Tool Awareness
 
-**Identifier**: `skills-and-mcp-awareness`  
-**Purpose**: Force active discovery, usage, and preservation of local Skills and MCP servers in all agent tasks, preventing redundant code generation and leveraging deterministic system tools.
+**Identifier**: `skills-and-mcp-awareness`
 
----
+## 1. Core Tooling Directive
 
-## 1. Core Mandate
+**MUST** prioritize existing filesystem Skills and Model Context Protocol (MCP) servers over generating custom ad-hoc scripts or raw shell commands.
 
-**AI agents must always prioritize using existing filesystem-based Skills and active Model Context Protocol (MCP) servers over generating custom ad-hoc code or executing raw shell commands.**
+## 2. Discovery & Execution Protocol
 
-If a task requires database queries, deployment checks, linting, git commits, or security auditing, the agent must check if a specialized Skill or MCP tool exists to handle that process.
+1. **Scan Catalog**: **MUST** inspect the available skills list before starting non-trivial tasks.
+2. **Load Instructions**: **MUST** view `SKILL.md` via `view_file` before executing skill-related work.
+3. **Use Utility Scripts**: **MUST** execute helper scripts within skill packages (`skills/<name>/scripts/`).
+4. **Preserve Standards**: **MUST NOT** overwrite skill instructions without explicit user approval.
 
----
+## 3. Mandatory Substitutions (Anti-Reinvention)
 
-## 2. Skills Usage Workflow
-
-Whenever a new task is received, follow this discovery protocol:
-
-1. **Scan the Skills Catalog**: List the contents of the `skills/` directory. Read the `README.md` or the `SKILL.md` of any skill that appears relevant to your objective.
-2. **Import or Reference Instructions**: If a skill matches the concern (e.g. `test-driven-development`, `security-audit`, `commit-expert`), the agent must follow its step-by-step guides and execute its pre-configured utility scripts.
-3. **Keep Filesystem-Based Skills Intact**: Do not overwrite or modify existing skills without explicit instruction. Enhance or update them strictly under the rules of the Open Agent Skills Standard (`agentskills.io`).
-
----
-
-## 3. MCP Tool Awareness & Prioritization
-
-The workspace contains specialized, lazy-loaded MCP servers. Agents must leverage their tools to perform operations securely and efficiently:
-
-### Active Servers & Capabilities:
-* **`bigquery`**: Use for database exploration, table schemas, and running read-only SQL queries instead of writing raw database connection scripts.
-* **`chrome-devtools`**: Use for executing UI screenshots, audits, network tracking, and client-side testing.
-* **`cloudrun`**: Use for projects and service listings, Cloud Run deployments, log inspection, and configuration reviews.
-* **`firebase-mcp-server`**: Use for Firestore operations (queries, updates), auth checks, functions logs, hosting, and remote configs.
-
----
-
-## 4. Anti-Pattern Prevention (Rules of Substitution)
-
-To avoid token bloat and project clutter, adhere to these substitutions:
-
-| Instead of writing custom logic for... | Use this standard tool... |
+| Task Domain | Mandatory Tool / Skill |
 | :--- | :--- |
-| **Running security audits / scanning secrets** | Run the script in `skills/security-audit/` or execute its scanning utilities. |
-| **Drafting branch names or commit messages** | Check `skills/commit-expert/` and use conventional commits formatting. |
-| **Querying Firestore databases** | Call the `firestore_query_collection` tool from `firebase-mcp-server`. |
-| **Interacting with Google Cloud resources** | Use the `cloudrun` or `bigquery` MCP servers. |
-| **Writing custom AST parsers / linter runners** | Use `skills/build-and-ci-gates/` or `skills/code-smells-expert/`. |
-
----
-
-## 5. Checklist for Session Start
-
-On every user prompt, check:
-- [ ] What skills are registered in the `skills/` directory?
-- [ ] Are any MCP tools available that can execute database, cloud, or browser actions for this task?
-- [ ] Am I writing redundant python scripts or bash commands when a tool/skill already provides this capability?
+| **Frontend / CSS / JS** | **MUST** execute `modern-web-guidance` BEFORE writing web code. |
+| **Database Queries** | **MUST** call `bigquery` or `firebase-mcp-server` tools instead of writing raw DB clients. |
+| **Cloud Infrastructure**| **MUST** leverage `cloudrun` MCP tools for Cloud Run service management. |
+| **Security Audits** | **MUST** execute utilities from `skills/security-audit/`. |
+| **Git / Commits** | **MUST** adhere to `skills/commit-expert/` conventional commit rules. |

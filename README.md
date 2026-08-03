@@ -4,7 +4,7 @@
 [![Antigravity](https://img.shields.io/badge/Antigravity-Customizations-orange?style=for-the-badge)](https://github.com/google/antigravity)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green?style=for-the-badge)](LICENSE)
 
-Welcome to **expert-ai-developer-skills**, the premium community repository for Google Antigravity (AGY) agent customizations. This workspace houses a professional-grade suite of **18 optimized developer skills** and a bundled **Python Backend plugin** designed to automate quality gates, enforce branch safety constraints (Gitflow), validate test execution, audit security vulnerabilities (OWASP Top 10), and seamlessly connect native MCP tools for Google Cloud and Firebase.
+Welcome to **expert-ai-developer-skills**, the premium community repository for Google Antigravity (AGY) agent customizations. This workspace houses a professional-grade suite of **17 optimized developer skills**, refactored RFC 2119 rules, and a bundled **Python Backend plugin** designed to automate quality gates, enforce branch safety constraints (Gitflow), validate test execution, audit security vulnerabilities (OWASP Top 10), and seamlessly connect native MCP tools for Google Cloud and Firebase.
 
 ---
 
@@ -62,8 +62,7 @@ expert-ai-developer-skills/
 │   └── workspace-daemon/               # Persistent file-watching and auto-formatting daemon
 ├── skills/
 │   ├── README.md                       # Detailed skills catalog & usage instructions
-│   ├── python-expert/                  # PEP 8 patterns, AST optimizations, memory checks
-│   ├── fastapi-expert/                 # FastAPI routing conventions & Pydantic v2 schemas
+│   ├── python-expert/                  # PEP 8/604, Protocols, slots dataclasses, TaskGroups
 │   ├── test-driven-development/        # Red-Green-Refactor cycles & coverage gates
 │   ├── loop-engineering/               # Manager-Worker topologies & PR review cron scripts
 │   ├── documentation-expert/           # Technical doc validation & Mermaid guides
@@ -75,7 +74,7 @@ expert-ai-developer-skills/
 │   ├── security-audit/                 # OWASP Top 10 auditing & secrets regex scanner
 │   ├── performance-scalability/        # N+1 query checks & CPU/memory profiling tools
 │   ├── database-migration-expert/      # Alembic schemas, seeding, & table lock checks
-│   ├── senior-architect-engineering/   # Architectural Decision Records (ADR) generators
+│   ├── senior-architect-engineering/   # SEI Architectural Tactics, ATAM trade-offs, ADRs
 │   ├── design-spec-expert/             # Software Design Documents (SDD) scaffolds
 │   ├── build-and-ci-gates/             # Pre-commit quality hooks & linter gates
 │   ├── repo-research/                  # AST repo trees & dependency path mapping
@@ -93,7 +92,7 @@ expert-ai-developer-skills/
 
 ---
 
-## 3. In-Depth Developer Skills (18 Packaged Modules)
+## 3. In-Depth Developer Skills (17 Packaged Modules)
 
 Each skill represents an isolated capability loaded with professional guidelines, architectural references, and self-contained command-line automation scripts:
 

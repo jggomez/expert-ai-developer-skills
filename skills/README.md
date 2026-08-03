@@ -1,21 +1,21 @@
 # Expert AI Agent Skills Catalog
 
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
-[![Skills Count](https://img.shields.io/badge/Skills-18%20Optimized-orange?style=flat-square)](file:///./)
+[![Skills Count](https://img.shields.io/badge/Skills-17%20Optimized-orange?style=flat-square)](file:///./)
 
-This directory contains a premium catalog of **18 agent skills** designed to automate code quality checks, enforce programming best practices, detect code smells, validate commit history, and implement self-correcting development loops using the Google Antigravity (AGY) system.
+This directory contains a premium catalog of **17 agent skills** designed to automate code quality checks, enforce programming best practices, detect code smells, validate commit history, and implement self-correcting development loops using the Google Antigravity (AGY) system.
 
 ---
 
 ## 1. Quick Installation & Setup
 
-These skills fully comply with the [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, you can install any of these 18 skills out-of-the-box using Vercel's official, standard `skills` CLI.
+These skills fully comply with the [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, you can install any of these 17 skills out-of-the-box using Vercel's official, standard `skills` CLI.
 
 ### Option A: Standard Installation (Recommended)
 This is the recommended and simplest way to discover, add, and manage these skills. There's no need for local configuration or downloading extra packages. Simply run:
 
 ```bash
-# List all 18 skills available in our repository
+# List all 17 skills available in our repository
 npx skills add jggomez/expert-ai-developer-skills --list
 
 # Install a specific skill (e.g. python-expert) in the active project (.agents/skills)
@@ -24,7 +24,7 @@ npx skills add jggomez/expert-ai-developer-skills --skill python-expert
 # Install a specific skill globally on your system (so all your workspaces can load it)
 npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
 
-# Install ALL 18 skills in the active project
+# Install ALL 17 skills in the active project
 npx skills add jggomez/expert-ai-developer-skills
 ```
 
@@ -46,7 +46,6 @@ This table provides a comprehensive overview of every modular skill, its core pu
 | Skill Directory | Core Purpose & Best Practices | Reference Guides | Key Automation Scripts & Usage |
 | :--- | :--- | :--- | :--- |
 | **`python-expert`** | Enforces PEP 8 styling, static typing (`mypy`), generator stream tuning, and `__slots__` memory footprint reduction. | `references/python-patterns.md` | Guides AST-based memory checks and object tuning. |
-| **`fastapi-expert`** | Enforces REST API routing conventions, dependency injection, and Pydantic validation. | `references/fastapi-patterns.md` | Enforces Pydantic v2 schemas and response models serialization. |
 | **`test-driven-development`** | Establishes the Red-Green-Refactor testing lifecycle and Arrange-Act-Assert (AAA) pattern implementation. | `references/testing-patterns.md` | `verify_tests.py` (Runs test suite and prints coverage summaries). |
 | **`loop-engineering`** | Orchestrates manager-worker topologies, parallel execution in isolated workspaces, and automated code review crons. | `references/loop-architecture.md` | `run_parallel_agents.py` (Manager orchestrator)<br>`pr_cron_reviewer.py` (30-min review cron). |
 | **`documentation-expert`** | Standardizes structural hierarchy and graphical representations using the Diátaxis framework and Mermaid.js. | `references/diataxis-framework.md`<br>`references/mermaid-guide.md` | `validate_docs.py` (Statically checks markdown layouts and verifies 0 absolute path leaks). |

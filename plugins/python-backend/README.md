@@ -30,7 +30,7 @@ plugins/python-backend/
     ├── pull-request-expert/
     ├── commit-expert/
     ├── loop-engineering/
-    └── ... (and 13 other backend-compatible skills, totaling 18)
+    └── ... (and 12 other backend-compatible skills, totaling 17)
 ```
 
 ---

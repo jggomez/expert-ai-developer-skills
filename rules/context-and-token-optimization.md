@@ -1,49 +1,21 @@
 ---
 trigger: model_decision
-description: Optimize prompt context, prevent token bloat, leverage local processing scripts, and minimize unnecessary file reading.
+description: Optimize context window, prevent token bloat, leverage local processing scripts, and minimize unnecessary file reading.
 ---
 
 # Rule: Context & Token Optimization
 
-**Identifier**: `context-and-token-optimization`  
-**Purpose**: Maximize code session efficiency, prevent token-window exhaustion, and reduce API usage costs by working modularly and utilizing local processing scripts.
+**Identifier**: `context-and-token-optimization`
 
----
+## 1. Context Minimization Directives
 
-## 1. Context Minimization Strategy
+* **MUST** specify exact line ranges (`StartLine`/`EndLine`) when viewing files. **NEVER** view full files >1000 lines.
+* **MUST NOT** perform unconstrained recursive directory listings on large paths; use targeted `grep_search` with glob filters.
+* **MUST** delegate isolated sub-tasks to subagents (`invoke_subagent`) to prevent main context exhaustion.
+* **NEVER** re-read unchanged files or re-run duplicate shell/directory commands in the same turn loop.
 
-AI agents must actively manage their context window to avoid slower response times and token overflow:
+## 2. Deterministic Scripting & RTK Integration
 
-* **Surgical Code Reads**: When reading files, specify exact line ranges (`StartLine` and `EndLine`) instead of reading whole files. Never read files larger than 1000 lines in full.
-* **Directory Scopes**: Avoid listing very large directories recursively. List specific paths or use `grep` search with glob inclusions to find files.
-* **Subagent Delegation**: For large tasks, define specialized subagents with narrow system prompts and task boundaries. This keeps the parent conversation clean.
-
----
-
-## 2. Offloading Tasks to Local Scripts (Deterministic Code)
-
-Instead of prompting the model to repeatedly process or parse raw datasets, text files, or git logs:
-
-* **Create Helper Scripts**: Write small Python or Bash scripts to process text, run regex parses, or filter data.
-* **Run Scripts Locally**: Run the script via the terminal and read the final summary output, rather than streaming raw logs into the agent conversation.
-* **Avoid Repetitive Tool Execution**: Do not call `git status` or `list_dir` multiple times in a single loop if the workspace state has not changed.
-
----
-
-## 3. RTK - Rust Token Killer Integration
-
-When working in workspaces with `rtk` installed:
-
-* **Transparent CLI hooks**: Always allow the Claude Code hook to rewrite standard Git and Dev commands through the token-optimized proxy.
-* **Analytics Checks**: Developers can check execution analytics and token savings metrics using:
-  ```bash
-  rtk gain
-  ```
-* **Missed Opportunities Audit**: Analyze command history for token-saving optimizations using:
-  ```bash
-  rtk discover
-  ```
-* **Debug Bypass**: If a developer command fails due to hook filtering, run the raw command with:
-  ```bash
-  rtk proxy <cmd>
-  ```
+* **MUST** offload heavy data parsing, text processing, or log filtering to local Python/Bash scripts in `scratch/`.
+* **ALWAYS** use `rtk` (Rust Token Killer) proxy for terminal commands (`rtk proxy <cmd>`, `rtk gain`).
+* **MUST** inspect summarized script results rather than streaming raw logs into the agent context window.
