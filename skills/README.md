@@ -1,9 +1,9 @@
 # Expert AI Agent Skills Catalog
 
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
-[![Skills Count](https://img.shields.io/badge/Skills-17%20Optimized-orange?style=flat-square)](file:///./)
+[![Skills Count](https://img.shields.io/badge/Skills-22%20Optimized-orange?style=flat-square)](file:///./)
 
-This directory contains a premium catalog of **17 agent skills** designed to automate code quality checks, enforce programming best practices, detect code smells, validate commit history, and implement self-correcting development loops using the Google Antigravity (AGY) system.
+This directory contains a premium catalog of **22 agent skills** designed to automate code quality checks, enforce programming best practices, detect code smells, validate commit history, and implement self-correcting development loops using the Google Antigravity (AGY) system.
 
 ---
 
@@ -15,7 +15,7 @@ These skills fully comply with the [**Open Agent Skills Standard** (`agentskills
 This is the recommended and simplest way to discover, add, and manage these skills. There's no need for local configuration or downloading extra packages. Simply run:
 
 ```bash
-# List all 17 skills available in our repository
+# List all 22 skills available in our repository
 npx skills add jggomez/expert-ai-developer-skills --list
 
 # Install a specific skill (e.g. python-expert) in the active project (.agents/skills)
@@ -24,7 +24,7 @@ npx skills add jggomez/expert-ai-developer-skills --skill python-expert
 # Install a specific skill globally on your system (so all your workspaces can load it)
 npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
 
-# Install ALL 17 skills in the active project
+# Install ALL 22 skills in the active project
 npx skills add jggomez/expert-ai-developer-skills
 ```
 
@@ -45,6 +45,11 @@ This table provides a comprehensive overview of every modular skill, its core pu
 
 | Skill Directory | Core Purpose & Best Practices | Reference Guides | Key Automation Scripts & Usage |
 | :--- | :--- | :--- | :--- |
+| **`product-analyst`** | Defines features, gaps, and writes Product Requirements Documents (PRDs). | `SKILL.md` | Requirement discovery workflows. |
+| **`qa-tester`** | Constructs End-to-End test suites and maps requirements to E2E tracing. | `SKILL.md` | Executable E2E traceability matrices. |
+| **`senior-dev-orchestrator`** | Orchestrates subagents across SDLC (Requirements, Architecture, Code, Test, Audit). | `SKILL.md` | Agent manager workflows. |
+| **`code-implementer`** | Writes production code utilizing strict TDD Red-Green-Refactor cycles. | `SKILL.md` | TDD implementation guides. |
+| **`compliance-verifier`** | Audits NFRs, security gates, and performs final release readiness checks. | `SKILL.md` | Compliance checklist workflows. |
 | **`python-expert`** | Enforces PEP 8 styling, static typing (`mypy`), generator stream tuning, and `__slots__` memory footprint reduction. | `references/python-patterns.md` | Guides AST-based memory checks and object tuning. |
 | **`test-driven-development`** | Establishes the Red-Green-Refactor testing lifecycle and Arrange-Act-Assert (AAA) pattern implementation. | `references/testing-patterns.md` | `verify_tests.py` (Runs test suite and prints coverage summaries). |
 | **`loop-engineering`** | Orchestrates manager-worker topologies, parallel execution in isolated workspaces, and automated code review crons. | `references/loop-architecture.md` | `run_parallel_agents.py` (Manager orchestrator)<br>`pr_cron_reviewer.py` (30-min review cron). |

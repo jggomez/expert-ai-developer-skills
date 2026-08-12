@@ -4,7 +4,7 @@
 [![Antigravity](https://img.shields.io/badge/Antigravity-Customizations-orange?style=for-the-badge)](https://github.com/google/antigravity)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green?style=for-the-badge)](LICENSE)
 
-Welcome to **expert-ai-developer-skills**, the premium community repository for Google Antigravity (AGY) agent customizations. This workspace houses a professional-grade suite of **17 optimized developer skills**, refactored RFC 2119 rules, and a bundled **Python Backend plugin** designed to automate quality gates, enforce branch safety constraints (Gitflow), validate test execution, audit security vulnerabilities (OWASP Top 10), and seamlessly connect native MCP tools for Google Cloud and Firebase.
+Welcome to **expert-ai-developer-skills**, the premium community repository for Google Antigravity (AGY) agent customizations. This workspace houses a professional-grade suite of **22 optimized developer skills**, refactored RFC 2119 rules, and a bundled **Python Backend plugin** designed to automate quality gates, enforce branch safety constraints (Gitflow), validate test execution, audit security vulnerabilities (OWASP Top 10), and seamlessly connect native MCP tools for Google Cloud and Firebase.
 
 ---
 
@@ -26,6 +26,7 @@ The workspace is cleanly structured into modular **skills** (discrete instructio
 ```
 expert-ai-developer-skills/
 ├── README.md                           # Main community reference guide (this file)
+├── agents/                             # Subagent configurations (Orchestrator, Architect, etc.)
 ├── images/                             # Instagram post design graphics (Overview, Skills, Rules, etc.)
 ├── rules/
 │   ├── README.md                       # Guide on integrating rules into AI agents
@@ -78,7 +79,12 @@ expert-ai-developer-skills/
 │   ├── design-spec-expert/             # Software Design Documents (SDD) scaffolds
 │   ├── build-and-ci-gates/             # Pre-commit quality hooks & linter gates
 │   ├── repo-research/                  # AST repo trees & dependency path mapping
-│   └── guidelines-karpathy/            # Critical behavioral checks to avoid LLM bugs
+│   ├── guidelines-karpathy/            # Critical behavioral checks to avoid LLM bugs
+│   ├── product-analyst/                # PRD generation and requirement analysis
+│   ├── qa-tester/                      # E2E test suites and integration verification
+│   ├── senior-dev-orchestrator/        # Subagent orchestration and SDLC lifecycle
+│   ├── code-implementer/               # TDD code implementation rules
+│   └── compliance-verifier/            # Final quality, security, and NFR auditing
 └── plugins/
     └── python-backend/
         ├── README.md                   # Plugin installation, hooks, & mcp configurations
@@ -92,12 +98,17 @@ expert-ai-developer-skills/
 
 ---
 
-## 3. In-Depth Developer Skills (17 Packaged Modules)
+## 3. In-Depth Developer Skills (22 Packaged Modules)
 
 Each skill represents an isolated capability loaded with professional guidelines, architectural references, and self-contained command-line automation scripts:
 
 | Skill Directory | Target Capability & Purpose | Key Automated Scripts |
 | :--- | :--- | :--- |
+| **`product-analyst`** | Generates PRDs, analyzes requirements, and asks clarifying questions. | *Requirement mapping rules* |
+| **`qa-tester`** | Constructs End-to-End (E2E) suites and validates business workflows. | *E2E testing guides* |
+| **`senior-dev-orchestrator`** | Orchestrates subagents across the SDLC using strict quality gates. | *Orchestration workflow* |
+| **`code-implementer`** | Writes production code utilizing strict TDD Red-Green-Refactor cycles. | *TDD guides* |
+| **`compliance-verifier`** | Audits NFRs, security gates, and performs final release readiness checks. | *Compliance checklists* |
 | **`python-expert`** | PEP 8 styling, static typing (`mypy`), generator stream tuning, and `__slots__` memory footprint reduction. | *AST-based memory checks* |
 | **`fastapi-expert`** | Establishes REST API routing standards, Pydantic v2 schemas, and session dependency injection. | *Safe serialization checkers* |
 | ****`test-driven-development`**** | Red-Green-Refactor cycle gatekeeping and Arrange-Act-Assert (AAA) testing standards. | `verify_tests.py` (Coverage checks & runner gate) |
@@ -174,13 +185,13 @@ This workspace provides a root-level [**`workflows/`**](file:///Users/jggomez/Do
 
 ## 7. Comprehensive Installation Guide
 
-This repository fully adheres to the official [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, other teams or users can install any of these 18 skills out-of-the-box using Vercel's official, standard `skills` CLI.
+This repository fully adheres to the official [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, other teams or users can install any of these 22 skills out-of-the-box using Vercel's official, standard `skills` CLI.
 
 ### 7.1 Standard Skills Installation (Using Vercel's `npx skills`)
 This is the recommended and simplest way to discover, add, and manage these skills. They don't need any local setups, just run:
 
 ```bash
-# List all 18 skills available in our repository
+# List all 22 skills available in our repository
 npx skills add jggomez/expert-ai-developer-skills --list
 
 # Install a specific skill (e.g. python-expert) in the active project (.agents/skills)
@@ -189,7 +200,7 @@ npx skills add jggomez/expert-ai-developer-skills --skill python-expert
 # Install a specific skill globally on your system (so all your workspaces can load it)
 npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
 
-# Install ALL 18 skills in the active project
+# Install ALL 22 skills in the active project
 npx skills add jggomez/expert-ai-developer-skills
 ```
 
