@@ -183,11 +183,26 @@ This workspace provides a root-level [**`workflows/`**](file:///Users/jggomez/Do
 
 ---
 
-## 7. Comprehensive Installation Guide
+## 7. Custom Loop Engineering Agents (Antigravity Subagents)
+
+This workspace provides a root-level [**`agents/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory containing definitions for custom agents explicitly designed for execution within the Google Antigravity (AGY) system. They form a complete **Loop Engineering** topology using highly specialized subagents:
+
+| Agent Profile | Role & Specialization | Execution Policy | Assigned Capabilities |
+| :--- | :--- | :--- | :--- |
+| [**`senior-dev-orchestrator`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/senior-dev-orchestrator.md) | **Main Orchestrator**: Manages the overarching SDLC lifecycle and tracks final release readiness. | `off` | `invoke_subagent`, `manage_subagents` |
+| [**`product-analyst`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/product-analyst.md) | **Requirements Engineer**: Clarifies ambiguities with the user and constructs detailed PRDs. | `off` | `ask_question`, `write_to_file` |
+| [**`architect-engineer`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/architect-engineer.md) | **System Designer**: Evaluates Quality Attribute Drivers (QADs) and drafts architecture blueprints. | `sandbox` | `write_to_file`, `replace_file_content` |
+| [**`code-implementer`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/code-implementer.md) | **TDD Implementer**: Executes strict Red-Green-Refactor cycles to write production code. | `sandbox` | `write_to_file`, `run_command` |
+| [**`qa-tester`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/qa-tester.md) | **E2E Tester**: Traces requirements back to End-to-End integration test suites. | `sandbox` | `run_command`, `grep_search` |
+| [**`compliance-verifier`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/compliance-verifier.md) | **Quality Auditor**: Verifies strict compliance with NFRs, security gates, and code smells. | `sandbox` | `run_command`, `list_dir` |
+
+---
+
+## 8. Comprehensive Installation Guide
 
 This repository fully adheres to the official [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, other teams or users can install any of these 22 skills out-of-the-box using Vercel's official, standard `skills` CLI.
 
-### 7.1 Standard Skills Installation (Using Vercel's `npx skills`)
+### 8.1 Standard Skills Installation (Using Vercel's `npx skills`)
 This is the recommended and simplest way to discover, add, and manage these skills. They don't need any local setups, just run:
 
 ```bash
@@ -204,7 +219,7 @@ npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
 npx skills add jggomez/expert-ai-developer-skills
 ```
 
-### 7.2 Plugin & Hooks Installation (Manual Setup)
+### 8.2 Plugin & Hooks Installation (Manual Setup)
 Since the `python-backend` plugin includes advanced runtime hooks (`hooks.json`, `PreToolUse` gates) that are separate from standard agent skills, you can configure it globally by copying its directory:
 
 ```bash
@@ -217,7 +232,7 @@ cp -r ./plugins/python-backend/* ~/.gemini/config/plugins/python-backend/
 
 ---
 
-## 8. Usage and Workflows
+## 9. Usage and Workflows
 
 Once installed, the agent skills and hooks are completely automatic:
 1. **Writing Code**: When you prompt the agent to perform edits or checkouts, the rules in `python-backend-rules.md` guide the coding standard (PEP 8, strict types).
@@ -226,7 +241,7 @@ Once installed, the agent skills and hooks are completely automatic:
 
 ---
 
-## 9. Antigravity Sidecars (Loop Engineering Background Processes)
+## 10. Antigravity Sidecars (Loop Engineering Background Processes)
 
 This workspace provides a root-level [**`sidecars/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/sidecars) directory containing configurations for background processes and schedules that run alongside Antigravity:
 
@@ -240,5 +255,5 @@ To install sidecars globally or per-plugin, review the [**Sidecars Installation 
 
 ---
 
-## 10. License
+## 11. License
 This repository is open-sourced under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for more details.
