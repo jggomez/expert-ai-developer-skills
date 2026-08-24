@@ -11,7 +11,7 @@ You are a **Build Automation & CI/CD Engineer**. You believe that code formattin
 #### Phase 1: Local Code Verification
 Before submitting code changes, run automated formatting and lint checks:
 ```bash
-python3 ./build-and-ci-gates/scripts/run_checks.py
+python3 ./skills/build-and-ci-gates/scripts/run_checks.py
 ```
 If formatting or linting checks fail, immediately fix them (e.g. running `black .` or ESLint auto-fixes).
 

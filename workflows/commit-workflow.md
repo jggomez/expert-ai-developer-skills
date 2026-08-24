@@ -1,7 +1,7 @@
 # Workflow: Staging, Committing & Pushing Code
 
 **Identifier**: `commit-workflow`  
-**Purpose**: Playbook to guide developers and agents on how to selectively stage changes, write semantic commit messages, validate syntax, and safely push work to version control, incorporating Antigravity safety gates and RTK token optimization.
+**Purpose**: Playbook to guide developers and agents on how to selectively stage changes, write semantic commit messages, validate syntax, and safely push work to version control using the Antigravity Gitflow safety gates.
 
 ---
 
@@ -47,7 +47,7 @@ graph TD
 ### Step 4: Validate Commit Message
 * **Antigravity Best Practice**: Run the AST commit-message validator from the local commit skill to verify formatting before committing:
   ```bash
-  python skills/commit-expert/validate_commit_msg.py --msg "feat(auth): add google oauth provider"
+  python3 skills/commit-expert/scripts/validate_commit_msg.py .git/COMMIT_EDITMSG
   ```
 * Ensure the message follows the Conventional Commit structure:
   * **Header**: `<type>(<scope>): <description>` (max 72 chars, lowercase, imperative mood, no ending period).
@@ -72,7 +72,7 @@ graph TD
   git pull origin feature/your-branch-name --rebase
   git push origin feature/your-branch-name
   ```
-* **RTK Token Optimization**: The push and pull operations are transparently intercepted and proxied by the `rtk` hook to minimize prompt token consumption.
+* **Gitflow Safety**: The workspace `PreToolUse` hook blocks pushes made directly on `main` or `develop`, regardless of how they're triggered.
 
 ---
 

@@ -14,7 +14,7 @@ To minimize token consumption and maximize efficiency, follow this automated and
 ### Phase 1: Automated Initial Analysis
 1. Run the repository analyzer script:
    ```bash
-   python3 ./repo-research/scripts/repo_analyzer.py
+   python3 ./skills/repo-research/scripts/repo_analyzer.py
    ```
 2. Verify that `.agents/rules/project-context.md` was generated or updated.
 

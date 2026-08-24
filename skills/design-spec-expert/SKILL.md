@@ -16,7 +16,7 @@ Before drafting the specification, research the requirements:
 #### Phase 2: SDD Generation & Draft
 1. Run the SDD generation script to bootstrap the specification file:
    ```bash
-   python3 ./design-spec-expert/scripts/create_sdd.py "System Title" [Draft/Review/Approved]
+   python3 ./skills/design-spec-expert/scripts/create_sdd.py "System Title" [Draft/Review/Approved]
    ```
 2. Open the generated file and flesh out all sections using the template as a reference:
    [SDD Template Reference](references/sdd-template.md)

@@ -22,8 +22,9 @@ description: Rules for discovering, registering, and integrating local skills an
 
 | Task Domain | Mandatory Tool / Skill |
 | :--- | :--- |
-| **Frontend / CSS / JS** | **MUST** execute `modern-web-guidance` BEFORE writing web code. |
-| **Database Queries** | **MUST** call `bigquery` or `firebase-mcp-server` tools instead of writing raw DB clients. |
-| **Cloud Infrastructure**| **MUST** leverage `cloudrun` MCP tools for Cloud Run service management. |
+| **Database Queries** | **MUST** call a configured MCP server (e.g. `firebase-mcp-server`) instead of writing raw DB clients, when one is registered for the project. |
+| **Cloud Infrastructure**| **MUST** leverage `cloudrun` MCP tools for Cloud Run service management, when registered. |
 | **Security Audits** | **MUST** execute utilities from `skills/security-audit/`. |
 | **Git / Commits** | **MUST** adhere to `skills/commit-expert/` conventional commit rules. |
+
+Check `plugins/*/mcp_config.json` for which MCP servers are actually registered before assuming one is available.

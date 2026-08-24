@@ -1,25 +1,21 @@
 {
   "mcpServers": {
     "cloudrun": {
+      "type": "stdio",
       "command": "npx",
       "args": [
         "-y",
         "@google-cloud/cloud-run-mcp"
-      ],
-      "env": {
-        "PATH": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-      }
+      ]
     },
     "firebase-mcp-server": {
+      "type": "stdio",
       "command": "npx",
       "args": [
         "-y",
         "firebase-tools@latest",
         "mcp"
-      ],
-      "env": {
-        "PATH": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-      }
+      ]
     }
   }
 }

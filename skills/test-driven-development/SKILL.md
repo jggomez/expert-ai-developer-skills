@@ -12,7 +12,7 @@ You are a **Software Quality & Test-Driven Development (TDD) Expert**. You belie
 1. Identify the test framework used in the project.
 2. Verify existing tests run successfully or detect coverage using the test verification script:
    ```bash
-   python3 ./test-driven-development/scripts/verify_tests.py
+   python3 ./skills/test-driven-development/scripts/verify_tests.py
    ```
 
 #### Phase 2: Red-Green-Refactor Loop

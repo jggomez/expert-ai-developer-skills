@@ -8,7 +8,7 @@
 ## 1. Prerequisites
 * Project dependencies and test requirements are installed (`pip install -r requirements-dev.txt`, `npm install`, etc.).
 * Database or external service mocks are configured or running (e.g., docker-compose for test databases).
-* If UI testing is required, ensure the `@chrome-devtools` MCP server is active.
+* If UI testing is required and a browser-automation MCP server (e.g. `chrome-devtools`) is configured for this project, ensure it's active.
 
 ---
 
@@ -48,12 +48,12 @@ graph TD
   # Node.js (Jest)
   npx jest tests/auth.test.js -t "should login user"
   ```
-* For UI components, use the `@chrome-devtools` MCP server. Run the app locally, then call devtools tools (e.g., `take_screenshot` or `lighthouse_audit`) to verify visual correctness.
+* For UI components, if a browser-automation MCP server is configured, run the app locally and use its tools (e.g. screenshot capture, a Lighthouse audit) to verify visual correctness.
 
 ### Step 4: Debug Failing Tests
 If a test fails, follow this diagnosis sequence:
 1. **Examine Assertions**: Read the traceback output. Isolate whether it is a value assertion mismatch, a Type/Attribute error, or a timeout.
-2. **Review Mocks**: If the test hits an external API or database, ensure the request is properly mocked (e.g., using `pytest-mock`, `nock`, or `@firebase-mcp-server` local rules).
+2. **Review Mocks**: If the test hits an external API or database, ensure the request is properly mocked (e.g., using `pytest-mock`, `nock`, or the Firestore emulator for Firebase-backed code).
 3. **Isolate Code**: Run the failing test in verbose mode with stdout capturing enabled:
    ```bash
    pytest tests/test_auth.py -s -vv
@@ -62,12 +62,7 @@ If a test fails, follow this diagnosis sequence:
 
 ### Step 5: Run the Full Test Suite via Background Task
 * Run the global project suite to verify no regressions were introduced elsewhere.
-* **Antigravity Best Practice**: Run the full test suite in the background. Do not poll the terminal in a loop. Instead, capture the background task ID and schedule a one-shot notification timer:
-  ```python
-  # Run tests asynchronously
-  # schedule a timer that will cancel early if the test task finishes
-  schedule(DurationSeconds="120", Prompt="Verify full test suite completion status", TimerCondition="task-123")
-  ```
+* **Antigravity Best Practice**: Run the full test suite in the background and wait for its completion notification instead of polling the terminal in a loop.
 
 ### Step 6: Verify Code Coverage
 * Execute coverage reporting to check that new statements, branches, and functions are covered:

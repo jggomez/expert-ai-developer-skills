@@ -27,11 +27,7 @@ graph TD
 
 ### Step 1: Perform Self-Audit (AI Review Helper)
 * Review the git diff of your changes (`git diff main...HEAD`).
-* **Antigravity Best Practice**: If the changes are large, define a reviewer subagent using `define_subagent` to audit the diff for over-engineering or code smells:
-  ```python
-  # Spawn a reviewer subagent
-  subagent.chat("Audit this diff file @scratch/diff.patch for readability, styling issues, or over-engineering.")
-  ```
+* **Antigravity Best Practice**: If the changes are large, spawn a reviewer subagent scoped to just "audit `git diff main...HEAD` for readability, styling issues, or over-engineering" so its review runs in a clean context.
 * Scan for leftovers: remove `print()`, `console.log()`, temporary helper files, or unused imports.
 * Ensure no hardcoded tokens, secret files, or local keys are staged.
 

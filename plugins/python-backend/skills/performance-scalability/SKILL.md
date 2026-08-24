@@ -11,13 +11,13 @@ You are a **Pragmatic Performance Architect & Systems Engineer**. Your goal is t
 #### Phase 1: Automated Bottleneck Scanning
 Scan the codebase to statically identify nested complexity loops, unbuffered I/O, or N+1 query signatures:
 ```bash
-python3 ./performance-scalability/scripts/measure_performance.py scan [optional_path_to_scan]
+python3 ./skills/performance-scalability/scripts/measure_performance.py scan [optional_path_to_scan]
 ```
 
 #### Phase 2: Execution Profiling
 To measure actual runtime execution duration and peak memory allocation of a specific Python function:
 ```bash
-python3 ./performance-scalability/scripts/measure_performance.py profile [path_to_script.py] [function_name]
+python3 ./skills/performance-scalability/scripts/measure_performance.py profile [path_to_script.py] [function_name]
 ```
 
 #### Phase 3: Architectural Patterns Audit

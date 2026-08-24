@@ -45,12 +45,8 @@ graph TD
 
 ## Phase 3: Test-Driven Development (TDD) with Subagents
 
-Follow the Red-Green-Refactor sequence. For complex modules, consider defining and invoking a specialized subagent to focus solely on test generation:
-1. **Delegate Test Writing (Optional)**: Invoke a subagent using the `define_subagent` and `invoke_subagent` tools:
-   ```python
-   # Example: Spawn a test-writer subagent
-   subagent.chat("Write unit tests for the registration schemas located in @src/schemas.py")
-   ```
+Follow the Red-Green-Refactor sequence. For complex modules, consider delegating test generation to a dedicated subagent so it can run in its own isolated context:
+1. **Delegate Test Writing (Optional)**: Spawn a subagent scoped to just "write unit tests for `src/schemas.py`'s registration models" — keep the request self-contained since the subagent starts with no prior context.
 2. **Write Unit Tests (Red)**: Write unit tests covering happy path inputs, invalid payloads, and boundary limits. Run tests and verify they fail:
    ```bash
    pytest tests/test_new_feature.py  # Verify failures
@@ -73,11 +69,7 @@ Follow the Red-Green-Refactor sequence. For complex modules, consider defining a
    ```bash
    bandit -r src/
    ```
-3. **Run Full Test Suite in Background**: If the suite is large, run it as a background task. Monitor its execution or schedule a one-shot notification timer so you don't poll the terminal:
-   ```python
-   # Schedule check in 60 seconds
-   schedule(DurationSeconds="60", Prompt="Check if background test suite finished", TimerCondition="task-123")
-   ```
+3. **Run Full Test Suite in Background**: If the suite is large, run it as a background task and wait for its completion notification instead of polling the terminal in a loop.
 
 ---
 
@@ -86,10 +78,7 @@ Follow the Red-Green-Refactor sequence. For complex modules, consider defining a
 1. **Selectively Stage**: Check `git status` and stage only files related to the feature. Do not use `git add .` if unnecessary files are changed.
    * *Note*: The Antigravity `PreToolUse` hook will block commits if you are accidentally on the `main` or `develop` branches.
 2. **Commit Semantically**: Write commit messages matching the Conventional Commits specification.
-3. **Analyze Token Savings**: Confirm the Claude Code hook ran commands through the `rtk` proxy to minimize session token usage:
-   ```bash
-   rtk gain
-   ```
+3. **Validate the Message**: Run the commit-message validator before finalizing (see the `commit-workflow` playbook).
 
 ---
 

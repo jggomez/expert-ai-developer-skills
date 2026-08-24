@@ -3,13 +3,15 @@
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
 [![Skills Count](https://img.shields.io/badge/Skills-22%20Optimized-orange?style=flat-square)](file:///./)
 
-This directory contains a premium catalog of **22 agent skills** designed to automate code quality checks, enforce programming best practices, detect code smells, validate commit history, and implement self-correcting development loops using the Google Antigravity (AGY) system.
+This directory contains a premium catalog of **22 agent skills** designed to automate code quality checks, enforce programming best practices, detect code smells, validate commit history, and implement self-correcting development loops. Every `SKILL.md` here is platform-neutral (no Antigravity- or Claude-Code-specific tool names in its instructions), so the same catalog works whether you're on Google Antigravity (AGY) or Claude Code.
+
+Two plugins in this repository bundle physical copies of a subset of these skills so they can be distributed standalone: [`plugins/python-backend`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/python-backend) (11 backend-focused skills) and [`plugins/senior-dev`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev) (8 SDLC-orchestration skills). Edit skills here, then run `python3 scripts/sync_plugin_skills.py` to re-sync both.
 
 ---
 
 ## 1. Quick Installation & Setup
 
-These skills fully comply with the [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, you can install any of these 17 skills out-of-the-box using Vercel's official, standard `skills` CLI.
+These skills fully comply with the [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, you can install any of these 22 skills out-of-the-box using Vercel's official, standard `skills` CLI.
 
 ### Option A: Standard Installation (Recommended)
 This is the recommended and simplest way to discover, add, and manage these skills. There's no need for local configuration or downloading extra packages. Simply run:

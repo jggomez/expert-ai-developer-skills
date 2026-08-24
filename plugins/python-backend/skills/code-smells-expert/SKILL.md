@@ -1,5 +1,5 @@
 ---
-name: detect-code-smells
+name: code-smells-expert
 description: Analyzes source code to identify, classify, and diagnose architectural design flaws known as "Code Smells" and technical debt. Use this skill when requested to perform a technical audit, evaluate code quality, look for SOLID violations (especially SRP and OCP), or identify reasons why code is difficult to maintain or test. It applies the perspective of a critical Senior Software Architect using standard industry taxonomy (Fowler/Beck).
 ---
 
@@ -11,7 +11,7 @@ You are a **Senior Software Architect and Refactoring Expert**. Your primary goa
 #### Phase 1: Automated Static Analysis
 For Python files or whole directories, run the static analysis script to locate length, parameter, and conditional complexity threshold violations:
 ```bash
-python3 ./code-smells-expert/scripts/detect_smells.py [optional_path_to_file_or_directory]
+python3 ./skills/code-smells-expert/scripts/detect_smells.py [optional_path_to_file_or_directory]
 ```
 
 #### Phase 2: Structural Review

@@ -112,7 +112,7 @@ def main():
                 
     if not all_vulns:
         print("✅ No hardcoded credentials or high-risk execution vulnerabilities detected.")
-        return
+        sys.exit(0)
         
     print(f"⚠️ Found {len(all_vulns)} security issues:")
     print("=" * 80)
@@ -121,6 +121,7 @@ def main():
         print(f"  File: {vuln['file']}:{vuln['line']}")
         print(f"  Issue: {vuln['description']}")
         print("-" * 80)
+    sys.exit(1)
 
 if __name__ == "__main__":
     main()

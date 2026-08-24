@@ -8,47 +8,39 @@ let inputData = '';
 try {
   inputData = fs.readFileSync(0, 'utf-8');
 } catch (e) {
-  console.log(JSON.stringify({ decision: 'allow' }));
   process.exit(0);
 }
 
-if (!inputData.trim()) {
-  console.log(JSON.stringify({ decision: 'allow' }));
-  process.exit(0);
+let payload = {};
+if (inputData.trim()) {
+  try {
+    payload = JSON.parse(inputData);
+  } catch (e) {
+    payload = {};
+  }
 }
 
-let payload;
-try {
-  payload = JSON.parse(inputData);
-} catch (e) {
-  console.log(JSON.stringify({ decision: 'allow' }));
-  process.exit(0);
-}
+// Normalize across Claude Code (cwd) and the legacy Antigravity/Gemini shape
+// (workspacePaths) some hosts still send.
+const workspaceRoot = payload.cwd || payload.workspacePaths?.[0] || process.cwd();
 
-const terminationReason = payload.terminationReason || '';
-const workspaceRoot = payload.workspacePaths?.[0] || process.cwd();
+// The TDD skill lives under skills/test-driven-development in this repo's
+// layout, wherever the plugin is installed.
+const testScriptPath = path.join(workspaceRoot, 'skills', 'test-driven-development', 'scripts', 'verify_tests.py');
 
-// Only check quality gates on standard model stops
-if (terminationReason === 'model_stop') {
-  const testScriptPath = path.join(workspaceRoot, 'test-driven-development', 'scripts', 'verify_tests.py');
-  
-  if (fs.existsSync(testScriptPath)) {
-    try {
-      // Run the test suite gate
-      execSync(`python3 "${testScriptPath}"`, { cwd: workspaceRoot, stdio: 'pipe' });
-    } catch (error) {
-      const testOutput = error.stdout ? error.stdout.toString() : (error.message || '');
-      
-      // Stop the termination, forcing the agent to stay and fix the failing tests
-      console.log(JSON.stringify({
-        decision: 'continue',
-        reason: `Quality Gate Violation: You are trying to complete the task, but some tests are failing or have not run successfully. You must fix the code or the tests before you can complete the request.\n\nTest Output:\n${testOutput}`
-      }));
-      process.exit(0);
-    }
+if (fs.existsSync(testScriptPath)) {
+  try {
+    execSync(`python3 "${testScriptPath}"`, { cwd: workspaceRoot, stdio: 'pipe' });
+  } catch (error) {
+    const testOutput = error.stdout ? error.stdout.toString() : (error.message || '');
+
+    // Exit code 2 blocks the stop and feeds stderr back as the reason.
+    console.error(
+      `Quality Gate Violation: you are trying to finish, but some tests are failing or did not run successfully. Fix the code or the tests before completing the request.\n\nTest Output:\n${testOutput}`
+    );
+    process.exit(2);
   }
 }
 
 // Default: allow the agent to stop
-console.log(JSON.stringify({ decision: 'allow' }));
 process.exit(0);

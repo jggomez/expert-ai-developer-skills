@@ -4,7 +4,7 @@
 [![Antigravity](https://img.shields.io/badge/Antigravity-Customizations-orange?style=for-the-badge)](https://github.com/google/antigravity)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green?style=for-the-badge)](LICENSE)
 
-Welcome to **expert-ai-developer-skills**, the premium community repository for Google Antigravity (AGY) agent customizations. This workspace houses a professional-grade suite of **22 optimized developer skills**, refactored RFC 2119 rules, and a bundled **Python Backend plugin** designed to automate quality gates, enforce branch safety constraints (Gitflow), validate test execution, audit security vulnerabilities (OWASP Top 10), and seamlessly connect native MCP tools for Google Cloud and Firebase.
+Welcome to **expert-ai-developer-skills**, the premium community repository for Google Antigravity (AGY) and Claude Code agent customizations. This workspace houses a professional-grade suite of **22 platform-neutral developer skills**, refactored RFC 2119 rules, and **five bundled Claude Code plugins** — each a self-contained slice of the skills catalog, reusing what already exists rather than duplicating capability: `python-backend` (quality gates, Gitflow, security/MCP for Cloud Run & Firebase), `senior-dev` (the full SDLC orchestration topology), `git-workflow` (commit/PR hygiene + Gitflow gate), `docs-and-quality` (documentation & testing standards), and `multi-agent-ops` (parallel-agent orchestration & repo research).
 
 ---
 
@@ -21,7 +21,7 @@ cd expert-ai-developer-skills
 
 ## 2. Directory Structure & Sitemap
 
-The workspace is cleanly structured into modular **skills** (discrete instructions and automation scripts), **rules** (system constraints for AI agents), **workflows** (playbooks for SDLC processes), **sidecars** (background processes and schedules), and a **plugin** (integrated lifecycle hooks and custom rules):
+The workspace is cleanly structured into modular **skills** (discrete instructions and automation scripts), **rules** (system constraints for AI agents), **workflows** (playbooks for SDLC processes), **sidecars** (background processes and schedules), and **plugins** (five self-contained Claude Code plugins, each bundling a subset of the skills catalog):
 
 ```
 expert-ai-developer-skills/
@@ -86,14 +86,34 @@ expert-ai-developer-skills/
 │   ├── code-implementer/               # TDD code implementation rules
 │   └── compliance-verifier/            # Final quality, security, and NFR auditing
 └── plugins/
-    └── python-backend/
-        ├── README.md                   # Plugin installation, hooks, & mcp configurations
+    ├── python-backend/
+    │   ├── README.md                   # Plugin installation, hooks, & mcp configurations
+    │   ├── plugin.json                 # Required plugin metadata descriptor
+    │   ├── .mcp.json                   # Configuration for GCP Cloud Run and Firebase MCPs
+    │   ├── hooks.json                  # Editor execution lifecycle hook registrations
+    │   ├── hooks/                      # SessionStart, PreToolUse, & Stop event scripts (JS)
+    │   ├── rules/                      # System-wide architecture rules & hook policies
+    │   └── skills/                     # Local backend-compatible copy of the skills catalog
+    ├── senior-dev/
+    │   ├── README.md                   # Plugin installation & subagent panel
+    │   ├── plugin.json                 # Required plugin metadata descriptor
+    │   ├── .mcp.json                   # Reused Cloud Run / Firebase MCP servers
+    │   ├── agents/                     # 6 bundled subagents (orchestrator + 5 specialists)
+    │   └── skills/                     # Local copy of the 8 skills those agents depend on
+    ├── git-workflow/
+    │   ├── README.md                   # Plugin installation & Gitflow gate details
+    │   ├── plugin.json                 # Required plugin metadata descriptor
+    │   ├── hooks.json                  # PreToolUse hook registration
+    │   ├── hooks/                      # Gitflow branch safety gate (extracted from python-backend)
+    │   └── skills/                     # commit-expert + pull-request-expert
+    ├── docs-and-quality/
+    │   ├── README.md                   # Plugin installation & skill summaries
+    │   ├── plugin.json                 # Required plugin metadata descriptor
+    │   └── skills/                     # documentation-expert + testing-expert + guidelines-karpathy
+    └── multi-agent-ops/
+        ├── README.md                   # Plugin installation & platform-gap notes
         ├── plugin.json                 # Required plugin metadata descriptor
-        ├── mcp_config.json             # Configuration for GCP Cloud Run and Firebase MCPs
-        ├── hooks.json                  # Editor execution lifecycle hook registrations
-        ├── hooks/                      # SessionStart, PreToolUse, & Stop event scripts (JS)
-        ├── rules/                      # System-wide architecture rules & hook policies
-        └── skills/                     # Local backend-compatible copy of the skills catalog
+        └── skills/                     # loop-engineering + repo-research
 ```
 
 ---
@@ -110,7 +130,6 @@ Each skill represents an isolated capability loaded with professional guidelines
 | **`code-implementer`** | Writes production code utilizing strict TDD Red-Green-Refactor cycles. | *TDD guides* |
 | **`compliance-verifier`** | Audits NFRs, security gates, and performs final release readiness checks. | *Compliance checklists* |
 | **`python-expert`** | PEP 8 styling, static typing (`mypy`), generator stream tuning, and `__slots__` memory footprint reduction. | *AST-based memory checks* |
-| **`fastapi-expert`** | Establishes REST API routing standards, Pydantic v2 schemas, and session dependency injection. | *Safe serialization checkers* |
 | ****`test-driven-development`**** | Red-Green-Refactor cycle gatekeeping and Arrange-Act-Assert (AAA) testing standards. | `verify_tests.py` (Coverage checks & runner gate) |
 | **`loop-engineering`** | Implements self-correcting agent execution loops, multi-agent parallel workflows, and automated cron auditing. | `run_parallel_agents.py` (Orchestrator)<br>`pr_cron_reviewer.py` (Review cron) |
 | **`documentation-expert`** | Enforces structured tech doc hierarchy using the Diátaxis framework and Mermaid.js diagrams. | `validate_docs.py` (Markdown link and absolute path checker) |
@@ -147,7 +166,32 @@ Intercepts editor actions and terminal executions to protect critical assets:
 
 ---
 
-## 5. Generic AI Developer Rules (10 Constraint Profiles)
+## 5. Senior Dev Orchestration Plugin
+
+This workspace ships the same Loop Engineering subagent topology (Orchestrator + Product Analyst + Architect + Code Implementer + QA Tester + Compliance Verifier) as **two parallel, natively-formatted entry points** over the same shared skills catalog — pick whichever matches your platform, or use both:
+
+| Platform | Entry Point | Format |
+| :--- | :--- | :--- |
+| **Google Antigravity (AGY)** | root [**`agents/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory | Antigravity subagent frontmatter (`subagent`, `mainAgent`, `commandExecutionPolicy`, `model: pro/flash`) |
+| **Claude Code** | [**`plugins/senior-dev/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev) plugin | Claude Code plugin subagent frontmatter (`tools`, `model: sonnet/haiku`, auto-discovered `agents/` + `skills/`) |
+
+Both entry points reuse the exact same 8 skills, the same agent roles, and the same scaled-pipeline philosophy (the orchestrator sizes the process to the task instead of always running all five subagents) — only the packaging format differs per platform's actual plugin/subagent schema. The `plugins/senior-dev/.mcp.json` reuses the same Cloud Run / Firebase MCP servers already defined for `python-backend`.
+
+---
+
+## 6. Additional Utility Plugins
+
+Three smaller Claude Code plugins split the remaining skills catalog into focused, independently-installable slices — each reuses existing skills/hooks verbatim, adding no new capability of its own:
+
+| Plugin | Bundles | Notes |
+| :--- | :--- | :--- |
+| [**`git-workflow`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/git-workflow) | `commit-expert`, `pull-request-expert` + a Gitflow branch safety hook | The hook is the Gitflow-check portion of `python-backend`'s `pre-tool-gate.js`, extracted standalone since it has no Python/cloud dependency — usable in any stack. |
+| [**`docs-and-quality`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/docs-and-quality) | `documentation-expert`, `testing-expert`, `guidelines-karpathy` | Skills-only, no hooks/MCP — documentation and testing standards for any language. |
+| [**`multi-agent-ops`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/multi-agent-ops) | `loop-engineering`, `repo-research` | The two catalog skills not yet bundled anywhere else. Its README documents a real platform gap: Claude Code plugins have no static equivalent to the cron-scheduled `sidecars/` daemons below (§12) — verified against current plugin docs, not assumed. |
+
+---
+
+## 7. Generic AI Developer Rules (10 Constraint Profiles)
 
 This workspace provides a root-level [**`rules/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules) directory containing generic, modular developer rules. These rules are designed to be copied directly into AI Agent configuration files (like Cursor `.cursorrules` or Claude Code `.claudecodesettings`) to govern coding, testing, and deployment behavior:
 
@@ -162,12 +206,12 @@ This workspace provides a root-level [**`rules/`**](file:///Users/jggomez/Docume
 | [**`context-and-token-optimization.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/context-and-token-optimization.md) | Optimizes token-window consumption through incremental surgical edits and local scripts. | Minimal file views + offloading logic parsing to local runs. |
 | [**`documentation-and-diagrams.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/documentation-and-diagrams.md) | Ensures docstrings, README files, and Mermaid diagrams are updated concurrently with changes. | Mermaid diagram validation + comment alignment. |
 | [**`pull-requests.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/pull-requests.md) | Mandates PR size limits, structured templates, and agent self-review checklist boundaries. | Local lint/test sweeps + 200-line change target limits. |
-| [**`loop-engineering-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/loop-engineering-workflow.md) | Mandates 7-stage cycle (`PLAN->TASK->BUILD->TEST->VERIFICATION->DOCUMENTATION->COMMIT`) with subagent parallelization. | Manager audit checklist + empirical runtime validation. |
+| [**`loop-engineering-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/loop-engineering-workflow.md) | 7-stage cycle (`PLAN->TASK->BUILD->TEST->VERIFICATION->DOCUMENTATION->COMMIT`), scaled to task size, with subagent parallelization. | Manager audit checklist + empirical runtime validation. |
 | [**`tdd-best-practices.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/tdd-best-practices.md) | Enforces TDD Red-Green-Refactor cycles, empirical runtime verification, and clean mock boundaries. | 100% test pass + empirical execution proof. |
 
 ---
 
-## 6. Generic AI Developer Workflows (7 Execution Playbooks)
+## 8. Generic AI Developer Workflows (7 Execution Playbooks)
 
 This workspace provides a root-level [**`workflows/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows) directory containing step-by-step developer execution playbooks. These workflows guide developers and AI Agents sequentially through complex tasks:
 
@@ -183,9 +227,9 @@ This workspace provides a root-level [**`workflows/`**](file:///Users/jggomez/Do
 
 ---
 
-## 7. Custom Loop Engineering Agents (Antigravity Subagents)
+## 9. Custom Loop Engineering Agents (Antigravity Subagents)
 
-This workspace provides a root-level [**`agents/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory containing definitions for custom agents explicitly designed for execution within the Google Antigravity (AGY) system. They form a complete **Loop Engineering** topology using highly specialized subagents:
+This workspace provides a root-level [**`agents/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory containing definitions for custom agents explicitly designed for execution within the Google Antigravity (AGY) system. They form a complete **Loop Engineering** topology using highly specialized subagents. For the Claude Code equivalent of this same topology, see [**§5 Senior Dev Orchestration Plugin**](#5-senior-dev-orchestration-plugin) and [**`plugins/senior-dev/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev).
 
 | Agent Profile | Role & Specialization | Execution Policy | Assigned Capabilities |
 | :--- | :--- | :--- | :--- |
@@ -198,11 +242,11 @@ This workspace provides a root-level [**`agents/`**](file:///Users/jggomez/Docum
 
 ---
 
-## 8. Comprehensive Installation Guide
+## 10. Comprehensive Installation Guide
 
 This repository fully adheres to the official [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, other teams or users can install any of these 22 skills out-of-the-box using Vercel's official, standard `skills` CLI.
 
-### 8.1 Standard Skills Installation (Using Vercel's `npx skills`)
+### 10.1 Standard Skills Installation (Using Vercel's `npx skills`)
 This is the recommended and simplest way to discover, add, and manage these skills. They don't need any local setups, just run:
 
 ```bash
@@ -219,8 +263,9 @@ npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
 npx skills add jggomez/expert-ai-developer-skills
 ```
 
-### 8.2 Plugin & Hooks Installation (Manual Setup)
-Since the `python-backend` plugin includes advanced runtime hooks (`hooks.json`, `PreToolUse` gates) that are separate from standard agent skills, you can configure it globally by copying its directory:
+### 10.2 Plugin & Hooks Installation (Manual Setup)
+
+**`python-backend` (Antigravity / Claude Code)** — includes runtime hooks (`hooks.json`, `PreToolUse` gates) that are separate from standard agent skills, so configure it by copying its directory:
 
 ```bash
 # 1. Create the global plugin directory
@@ -230,9 +275,18 @@ mkdir -p ~/.gemini/config/plugins/python-backend
 cp -r ./plugins/python-backend/* ~/.gemini/config/plugins/python-backend/
 ```
 
+**`senior-dev`, `git-workflow`, `docs-and-quality`, `multi-agent-ops` (Claude Code)** — plugins of bundled skills/subagents; `git-workflow` also has a hook, the other two are skills-only:
+
+```bash
+cp -r ./plugins/senior-dev ~/.claude/plugins/senior-dev
+cp -r ./plugins/git-workflow ~/.claude/plugins/git-workflow
+cp -r ./plugins/docs-and-quality ~/.claude/plugins/docs-and-quality
+cp -r ./plugins/multi-agent-ops ~/.claude/plugins/multi-agent-ops
+```
+
 ---
 
-## 9. Usage and Workflows
+## 11. Usage and Workflows
 
 Once installed, the agent skills and hooks are completely automatic:
 1. **Writing Code**: When you prompt the agent to perform edits or checkouts, the rules in `python-backend-rules.md` guide the coding standard (PEP 8, strict types).
@@ -241,7 +295,7 @@ Once installed, the agent skills and hooks are completely automatic:
 
 ---
 
-## 10. Antigravity Sidecars (Loop Engineering Background Processes)
+## 12. Antigravity Sidecars (Loop Engineering Background Processes)
 
 This workspace provides a root-level [**`sidecars/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/sidecars) directory containing configurations for background processes and schedules that run alongside Antigravity:
 
@@ -255,5 +309,5 @@ To install sidecars globally or per-plugin, review the [**Sidecars Installation 
 
 ---
 
-## 11. License
+## 13. License
 This repository is open-sourced under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for more details.

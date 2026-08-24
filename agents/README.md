@@ -2,6 +2,8 @@
 
 This directory contains definitions for **Custom Agents and Subagents** explicitly designed for execution within the Google Antigravity (AGY) system. These agents form a robust "Loop Engineering" lifecycle topology, leveraging extreme specialization to orchestrate end-to-end software delivery.
 
+**Using Claude Code instead?** The same six agents, reusing the same skills, are packaged as a native Claude Code plugin at [`plugins/senior-dev/`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev) — Claude Code's subagent frontmatter is not compatible with Antigravity's, so the two are kept as separate, natively-formatted directories rather than one shared file.
+
 ---
 
 ## 1. Loop Engineering Topology
@@ -28,4 +30,5 @@ These configurations can be directly loaded into an Antigravity workspace or glo
 ### Key Features
 * **Cost Optimization**: Complex reasoning agents (Orchestrator, Architect, Implementer) operate using the `pro` model, whereas validation agents (QA Tester, Verifier) utilize the faster, cost-efficient `flash` model.
 * **Security & Sandboxing**: The orchestrator is restricted from running terminal commands directly (`commandExecutionPolicy: off`), forcing it to delegate to the sandboxed worker agents.
-* **Skill Integration**: Each agent is hardcoded to load the exact combination of developer skills required for their role (e.g., the Implementer loads `skills/test-driven-development` and `skills/python-expert`).
+* **Skill Integration**: Each agent's system prompt is intentionally thin — it points to its bundled skill (e.g. `skills/code-implementer`, `skills/senior-architect-engineering`) for the actual workflow/templates instead of restating them, so the skill stays the single source of truth.
+* **Scaled, Not Fixed, Pipeline**: The Orchestrator does not run all five subagents for every request. It sizes the pipeline to the task — a trivial fix goes straight to `code-implementer`, while a new feature or system-level change runs the full Product → Architect → Implement → QA → Verify sequence. Each subagent mirrors this: it scales its own deliverable (PRD, ADR, E2E suite, audit) to what the change actually warrants, avoiding over-engineering on small tasks while still covering the full lifecycle on larger ones.

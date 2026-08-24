@@ -14,8 +14,8 @@ description: Optimize context window, prevent token bloat, leverage local proces
 * **MUST** delegate isolated sub-tasks to subagents (`invoke_subagent`) to prevent main context exhaustion.
 * **NEVER** re-read unchanged files or re-run duplicate shell/directory commands in the same turn loop.
 
-## 2. Deterministic Scripting & RTK Integration
+## 2. Deterministic Scripting & Output Discipline
 
 * **MUST** offload heavy data parsing, text processing, or log filtering to local Python/Bash scripts in `scratch/`.
-* **ALWAYS** use `rtk` (Rust Token Killer) proxy for terminal commands (`rtk proxy <cmd>`, `rtk gain`).
+* **MUST** prefer commands that summarize output (`--stat`, `-q`, `| tail`, `| head`) over raw verbose logs when the full output isn't needed.
 * **MUST** inspect summarized script results rather than streaming raw logs into the agent context window.

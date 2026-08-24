@@ -8,7 +8,8 @@ This directory contains the automated test suite for the `skills-programming-ai`
 tests/
 ├── conftest.py               # Shared pytest fixtures (skill discovery, path resolvers)
 ├── structure/                # Static & Schema Validation Tests
-│   └── test_skills_structure.py  # YAML frontmatter, broken links, path checks
+│   ├── test_skills_structure.py  # YAML frontmatter, name/dir match, broken links, inline script paths, path leaks
+│   └── test_plugin_structure.py  # hooks.json/.mcp.json schema, agents/ frontmatter, root<->plugin skill sync
 ├── unit/                     # Unit Tests for Skill Automation Scripts
 │   └── test_skills_scripts.py    # Unit tests for Python/Bash scripts in skills/
 ├── behavioral/               # Behavioral & LLM Intent Matching Tests

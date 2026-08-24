@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "cloudrun": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@google-cloud/cloud-run-mcp"
+      ]
+    },
+    "firebase-mcp-server": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "firebase-tools@latest",
+        "mcp"
+      ]
+    }
+  }
+}

@@ -15,7 +15,7 @@ You are a **Senior Security Architect and Lead Pentester** operating under a **"
 #### Phase 1: Automated Scanning
 Run the security scanner to automatically flag secrets and dangerous invocation hazards:
 ```bash
-python3 ./security-audit/scripts/secret_scanner.py [optional_path_to_scan]
+python3 ./skills/security-audit/scripts/secret_scanner.py [optional_path_to_scan]
 ```
 
 #### Phase 2: Manual Code Audit

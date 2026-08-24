@@ -1,21 +1,23 @@
-# Antigravity Custom Plugin: Python Backend
+# Python Backend Plugin
 
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
 [![Plugin](https://img.shields.io/badge/Plugin-python--backend-green?style=flat-square)](file:///./)
 
-The `python-backend` plugin is a unified customization package designed to automate quality gates, enforce branch safety constraints (Gitflow), validate test execution, run periodic reviews, and link external GCP and Firebase resources through the Model Context Protocol (MCP).
+The `python-backend` plugin is a unified customization package designed to automate quality gates, enforce branch safety constraints (Gitflow), validate test execution, and link external GCP and Firebase resources through the Model Context Protocol (MCP).
+
+Its `plugin.json`/`hooks.json`/`${CLAUDE_PLUGIN_ROOT}` layout follows the **Claude Code plugin format**, which is the platform it is verified against. The hook scripts also detect and emit the payload shape expected by Antigravity/Gemini, GitHub Copilot, and Codex hosts, so the same plugin folder can be dropped into those environments — but only the Claude Code path has been validated end-to-end.
+
+> **Maintaining the bundled skills**: `skills/` below is a physical copy of the matching directories in the root `/skills` catalog, kept self-contained so the plugin folder can be distributed on its own. After editing any bundled skill under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo root to re-sync this copy — don't hand-edit both. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills` fails CI if the two ever drift.
 
 ---
 
 ## 1. Directory Tree & Architecture
 
-The plugin is structured according to the official Antigravity plugin layout:
-
 ```
 plugins/python-backend/
 ├── README.md             # This usage and configuration manual
 ├── plugin.json           # Required marker containing metadata
-├── mcp_config.json       # MCP definitions (GCP, Firebase)
+├── .mcp.json             # MCP definitions (GCP, Firebase)
 ├── hooks.json            # Dynamic lifecycle hook registrations
 ├── hooks/                # Node.js hook event handlers
 │   ├── python-backend-activate.js  # Runs on SessionStart; audits environment
@@ -25,19 +27,19 @@ plugins/python-backend/
 │   ├── python-backend-rules.md     # Quality checklists and coding patterns
 │   └── git-hooks.md                # Blueprints for pre-commit & commit-msg hooks
 └── skills/               # Bundled developer skills loaded globally
-    ├── documentation-expert/
-    ├── testing-expert/
+    ├── python-expert/
+    ├── test-driven-development/
     ├── pull-request-expert/
-    ├── commit-expert/
-    ├── loop-engineering/
-    └── ... (and 12 other backend-compatible skills, totaling 17)
+    ├── security-audit/
+    ├── senior-architect-engineering/
+    └── ... (and 6 other backend-compatible skills, totaling 11)
 ```
 
 ---
 
 ## 2. Integrated Configuration Assets
 
-### 2.1 Model Context Protocol (`mcp_config.json`)
+### 2.1 Model Context Protocol (`.mcp.json`)
 Registers secure, lazy-loaded cloud management tools:
 - **`google-cloud-run`**: Enables listing services, fetching service details, viewing deployment logs, and running deployments.
 - **`firebase-tools`**: Enables Cloud Firestore collection lookups, document mutations, and real-time database queries.
@@ -56,9 +58,9 @@ Registers Node.js triggers to intercept editor operations:
 - **Goal**: Protect staging (`develop`) and production (`main`) branches.
 - **Mechanism**: The `PreToolUse` hook checks the active branch using git command lines. If the developer tries to commit or push directly to `main` or `develop`, it returns a `deny` decision, blocking the execution immediately.
 
-### 3.2 Deployment Lock (Force Ask)
+### 3.2 Deployment Lock (Ask)
 - **Goal**: Avoid accidental modifications or deployments to cloud targets.
-- **Mechanism**: If a command contains deployment keywords (`deploy`, `kubectl apply`) or calls GCP/Firebase MCP modification APIs, the `PreToolUse` hook returns a `force_ask` decision. This pauses execution and displays a confirmation dialog asking the user for explicit approval.
+- **Mechanism**: If a command contains deployment keywords (`deploy`, `kubectl apply`) or calls GCP/Firebase MCP modification APIs, the `PreToolUse` hook returns an `ask` permission decision. This pauses execution and displays a confirmation dialog asking the user for explicit approval.
 
 ### 3.3 Test Verification Gate (Request finalization blocker)
 - **Goal**: Ensure 0 regressions are delivered.
@@ -66,25 +68,18 @@ Registers Node.js triggers to intercept editor operations:
 
 ---
 
-## 4. Bundled Skills (18 Packaged Modules)
+## 4. Bundled Skills (11 Packaged Modules)
 
-On loading the plugin, the following 18 skills are automatically loaded into the agent's context:
+On loading the plugin, the following 11 skills are automatically loaded into the agent's context:
 
-1. **`loop-engineering`**: Manager-worker topology automation.
-2. **`python-expert`**: AST analysis and memory optimization check.
-3. **`fastapi-expert`**: REST routing and Pydantic v2 schemas.
-4. **`test-driven-development`**: AAA execution patterns.
-5. **`documentation-expert`**: Diátaxis layouts and Mermaid guide validation.
-6. **`testing-expert`**: Language-agnostic BDD Gherkin specifications.
-7. **`pull-request-expert`**: Size checks and Conventional Commit logs.
-8. **`commit-expert`**: Commit message syntax checkers and hook helpers.
-9. **`code-smells-expert`**: Code complexity diagnostics.
-10. **`refactoring-code-expert`**: Safe extraction methods.
-11. **`security-audit`**: OWASP Top 10 scanner.
-12. **`performance-scalability`**: CPU/Memory execution profiler.
-13. **`database-migration-expert`**: Alembic schema migrations.
-14. **`senior-architect-engineering`**: ADR templates.
-15. **`design-spec-expert`**: SDD schemas.
-16. **`build-and-ci-gates`**: Pre-commit quality hook gates.
-17. **`repo-research`**: Automatically analyzes file tree structures, packages, and dependency maps.
-18. **`guidelines-karpathy`**: Model development checklists.
+1. **`python-expert`**: AST analysis and memory optimization check.
+2. **`test-driven-development`**: AAA execution patterns.
+3. **`pull-request-expert`**: Size checks and Conventional Commit logs.
+4. **`code-smells-expert`**: Code complexity diagnostics.
+5. **`refactoring-code-expert`**: Safe extraction methods.
+6. **`security-audit`**: OWASP Top 10 scanner.
+7. **`performance-scalability`**: CPU/Memory execution profiler.
+8. **`database-migration-expert`**: Alembic schema migrations.
+9. **`senior-architect-engineering`**: ADR templates.
+10. **`design-spec-expert`**: SDD schemas.
+11. **`build-and-ci-gates`**: Pre-commit quality hook gates.

@@ -32,7 +32,7 @@ graph TD
 * **Antigravity Best Practice**: Prioritize running the AST-based smell detector from the local skills catalog instead of writing custom parser scripts:
   ```bash
   # Execute the pre-configured code smells skill detector
-  python skills/code-smells-expert/detect_smells.py --path src/
+  python3 skills/code-smells-expert/scripts/detect_smells.py src/
   ```
 * Run additional metrics if necessary (e.g. Radon for Cyclomatic Complexity):
   ```bash
@@ -48,7 +48,7 @@ Review the code for these specific structural defects:
 
 ### Step 3: Plan Refactoring Steps
 * Break the refactoring down into tiny, single-focus steps.
-* **Workspace Isolation (Optional)**: If testing alternative refactor implementations, spawn an isolated subagent in `branch` or `share` mode using `invoke_subagent` so the main chat session remains clean.
+* **Workspace Isolation (Optional)**: If testing alternative refactor implementations, spawn an isolated subagent in its own workspace checkout so the main chat session remains clean.
 
 ### Step 4: Establish Green Baseline
 * Before modifying any line, run the unit test suite covering the target files:
@@ -70,7 +70,7 @@ Review the code for these specific structural defects:
 * If tests fail, immediately revert the changes using `git checkout` or `git restore`, isolate what contract broke, and try again with a smaller step.
 
 ### Step 7: Re-evaluate Complexity
-* Re-run the AST code smells script (`detect_smells.py`). Confirm that Cyclomatic Complexity score is in the A/B range (Score < 10 per function).
+* Re-run `detect_smells.py`. Confirm that Cyclomatic Complexity score is in the A/B range (Score < 10 per function).
 
 ---
 

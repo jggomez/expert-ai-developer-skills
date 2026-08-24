@@ -1,6 +1,6 @@
 {
-  "python-backend-activation": {
-    "enabled": true,
+  "description": "Python backend quality gates: Gitflow branch safety, deployment guardrails, and TDD verification.",
+  "hooks": {
     "SessionStart": [
       {
         "matcher": "startup|resume|clear|compact",
@@ -8,18 +8,14 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/python-backend-activate.js\"",
-            "timeout": 5,
-            "statusMessage": "Loading python-backend rules..."
+            "timeout": 5
           }
         ]
       }
-    ]
-  },
-  "python-backend-safety-gates": {
-    "enabled": true,
+    ],
     "PreToolUse": [
       {
-        "matcher": "run_command|call_mcp_tool",
+        "matcher": "Bash|run_command|call_mcp_tool|mcp__cloudrun__.*|mcp__firebase-mcp-server__.*",
         "hooks": [
           {
             "type": "command",
@@ -31,9 +27,13 @@
     ],
     "Stop": [
       {
-        "type": "command",
-        "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/stop-gate.js\"",
-        "timeout": 30
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/stop-gate.js\"",
+            "timeout": 30
+          }
+        ]
       }
     ]
   }

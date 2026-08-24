@@ -39,7 +39,13 @@ def test_skills_frontmatter_and_metadata(skills_dirs):
             
         if "description" not in data or not data["description"]:
             errors.append(f"{skill_name}: 'description' field is missing or empty in frontmatter")
-            
+
+        if data.get("name") and data["name"] != skill_name:
+            errors.append(
+                f"{skill_name}: frontmatter 'name' is '{data['name']}' but the directory is '{skill_name}' "
+                "(they must match for the skill to be discoverable by directory name)"
+            )
+
     assert not errors, "\n".join(errors)
 
 def test_skills_relative_links_and_files(skills_dirs):
@@ -67,6 +73,28 @@ def test_skills_relative_links_and_files(skills_dirs):
             if not os.path.exists(target_path):
                 errors.append(f"{skill_name}: Broken relative link '{link}' -> Resolved to '{target_path}' which does not exist.")
                 
+    assert not errors, "\n".join(errors)
+
+def test_skills_inline_script_invocations_resolve(skills_dirs, workspace_root):
+    """Verifies inline 'python3 ./...' script invocations in SKILL.md code
+    blocks resolve to a real file from the workspace root, since that's the
+    convention agents run these commands from."""
+    errors = []
+    invocation_pattern = re.compile(r"python3\s+(\./[\w\-./]+\.py)")
+
+    for skill_dir in skills_dirs:
+        skill_name = os.path.basename(skill_dir)
+        skill_md = os.path.join(skill_dir, "SKILL.md")
+
+        _, content = parse_frontmatter(skill_md)
+        for relative_path in invocation_pattern.findall(content):
+            target_path = os.path.normpath(os.path.join(workspace_root, relative_path))
+            if not os.path.exists(target_path):
+                errors.append(
+                    f"{skill_name}: inline invocation '{relative_path}' does not resolve to "
+                    f"'{target_path}' from the workspace root"
+                )
+
     assert not errors, "\n".join(errors)
 
 def test_no_hardcoded_user_absolute_paths(skills_dirs):

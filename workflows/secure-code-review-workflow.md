@@ -31,7 +31,7 @@ graph TD
 * Scan all changed files and commit histories for hardcoded keys, API tokens, passwords, database URLs, and certificates.
 * **Antigravity Best Practice**: Run the pre-configured `secret_scanner.py` from the local security skill:
   ```bash
-  python skills/security-audit/secret_scanner.py --path src/
+  python3 skills/security-audit/scripts/secret_scanner.py src/
   ```
 * **Resolution**: Extract all hardcoded values to a `.env` file (ignored by Git) and fetch them via standard environment configuration (e.g., `os.getenv()`, `process.env`).
 
@@ -53,7 +53,7 @@ graph TD
   * *Bad*: `conn.execute(f"SELECT * FROM users WHERE id = '{user_id}'")`
   * *Good*: `conn.execute("SELECT * FROM users WHERE id = :id", {"id": user_id})`
 * **Firestore DBs**: If your project integrates with Firestore:
-  1. Audit security rules using the `@firebase-security-rules-auditor` skill before deploying.
+  1. Manually review `firestore.rules` for overly permissive `allow read, write: if true` statements before deploying.
   2. Test rules validations by running:
      ```bash
      npx firebase-tools securityrules:validate
@@ -77,5 +77,5 @@ The secure code workflow is complete when:
 - [ ] Secrets scanner returns 0 findings on staged commit files.
 - [ ] SAST analyzer (e.g. Bandit) returns 0 High/Medium severity alerts.
 - [ ] All database access points use parameterized queries.
-- [ ] Firestore security rules are validated via Firebase rules auditor.
+- [ ] Firestore security rules were reviewed and pass `firebase-tools securityrules:validate`.
 - [ ] Package vulnerability scanner reports 0 critical vulnerabilities.
