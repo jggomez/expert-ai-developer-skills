@@ -16,7 +16,9 @@ The `git-workflow` plugin packages the repository's git hygiene tooling — comm
 ```
 plugins/git-workflow/
 ├── README.md                       # This usage manual
-├── plugin.json                     # Required plugin metadata descriptor
+├── plugin.json                     # Required plugin metadata descriptor (Antigravity, plugin root)
+├── .claude-plugin/
+│   └── plugin.json                 # Same metadata — Claude Code requires the manifest here, not at plugin root
 ├── hooks.json                      # PreToolUse hook registration
 ├── hooks/
 │   └── gitflow-branch-gate.js      # Blocks git add/commit/push/merge directly on main or develop
@@ -55,13 +57,16 @@ To see the safety gate itself, try: "Commit directly to main" — the hook shoul
 
 ## 5. Installation
 
-**Claude Code**:
+**Antigravity CLI** — global only, via the CLI:
+```bash
+agy plugin install ./plugins/git-workflow
+```
+
+**Claude Code** — global:
 ```bash
 cp -r ./plugins/git-workflow ~/.claude/plugins/git-workflow
 ```
-
-**Antigravity CLI**:
+**Claude Code** — project-scoped, no install/copy:
 ```bash
-mkdir -p ~/.gemini/config/plugins/git-workflow
-cp -r ./plugins/git-workflow/* ~/.gemini/config/plugins/git-workflow/
+claude --plugin-dir ./plugins/git-workflow
 ```

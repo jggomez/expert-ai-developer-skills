@@ -14,7 +14,9 @@ The `docs-and-quality` plugin packages the repository's stack-agnostic documenta
 ```
 plugins/docs-and-quality/
 ├── README.md                       # This usage manual
-├── plugin.json                     # Required plugin metadata descriptor
+├── plugin.json                     # Required plugin metadata descriptor (Antigravity, plugin root)
+├── .claude-plugin/
+│   └── plugin.json                 # Same metadata — Claude Code requires the manifest here, not at plugin root
 └── skills/
     ├── documentation-expert/       # Diátaxis framework & Mermaid diagram standards
     ├── testing-expert/             # AAA pattern, hermetic tests, Gherkin/BDD syntax
@@ -45,13 +47,16 @@ None of these three skills reference Python, a specific framework, or a specific
 
 ## 4. Installation
 
-**Claude Code**:
+**Antigravity CLI** — global only, via the CLI:
+```bash
+agy plugin install ./plugins/docs-and-quality
+```
+
+**Claude Code** — global:
 ```bash
 cp -r ./plugins/docs-and-quality ~/.claude/plugins/docs-and-quality
 ```
-
-**Antigravity CLI**:
+**Claude Code** — project-scoped, no install/copy:
 ```bash
-mkdir -p ~/.gemini/config/plugins/docs-and-quality
-cp -r ./plugins/docs-and-quality/* ~/.gemini/config/plugins/docs-and-quality/
+claude --plugin-dir ./plugins/docs-and-quality
 ```

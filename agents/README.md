@@ -25,7 +25,7 @@ The loop engineering process is driven by a single **Main Agent** (the Orchestra
 
 ## 2. Using these Agents with Antigravity
 
-These configurations can be directly loaded into an Antigravity workspace or global configuration directory (`~/.gemini/config/agents/`). 
+These are plain `.md` files, not a packaged plugin — Antigravity auto-discovers agents from either scope: copy into `.agents/agents/` inside a project for project-scoped use, or `~/.gemini/config/agents/` to make them available globally. Full plugins (installed via `agy plugin install`) are global-only on Antigravity; these standalone agent files are the project-scoped path when you don't want that.
 
 ### Key Features
 * **Cost Optimization**: Complex reasoning agents (Orchestrator, Architect, Implementer) operate using the `pro` model, whereas validation agents (QA Tester, Verifier) utilize the faster, cost-efficient `flash` model.

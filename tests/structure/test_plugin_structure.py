@@ -20,6 +20,42 @@ def plugin_dirs(workspace_root):
     return _discover_plugins(workspace_root)
 
 
+def test_plugin_manifest_locations(workspace_root, plugin_dirs):
+    """Verifies every plugin ships a manifest at BOTH locations, since the
+    two hosts require different paths: Antigravity reads 'plugin.json' at
+    the plugin root; Claude Code requires it at '.claude-plugin/plugin.json'
+    specifically (a root-level plugin.json alone is not recognized) —
+    verified against antigravity.google/docs/cli/plugins and
+    code.claude.com/docs/en/plugins. Both must declare the same 'name'
+    matching the plugin's directory name."""
+    errors = []
+
+    for plugin in plugin_dirs:
+        plugin_path = os.path.join(workspace_root, "plugins", plugin)
+
+        antigravity_manifest = os.path.join(plugin_path, "plugin.json")
+        claude_manifest = os.path.join(plugin_path, ".claude-plugin", "plugin.json")
+
+        if not os.path.isfile(antigravity_manifest):
+            errors.append(f"{plugin}: missing plugin.json at the plugin root (required by Antigravity)")
+        if not os.path.isfile(claude_manifest):
+            errors.append(f"{plugin}: missing .claude-plugin/plugin.json (required by Claude Code)")
+        if not os.path.isfile(antigravity_manifest) or not os.path.isfile(claude_manifest):
+            continue
+
+        with open(antigravity_manifest, "r", encoding="utf-8") as f:
+            antigravity_data = json.load(f)
+        with open(claude_manifest, "r", encoding="utf-8") as f:
+            claude_data = json.load(f)
+
+        if antigravity_data.get("name") != plugin:
+            errors.append(f"{plugin}: plugin.json 'name' is '{antigravity_data.get('name')}', expected '{plugin}'")
+        if claude_data.get("name") != plugin:
+            errors.append(f"{plugin}: .claude-plugin/plugin.json 'name' is '{claude_data.get('name')}', expected '{plugin}'")
+
+    assert not errors, "\n".join(errors)
+
+
 def test_plugin_hooks_json_schema(workspace_root, plugin_dirs):
     """Verifies every plugin's hooks.json (when present) follows a valid
     schema for at least one host. A single hooks.json can serve both hosts

@@ -14,7 +14,9 @@ The `multi-agent-ops` plugin packages the repository's manager-worker orchestrat
 ```
 plugins/multi-agent-ops/
 ├── README.md                       # This usage manual
-├── plugin.json                     # Required plugin metadata descriptor
+├── plugin.json                     # Required plugin metadata descriptor (Antigravity, plugin root)
+├── .claude-plugin/
+│   └── plugin.json                 # Same metadata — Claude Code requires the manifest here, not at plugin root
 └── skills/
     ├── loop-engineering/           # Manager-worker parallel-agent workflows, isolated workspaces
     └── repo-research/              # Repository structure/dependency analysis & project-context generation
@@ -52,13 +54,16 @@ So this plugin intentionally ships **only** the two skills above. If you want pe
 
 ## 5. Installation
 
-**Claude Code**:
+**Antigravity CLI** — global only, via the CLI:
+```bash
+agy plugin install ./plugins/multi-agent-ops
+```
+
+**Claude Code** — global:
 ```bash
 cp -r ./plugins/multi-agent-ops ~/.claude/plugins/multi-agent-ops
 ```
-
-**Antigravity CLI**:
+**Claude Code** — project-scoped, no install/copy:
 ```bash
-mkdir -p ~/.gemini/config/plugins/multi-agent-ops
-cp -r ./plugins/multi-agent-ops/* ~/.gemini/config/plugins/multi-agent-ops/
+claude --plugin-dir ./plugins/multi-agent-ops
 ```

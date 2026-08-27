@@ -18,7 +18,9 @@ Built from Google Cloud's own "Query Processing and Optimization" training mater
 ```
 plugins/sql-query-optimizer/
 ├── README.md                       # This usage manual
-├── plugin.json                     # Required plugin metadata descriptor
+├── plugin.json                     # Required plugin metadata descriptor (Antigravity, plugin root)
+├── .claude-plugin/
+│   └── plugin.json                 # Same metadata — Claude Code requires the manifest here, not at plugin root
 ├── .mcp.json                       # BigQuery + Cloud SQL — Claude Code's remote MCP format
 ├── mcp_config.json                 # Same 2 servers, Antigravity's format (serverUrl + authProviderType)
 ├── agents/
@@ -87,15 +89,25 @@ The `bigquery` server here is the same one already used by `plugins/senior-data-
 
 ## 7. Installation
 
-**Claude Code**:
+**Claude Code** — global:
 ```bash
 cp -r ./plugins/sql-query-optimizer ~/.claude/plugins/sql-query-optimizer
+```
+**Claude Code** — project-scoped, no install/copy:
+```bash
+claude --plugin-dir ./plugins/sql-query-optimizer
 ```
 
 **Antigravity CLI** — the subagent comes from the root `agents/` directory, not this plugin folder:
 ```bash
-mkdir -p ~/.gemini/config/agents/ ~/.gemini/config/plugins/sql-query-optimizer
+# Project-scoped agent (auto-discovered from the current project):
+mkdir -p .agents/agents/
+cp agents/sql-query-optimizer.md .agents/agents/
+
+# Global agent, equivalently:
+mkdir -p ~/.gemini/config/agents/
 cp agents/sql-query-optimizer.md ~/.gemini/config/agents/
-cp plugins/sql-query-optimizer/mcp_config.json plugins/sql-query-optimizer/plugin.json ~/.gemini/config/plugins/sql-query-optimizer/
-cp -r plugins/sql-query-optimizer/skills ~/.gemini/config/plugins/sql-query-optimizer/
+
+# The plugin's MCP servers (mcp_config.json) install as a full plugin, global-only:
+agy plugin install ./plugins/sql-query-optimizer
 ```

@@ -16,7 +16,9 @@ This plugin supports **both Antigravity CLI and Claude Code**, each verified aga
 ```
 plugins/python-backend/
 ├── README.md             # This usage and configuration manual
-├── plugin.json           # Required marker containing metadata
+├── plugin.json           # Required marker containing metadata (Antigravity reads this at plugin root)
+├── .claude-plugin/
+│   └── plugin.json       # Same metadata — Claude Code requires the manifest here, not at plugin root
 ├── .mcp.json             # MCP definitions for Claude Code (GCP, Firebase)
 ├── mcp_config.json       # Same MCP definitions, Antigravity's format (serverUrl-based entries not needed here — both are stdio)
 ├── hooks.json            # Lifecycle hook registrations for both hosts, in one file
@@ -102,5 +104,23 @@ The Gitflow/deployment/test-verification gates apply automatically once the plug
 - "Draft an ADR for choosing between REST and gRPC for this internal service." (`senior-architect-engineering`)
 - "Scaffold a Software Design Document for the new billing service." (`design-spec-expert`)
 - "Set up a pre-commit hook that runs lint, tests, and the secret scanner." (`build-and-ci-gates`)
+
+---
+
+## 6. Installation
+
+**Antigravity CLI** — global only, via the CLI (don't hand-copy into `~/.gemini/...`):
+```bash
+agy plugin install ./plugins/python-backend
+```
+
+**Claude Code** — global:
+```bash
+cp -r ./plugins/python-backend ~/.claude/plugins/python-backend
+```
+**Claude Code** — project-scoped, no install/copy:
+```bash
+claude --plugin-dir ./plugins/python-backend
+```
 
 Try triggering a gate directly to see it in action: "Commit and push directly to main" (the Gitflow hook should deny it) or "Deploy this service to Cloud Run" (the deployment hook should ask for explicit approval first).

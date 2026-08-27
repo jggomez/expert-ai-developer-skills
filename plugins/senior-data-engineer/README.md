@@ -16,7 +16,9 @@ The `senior-data-engineer` plugin packages a Google Cloud data engineering exper
 ```
 plugins/senior-data-engineer/
 ├── README.md                       # This usage manual
-├── plugin.json                     # Required plugin metadata descriptor
+├── plugin.json                     # Required plugin metadata descriptor (Antigravity, plugin root)
+├── .claude-plugin/
+│   └── plugin.json                 # Same metadata — Claude Code requires the manifest here, not at plugin root
 ├── .mcp.json                       # BigQuery, Datastream, Dataform, Pub/Sub — Claude Code's remote MCP format
 ├── mcp_config.json                 # Same 4 servers, Antigravity's format (serverUrl + authProviderType)
 ├── agents/
@@ -85,15 +87,25 @@ This is a **chat-based expert** for design and implementation help inside a Clau
 
 ## 7. Installation
 
-**Claude Code**:
+**Claude Code** — global:
 ```bash
 cp -r ./plugins/senior-data-engineer ~/.claude/plugins/senior-data-engineer
+```
+**Claude Code** — project-scoped, no install/copy:
+```bash
+claude --plugin-dir ./plugins/senior-data-engineer
 ```
 
 **Antigravity CLI** — the subagent comes from the root `agents/` directory, not this plugin folder:
 ```bash
-mkdir -p ~/.gemini/config/agents/ ~/.gemini/config/plugins/senior-data-engineer
+# Project-scoped agent (auto-discovered from the current project):
+mkdir -p .agents/agents/
+cp agents/senior-data-engineer.md .agents/agents/
+
+# Global agent, equivalently:
+mkdir -p ~/.gemini/config/agents/
 cp agents/senior-data-engineer.md ~/.gemini/config/agents/
-cp plugins/senior-data-engineer/mcp_config.json plugins/senior-data-engineer/plugin.json ~/.gemini/config/plugins/senior-data-engineer/
-cp -r plugins/senior-data-engineer/skills ~/.gemini/config/plugins/senior-data-engineer/
+
+# The plugin's MCP servers (mcp_config.json) install as a full plugin, global-only:
+agy plugin install ./plugins/senior-data-engineer
 ```
