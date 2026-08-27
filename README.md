@@ -93,22 +93,24 @@ expert-ai-developer-skills/
     ├── python-backend/
     │   ├── README.md                   # Plugin installation, hooks, & mcp configurations
     │   ├── plugin.json                 # Required plugin metadata descriptor
-    │   ├── .mcp.json                   # Configuration for GCP Cloud Run and Firebase MCPs
-    │   ├── hooks.json                  # Editor execution lifecycle hook registrations
-    │   ├── hooks/                      # SessionStart, PreToolUse, & Stop event scripts (JS)
+    │   ├── .mcp.json                   # Cloud Run + Firebase MCP, Claude Code's format
+    │   ├── mcp_config.json             # Same MCP servers, Antigravity's format
+    │   ├── hooks.json                  # Lifecycle hooks for both hosts, in one file
+    │   ├── hooks/                      # SessionStart, PreToolUse, & Stop event scripts (host-aware JS)
     │   ├── rules/                      # System-wide architecture rules & hook policies
     │   └── skills/                     # Local backend-compatible copy of the skills catalog
     ├── senior-dev/
     │   ├── README.md                   # Plugin installation & subagent panel
     │   ├── plugin.json                 # Required plugin metadata descriptor
-    │   ├── .mcp.json                   # Reused Cloud Run / Firebase MCP servers
-    │   ├── agents/                     # 6 bundled subagents (orchestrator + 5 specialists)
+    │   ├── .mcp.json                   # Reused Cloud Run / Firebase MCP servers, Claude Code's format
+    │   ├── mcp_config.json             # Same MCP servers, Antigravity's format
+    │   ├── agents/                     # 6 bundled subagents (orchestrator + 5 specialists) — Claude Code only, see agents/ at root for Antigravity
     │   └── skills/                     # Local copy of the 8 skills those agents depend on
     ├── git-workflow/
     │   ├── README.md                   # Plugin installation & Gitflow gate details
     │   ├── plugin.json                 # Required plugin metadata descriptor
-    │   ├── hooks.json                  # PreToolUse hook registration
-    │   ├── hooks/                      # Gitflow branch safety gate (extracted from python-backend)
+    │   ├── hooks.json                  # PreToolUse hook for both hosts, in one file
+    │   ├── hooks/                      # Gitflow branch safety gate (host-aware, extracted from python-backend)
     │   └── skills/                     # commit-expert + pull-request-expert
     ├── docs-and-quality/
     │   ├── README.md                   # Plugin installation & skill summaries
@@ -118,17 +120,19 @@ expert-ai-developer-skills/
     │   ├── README.md                   # Plugin installation & platform-gap notes
     │   ├── plugin.json                 # Required plugin metadata descriptor
     │   └── skills/                     # loop-engineering + repo-research
-    └── senior-data-engineer/
-        ├── README.md                   # Plugin installation, MCP servers, known gaps
-        ├── plugin.json                 # Required plugin metadata descriptor
-    │   ├── .mcp.json                   # BigQuery, Datastream, Dataform, Pub/Sub (Google remote MCP)
-    │   ├── agents/                     # 1 subagent: senior-data-engineer
+    ├── senior-data-engineer/
+    │   ├── README.md                   # Plugin installation, MCP servers, known gaps
+    │   ├── plugin.json                 # Required plugin metadata descriptor
+    │   ├── .mcp.json                   # BigQuery, Datastream, Dataform, Pub/Sub, Claude Code's format
+    │   ├── mcp_config.json             # Same 4 servers, Antigravity's format
+    │   ├── agents/                     # 1 subagent — Claude Code only, see agents/ at root for Antigravity
     │   └── skills/                     # gcp-data-engineering + cdc-scd-patterns
     └── sql-query-optimizer/
         ├── README.md                   # Plugin installation, MCP servers, example prompts
         ├── plugin.json                 # Required plugin metadata descriptor
-        ├── .mcp.json                   # BigQuery + Cloud SQL (Google remote MCP, query execution/EXPLAIN)
-        ├── agents/                     # 1 subagent: sql-query-optimizer
+        ├── .mcp.json                   # BigQuery + Cloud SQL, Claude Code's format
+        ├── mcp_config.json             # Same 2 servers, Antigravity's format
+        ├── agents/                     # 1 subagent — Claude Code only, see agents/ at root for Antigravity
         └── skills/                     # bigquery-query-optimization + sql-query-optimization
 ```
 
@@ -301,40 +305,51 @@ npx skills add jggomez/expert-ai-developer-skills
 
 ### 12.2 Plugin & Hooks Installation (Manual Setup)
 
-**Platform coverage at a glance** — only 2 of the 7 plugins have an Antigravity path; the other 5 are Claude Code only, and that's a deliberate, documented gap rather than an oversight:
+**Platform coverage at a glance** — every plugin now installs for both hosts, verified against the official schema for each (`antigravity.google/docs`, `code.claude.com/docs`), not assumed:
 
 | Plugin | Antigravity CLI | Claude Code |
 | :--- | :--- | :--- |
-| `python-backend` | ✅ same folder (hook scripts detect the host at runtime) | ✅ verified end-to-end (see §4) |
-| `senior-dev` | ✅ via the separate root [`agents/`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory (§11) — **not** this plugin folder | ✅ this plugin folder |
-| `git-workflow`, `docs-and-quality`, `multi-agent-ops`, `senior-data-engineer`, `sql-query-optimizer` | ❌ no equivalent in this repo | ✅ this plugin folder |
+| `python-backend` | ✅ same folder — `hooks.json` carries both hosts' hook groups in one file; scripts detect the host and emit the right decision format; `mcp_config.json` added | ✅ same folder — `.mcp.json` |
+| `senior-dev` | ✅ via the separate root [`agents/`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory (§11) for the 6 subagents — **not** this plugin folder; `mcp_config.json` added to this plugin folder for the MCP servers | ✅ this plugin folder |
+| `git-workflow` | ✅ same folder — `hooks.json` carries both hosts' hook groups; script detects the host | ✅ same folder |
+| `docs-and-quality`, `multi-agent-ops` | ✅ same folder — skills-only, no host-specific format to port | ✅ same folder |
+| `senior-data-engineer`, `sql-query-optimizer` | ✅ via the root `agents/` directory for the single subagent, plus `mcp_config.json` added to the plugin folder | ✅ this plugin folder |
 
-Why the 5 don't have an Antigravity path: their MCP servers (`.mcp.json`) and subagent frontmatter (`agents/*.md`) were verified specifically against Claude Code's plugin schema. Antigravity's own plugin/MCP conventions were never independently verified for this repo (unlike `python-backend`, whose hook scripts were explicitly built and tested to detect the host and branch accordingly) — so rather than guess at an untested format, these 5 are documented as Claude Code only until that verification happens.
+**Why this took real verification, not a guess**: earlier in this repo's history, `python-backend`'s `hooks.json`/`mcp_config.json` were rewritten to Claude Code's schema (`{"hooks": {...}}`, `.mcp.json` with `type`+`url`) without realizing the *original* format was already correct Antigravity — a real regression, since Antigravity's actual schema (confirmed: named hook groups with an `enabled` flag, events `PreToolUse`/`PostToolUse`/`PreInvocation`/`PostInvocation`/`Stop` — no `SessionStart`; `mcp_config.json` with `serverUrl`/`authProviderType`) is genuinely different from Claude Code's. Both are now supported side by side: `hooks.json` carries a `"hooks"` key for Claude Code and separate named keys for Antigravity in the same file (each host reads only the key it understands); MCP config ships as two separate files (`.mcp.json` and `mcp_config.json`) since the filenames don't collide.
 
-**`python-backend` (Antigravity / Claude Code)** — includes runtime hooks (`hooks.json`, `PreToolUse` gates) that are separate from standard agent skills, so configure it by copying its directory:
-
+**`python-backend`, `git-workflow` (Antigravity CLI)** — hooks + MCP:
 ```bash
-# 1. Create the global plugin directory
 mkdir -p ~/.gemini/config/plugins/python-backend
-
-# 2. Copy the plugin folder to your global config
 cp -r ./plugins/python-backend/* ~/.gemini/config/plugins/python-backend/
+mkdir -p ~/.gemini/config/plugins/git-workflow
+cp -r ./plugins/git-workflow/* ~/.gemini/config/plugins/git-workflow/
 ```
 
-**`senior-dev` (Antigravity)** — use the root `agents/` directory instead of this plugin folder:
+**`senior-dev`, `senior-data-engineer`, `sql-query-optimizer` (Antigravity CLI)** — the subagent(s) install via the root `agents/` directory, not the plugin folder:
 ```bash
 mkdir -p ~/.gemini/config/agents/
-cp agents/*.md ~/.gemini/config/agents/
+cp agents/senior-dev-orchestrator.md agents/product-analyst.md agents/architect-engineer.md \
+   agents/code-implementer.md agents/qa-tester.md agents/compliance-verifier.md \
+   agents/senior-data-engineer.md agents/sql-query-optimizer.md \
+   ~/.gemini/config/agents/
+```
+Then copy each plugin's `mcp_config.json` the same way as above if you want its MCP servers registered too.
+
+**`docs-and-quality`, `multi-agent-ops` (Antigravity CLI)** — skills-only, same folder:
+```bash
+mkdir -p ~/.gemini/config/plugins/docs-and-quality ~/.gemini/config/plugins/multi-agent-ops
+cp -r ./plugins/docs-and-quality/* ~/.gemini/config/plugins/docs-and-quality/
+cp -r ./plugins/multi-agent-ops/* ~/.gemini/config/plugins/multi-agent-ops/
 ```
 
-**`senior-dev`, `git-workflow`, `docs-and-quality`, `multi-agent-ops`, `senior-data-engineer`, `sql-query-optimizer` (Claude Code)** — plugins of bundled skills/subagents; `git-workflow` also has a hook, `senior-dev`/`senior-data-engineer`/`sql-query-optimizer` also have MCP servers, `docs-and-quality`/`multi-agent-ops` are skills-only:
-
+**All 7 plugins (Claude Code)**:
 ```bash
+cp -r ./plugins/python-backend ~/.claude/plugins/python-backend
 cp -r ./plugins/senior-dev ~/.claude/plugins/senior-dev
 cp -r ./plugins/git-workflow ~/.claude/plugins/git-workflow
 cp -r ./plugins/docs-and-quality ~/.claude/plugins/docs-and-quality
-cp -r ./plugins/senior-data-engineer ~/.claude/plugins/senior-data-engineer
 cp -r ./plugins/multi-agent-ops ~/.claude/plugins/multi-agent-ops
+cp -r ./plugins/senior-data-engineer ~/.claude/plugins/senior-data-engineer
 cp -r ./plugins/sql-query-optimizer ~/.claude/plugins/sql-query-optimizer
 ```
 

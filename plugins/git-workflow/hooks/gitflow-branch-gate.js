@@ -2,6 +2,8 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 
+const isClaudeCode = Boolean(process.env.CLAUDE_PLUGIN_ROOT);
+
 // Read input payload from stdin
 let inputData = '';
 try {
@@ -22,18 +24,24 @@ try {
 }
 
 function deny(reason) {
-  console.log(JSON.stringify({
-    hookSpecificOutput: {
-      hookEventName: 'PreToolUse',
-      permissionDecision: 'deny',
-      permissionDecisionReason: reason,
-    },
-  }));
+  if (isClaudeCode) {
+    console.log(JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: 'PreToolUse',
+        permissionDecision: 'deny',
+        permissionDecisionReason: reason,
+      },
+    }));
+  } else {
+    // Antigravity's PreToolUse contract (verified against
+    // antigravity.google/docs/hooks): a top-level {"decision": ...}.
+    console.log(JSON.stringify({ decision: 'deny', reason }));
+  }
   process.exit(0);
 }
 
-// Normalize across Claude Code (tool_name/tool_input/cwd) and the legacy
-// Antigravity/Gemini shape (toolCall.name/toolCall.args) some hosts still send.
+// Normalize across Claude Code (tool_name/tool_input/cwd) and Antigravity
+// (toolCall.name/toolCall.args) payload shapes.
 const toolName = payload.tool_name || payload.toolCall?.name || '';
 const toolInput = payload.tool_input || payload.toolCall?.args || {};
 const commandLine = toolInput.command || toolInput.CommandLine || '';

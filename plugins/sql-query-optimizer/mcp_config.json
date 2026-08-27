@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "bigquery": {
+      "serverUrl": "https://bigquery.googleapis.com/mcp",
+      "authProviderType": "google_credentials"
+    },
+    "cloudsql": {
+      "serverUrl": "https://sqladmin.googleapis.com/mcp/query_execution",
+      "authProviderType": "google_credentials"
+    }
+  }
+}

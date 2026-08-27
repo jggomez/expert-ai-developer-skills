@@ -3,9 +3,7 @@
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
 [![Plugin](https://img.shields.io/badge/Plugin-multi--agent--ops-green?style=flat-square)](file:///./)
 
-The `multi-agent-ops` plugin packages the repository's manager-worker orchestration and repo-analysis skills as a minimal Claude Code plugin — the two skills in this repo's catalog that weren't yet bundled into any other plugin.
-
-**Claude Code only** — no Antigravity equivalent exists in this repo for this plugin as a bundle (see root README §12.2 for why), though §3 below covers a related, separate platform gap around scheduled automation specifically.
+The `multi-agent-ops` plugin packages the repository's manager-worker orchestration and repo-analysis skills as a minimal plugin for **both Antigravity CLI and Claude Code** — the two skills in this repo's catalog that weren't yet bundled into any other plugin. Since it's skills-only, the same plugin folder installs unchanged on either host. §3 below covers a real, separate platform gap around scheduled automation specifically (Antigravity has it via `sidecars/`, Claude Code doesn't have a plugin-bundleable equivalent).
 
 > **Maintaining the bundled skills**: `skills/` below is a physical copy of the matching directories in the root `/skills` catalog. After editing either skill under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo root to re-sync this copy. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills` fails CI if the two ever drift.
 
@@ -54,6 +52,13 @@ So this plugin intentionally ships **only** the two skills above. If you want pe
 
 ## 5. Installation
 
+**Claude Code**:
 ```bash
 cp -r ./plugins/multi-agent-ops ~/.claude/plugins/multi-agent-ops
+```
+
+**Antigravity CLI**:
+```bash
+mkdir -p ~/.gemini/config/plugins/multi-agent-ops
+cp -r ./plugins/multi-agent-ops/* ~/.gemini/config/plugins/multi-agent-ops/
 ```

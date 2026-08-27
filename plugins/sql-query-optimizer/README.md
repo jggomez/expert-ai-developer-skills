@@ -3,9 +3,9 @@
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
 [![Plugin](https://img.shields.io/badge/Plugin-sql--query--optimizer-green?style=flat-square)](file:///./)
 
-The `sql-query-optimizer` plugin finds and rewrites slow SQL — standalone `.sql` files and queries embedded in application code — as a Claude Code plugin: one subagent, two skills (BigQuery-specific, and generic SQL for traditional engines), and direct MCP access to BigQuery and Cloud SQL for real query plans.
+The `sql-query-optimizer` plugin finds and rewrites slow SQL — standalone `.sql` files and queries embedded in application code — for **both Antigravity CLI and Claude Code**: one subagent, two skills (BigQuery-specific, and generic SQL for traditional engines), and direct MCP access to BigQuery and Cloud SQL for real query plans.
 
-**Claude Code only** — no Antigravity equivalent exists in this repo for this plugin (see root README §12.2 for why).
+**Antigravity CLI users**: the subagent installs from the root [`agents/sql-query-optimizer.md`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/sql-query-optimizer.md) — not this plugin folder's `agents/` — since Claude Code and Antigravity use incompatible subagent frontmatter. This plugin folder's `mcp_config.json` (Antigravity's MCP format) still applies either way.
 
 Built from Google Cloud's own "Query Processing and Optimization" training material (partitioning/clustering pruning, JOIN ordering, shuffle/skew, broadcast vs. hash joins, approximate functions) plus general cross-engine practices (EXPLAIN ANALYZE, indexing, avoiding functions on indexed columns).
 
@@ -19,9 +19,10 @@ Built from Google Cloud's own "Query Processing and Optimization" training mater
 plugins/sql-query-optimizer/
 ├── README.md                       # This usage manual
 ├── plugin.json                     # Required plugin metadata descriptor
-├── .mcp.json                       # BigQuery + Cloud SQL — Google-hosted remote MCP servers
+├── .mcp.json                       # BigQuery + Cloud SQL — Claude Code's remote MCP format
+├── mcp_config.json                 # Same 2 servers, Antigravity's format (serverUrl + authProviderType)
 ├── agents/
-│   └── sql-query-optimizer.md      # The subagent
+│   └── sql-query-optimizer.md      # The subagent (Claude Code only — Antigravity's copy lives at the repo root)
 └── skills/
     ├── bigquery-query-optimization/  # Query plan diagnosis, JOIN/skew/partitioning rules, a static SQL linter
     └── sql-query-optimization/       # EXPLAIN ANALYZE, indexing, pagination — for Postgres/MySQL/etc.
@@ -51,16 +52,18 @@ What the static linter **can't** catch — JOIN ordering, skewed JOINs, missing 
 
 ---
 
-## 4. Model Context Protocol (`.mcp.json`)
+## 4. Model Context Protocol (`.mcp.json` / `mcp_config.json`)
 
-Two of Google's own **remote** MCP servers (HTTP + native OAuth — Claude Code handles the browser consent flow, no embedded credentials needed):
+Two of Google's own **remote** MCP servers, registered for both hosts:
 
 | Server | Covers |
 | :--- | :--- |
 | `bigquery` | Dry-run query cost estimates, `INFORMATION_SCHEMA.JOBS` for real query plan stats, dataset/table metadata |
-| `cloudsql` | `execute_sql_readonly` — run `EXPLAIN ANALYZE` against a real Postgres/MySQL instance |
+| `cloudsql` | Read-only query execution — run `EXPLAIN ANALYZE` against a real Postgres/MySQL instance |
 
 The `bigquery` server here is the same one already used by `plugins/senior-data-engineer` — reused, not duplicated.
+
+**Auth differs by host**: Claude Code handles OAuth natively (browser consent flow, no embedded credentials needed). Antigravity's `mcp_config.json` uses `authProviderType: "google_credentials"` instead, relying on Application Default Credentials (`gcloud auth application-default login`).
 
 ---
 
@@ -84,6 +87,15 @@ The `bigquery` server here is the same one already used by `plugins/senior-data-
 
 ## 7. Installation
 
+**Claude Code**:
 ```bash
 cp -r ./plugins/sql-query-optimizer ~/.claude/plugins/sql-query-optimizer
+```
+
+**Antigravity CLI** — the subagent comes from the root `agents/` directory, not this plugin folder:
+```bash
+mkdir -p ~/.gemini/config/agents/ ~/.gemini/config/plugins/sql-query-optimizer
+cp agents/sql-query-optimizer.md ~/.gemini/config/agents/
+cp plugins/sql-query-optimizer/mcp_config.json plugins/sql-query-optimizer/plugin.json ~/.gemini/config/plugins/sql-query-optimizer/
+cp -r plugins/sql-query-optimizer/skills ~/.gemini/config/plugins/sql-query-optimizer/
 ```

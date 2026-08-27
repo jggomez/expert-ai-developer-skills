@@ -21,30 +21,45 @@ try {
   process.exit(0);
 }
 
+// Claude Code sets CLAUDE_PLUGIN_ROOT when running plugin hooks; Antigravity
+// does not, so anything else falls back to Antigravity's real PreToolUse
+// contract: a top-level {"decision": "allow"|"deny"|"ask", "reason": ...}
+// (verified against antigravity.google/docs/hooks — this is NOT the same
+// shape as Claude Code's hookSpecificOutput.permissionDecision).
+const isClaudeCode = Boolean(process.env.CLAUDE_PLUGIN_ROOT);
+
 function ask(reason) {
-  console.log(JSON.stringify({
-    hookSpecificOutput: {
-      hookEventName: 'PreToolUse',
-      permissionDecision: 'ask',
-      permissionDecisionReason: reason,
-    },
-  }));
+  if (isClaudeCode) {
+    console.log(JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: 'PreToolUse',
+        permissionDecision: 'ask',
+        permissionDecisionReason: reason,
+      },
+    }));
+  } else {
+    console.log(JSON.stringify({ decision: 'ask', reason }));
+  }
   process.exit(0);
 }
 
 function deny(reason) {
-  console.log(JSON.stringify({
-    hookSpecificOutput: {
-      hookEventName: 'PreToolUse',
-      permissionDecision: 'deny',
-      permissionDecisionReason: reason,
-    },
-  }));
+  if (isClaudeCode) {
+    console.log(JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: 'PreToolUse',
+        permissionDecision: 'deny',
+        permissionDecisionReason: reason,
+      },
+    }));
+  } else {
+    console.log(JSON.stringify({ decision: 'deny', reason }));
+  }
   process.exit(0);
 }
 
-// Normalize across Claude Code (tool_name/tool_input/cwd) and the legacy
-// Antigravity/Gemini shape (toolCall.name/toolCall.args) some hosts still send.
+// Normalize across Claude Code (tool_name/tool_input/cwd) and Antigravity
+// (toolCall.name/toolCall.args) payload shapes.
 const toolName = payload.tool_name || payload.toolCall?.name || '';
 const toolInput = payload.tool_input || payload.toolCall?.args || {};
 const commandLine = toolInput.command || toolInput.CommandLine || '';
@@ -59,8 +74,8 @@ if (isShellTool && deployRegex.test(commandLine)) {
 }
 
 // 2. MCP Tools Guardrail (Cloud Run & Firebase writes)
-// Claude Code names MCP tools "mcp__<server>__<tool>"; the legacy shape uses
-// a dedicated call_mcp_tool wrapper with ServerName/ToolName fields.
+// Claude Code names MCP tools "mcp__<server>__<tool>"; Antigravity uses a
+// dedicated call_mcp_tool wrapper with ServerName/ToolName fields.
 let mcpServer = '';
 let mcpTool = '';
 if (toolName.startsWith('mcp__')) {

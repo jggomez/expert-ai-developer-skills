@@ -3,9 +3,9 @@
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
 [![Plugin](https://img.shields.io/badge/Plugin-senior--data--engineer-green?style=flat-square)](file:///./)
 
-The `senior-data-engineer` plugin packages a Google Cloud data engineering expert as a Claude Code plugin: one subagent, two skills (architecture decisions, and CDC/SCD patterns specifically), and direct MCP access to BigQuery, Datastream, Dataform, and Pub/Sub.
+The `senior-data-engineer` plugin packages a Google Cloud data engineering expert for **both Antigravity CLI and Claude Code**: one subagent, two skills (architecture decisions, and CDC/SCD patterns specifically), and direct MCP access to BigQuery, Datastream, Dataform, and Pub/Sub.
 
-**Claude Code only** — no Antigravity equivalent exists in this repo for this plugin (see root README §12.2 for why).
+**Antigravity CLI users**: the subagent installs from the root [`agents/senior-data-engineer.md`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/senior-data-engineer.md) — not this plugin folder's `agents/` — since Claude Code and Antigravity use incompatible subagent frontmatter. This plugin folder's `mcp_config.json` (Antigravity's MCP format) still applies either way.
 
 > **Maintaining the bundled skills**: `skills/` below is a physical copy of the matching directories in the root `/skills` catalog. After editing `gcp-data-engineering` or `cdc-scd-patterns` under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo root to re-sync this copy. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills` fails CI if the two ever drift.
 
@@ -17,9 +17,10 @@ The `senior-data-engineer` plugin packages a Google Cloud data engineering exper
 plugins/senior-data-engineer/
 ├── README.md                       # This usage manual
 ├── plugin.json                     # Required plugin metadata descriptor
-├── .mcp.json                       # BigQuery, Datastream, Dataform, Pub/Sub — Google-hosted remote MCP servers
+├── .mcp.json                       # BigQuery, Datastream, Dataform, Pub/Sub — Claude Code's remote MCP format
+├── mcp_config.json                 # Same 4 servers, Antigravity's format (serverUrl + authProviderType)
 ├── agents/
-│   └── senior-data-engineer.md     # The subagent
+│   └── senior-data-engineer.md     # The subagent (Claude Code only — Antigravity's copy lives at the repo root)
 └── skills/
     ├── gcp-data-engineering/       # Architecture decisions: storage, batch/streaming, orchestration, BQ cost/perf
     └── cdc-scd-patterns/           # Datastream CDC checklist + SCD Type 0-6 + a Dataform SCD2 scaffolder script
@@ -37,9 +38,9 @@ This is intentionally a single agent, not a multi-role panel — it's one area o
 
 ---
 
-## 3. Model Context Protocol (`.mcp.json`)
+## 3. Model Context Protocol (`.mcp.json` / `mcp_config.json`)
 
-Four of Google's own **remote** MCP servers (HTTP + native OAuth — Claude Code handles the browser consent flow itself, no embedded credentials needed):
+Four of Google's own **remote** MCP servers, registered for both hosts:
 
 | Server | Covers |
 | :--- | :--- |
@@ -50,7 +51,9 @@ Four of Google's own **remote** MCP servers (HTTP + native OAuth — Claude Code
 
 **Known gap** (verified, not assumed): there is no dedicated Dataflow MCP server as of this research. Custom streaming/batch Beam pipelines are still operated via `gcloud`, Terraform, or the Beam SDK directly — the agent will tell you this rather than pretend an MCP tool covers it.
 
-The first time you use one of these tools, Claude Code will prompt you to authenticate with your Google account in a browser (standard OAuth, PKCE-based dynamic client registration — see [Claude Code's MCP docs](https://code.claude.com/docs/en/mcp)).
+**Auth differs by host**: Claude Code handles OAuth natively (browser consent flow, PKCE-based dynamic client registration — no embedded credentials needed; see [Claude Code's MCP docs](https://code.claude.com/docs/en/mcp)). Antigravity's `mcp_config.json` instead declares `authProviderType: "google_credentials"` on each server, using Application Default Credentials (`gcloud auth application-default login`) rather than a browser OAuth popup — see [Antigravity's MCP docs](https://antigravity.google/docs/cli/mcp/).
+
+`dataform`'s URL is region-scoped (`https://dataform.<region>.rep.googleapis.com/mcp`). Claude Code's `.mcp.json` uses `${GCP_REGION:-us-central1}` (env var substitution, confirmed supported); Antigravity's `mcp_config.json` hardcodes `us-central1` since variable substitution in that file wasn't independently verified — edit it directly if your Dataform repository is in a different region.
 
 ---
 
@@ -82,6 +85,15 @@ This is a **chat-based expert** for design and implementation help inside a Clau
 
 ## 7. Installation
 
+**Claude Code**:
 ```bash
 cp -r ./plugins/senior-data-engineer ~/.claude/plugins/senior-data-engineer
+```
+
+**Antigravity CLI** — the subagent comes from the root `agents/` directory, not this plugin folder:
+```bash
+mkdir -p ~/.gemini/config/agents/ ~/.gemini/config/plugins/senior-data-engineer
+cp agents/senior-data-engineer.md ~/.gemini/config/agents/
+cp plugins/senior-data-engineer/mcp_config.json plugins/senior-data-engineer/plugin.json ~/.gemini/config/plugins/senior-data-engineer/
+cp -r plugins/senior-data-engineer/skills ~/.gemini/config/plugins/senior-data-engineer/
 ```

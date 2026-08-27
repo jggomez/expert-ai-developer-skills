@@ -5,7 +5,7 @@
 
 The `python-backend` plugin is a unified customization package designed to automate quality gates, enforce branch safety constraints (Gitflow), validate test execution, and link external GCP and Firebase resources through the Model Context Protocol (MCP).
 
-Its `plugin.json`/`hooks.json`/`${CLAUDE_PLUGIN_ROOT}` layout follows the **Claude Code plugin format**, which is the platform it is verified against. The hook scripts also detect and emit the payload shape expected by Antigravity/Gemini, GitHub Copilot, and Codex hosts, so the same plugin folder can be dropped into those environments — but only the Claude Code path has been validated end-to-end.
+This plugin supports **both Antigravity CLI and Claude Code**, each verified against its own official schema (not assumed): `hooks.json` carries a `"hooks"` key for Claude Code and a separate named group for Antigravity in the same file — each host reads only the key it understands. `.mcp.json` (Claude Code) and `mcp_config.json` (Antigravity) ship side by side since the filenames don't collide. The hook scripts detect the host at runtime (via `CLAUDE_PLUGIN_ROOT`) and emit the correct decision format for each — Claude Code's `hookSpecificOutput.permissionDecision`, or Antigravity's top-level `decision` field.
 
 > **Maintaining the bundled skills**: `skills/` below is a physical copy of the matching directories in the root `/skills` catalog, kept self-contained so the plugin folder can be distributed on its own. After editing any bundled skill under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo root to re-sync this copy — don't hand-edit both. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills` fails CI if the two ever drift.
 
@@ -17,10 +17,11 @@ Its `plugin.json`/`hooks.json`/`${CLAUDE_PLUGIN_ROOT}` layout follows the **Clau
 plugins/python-backend/
 ├── README.md             # This usage and configuration manual
 ├── plugin.json           # Required marker containing metadata
-├── .mcp.json             # MCP definitions (GCP, Firebase)
-├── hooks.json            # Dynamic lifecycle hook registrations
-├── hooks/                # Node.js hook event handlers
-│   ├── python-backend-activate.js  # Runs on SessionStart; audits environment
+├── .mcp.json             # MCP definitions for Claude Code (GCP, Firebase)
+├── mcp_config.json       # Same MCP definitions, Antigravity's format (serverUrl-based entries not needed here — both are stdio)
+├── hooks.json            # Lifecycle hook registrations for both hosts, in one file
+├── hooks/                # Node.js hook event handlers (host-aware)
+│   ├── python-backend-activate.js  # Runs on SessionStart (Claude Code only — Antigravity has no SessionStart event; its rules/ dir auto-loads instead)
 │   ├── pre-tool-gate.js            # Runs on PreToolUse; intercepts git & cloud deployments
 │   └── stop-gate.js                # Runs on Stop; quality gate checking test suite
 ├── rules/                # Central system guidelines
@@ -39,16 +40,16 @@ plugins/python-backend/
 
 ## 2. Integrated Configuration Assets
 
-### 2.1 Model Context Protocol (`.mcp.json`)
-Registers secure, lazy-loaded cloud management tools:
-- **`google-cloud-run`**: Enables listing services, fetching service details, viewing deployment logs, and running deployments.
-- **`firebase-tools`**: Enables Cloud Firestore collection lookups, document mutations, and real-time database queries.
+### 2.1 Model Context Protocol (`.mcp.json` / `mcp_config.json`)
+Registers secure, lazy-loaded cloud management tools — for both Claude Code (`.mcp.json`) and Antigravity (`mcp_config.json`):
+- **`cloudrun`**: Enables listing services, fetching service details, viewing deployment logs, and running deployments.
+- **`firebase-mcp-server`**: Enables Cloud Firestore collection lookups, document mutations, and real-time database queries.
 
 ### 2.2 Lifecycle Hook Mappings (`hooks.json`)
-Registers Node.js triggers to intercept editor operations:
-- **`SessionStart`**: Runs `python-backend-activate.js` on startup to load rules and check cloud credentials.
-- **`PreToolUse`**: Runs `pre-tool-gate.js` before executing command line tools or calling MCP tools to inspect arguments.
-- **`Stop`**: Runs `stop-gate.js` before finishing a request to verify the test suite state.
+One file, two hosts — Claude Code reads the top-level `"hooks"` key, Antigravity reads the separate `"python-backend-safety-gates"` named group (its own schema: `enabled` + event arrays):
+- **`SessionStart`** (Claude Code only — this event doesn't exist in Antigravity): runs `python-backend-activate.js` to load rules and check cloud credentials. On Antigravity, `rules/python-backend-rules.md` auto-loads via the plugin's `rules/` directory instead.
+- **`PreToolUse`**: runs `pre-tool-gate.js` before executing command line tools or calling MCP tools to inspect arguments.
+- **`Stop`**: runs `stop-gate.js` before finishing a request to verify the test suite state.
 
 ---
 

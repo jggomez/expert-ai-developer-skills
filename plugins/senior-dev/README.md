@@ -19,7 +19,8 @@ Its `plugin.json`/`agents/`/`.mcp.json`/`${CLAUDE_PLUGIN_ROOT}` layout follows t
 plugins/senior-dev/
 ├── README.md               # This usage manual
 ├── plugin.json             # Required plugin metadata descriptor
-├── .mcp.json               # MCP servers (GCP Cloud Run, Firebase) — reused from python-backend
+├── .mcp.json               # MCP servers for Claude Code (GCP Cloud Run, Firebase) — reused from python-backend
+├── mcp_config.json         # Same MCP servers, Antigravity's format — this plugin folder's agents/ isn't used by Antigravity (see below), but its MCP servers still are
 ├── agents/                 # 6 bundled subagents, auto-discovered by Claude Code
 │   ├── senior-dev-orchestrator.md  # Main orchestrator; scales the pipeline to the task
 │   ├── product-analyst.md          # Requirements & PRDs
@@ -57,9 +58,9 @@ plugins/senior-dev/
 
 ---
 
-## 3. Model Context Protocol (`.mcp.json`)
+## 3. Model Context Protocol (`.mcp.json` / `mcp_config.json`)
 
-Reuses the exact two MCP servers already defined for `plugins/python-backend`:
+Reuses the exact two MCP servers already defined for `plugins/python-backend`, for both Claude Code (`.mcp.json`) and Antigravity (`mcp_config.json`):
 - **`cloudrun`**: list/inspect Cloud Run services and deployments.
 - **`firebase-mcp-server`**: query and mutate Firestore collections.
 
@@ -99,10 +100,16 @@ On loading the plugin, the following 8 skills are automatically loaded as the ag
 
 ## 6. Installation
 
-Copy the plugin folder into your Claude Code plugins directory (or install it via the plugin marketplace if this repository is registered as one):
-
+**Claude Code** — copy the plugin folder (or install via the plugin marketplace if this repository is registered as one):
 ```bash
 cp -r ./plugins/senior-dev ~/.claude/plugins/senior-dev
 ```
-
 Once installed, invoke `senior-dev-orchestrator` (or any of the five subagents directly) via the `Agent` tool the same way you would any other subagent.
+
+**Antigravity CLI** — the subagents come from the root `agents/` directory, not this plugin folder (see the note in the intro above for why); this folder's `mcp_config.json` still applies if you want the MCP servers:
+```bash
+mkdir -p ~/.gemini/config/agents/
+cp agents/senior-dev-orchestrator.md agents/product-analyst.md agents/architect-engineer.md \
+   agents/code-implementer.md agents/qa-tester.md agents/compliance-verifier.md \
+   ~/.gemini/config/agents/
+```

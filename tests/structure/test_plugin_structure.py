@@ -21,10 +21,15 @@ def plugin_dirs(workspace_root):
 
 
 def test_plugin_hooks_json_schema(workspace_root, plugin_dirs):
-    """Verifies every plugin's hooks.json (when present) follows the plugin
-    hooks schema: a top-level 'hooks' object keyed by event name, with no
-    legacy custom groupings."""
-    known_events = {"SessionStart", "PreToolUse", "PostToolUse", "Stop", "UserPromptSubmit", "Notification"}
+    """Verifies every plugin's hooks.json (when present) follows a valid
+    schema for at least one host. A single hooks.json can serve both hosts
+    at once since each reads a different top-level key: Claude Code reads
+    'hooks' (event-name-keyed, no 'enabled' field); Antigravity reads any
+    other top-level key as a named hook group (its own 'enabled' field and
+    event names are valid there) — verified against
+    antigravity.google/docs/hooks."""
+    claude_code_events = {"SessionStart", "PreToolUse", "PostToolUse", "Stop", "UserPromptSubmit", "Notification"}
+    antigravity_events = {"PreToolUse", "PostToolUse", "PreInvocation", "PostInvocation", "Stop"}
     errors = []
 
     for plugin in plugin_dirs:
@@ -35,59 +40,83 @@ def test_plugin_hooks_json_schema(workspace_root, plugin_dirs):
         with open(hooks_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        if "hooks" not in data:
-            errors.append(f"{plugin}: hooks.json must have a top-level 'hooks' key")
-            continue
-        if not isinstance(data["hooks"], dict):
-            errors.append(f"{plugin}: 'hooks' must map event names to hook definitions")
-            continue
-
-        for event_name, groups in data["hooks"].items():
-            if event_name not in known_events:
-                errors.append(f"{plugin}: unknown hook event '{event_name}' in hooks.json")
+        for key, value in data.items():
+            if key == "description":
                 continue
-            for group in groups:
-                if "enabled" in group:
-                    errors.append(
-                        f"{plugin}: non-standard 'enabled' flag found on a '{event_name}' hook group; "
-                        "Claude Code has no per-hook enabled field (use disableAllHooks to disable everything)"
-                    )
-                if "hooks" not in group:
-                    errors.append(f"{plugin}: hook group for '{event_name}' is missing its 'hooks' array")
+
+            if key == "hooks":
+                # Claude Code format: {"hooks": {EventName: [{"matcher"?, "hooks": [...]}]}}
+                if not isinstance(value, dict):
+                    errors.append(f"{plugin}: 'hooks' must map event names to hook definitions")
+                    continue
+                for event_name, groups in value.items():
+                    if event_name not in claude_code_events:
+                        errors.append(f"{plugin}: unknown Claude Code hook event '{event_name}' in hooks.json")
+                        continue
+                    for group in groups:
+                        if "enabled" in group:
+                            errors.append(
+                                f"{plugin}: non-standard 'enabled' flag inside the 'hooks' (Claude Code) "
+                                f"'{event_name}' group; Claude Code has no per-hook enabled field"
+                            )
+                        if "hooks" not in group:
+                            errors.append(f"{plugin}: hook group for '{event_name}' is missing its 'hooks' array")
+                continue
+
+            # Any other top-level key is an Antigravity-style named hook
+            # group: {"enabled": bool, EventName: [...]}.
+            if not isinstance(value, dict):
+                errors.append(f"{plugin}: hook group '{key}' must be an object")
+                continue
+            event_keys = [k for k in value.keys() if k != "enabled"]
+            if not event_keys:
+                errors.append(f"{plugin}: hook group '{key}' declares no events")
+            for event_name in event_keys:
+                if event_name not in antigravity_events:
+                    errors.append(f"{plugin}: unknown Antigravity hook event '{event_name}' in group '{key}'")
 
     assert not errors, "\n".join(errors)
 
 
 def test_plugin_mcp_json_schema(workspace_root, plugin_dirs):
-    """Verifies every plugin's .mcp.json (when present) uses the real Claude
-    Code filename/shape: top-level 'mcpServers', each entry declaring a
-    'type' (stdio/http/sse)."""
-    valid_types = {"stdio", "http", "sse"}
+    """Verifies each plugin's MCP config files. A plugin may ship both:
+    '.mcp.json' (Claude Code — top-level 'mcpServers', each entry declaring
+    a 'type' of stdio/http/sse) and/or 'mcp_config.json' (Antigravity —
+    top-level 'mcpServers', each entry needing either 'command' (stdio) or
+    'serverUrl' (remote)) — verified against antigravity.google/docs/mcp."""
+    valid_claude_types = {"stdio", "http", "sse"}
     errors = []
 
     for plugin in plugin_dirs:
         plugin_path = os.path.join(workspace_root, "plugins", plugin)
-        legacy_path = os.path.join(plugin_path, "mcp_config.json")
-        if os.path.isfile(legacy_path):
-            errors.append(f"{plugin}: uses legacy filename 'mcp_config.json' instead of '.mcp.json'")
 
-        mcp_path = os.path.join(plugin_path, ".mcp.json")
-        if not os.path.isfile(mcp_path):
-            continue
+        claude_mcp_path = os.path.join(plugin_path, ".mcp.json")
+        if os.path.isfile(claude_mcp_path):
+            with open(claude_mcp_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if "mcpServers" not in data:
+                errors.append(f"{plugin}: .mcp.json must have a top-level 'mcpServers' key")
+            else:
+                for server_name, config in data["mcpServers"].items():
+                    if config.get("type") not in valid_claude_types:
+                        errors.append(
+                            f"{plugin}: .mcp.json server '{server_name}' is missing a valid 'type' "
+                            f"(one of {sorted(valid_claude_types)})"
+                        )
 
-        with open(mcp_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        if "mcpServers" not in data:
-            errors.append(f"{plugin}: .mcp.json must have a top-level 'mcpServers' key")
-            continue
-
-        for server_name, config in data["mcpServers"].items():
-            if config.get("type") not in valid_types:
-                errors.append(
-                    f"{plugin}: MCP server '{server_name}' is missing a valid 'type' "
-                    f"(one of {sorted(valid_types)})"
-                )
+        antigravity_mcp_path = os.path.join(plugin_path, "mcp_config.json")
+        if os.path.isfile(antigravity_mcp_path):
+            with open(antigravity_mcp_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if "mcpServers" not in data:
+                errors.append(f"{plugin}: mcp_config.json must have a top-level 'mcpServers' key")
+            else:
+                for server_name, config in data["mcpServers"].items():
+                    if "command" not in config and "serverUrl" not in config:
+                        errors.append(
+                            f"{plugin}: mcp_config.json server '{server_name}' needs either "
+                            "'command' (stdio) or 'serverUrl' (remote)"
+                        )
 
     assert not errors, "\n".join(errors)
 
@@ -129,6 +158,45 @@ def test_plugin_agents_frontmatter(workspace_root, plugin_dirs):
                     f"{plugin}/agents/{fname}: frontmatter 'name' is '{data.get('name')}' "
                     f"but the file is '{fname}' (they must match)"
                 )
+
+    assert not errors, "\n".join(errors)
+
+
+def test_root_agents_frontmatter(workspace_root):
+    """Verifies every root-level agents/*.md (the Antigravity subagent
+    definitions) has valid frontmatter with 'name' matching its filename
+    and a 'description' — mirrors test_plugin_agents_frontmatter for the
+    plugin-bundled agents."""
+    agents_dir = os.path.join(workspace_root, "agents")
+    errors = []
+
+    for fname in os.listdir(agents_dir):
+        if not fname.endswith(".md") or fname == "README.md":
+            continue
+        agent_name = fname[:-3]
+        agent_path = os.path.join(agents_dir, fname)
+
+        with open(agent_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        match = re.search(r"^---\s*\n(.*?)\n---\s*\n", content, re.DOTALL)
+        if not match:
+            errors.append(f"agents/{fname}: missing or invalid YAML frontmatter")
+            continue
+
+        try:
+            data = yaml.safe_load(match.group(1))
+        except Exception as e:
+            errors.append(f"agents/{fname}: invalid YAML frontmatter ({e})")
+            continue
+
+        if not data.get("description"):
+            errors.append(f"agents/{fname}: 'description' field is missing or empty")
+        if data.get("name") != agent_name:
+            errors.append(
+                f"agents/{fname}: frontmatter 'name' is '{data.get('name')}' "
+                f"but the file is '{fname}' (they must match)"
+            )
 
     assert not errors, "\n".join(errors)
 

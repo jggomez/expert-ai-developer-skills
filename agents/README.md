@@ -47,3 +47,17 @@ These configurations can be directly loaded into an Antigravity workspace or glo
 - "Use the code-implementer agent to build the new endpoint with TDD." (`code-implementer`)
 - "Have the qa-tester agent write E2E tests for the checkout flow." (`qa-tester`)
 - "Ask the compliance-verifier agent for a release-readiness verdict on this branch." (`compliance-verifier`)
+
+---
+
+## 4. Standalone Domain Experts
+
+Two more agents live in this directory, outside the Loop Engineering topology — each a single area of expertise, not part of the orchestrator's panel:
+
+| Agent | Role | MCP Servers |
+| :--- | :--- | :--- |
+| **`senior-data-engineer`** | Google Cloud data pipeline design: lake/warehouse architecture, CDC via Datastream, SCD modeling in BigQuery/Dataform. | `bigquery`, `datastream`, `dataform`, `pubsub` (via `plugins/senior-data-engineer/mcp_config.json`) |
+| **`sql-query-optimizer`** | Finds and rewrites slow SQL — `.sql` files and queries embedded in application code — for both BigQuery and traditional engines. | `bigquery`, `cloudsql` (via `plugins/sql-query-optimizer/mcp_config.json`) |
+
+Their Claude Code equivalents live in `plugins/senior-data-engineer/` and `plugins/sql-query-optimizer/` respectively — same skills, same reasoning, packaged per-platform for the same incompatible-schema reason as the Loop Engineering panel above.
+

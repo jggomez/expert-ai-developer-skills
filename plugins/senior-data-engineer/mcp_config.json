@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "bigquery": {
+      "serverUrl": "https://bigquery.googleapis.com/mcp",
+      "authProviderType": "google_credentials"
+    },
+    "datastream": {
+      "serverUrl": "https://datastream.googleapis.com/mcp",
+      "authProviderType": "google_credentials"
+    },
+    "dataform": {
+      "serverUrl": "https://dataform.us-central1.rep.googleapis.com/mcp",
+      "authProviderType": "google_credentials"
+    },
+    "pubsub": {
+      "serverUrl": "https://pubsub.googleapis.com/mcp",
+      "authProviderType": "google_credentials"
+    }
+  }
+}

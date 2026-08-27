@@ -3,9 +3,7 @@
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
 [![Plugin](https://img.shields.io/badge/Plugin-docs--and--quality-green?style=flat-square)](file:///./)
 
-The `docs-and-quality` plugin packages the repository's stack-agnostic documentation and testing standards as a minimal Claude Code plugin: no hooks, no MCP servers, no agents — just three skills that already exist in the root `/skills` catalog, with nothing added.
-
-**Claude Code only** — no Antigravity equivalent exists in this repo for this plugin (see root README §12.2 for why). The three bundled skills themselves are platform-neutral, though — see below.
+The `docs-and-quality` plugin packages the repository's stack-agnostic documentation and testing standards as a minimal plugin for **both Antigravity CLI and Claude Code**: no hooks, no MCP servers, no agents — just three skills that already exist in the root `/skills` catalog, with nothing added. Since it's skills-only, the same plugin folder installs unchanged on either host — there's no per-platform format to reconcile.
 
 > **Maintaining the bundled skills**: `skills/` below is a physical copy of the matching directories in the root `/skills` catalog. After editing any of these three skills under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo root to re-sync this copy. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills` fails CI if the two ever drift.
 
@@ -47,6 +45,13 @@ None of these three skills reference Python, a specific framework, or a specific
 
 ## 4. Installation
 
+**Claude Code**:
 ```bash
 cp -r ./plugins/docs-and-quality ~/.claude/plugins/docs-and-quality
+```
+
+**Antigravity CLI**:
+```bash
+mkdir -p ~/.gemini/config/plugins/docs-and-quality
+cp -r ./plugins/docs-and-quality/* ~/.gemini/config/plugins/docs-and-quality/
 ```
