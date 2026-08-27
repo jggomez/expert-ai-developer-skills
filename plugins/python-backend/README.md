@@ -83,3 +83,23 @@ On loading the plugin, the following 11 skills are automatically loaded into the
 9. **`senior-architect-engineering`**: ADR templates.
 10. **`design-spec-expert`**: SDD schemas.
 11. **`build-and-ci-gates`**: Pre-commit quality hook gates.
+
+---
+
+## 5. Example Prompts
+
+The Gitflow/deployment/test-verification gates apply automatically once the plugin is installed — no prompt needed. The skills below activate when you ask for what they cover:
+
+- "Review this Python module for PEP 8 compliance and `__slots__` memory optimization." (`python-expert`)
+- "Add a new field to the API and write it test-first, Red-Green-Refactor." (`test-driven-development`)
+- "Prepare this branch for a pull request and check it against the 200-line size guideline." (`pull-request-expert`)
+- "Scan this service for God classes and high-complexity methods." (`code-smells-expert`)
+- "Extract the validation logic from this function without changing its behavior." (`refactoring-code-expert`)
+- "Run a security audit on this codebase for hardcoded secrets and OWASP Top 10 issues." (`security-audit`)
+- "Profile this endpoint for N+1 queries and memory usage." (`performance-scalability`)
+- "Write a zero-downtime Alembic migration that adds a NOT NULL column." (`database-migration-expert`)
+- "Draft an ADR for choosing between REST and gRPC for this internal service." (`senior-architect-engineering`)
+- "Scaffold a Software Design Document for the new billing service." (`design-spec-expert`)
+- "Set up a pre-commit hook that runs lint, tests, and the secret scanner." (`build-and-ci-gates`)
+
+Try triggering a gate directly to see it in action: "Commit and push directly to main" (the Gitflow hook should deny it) or "Deploy this service to Cloud Run" (the deployment hook should ask for explicit approval first).

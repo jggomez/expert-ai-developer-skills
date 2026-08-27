@@ -41,7 +41,16 @@ So this plugin intentionally ships **only** the two skills above. If you want pe
 
 ---
 
-## 4. Installation
+## 4. Example Prompts
+
+- "Analyze this repository and generate a project context document." (`repo-research`)
+- "I have 3 independent features to build — provision isolated worktrees for each so I can dispatch a subagent per branch." (`loop-engineering`)
+- "Audit the open feature branches for quality gate failures." (`loop-engineering`, via `pr_cron_reviewer.py`)
+- "Once these subagents finish and push, review their branches before I merge." (`loop-engineering`)
+
+---
+
+## 5. Installation
 
 ```bash
 cp -r ./plugins/multi-agent-ops ~/.claude/plugins/multi-agent-ops

@@ -33,7 +33,17 @@ None of these three skills reference Python, a specific framework, or a specific
 
 ---
 
-## 3. Installation
+## 3. Example Prompts
+
+- "Write a README for this service following the Diátaxis framework, with a Mermaid diagram of the architecture." (`documentation-expert`)
+- "Check this documentation for broken relative links and absolute path leaks." (`documentation-expert`)
+- "Write Gherkin BDD scenarios for the password-reset flow, covering the happy path and expired-token case." (`testing-expert`)
+- "Review these tests for hermeticity — are any of them hitting a real network call?" (`testing-expert`)
+- "Before we add this abstraction, check it against the Karpathy guidelines — do we actually need it yet?" (`guidelines-karpathy`)
+
+---
+
+## 4. Installation
 
 ```bash
 cp -r ./plugins/docs-and-quality ~/.claude/plugins/docs-and-quality

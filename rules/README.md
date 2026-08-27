@@ -29,3 +29,21 @@ All rules enforce **RFC 2119 directives** (`MUST`, `MUST NOT`, `NEVER`, `ALWAYS`
 - **Google Antigravity**: Rules load automatically from workspace `.agents/rules/` or referenced via `@rules/<name>.md`. All rules preserve YAML frontmatter (`trigger: model_decision`).
 - **Cursor**: Concatenate or select rules in Cursor Settings: `cat rules/*.md > .cursorrules`.
 - **Claude Code**: Add rule paths or contents into `.claudecodesettings` under `customInstructions`.
+
+---
+
+## 3. Example Prompts That Trigger Each Rule
+
+Rules apply passively (`trigger: model_decision`) — you don't invoke them directly, but the ordinary tasks below are exactly what makes each one kick in:
+
+- "Refactor this class — it's grown pretty large." → `clean-code-and-principles` (SOLID/DRY/KISS checks apply)
+- "Summarize this 2000-line log file." → `context-and-token-optimization` (should offload to a script instead of reading it all)
+- "Commit and push this fix." → `conventional-commits` (format + branch safety enforced)
+- "Deploy this service to production." → `deployment-restrictions` (pre-deploy gates required first)
+- "Add a new API endpoint." → `documentation-and-diagrams` (docstrings/README/diagrams must stay in sync)
+- "Build this feature — it touches three independent modules." → `loop-engineering-workflow` (cycle scaled to the task size)
+- "Open a pull request for this branch." → `pull-requests` (size limit + self-audit checklist)
+- "Add a login form that stores user credentials." → `secure-coding-and-secrets` (OWASP + secrets rules apply)
+- "Query this data — is there a skill or MCP server for that already?" → `skills-and-mcp-awareness`
+- "Implement the new pricing calculation." → `tdd-best-practices` (Red-Green-Refactor expected)
+- "This bug is fixed now." → `testing-after-changes` (must show a passing test run before declaring it done)

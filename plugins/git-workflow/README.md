@@ -40,7 +40,18 @@ This plugin intentionally does **not** include the deployment or cloud-MCP guard
 
 ---
 
-## 4. Installation
+## 4. Example Prompts
+
+- "Write a Conventional Commits message for these staged changes." (`commit-expert`)
+- "Validate this commit message file against Conventional Commits before I push." (`commit-expert`)
+- "Prepare this branch for a pull request — check the diff size and generate the PR description from the template." (`pull-request-expert`)
+- "Audit the last few commits on this branch for Conventional Commits compliance." (`pull-request-expert`)
+
+To see the safety gate itself, try: "Commit directly to main" — the hook should deny it and tell you to use a feature branch instead.
+
+---
+
+## 5. Installation
 
 ```bash
 cp -r ./plugins/git-workflow ~/.claude/plugins/git-workflow

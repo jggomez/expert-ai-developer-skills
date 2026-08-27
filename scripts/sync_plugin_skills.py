@@ -58,6 +58,10 @@ PLUGIN_BUNDLED_SKILLS = {
         "gcp-data-engineering",
         "cdc-scd-patterns",
     ],
+    "sql-query-optimizer": [
+        "bigquery-query-optimization",
+        "sql-query-optimization",
+    ],
 }
 
 IGNORE = shutil.ignore_patterns(".DS_Store", "__pycache__", "*.pyc")

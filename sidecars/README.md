@@ -57,3 +57,13 @@ Runs every 30 minutes (`*/30 * * * *`). It launches a conversation instructing t
 
 ### `workspace-daemon` (Continuous Process)
 A persistent file-watching background daemon. If files are changed, it executes static checks and formats code automatically. Antigravity will automatically restart this script if it exits.
+
+---
+
+## 4. Example Prompts
+
+Sidecars trigger themselves on a schedule — you don't invoke them directly — but this is the exact prompt each one sends when it fires (see each `sidecar.json`), and what you'd type to run the same check manually right now:
+
+- `pr-reviewer-cron` sends: *"Search the repository for open PR branches. Audit their diffs for security vulnerabilities, TODO leftovers, and styling violations, and output the report."* — run it yourself anytime with the same prompt, or with "Audit the open feature branches for quality gate failures" (`multi-agent-ops`'s `pr_cron_reviewer.py`).
+- `incoming-reviews-alert` sends: *"Fetch and display a list of all incoming code review requests or PR assignments from the remote git repository."*
+- `workspace-daemon` runs continuously with no prompt — it reacts to file-save events, not chat input.

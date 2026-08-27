@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "bigquery": {
+      "type": "http",
+      "url": "https://bigquery.googleapis.com/mcp"
+    },
+    "cloudsql": {
+      "type": "http",
+      "url": "https://sqladmin.googleapis.com/mcp/query_execution",
+      "oauth": {
+        "scopes": "https://www.googleapis.com/auth/cloudsql"
+      }
+    }
+  }
+}

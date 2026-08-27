@@ -4,7 +4,7 @@
 [![Antigravity](https://img.shields.io/badge/Antigravity-Customizations-orange?style=for-the-badge)](https://github.com/google/antigravity)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green?style=for-the-badge)](LICENSE)
 
-Welcome to **expert-ai-developer-skills**, the premium community repository for Google Antigravity (AGY) and Claude Code agent customizations. This workspace houses a professional-grade suite of **24 platform-neutral developer skills**, refactored RFC 2119 rules, and **six bundled Claude Code plugins** — each a self-contained slice of the skills catalog, reusing what already exists rather than duplicating capability: `python-backend` (quality gates, Gitflow, security/MCP for Cloud Run & Firebase), `senior-dev` (the full SDLC orchestration topology), `git-workflow` (commit/PR hygiene + Gitflow gate), `docs-and-quality` (documentation & testing standards), `multi-agent-ops` (parallel-agent orchestration & repo research), and `senior-data-engineer` (GCP pipeline design, CDC/SCD, with live BigQuery/Datastream/Dataform/Pub-Sub MCP access).
+Welcome to **expert-ai-developer-skills**, the premium community repository for Google Antigravity (AGY) and Claude Code agent customizations. This workspace houses a professional-grade suite of **26 platform-neutral developer skills**, refactored RFC 2119 rules, and **seven bundled Claude Code plugins** — each a self-contained slice of the skills catalog, reusing what already exists rather than duplicating capability: `python-backend` (quality gates, Gitflow, security/MCP for Cloud Run & Firebase), `senior-dev` (the full SDLC orchestration topology), `git-workflow` (commit/PR hygiene + Gitflow gate), `docs-and-quality` (documentation & testing standards), `multi-agent-ops` (parallel-agent orchestration & repo research), `senior-data-engineer` (GCP pipeline design, CDC/SCD, with live BigQuery/Datastream/Dataform/Pub-Sub MCP access), and `sql-query-optimizer` (finds and rewrites slow SQL across a codebase, BigQuery-specific and generic).
 
 ---
 
@@ -21,7 +21,7 @@ cd expert-ai-developer-skills
 
 ## 2. Directory Structure & Sitemap
 
-The workspace is cleanly structured into modular **skills** (discrete instructions and automation scripts), **rules** (system constraints for AI agents), **workflows** (playbooks for SDLC processes), **sidecars** (background processes and schedules), and **plugins** (six self-contained Claude Code plugins, each bundling a subset of the skills catalog):
+The workspace is cleanly structured into modular **skills** (discrete instructions and automation scripts), **rules** (system constraints for AI agents), **workflows** (playbooks for SDLC processes), **sidecars** (background processes and schedules), and **plugins** (seven self-contained Claude Code plugins, each bundling a subset of the skills catalog):
 
 ```
 expert-ai-developer-skills/
@@ -86,7 +86,9 @@ expert-ai-developer-skills/
 │   ├── code-implementer/               # TDD code implementation rules
 │   ├── compliance-verifier/            # Final quality, security, and NFR auditing
 │   ├── gcp-data-engineering/           # GCP pipeline architecture: storage, batch/streaming, orchestration, BQ cost
-│   └── cdc-scd-patterns/               # Datastream CDC checklist + SCD Type 0-6 + Dataform SCD2 scaffolder
+│   ├── cdc-scd-patterns/               # Datastream CDC checklist + SCD Type 0-6 + Dataform SCD2 scaffolder
+│   ├── bigquery-query-optimization/    # Query plan diagnosis, JOIN/skew/partitioning rules, static SQL linter
+│   └── sql-query-optimization/         # EXPLAIN ANALYZE, indexing, pagination for Postgres/MySQL/etc.
 └── plugins/
     ├── python-backend/
     │   ├── README.md                   # Plugin installation, hooks, & mcp configurations
@@ -119,14 +121,20 @@ expert-ai-developer-skills/
     └── senior-data-engineer/
         ├── README.md                   # Plugin installation, MCP servers, known gaps
         ├── plugin.json                 # Required plugin metadata descriptor
-        ├── .mcp.json                   # BigQuery, Datastream, Dataform, Pub/Sub (Google remote MCP)
-        ├── agents/                     # 1 subagent: senior-data-engineer
-        └── skills/                     # gcp-data-engineering + cdc-scd-patterns
+    │   ├── .mcp.json                   # BigQuery, Datastream, Dataform, Pub/Sub (Google remote MCP)
+    │   ├── agents/                     # 1 subagent: senior-data-engineer
+    │   └── skills/                     # gcp-data-engineering + cdc-scd-patterns
+    └── sql-query-optimizer/
+        ├── README.md                   # Plugin installation, MCP servers, example prompts
+        ├── plugin.json                 # Required plugin metadata descriptor
+        ├── .mcp.json                   # BigQuery + Cloud SQL (Google remote MCP, query execution/EXPLAIN)
+        ├── agents/                     # 1 subagent: sql-query-optimizer
+        └── skills/                     # bigquery-query-optimization + sql-query-optimization
 ```
 
 ---
 
-## 3. In-Depth Developer Skills (24 Packaged Modules)
+## 3. In-Depth Developer Skills (26 Packaged Modules)
 
 Each skill represents an isolated capability loaded with professional guidelines, architectural references, and self-contained command-line automation scripts:
 
@@ -156,6 +164,8 @@ Each skill represents an isolated capability loaded with professional guidelines
 | **`guidelines-karpathy`** | Critical checklists to avoid common model generation pitfalls and keep changes surgical. | *Behavioral validation checklist* |
 | **`gcp-data-engineering`** | Architecture decisions for GCP pipelines: storage layer, batch vs. streaming, orchestration tool choice, BigQuery cost/performance. | *GCP data stack decision checklist* |
 | **`cdc-scd-patterns`** | Change Data Capture via Datastream and Slowly Changing Dimension (Type 0-6) modeling in BigQuery/Dataform. | `scaffold_scd2_dataform.py` (Generates a parameterized SCD Type 2 template) |
+| **`bigquery-query-optimization`** | Diagnoses BigQuery query plans (skew, shuffle) and rewrites queries: partition/cluster pruning, JOIN ordering, approximate functions. | `lint_sql_query.py` (Scans directories/embedded code for SQL anti-patterns) |
+| **`sql-query-optimization`** | EXPLAIN ANALYZE, indexing strategy, and pagination for Postgres/MySQL/SQL Server and other traditional engines. | *Execution plan diagnostic workflow* |
 
 ---
 
@@ -197,7 +207,7 @@ Three smaller Claude Code plugins split the remaining skills catalog into focuse
 | :--- | :--- | :--- |
 | [**`git-workflow`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/git-workflow) | `commit-expert`, `pull-request-expert` + a Gitflow branch safety hook | The hook is the Gitflow-check portion of `python-backend`'s `pre-tool-gate.js`, extracted standalone since it has no Python/cloud dependency — usable in any stack. |
 | [**`docs-and-quality`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/docs-and-quality) | `documentation-expert`, `testing-expert`, `guidelines-karpathy` | Skills-only, no hooks/MCP — documentation and testing standards for any language. |
-| [**`multi-agent-ops`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/multi-agent-ops) | `loop-engineering`, `repo-research` | The two catalog skills not yet bundled anywhere else. Its README documents a real platform gap: Claude Code plugins have no static equivalent to the cron-scheduled `sidecars/` daemons below (§13) — verified against current plugin docs, not assumed. |
+| [**`multi-agent-ops`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/multi-agent-ops) | `loop-engineering`, `repo-research` | The two catalog skills not yet bundled anywhere else. Its README documents a real platform gap: Claude Code plugins have no static equivalent to the cron-scheduled `sidecars/` daemons below (§14) — verified against current plugin docs, not assumed. |
 
 ---
 
@@ -209,7 +219,15 @@ Researched before building, not assumed: there is no dedicated Dataflow MCP serv
 
 ---
 
-## 8. Generic AI Developer Rules (10 Constraint Profiles)
+## 8. SQL Query Optimizer Plugin
+
+The [**`sql-query-optimizer`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/sql-query-optimizer) plugin finds and rewrites slow SQL — both standalone `.sql` files and queries embedded in application code — as one subagent, two skills, and direct MCP access to BigQuery and Cloud SQL for real query plans.
+
+Built from Google Cloud's own "Query Processing and Optimization" training material (`bigquery-query-optimization`: partition/cluster pruning, JOIN ordering, shuffle/skew, approximate functions, SQL vs. JS UDFs) plus generic cross-engine practices (`sql-query-optimization`: EXPLAIN ANALYZE, indexing, keyset pagination) so the same agent handles BigQuery and traditional engines without misapplying one engine's advice to the other. Its bundled `lint_sql_query.py` recursively scans a whole project — `.sql` files and SQL string literals inside `.py`/`.js`/`.ts`/`.java`/`.go`/`.rb`/`.scala` — for text-detectable anti-patterns before any live database connection is needed.
+
+---
+
+## 9. Generic AI Developer Rules (10 Constraint Profiles)
 
 This workspace provides a root-level [**`rules/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules) directory containing generic, modular developer rules. These rules are designed to be copied directly into AI Agent configuration files (like Cursor `.cursorrules` or Claude Code `.claudecodesettings`) to govern coding, testing, and deployment behavior:
 
@@ -229,7 +247,7 @@ This workspace provides a root-level [**`rules/`**](file:///Users/jggomez/Docume
 
 ---
 
-## 9. Generic AI Developer Workflows (7 Execution Playbooks)
+## 10. Generic AI Developer Workflows (7 Execution Playbooks)
 
 This workspace provides a root-level [**`workflows/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows) directory containing step-by-step developer execution playbooks. These workflows guide developers and AI Agents sequentially through complex tasks:
 
@@ -245,7 +263,7 @@ This workspace provides a root-level [**`workflows/`**](file:///Users/jggomez/Do
 
 ---
 
-## 10. Custom Loop Engineering Agents (Antigravity Subagents)
+## 11. Custom Loop Engineering Agents (Antigravity Subagents)
 
 This workspace provides a root-level [**`agents/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory containing definitions for custom agents explicitly designed for execution within the Google Antigravity (AGY) system. They form a complete **Loop Engineering** topology using highly specialized subagents. For the Claude Code equivalent of this same topology, see [**§5 Senior Dev Orchestration Plugin**](#5-senior-dev-orchestration-plugin) and [**`plugins/senior-dev/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev).
 
@@ -260,15 +278,15 @@ This workspace provides a root-level [**`agents/`**](file:///Users/jggomez/Docum
 
 ---
 
-## 11. Comprehensive Installation Guide
+## 12. Comprehensive Installation Guide
 
-This repository fully adheres to the official [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, other teams or users can install any of these 24 skills out-of-the-box using Vercel's official, standard `skills` CLI.
+This repository fully adheres to the official [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, other teams or users can install any of these 26 skills out-of-the-box using Vercel's official, standard `skills` CLI.
 
-### 11.1 Standard Skills Installation (Using Vercel's `npx skills`)
+### 12.1 Standard Skills Installation (Using Vercel's `npx skills`)
 This is the recommended and simplest way to discover, add, and manage these skills. They don't need any local setups, just run:
 
 ```bash
-# List all 24 skills available in our repository
+# List all 26 skills available in our repository
 npx skills add jggomez/expert-ai-developer-skills --list
 
 # Install a specific skill (e.g. python-expert) in the active project (.agents/skills)
@@ -277,11 +295,11 @@ npx skills add jggomez/expert-ai-developer-skills --skill python-expert
 # Install a specific skill globally on your system (so all your workspaces can load it)
 npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
 
-# Install ALL 24 skills in the active project
+# Install ALL 26 skills in the active project
 npx skills add jggomez/expert-ai-developer-skills
 ```
 
-### 11.2 Plugin & Hooks Installation (Manual Setup)
+### 12.2 Plugin & Hooks Installation (Manual Setup)
 
 **`python-backend` (Antigravity / Claude Code)** — includes runtime hooks (`hooks.json`, `PreToolUse` gates) that are separate from standard agent skills, so configure it by copying its directory:
 
@@ -293,7 +311,7 @@ mkdir -p ~/.gemini/config/plugins/python-backend
 cp -r ./plugins/python-backend/* ~/.gemini/config/plugins/python-backend/
 ```
 
-**`senior-dev`, `git-workflow`, `docs-and-quality`, `multi-agent-ops`, `senior-data-engineer` (Claude Code)** — plugins of bundled skills/subagents; `git-workflow` also has a hook, `senior-dev`/`senior-data-engineer` also have MCP servers, `docs-and-quality`/`multi-agent-ops` are skills-only:
+**`senior-dev`, `git-workflow`, `docs-and-quality`, `multi-agent-ops`, `senior-data-engineer`, `sql-query-optimizer` (Claude Code)** — plugins of bundled skills/subagents; `git-workflow` also has a hook, `senior-dev`/`senior-data-engineer`/`sql-query-optimizer` also have MCP servers, `docs-and-quality`/`multi-agent-ops` are skills-only:
 
 ```bash
 cp -r ./plugins/senior-dev ~/.claude/plugins/senior-dev
@@ -301,11 +319,12 @@ cp -r ./plugins/git-workflow ~/.claude/plugins/git-workflow
 cp -r ./plugins/docs-and-quality ~/.claude/plugins/docs-and-quality
 cp -r ./plugins/senior-data-engineer ~/.claude/plugins/senior-data-engineer
 cp -r ./plugins/multi-agent-ops ~/.claude/plugins/multi-agent-ops
+cp -r ./plugins/sql-query-optimizer ~/.claude/plugins/sql-query-optimizer
 ```
 
 ---
 
-## 12. Usage and Workflows
+## 13. Usage and Workflows
 
 Once installed, the agent skills and hooks are completely automatic:
 1. **Writing Code**: When you prompt the agent to perform edits or checkouts, the rules in `python-backend-rules.md` guide the coding standard (PEP 8, strict types).
@@ -314,7 +333,7 @@ Once installed, the agent skills and hooks are completely automatic:
 
 ---
 
-## 13. Antigravity Sidecars (Loop Engineering Background Processes)
+## 14. Antigravity Sidecars (Loop Engineering Background Processes)
 
 This workspace provides a root-level [**`sidecars/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/sidecars) directory containing configurations for background processes and schedules that run alongside Antigravity:
 
@@ -328,5 +347,5 @@ To install sidecars globally or per-plugin, review the [**Sidecars Installation 
 
 ---
 
-## 14. License
+## 15. License
 This repository is open-sourced under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for more details.

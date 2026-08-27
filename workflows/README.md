@@ -27,6 +27,15 @@ These files act as active instructions. You can guide your AI agent to follow a 
 
 > *"Please follow the workflow detailed in [test-execution-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/test-execution-workflow.md) to run and verify tests before making changes."*
 
+More example prompts, one per workflow:
+- "Follow the pull-request-workflow to prepare this branch and write the PR description." (`pull-request-workflow.md`)
+- "Follow the commit-workflow to stage and commit these changes." (`commit-workflow.md`)
+- "Follow the test-execution-workflow to locate and run this project's test suite with coverage." (`test-execution-workflow.md`)
+- "Follow the code-smell-review-workflow to audit this module for God classes and high complexity." (`code-smell-review-workflow.md`)
+- "Follow the secure-code-review-workflow before I merge this branch." (`secure-code-review-workflow.md`)
+- "Follow the feature-development-workflow to build the new notifications feature end to end." (`feature-development-workflow.md`)
+- "Follow the grill-me-alignment-workflow to interview me about this design before you start coding." (`grill-me-alignment-workflow.md`)
+
 When an agent loads a workflow file, it must:
 1. Parse the **Prerequisites** and ensure the environment matches.
 2. Follow the **Workflow Steps** chronologically.

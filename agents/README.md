@@ -32,3 +32,18 @@ These configurations can be directly loaded into an Antigravity workspace or glo
 * **Security & Sandboxing**: The orchestrator is restricted from running terminal commands directly (`commandExecutionPolicy: off`), forcing it to delegate to the sandboxed worker agents.
 * **Skill Integration**: Each agent's system prompt is intentionally thin — it points to its bundled skill (e.g. `skills/code-implementer`, `skills/senior-architect-engineering`) for the actual workflow/templates instead of restating them, so the skill stays the single source of truth.
 * **Scaled, Not Fixed, Pipeline**: The Orchestrator does not run all five subagents for every request. It sizes the pipeline to the task — a trivial fix goes straight to `code-implementer`, while a new feature or system-level change runs the full Product → Architect → Implement → QA → Verify sequence. Each subagent mirrors this: it scales its own deliverable (PRD, ADR, E2E suite, audit) to what the change actually warrants, avoiding over-engineering on small tasks while still covering the full lifecycle on larger ones.
+
+---
+
+## 3. Example Prompts
+
+**Full pipeline, via the orchestrator**:
+- "Use the senior-dev-orchestrator agent to build a password-reset feature end to end."
+- "Orchestrate a fix for this bug report — keep it lightweight, no full design phase needed."
+
+**Individual subagents, invoked directly**:
+- "Ask the product-analyst agent to turn this feature request into a PRD." (`product-analyst`)
+- "Have the architect-engineer agent draft an ADR comparing sync vs. async processing for this endpoint." (`architect-engineer`)
+- "Use the code-implementer agent to build the new endpoint with TDD." (`code-implementer`)
+- "Have the qa-tester agent write E2E tests for the checkout flow." (`qa-tester`)
+- "Ask the compliance-verifier agent for a release-readiness verdict on this branch." (`compliance-verifier`)

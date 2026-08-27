@@ -82,7 +82,22 @@ On loading the plugin, the following 8 skills are automatically loaded as the ag
 
 ---
 
-## 5. Installation
+## 5. Example Prompts
+
+**Full pipeline, via the orchestrator** (it decides how much of the pipeline the task actually needs):
+- "Use the senior-dev-orchestrator agent to build a password-reset feature end to end — requirements, design, implementation, tests, and a final audit."
+- "Orchestrate a fix for this bug report — keep it lightweight, this doesn't need a full design phase."
+
+**Individual subagents, invoked directly**:
+- "Ask the product-analyst agent to turn this feature request into a PRD." (`product-analyst`)
+- "Have the architect-engineer agent draft an ADR comparing sync vs. async processing for this endpoint." (`architect-engineer`)
+- "Use the code-implementer agent to build the new endpoint with TDD." (`code-implementer`)
+- "Have the qa-tester agent write E2E tests for the checkout flow and map them to requirements." (`qa-tester`)
+- "Ask the compliance-verifier agent for a release-readiness verdict on this branch." (`compliance-verifier`)
+
+---
+
+## 6. Installation
 
 Copy the plugin folder into your Claude Code plugins directory (or install it via the plugin marketplace if this repository is registered as one):
 

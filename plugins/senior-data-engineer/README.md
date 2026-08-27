@@ -65,7 +65,20 @@ This is a **chat-based expert** for design and implementation help inside a Clau
 
 ---
 
-## 6. Installation
+## 6. Example Prompts
+
+- "Use the senior-data-engineer agent to design a pipeline that lands daily sales CSV exports into BigQuery."
+- "Design a CDC pipeline from our Cloud SQL orders table into BigQuery, and model it as SCD Type 2."
+- "Scaffold an SCD Type 2 Dataform model for the customer dimension, tracking name/address/tier changes."
+- "Should this pipeline be batch or streaming? We need the dashboard updated every 15 minutes."
+- "List the datasets in this BigQuery project and check the table schema before I design a new mart on top of it." (uses the `bigquery` MCP tool)
+- "Check the replication status of our Datastream stream from the orders database." (uses the `datastream` MCP tool)
+- "Why did the last Dataform workflow invocation fail?" (uses the `dataform` MCP tool)
+- "Review this BigQuery table's partitioning and clustering for a query that always filters by `order_date` and `region`."
+
+---
+
+## 7. Installation
 
 ```bash
 cp -r ./plugins/senior-data-engineer ~/.claude/plugins/senior-data-engineer
