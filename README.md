@@ -301,6 +301,16 @@ npx skills add jggomez/expert-ai-developer-skills
 
 ### 12.2 Plugin & Hooks Installation (Manual Setup)
 
+**Platform coverage at a glance** — only 2 of the 7 plugins have an Antigravity path; the other 5 are Claude Code only, and that's a deliberate, documented gap rather than an oversight:
+
+| Plugin | Antigravity CLI | Claude Code |
+| :--- | :--- | :--- |
+| `python-backend` | ✅ same folder (hook scripts detect the host at runtime) | ✅ verified end-to-end (see §4) |
+| `senior-dev` | ✅ via the separate root [`agents/`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory (§11) — **not** this plugin folder | ✅ this plugin folder |
+| `git-workflow`, `docs-and-quality`, `multi-agent-ops`, `senior-data-engineer`, `sql-query-optimizer` | ❌ no equivalent in this repo | ✅ this plugin folder |
+
+Why the 5 don't have an Antigravity path: their MCP servers (`.mcp.json`) and subagent frontmatter (`agents/*.md`) were verified specifically against Claude Code's plugin schema. Antigravity's own plugin/MCP conventions were never independently verified for this repo (unlike `python-backend`, whose hook scripts were explicitly built and tested to detect the host and branch accordingly) — so rather than guess at an untested format, these 5 are documented as Claude Code only until that verification happens.
+
 **`python-backend` (Antigravity / Claude Code)** — includes runtime hooks (`hooks.json`, `PreToolUse` gates) that are separate from standard agent skills, so configure it by copying its directory:
 
 ```bash
@@ -309,6 +319,12 @@ mkdir -p ~/.gemini/config/plugins/python-backend
 
 # 2. Copy the plugin folder to your global config
 cp -r ./plugins/python-backend/* ~/.gemini/config/plugins/python-backend/
+```
+
+**`senior-dev` (Antigravity)** — use the root `agents/` directory instead of this plugin folder:
+```bash
+mkdir -p ~/.gemini/config/agents/
+cp agents/*.md ~/.gemini/config/agents/
 ```
 
 **`senior-dev`, `git-workflow`, `docs-and-quality`, `multi-agent-ops`, `senior-data-engineer`, `sql-query-optimizer` (Claude Code)** — plugins of bundled skills/subagents; `git-workflow` also has a hook, `senior-dev`/`senior-data-engineer`/`sql-query-optimizer` also have MCP servers, `docs-and-quality`/`multi-agent-ops` are skills-only:

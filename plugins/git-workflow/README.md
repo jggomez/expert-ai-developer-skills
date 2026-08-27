@@ -5,6 +5,8 @@
 
 The `git-workflow` plugin packages the repository's git hygiene tooling — commit message standards, PR conventions, and the Gitflow branch safety gate — as a small, language-agnostic Claude Code plugin. It bundles nothing new: the hook is the Gitflow-branch-check portion of `plugins/python-backend/hooks/pre-tool-gate.js`, extracted on its own since it has no dependency on Python or cloud MCP servers, and the two skills already exist in the root `/skills` catalog.
 
+**Claude Code only** — no Antigravity equivalent exists in this repo for this plugin (see root README §12.2 for why).
+
 > **Maintaining the bundled skills**: `skills/` below is a physical copy of the matching directories in the root `/skills` catalog. After editing `commit-expert` or `pull-request-expert` under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo root to re-sync this copy. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills` fails CI if the two ever drift.
 
 ---

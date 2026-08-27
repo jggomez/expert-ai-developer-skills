@@ -5,6 +5,8 @@
 
 The `multi-agent-ops` plugin packages the repository's manager-worker orchestration and repo-analysis skills as a minimal Claude Code plugin — the two skills in this repo's catalog that weren't yet bundled into any other plugin.
 
+**Claude Code only** — no Antigravity equivalent exists in this repo for this plugin as a bundle (see root README §12.2 for why), though §3 below covers a related, separate platform gap around scheduled automation specifically.
+
 > **Maintaining the bundled skills**: `skills/` below is a physical copy of the matching directories in the root `/skills` catalog. After editing either skill under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo root to re-sync this copy. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills` fails CI if the two ever drift.
 
 ---

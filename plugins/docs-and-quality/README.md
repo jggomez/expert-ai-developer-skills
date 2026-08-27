@@ -5,6 +5,8 @@
 
 The `docs-and-quality` plugin packages the repository's stack-agnostic documentation and testing standards as a minimal Claude Code plugin: no hooks, no MCP servers, no agents — just three skills that already exist in the root `/skills` catalog, with nothing added.
 
+**Claude Code only** — no Antigravity equivalent exists in this repo for this plugin (see root README §12.2 for why). The three bundled skills themselves are platform-neutral, though — see below.
+
 > **Maintaining the bundled skills**: `skills/` below is a physical copy of the matching directories in the root `/skills` catalog. After editing any of these three skills under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo root to re-sync this copy. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills` fails CI if the two ever drift.
 
 ---
