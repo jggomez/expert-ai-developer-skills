@@ -54,6 +54,10 @@ PLUGIN_BUNDLED_SKILLS = {
         "loop-engineering",
         "repo-research",
     ],
+    "senior-data-engineer": [
+        "gcp-data-engineering",
+        "cdc-scd-patterns",
+    ],
 }
 
 IGNORE = shutil.ignore_patterns(".DS_Store", "__pycache__", "*.pyc")

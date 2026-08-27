@@ -1,23 +1,23 @@
 # Expert AI Agent Skills Catalog
 
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
-[![Skills Count](https://img.shields.io/badge/Skills-22%20Optimized-orange?style=flat-square)](file:///./)
+[![Skills Count](https://img.shields.io/badge/Skills-24%20Optimized-orange?style=flat-square)](file:///./)
 
-This directory contains a premium catalog of **22 agent skills** designed to automate code quality checks, enforce programming best practices, detect code smells, validate commit history, and implement self-correcting development loops. Every `SKILL.md` here is platform-neutral (no Antigravity- or Claude-Code-specific tool names in its instructions), so the same catalog works whether you're on Google Antigravity (AGY) or Claude Code.
+This directory contains a premium catalog of **24 agent skills** designed to automate code quality checks, enforce programming best practices, detect code smells, validate commit history, and implement self-correcting development loops. Every `SKILL.md` here is platform-neutral (no Antigravity- or Claude-Code-specific tool names in its instructions), so the same catalog works whether you're on Google Antigravity (AGY) or Claude Code.
 
-Two plugins in this repository bundle physical copies of a subset of these skills so they can be distributed standalone: [`plugins/python-backend`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/python-backend) (11 backend-focused skills) and [`plugins/senior-dev`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev) (8 SDLC-orchestration skills). Edit skills here, then run `python3 scripts/sync_plugin_skills.py` to re-sync both.
+Five plugins in this repository bundle physical copies of a subset of these skills so they can be distributed standalone: [`python-backend`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/python-backend) (11 backend skills), [`senior-dev`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev) (8 SDLC-orchestration skills), [`git-workflow`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/git-workflow) (2), [`docs-and-quality`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/docs-and-quality) (3), [`multi-agent-ops`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/multi-agent-ops) (2), and [`senior-data-engineer`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-data-engineer) (2, GCP-focused). Edit skills here, then run `python3 scripts/sync_plugin_skills.py` to re-sync all of them.
 
 ---
 
 ## 1. Quick Installation & Setup
 
-These skills fully comply with the [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, you can install any of these 22 skills out-of-the-box using Vercel's official, standard `skills` CLI.
+These skills fully comply with the [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, you can install any of these 24 skills out-of-the-box using Vercel's official, standard `skills` CLI.
 
 ### Option A: Standard Installation (Recommended)
 This is the recommended and simplest way to discover, add, and manage these skills. There's no need for local configuration or downloading extra packages. Simply run:
 
 ```bash
-# List all 22 skills available in our repository
+# List all 24 skills available in our repository
 npx skills add jggomez/expert-ai-developer-skills --list
 
 # Install a specific skill (e.g. python-expert) in the active project (.agents/skills)
@@ -26,7 +26,7 @@ npx skills add jggomez/expert-ai-developer-skills --skill python-expert
 # Install a specific skill globally on your system (so all your workspaces can load it)
 npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
 
-# Install ALL 22 skills in the active project
+# Install ALL 24 skills in the active project
 npx skills add jggomez/expert-ai-developer-skills
 ```
 
@@ -69,6 +69,8 @@ This table provides a comprehensive overview of every modular skill, its core pu
 | **`build-and-ci-gates`** | Enforces local check gates, multi-stage Docker builds, and Git pre-commit triggers. | `references/ci-templates.md` | `run_checks.py` (Black/Ruff linter gate wrapper)<br>`pre_commit_quality_gate.py` (Pre-commit hook). |
 | **`repo-research`** | Automatically maps workspace packages, dependency trees, and sitemaps. | `references/research-patterns.md` | `repo_analyzer.py` (Statically generates up-to-date repository indexes). |
 | **`guidelines-karpathy`** | Behavioral quality checklist to reduce common LLM coding pitfalls. | `references/karpathy-checklist.md` | Prevents over-engineering and keeps logic atomic. |
+| **`gcp-data-engineering`** | Architecture decisions for GCP pipelines: lake/warehouse design, batch vs. streaming, orchestration tool choice, BigQuery cost/performance. | `references/gcp-data-stack.md` | Guides Datastream/Dataform/Pub-Sub/Airflow selection via a decision checklist. |
+| **`cdc-scd-patterns`** | Change Data Capture via Datastream and Slowly Changing Dimension (Type 0-6) modeling in BigQuery/Dataform. | `references/scd-type2-sql.md` | `scaffold_scd2_dataform.py` (Generates a parameterized SCD Type 2 `.sqlx` template). |
 
 ---
 
