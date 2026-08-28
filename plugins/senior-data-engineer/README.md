@@ -5,7 +5,7 @@
 
 The `senior-data-engineer` plugin packages a Google Cloud data engineering expert for **both Antigravity CLI and Claude Code**: one subagent, two skills (architecture decisions, and CDC/SCD patterns specifically), and direct MCP access to BigQuery, Datastream, Dataform, and Pub/Sub.
 
-**Antigravity CLI users**: the subagent installs from the root [`agents/senior-data-engineer.md`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/senior-data-engineer.md) — not this plugin folder's `agents/` — since Claude Code and Antigravity use incompatible subagent frontmatter. This plugin folder's `mcp_config.json` (Antigravity's MCP format) still applies either way.
+**Antigravity CLI users**: the subagent installs from the root [`agents/senior-data-engineer.md`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/senior-data-engineer.md) — not this plugin folder's `agents/` — since Claude Code and Antigravity use incompatible subagent frontmatter. **Don't run `agy plugin install` on this plugin folder**; copy the agent file and `mcp_config.json` by hand instead — see §7 Installation.
 
 > **Maintaining the bundled skills**: `skills/` below is a physical copy of the matching directories in the root `/skills` catalog. After editing `gcp-data-engineering` or `cdc-scd-patterns` under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo root to re-sync this copy. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills` fails CI if the two ever drift.
 
@@ -96,16 +96,13 @@ cp -r ./plugins/senior-data-engineer ~/.claude/plugins/senior-data-engineer
 claude --plugin-dir ./plugins/senior-data-engineer
 ```
 
-**Antigravity CLI** — the subagent comes from the root `agents/` directory, not this plugin folder:
+**Antigravity CLI** — **do not** run `agy plugin install ./plugins/senior-data-engineer`: this folder's `agents/` uses Claude Code's frontmatter schema, and whether Antigravity's loader auto-discovers a plugin's `agents/` folder the same way it does `skills/` isn't documented — the install risks it trying (and failing) to parse a file it was never meant to read, for no benefit, since Antigravity doesn't use this folder's agent anyway. Instead, copy the two pieces it needs by hand:
 ```bash
-# Project-scoped agent (auto-discovered from the current project):
-mkdir -p .agents/agents/
+# 1. Agent — the Antigravity-format copy lives at the repo root, not in this plugin folder:
+mkdir -p .agents/agents/          # project-scoped; use ~/.gemini/config/agents/ for global
 cp agents/senior-data-engineer.md .agents/agents/
 
-# Global agent, equivalently:
-mkdir -p ~/.gemini/config/agents/
-cp agents/senior-data-engineer.md ~/.gemini/config/agents/
-
-# The plugin's MCP servers (mcp_config.json) install as a full plugin, global-only:
-agy plugin install ./plugins/senior-data-engineer
+# 2. MCP servers — merge this plugin's mcp_config.json manually:
+cat plugins/senior-data-engineer/mcp_config.json   # merge its "mcpServers" into .agents/mcp_config.json
+                                                    # (global: ~/.gemini/config/mcp_config.json)
 ```

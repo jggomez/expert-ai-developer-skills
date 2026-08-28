@@ -7,7 +7,7 @@ The `senior-dev` plugin packages the repository's Loop Engineering subagent topo
 
 Its `plugin.json`/`agents/`/`.mcp.json`/`${CLAUDE_PLUGIN_ROOT}` layout follows the **Claude Code plugin format**. Claude Code auto-discovers each `.md` file under `agents/` as a subagent and each `SKILL.md` under `skills/` as a skill — no separate manifest entry is needed for either.
 
-**Antigravity CLI users**: this same topology is available natively at the repo root under [`agents/`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents), using Antigravity's own subagent frontmatter (`subagent`, `mainAgent`, `commandExecutionPolicy`, `model: pro/flash`) instead of Claude Code's. Both directories reuse the same underlying skills and agent roles — only the packaging differs per platform, since the two hosts use incompatible subagent schemas that can't be merged into one file.
+**Antigravity CLI users**: this same topology is available natively at the repo root under [`agents/`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents), using Antigravity's own subagent frontmatter (`subagent`, `mainAgent`, `commandExecutionPolicy`, `model: pro/flash`) instead of Claude Code's. Both directories reuse the same underlying skills and agent roles — only the packaging differs per platform, since the two hosts use incompatible subagent schemas that can't be merged into one file. **Don't run `agy plugin install` on this plugin folder** — see §6 Installation for why and what to copy instead.
 
 > **Maintaining the bundled skills**: `skills/` below is a physical copy of the matching directories in the root `/skills` catalog, kept self-contained so the plugin folder can be distributed on its own. After editing any bundled skill under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo root to re-sync this copy — don't hand-edit both. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills` fails CI if the two ever drift.
 
@@ -112,18 +112,15 @@ claude --plugin-dir ./plugins/senior-dev
 ```
 Once installed, invoke `senior-dev-orchestrator` (or any of the five subagents directly) via the `Agent` tool the same way you would any other subagent.
 
-**Antigravity CLI** — the subagents come from the root `agents/` directory, not this plugin folder (see the note in the intro above for why). Install them project-scoped or global:
+**Antigravity CLI** — **do not** run `agy plugin install ./plugins/senior-dev`: this folder's `agents/` uses Claude Code's frontmatter schema, and whether Antigravity's loader auto-discovers a plugin's `agents/` folder the same way it does `skills/` isn't documented — running the install risks it trying (and failing) to parse files it was never meant to read, for no benefit, since Antigravity doesn't use this folder's agents anyway. Instead, copy the two pieces it needs by hand:
 ```bash
-# Project-scoped (auto-discovered from the current project):
-mkdir -p .agents/agents/
+# 1. Agents — Antigravity-format copies live at the repo root, not in this plugin folder:
+mkdir -p .agents/agents/          # project-scoped; use ~/.gemini/config/agents/ for global
 cp agents/senior-dev-orchestrator.md agents/product-analyst.md agents/architect-engineer.md \
    agents/code-implementer.md agents/qa-tester.md agents/compliance-verifier.md \
    .agents/agents/
 
-# Global:
-mkdir -p ~/.gemini/config/agents/
-cp agents/senior-dev-orchestrator.md agents/product-analyst.md agents/architect-engineer.md \
-   agents/code-implementer.md agents/qa-tester.md agents/compliance-verifier.md \
-   ~/.gemini/config/agents/
+# 2. MCP servers — merge this plugin's mcp_config.json manually:
+cat plugins/senior-dev/mcp_config.json   # merge its "mcpServers" into .agents/mcp_config.json
+                                          # (global: ~/.gemini/config/mcp_config.json)
 ```
-This plugin folder's `mcp_config.json` (the MCP servers, not the agents) installs as a full plugin, global-only, via `agy plugin install ./plugins/senior-dev`.

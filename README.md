@@ -310,33 +310,44 @@ npx skills add jggomez/expert-ai-developer-skills
 | Plugin | Antigravity CLI | Claude Code |
 | :--- | :--- | :--- |
 | `python-backend` | ✅ same folder — `hooks.json` carries both hosts' hook groups in one file; scripts detect the host and emit the right decision format; `mcp_config.json` added | ✅ same folder — `.mcp.json` |
-| `senior-dev` | ✅ via the separate root [`agents/`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory (§11) for the 6 subagents — **not** this plugin folder; `mcp_config.json` added to this plugin folder for the MCP servers | ✅ this plugin folder |
+| `senior-dev` | ⚠️ never `agy plugin install` this folder (its `agents/` is Claude-only, unverified how Antigravity's loader treats it) — agents via the separate root [`agents/`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory (§11), `mcp_config.json` copied by hand | ✅ this plugin folder |
 | `git-workflow` | ✅ same folder — `hooks.json` carries both hosts' hook groups; script detects the host | ✅ same folder |
 | `docs-and-quality`, `multi-agent-ops` | ✅ same folder — skills-only, no host-specific format to port | ✅ same folder |
-| `senior-data-engineer`, `sql-query-optimizer` | ✅ via the root `agents/` directory for the single subagent, plus `mcp_config.json` added to the plugin folder | ✅ this plugin folder |
+| `senior-data-engineer`, `sql-query-optimizer` | ⚠️ never `agy plugin install` these folders (same `agents/` risk as `senior-dev`) — agent via the root `agents/` directory, `mcp_config.json` copied by hand | ✅ this plugin folder |
 
 **Why this took real verification, not a guess**: earlier in this repo's history, `python-backend`'s `hooks.json`/`mcp_config.json` were rewritten to Claude Code's schema (`{"hooks": {...}}`, `.mcp.json` with `type`+`url`) without realizing the *original* format was already correct Antigravity — a real regression, since Antigravity's actual schema (confirmed: named hook groups with an `enabled` flag, events `PreToolUse`/`PostToolUse`/`PreInvocation`/`PostInvocation`/`Stop` — no `SessionStart`; `mcp_config.json` with `serverUrl`/`authProviderType`) is genuinely different from Claude Code's. Both are now supported side by side: `hooks.json` carries a `"hooks"` key for Claude Code and separate named keys for Antigravity in the same file (each host reads only the key it understands); MCP config ships as two separate files (`.mcp.json` and `mcp_config.json`) since the filenames don't collide.
 
-**Two more verified findings, folded in below**:
+**Three more verified findings, folded in below**:
 - **Claude Code's plugin manifest lives at `.claude-plugin/plugin.json`**, a subdirectory — not `plugin.json` at the plugin root. Every plugin here now ships *both*: root `plugin.json` for Antigravity, `.claude-plugin/plugin.json` (same content) for Claude Code. Without the subdirectory copy, Claude Code does not recognize the directory as a plugin at all.
 - **Antigravity's real global install path is `~/.gemini/antigravity-cli/plugins/<name>/`**, populated by the `agy plugin install <path>` CLI command — not a path you `mkdir`/`cp` into by hand. Use the command below; let `agy` manage the destination.
+- **`agy plugin install` is not safe for `senior-dev`, `senior-data-engineer`, or `sql-query-optimizer`.** These 3 plugins bundle an `agents/*.md` folder written in Claude Code's subagent frontmatter (`tools: Read, Write, Edit`, `model: sonnet`) — a different YAML schema than Antigravity's (`tools: [view_file, run_command]`, `mainAgent`, `subagent`, `commandExecutionPolicy`). Whether Antigravity's loader auto-discovers a plugin's `agents/` folder the same way it does `skills/` isn't documented, so whether it silently ignores those incompatible files or errors on them is unverified — running `agy plugin install` on these 3 is an avoidable risk for no benefit, since Antigravity never uses that `agents/` folder anyway (its own agent copies live at the repo root, see below). **Don't run `agy plugin install` on these 3 plugins** — copy their `mcp_config.json` by hand instead (shown below). The other 4 plugins (`python-backend`, `git-workflow`, `docs-and-quality`, `multi-agent-ops`) have no `agents/` folder at all, so `agy plugin install` is unambiguously safe for them.
 
-**Antigravity CLI — global install, any plugin** (full plugins are global-only on this host; there is no project-scoped equivalent for a bundled plugin):
+**Antigravity CLI — global install via `agy`** (safe: no `agents/` folder in these 4; full plugins are global-only, no project-scoped equivalent):
 ```bash
 agy plugin install ./plugins/python-backend
 agy plugin install ./plugins/git-workflow
 agy plugin install ./plugins/docs-and-quality
 agy plugin install ./plugins/multi-agent-ops
-agy plugin install ./plugins/senior-dev            # installs the plugin's mcp_config.json only — see below for its agents
-agy plugin install ./plugins/senior-data-engineer   # same: mcp_config.json only, agent comes from root agents/
-agy plugin install ./plugins/sql-query-optimizer    # same: mcp_config.json only, agent comes from root agents/
 agy plugin list      # confirm
 agy plugin enable|disable|uninstall <name>
 ```
 
-**`senior-dev`, `senior-data-engineer`, `sql-query-optimizer` (Antigravity CLI)** — these plugins' subagents use Claude-Code-only frontmatter, so on Antigravity the equivalent subagents ship separately as plain `.md` files at the repo root `agents/`. Two ways to use them:
-- **Project-scoped** (no global state): `mkdir -p .agents/agents && cp agents/senior-dev-orchestrator.md agents/product-analyst.md agents/architect-engineer.md agents/code-implementer.md agents/qa-tester.md agents/compliance-verifier.md agents/senior-data-engineer.md agents/sql-query-optimizer.md .agents/agents/` — Antigravity auto-discovers agents from `.agents/agents/` in the current project.
-- **Global**: same, but into `~/.gemini/config/agents/`.
+**`senior-dev`, `senior-data-engineer`, `sql-query-optimizer` (Antigravity CLI)** — skip `agy plugin install` for these; copy the two pieces Antigravity actually needs by hand instead:
+```bash
+# 1. MCP servers — merge each plugin's mcp_config.json into your Antigravity MCP config
+#    (project-scoped):
+cat plugins/senior-dev/mcp_config.json               # merge its "mcpServers" into .agents/mcp_config.json
+cat plugins/senior-data-engineer/mcp_config.json      # merge into .agents/mcp_config.json
+cat plugins/sql-query-optimizer/mcp_config.json       # merge into .agents/mcp_config.json
+#    (global equivalent: merge into ~/.gemini/config/mcp_config.json instead)
+
+# 2. Agents — Antigravity-format copies already exist at the repo root, not inside these plugins:
+mkdir -p .agents/agents      # project-scoped; use ~/.gemini/config/agents/ for global
+cp agents/senior-dev-orchestrator.md agents/product-analyst.md agents/architect-engineer.md \
+   agents/code-implementer.md agents/qa-tester.md agents/compliance-verifier.md \
+   agents/senior-data-engineer.md agents/sql-query-optimizer.md \
+   .agents/agents/
+```
 
 **Project-scoped Antigravity pieces, without installing a full plugin**: skills → `.agents/skills/<skill-name>/` (global: `~/.gemini/config/skills/`), agents → `.agents/agents/` (global: `~/.gemini/config/agents/`), MCP servers → `.agents/mcp_config.json` (global: `~/.gemini/config/mcp_config.json`). These three are the only Antigravity mechanisms that work per-project; the plugin bundle itself (`agy plugin install`) is global-only.
 
