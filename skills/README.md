@@ -1,23 +1,23 @@
 # Expert AI Agent Skills Catalog
 
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
-[![Skills Count](https://img.shields.io/badge/Skills-28%20Optimized-orange?style=flat-square)](file:///./)
+[![Skills Count](https://img.shields.io/badge/Skills-35%20Optimized-orange?style=flat-square)](file:///./)
 
-This directory contains a premium catalog of **28 agent skills** designed to automate code quality checks, enforce programming best practices, detect code smells, validate commit history, and implement self-correcting development loops. Every `SKILL.md` here is platform-neutral (no Antigravity- or Claude-Code-specific tool names in its instructions), so the same catalog works whether you're on Google Antigravity (AGY) or Claude Code.
+This directory contains a premium catalog of **35 agent skills** designed to automate code quality checks, enforce programming best practices, detect code smells, validate commit history, and implement self-correcting development loops. Every `SKILL.md` here is platform-neutral (no Antigravity- or Claude-Code-specific tool names in its instructions), so the same catalog works whether you're on Google Antigravity (AGY) or Claude Code.
 
-Seven plugins in this repository bundle physical copies of a subset of these skills so they can be distributed standalone: [`python-backend`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/python-backend) (11 backend skills), [`senior-dev`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev) (8 SDLC-orchestration skills), [`git-workflow`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/git-workflow) (2), [`docs-and-quality`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/docs-and-quality) (3), [`multi-agent-ops`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/multi-agent-ops) (2), [`senior-data-engineer`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-data-engineer) (2, GCP-focused), and [`sql-query-optimizer`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/sql-query-optimizer) (2, BigQuery + generic SQL). Edit skills here, then run `python3 scripts/sync_plugin_skills.py` to re-sync all of them.
+Nine plugins in this repository bundle physical copies of a subset of these skills so they can be distributed standalone: [`python-backend`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/python-backend) (11 backend skills), [`senior-dev`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev) (8 SDLC-orchestration skills), [`git-workflow`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/git-workflow) (2), [`docs-and-quality`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/docs-and-quality) (3), [`multi-agent-ops`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/multi-agent-ops) (2), [`senior-data-engineer`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-data-engineer) (2, GCP-focused), [`sql-query-optimizer`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/sql-query-optimizer) (2, BigQuery + generic SQL), [`shared-context`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/shared-context) (2, cross-agent working memory), and [`senior-dev-flutter`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev-flutter) (7, the senior Flutter layer on top of the official Flutter/Dart skill packs). Edit skills here, then run `python3 scripts/sync_plugin_skills.py` to re-sync all of them.
 
 ---
 
 ## 1. Quick Installation & Setup
 
-These skills fully comply with the [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, you can install any of these 28 skills out-of-the-box using Vercel's official, standard `skills` CLI.
+These skills fully comply with the [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, you can install any of these 35 skills out-of-the-box using Vercel's official, standard `skills` CLI.
 
 ### Option A: Standard Installation (Recommended)
 This is the recommended and simplest way to discover, add, and manage these skills. There's no need for local configuration or downloading extra packages. Simply run:
 
 ```bash
-# List all 28 skills available in our repository
+# List all 35 skills available in our repository
 npx skills add jggomez/expert-ai-developer-skills --list
 
 # Install a specific skill (e.g. python-expert) in the active project (.agents/skills)
@@ -26,7 +26,7 @@ npx skills add jggomez/expert-ai-developer-skills --skill python-expert
 # Install a specific skill globally on your system (so all your workspaces can load it)
 npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
 
-# Install ALL 28 skills in the active project
+# Install ALL 35 skills in the active project
 npx skills add jggomez/expert-ai-developer-skills
 ```
 
@@ -75,6 +75,13 @@ This table provides a comprehensive overview of every modular skill, its core pu
 | **`sql-query-optimization`** | EXPLAIN ANALYZE, indexing strategy, and pagination for Postgres/MySQL/SQL Server and other traditional engines. | `SKILL.md` | Diagnostic workflow for reading execution plans. |
 | **`context-capture`** | Records what a session did, decided, and how, into a shared `context/` directory other AI agents (Claude Code, Antigravity) can load. Secret redaction, `tar.xz` compression of old sessions, decision rollup. | `references/record-schema.md` | `context_snapshot.py` (scaffold + git snapshot)<br>`context_pack.py` (compress/decompress)<br>`context_rollup.py` (architecture log + retention). |
 | **`context-restore`** | Loads prior AI session context from `context/` at session start — summarizes what's there and adopts decisions/preferences only after the user confirms. | `references/restore-checklist.md` | `context_list.py` (read-only session listing; `exists` boolean for hooks). |
+| **`flutter-architecture-decisions`** | Choosing Flutter state management (Riverpod/Bloc/signals/setState), drawing package/module boundaries, and recording Flutter ADRs. Complements the official `flutter-apply-architecture-best-practices`. | `references/state-management-decision-matrix.md`<br>`references/adr-template.md` | Decision matrix + ADR template. |
+| **`flutter-review-checklist`** | Senior Flutter code review: rebuild scope, `const`, keys, dispose/leaks, `BuildContext` after `await`, list/image perf, `RepaintBoundary`, a11y semantics, golden coverage. | `references/flutter-review-checklist.md` | `flutter_project_audit.py` (file-only project audit: SDK constraints, lint strictness, test/coverage, flavors, `lib/` smells). |
+| **`flutter-test-strategy`** | Deciding what to test at which layer (unit/widget/golden/integration) and setting coverage gates. Routes to the official Flutter/Dart how-to test skills. | `references/test-pyramid-flutter.md` | Layer decision matrix + worked examples. |
+| **`flutter-performance-profiling`** | Diagnosing Flutter jank and slow startup with DevTools timeline, profile mode, the UI/raster thread split, shader jank, and `--trace-startup`; fix by symptom. | `references/jank-hunting-playbook.md` | Symptom→cause→fix table + step-by-step playbook. |
+| **`flutter-release-engineering`** | Shipping a Flutter app: build flavors + `--dart-define-from-file`, signing, the `flutter build` matrix, version/build-number, store metadata, and the OTA (Shorebird) decision. | `references/flavors-and-config.md` | Build matrix + `AppConfig` pattern. |
+| **`flutter-upgrade-migration`** | Project-scale Flutter/Dart SDK upgrades, dependency major bumps, and deprecation sweeps — the ordered upgrade plan around `dart fix` / `dart-resolve-package-conflicts`. | `SKILL.md` | Ordered upgrade sweep + deprecation triage. |
+| **`flutter-senior-orchestration`** | The phase map for running a Flutter feature/fix end to end — sizes the task, sequences the official skills, routes phases to the Flutter subagents. | `SKILL.md` | Task-sizing table + phase breakdown. |
 
 ---
 
@@ -121,6 +128,12 @@ python3 ./skills/context-capture/scripts/context_pack.py --auto # compress all b
 python3 ./skills/context-restore/scripts/context_list.py --json # what prior sessions exist (used by the hooks)
 ```
 
+### 3.7 Flutter Project Audit
+File-only audit of a Flutter/Dart project (no `flutter`/`dart` binary needed): SDK constraints, lint strictness, test & coverage setup, flavors, and `lib/` smells.
+```bash
+python3 ./skills/flutter-review-checklist/scripts/flutter_project_audit.py [PROJECT_DIR] [--json] [--strict]
+```
+
 ---
 
 ## 4. Example Activation Prompts
@@ -157,3 +170,10 @@ A skill activates when its `description` matches what you ask for — you don't 
 | `sql-query-optimization` | "Run EXPLAIN ANALYZE on this query and tell me if it needs an index." |
 | `context-capture` | "Save the context for this session — what we did, the decisions, and the flow — so the next agent can pick it up." |
 | `context-restore` | "Check the shared context directory and tell me what previous sessions worked on before we start." |
+| `flutter-architecture-decisions` | "We're starting a Flutter app — help me choose between Riverpod and Bloc and record the decision as an ADR." |
+| `flutter-review-checklist` | "Review this Flutter PR for rebuild scope, leaks, context-after-await, and accessibility." |
+| `flutter-test-strategy` | "For this new checkout feature, tell me what to test at unit vs widget vs integration level and set a coverage gate." |
+| `flutter-performance-profiling` | "This list screen janks when I scroll on Android — profile it and fix the cause." |
+| `flutter-release-engineering` | "Set up dev/staging/prod flavors with --dart-define-from-file and a signed release build matrix for this Flutter app." |
+| `flutter-upgrade-migration` | "Upgrade this app to the latest Flutter stable and clear the deprecations without one giant PR." |
+| `flutter-senior-orchestration` | "Build this Flutter feature end to end — size it, then run architecture, implementation, tests, and review." |

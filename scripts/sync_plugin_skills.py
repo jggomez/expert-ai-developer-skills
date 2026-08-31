@@ -66,6 +66,15 @@ PLUGIN_BUNDLED_SKILLS = {
         "context-capture",
         "context-restore",
     ],
+    "senior-dev-flutter": [
+        "flutter-senior-orchestration",
+        "flutter-architecture-decisions",
+        "flutter-review-checklist",
+        "flutter-test-strategy",
+        "flutter-performance-profiling",
+        "flutter-release-engineering",
+        "flutter-upgrade-migration",
+    ],
 }
 
 IGNORE = shutil.ignore_patterns(".DS_Store", "__pycache__", "*.pyc")

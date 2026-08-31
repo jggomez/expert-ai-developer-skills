@@ -9,13 +9,16 @@ tests/
 ├── conftest.py               # Shared pytest fixtures (skill discovery, path resolvers)
 ├── structure/                # Static & Schema Validation Tests
 │   ├── test_skills_structure.py       # YAML frontmatter, name/dir match, broken links, inline script paths, path leaks
-│   ├── test_plugin_structure.py       # hooks.json/.mcp.json schema, agents/ frontmatter, root<->plugin skill sync
-│   └── test_shared_context_plugin.py  # shared-context plugin layout: dual-host hooks.json, MCP config, host-neutral agent, rules file
+│   ├── test_plugin_structure.py         # hooks.json/.mcp.json schema, agents/ frontmatter, root<->plugin skill sync
+│   ├── test_shared_context_plugin.py    # shared-context plugin layout: dual-host hooks.json, MCP config, host-neutral agent, rules file
+│   └── test_senior_dev_flutter_plugin.py # senior-dev-flutter layout: boundary stated, 5 host-neutral agents, dual-host hooks, dart mcp-server config
 ├── unit/                     # Unit Tests for Skill Automation Scripts
-│   ├── test_skills_scripts.py          # Unit tests for Python/Bash scripts in skills/
-│   ├── test_shared_context_scripts.py  # context_snapshot / pack / rollup / list: scaffold, redaction, round-trip, retention
-│   ├── test_shared_context_mcp.py      # MCP server tool layer (pure functions, no mcp package needed)
-│   └── test_shared_context_hooks.py    # the 3 Node hooks: start prompt, checkpoint nudge, stop flush (both hosts)
+│   ├── test_skills_scripts.py           # Unit tests for Python/Bash scripts in skills/
+│   ├── test_shared_context_scripts.py   # context_snapshot / pack / rollup / list: scaffold, redaction, round-trip, retention
+│   ├── test_shared_context_mcp.py       # MCP server tool layer (pure functions, no mcp package needed)
+│   ├── test_shared_context_hooks.py     # the 3 Node hooks: start prompt, checkpoint nudge, stop flush (both hosts)
+│   ├── test_flutter_project_audit.py    # flutter_project_audit.py: SDK/lint/test/coverage/flavor detection, secret + print smells
+│   └── test_senior_dev_flutter_hooks.py # the 2 Node hooks: protected-branch build/upgrade gate, `dart analyze` stop gate (fake dart)
 ├── behavioral/               # Behavioral & LLM Intent Matching Tests
 │   └── test_skills_behavioral.py # Skill description trigger coverage & README sync
 └── integration/              # End-to-End & Multi-Skill Integration Tests

@@ -4,7 +4,7 @@
 [![Antigravity](https://img.shields.io/badge/Antigravity-Customizations-orange?style=for-the-badge)](https://github.com/google/antigravity)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green?style=for-the-badge)](LICENSE)
 
-Welcome to **expert-ai-developer-skills**, the premium community repository for Google Antigravity (AGY) and Claude Code agent customizations. This workspace houses a professional-grade suite of **28 platform-neutral developer skills**, refactored RFC 2119 rules, and **eight bundled plugins** (Claude Code + Antigravity CLI) — each a self-contained slice of the skills catalog, reusing what already exists rather than duplicating capability: `python-backend` (quality gates, Gitflow, security/MCP for Cloud Run & Firebase), `senior-dev` (the full SDLC orchestration topology), `git-workflow` (commit/PR hygiene + Gitflow gate), `docs-and-quality` (documentation & testing standards), `multi-agent-ops` (parallel-agent orchestration & repo research), `senior-data-engineer` (GCP pipeline design, CDC/SCD, with live BigQuery/Datastream/Dataform/Pub-Sub MCP access), `sql-query-optimizer` (finds and rewrites slow SQL across a codebase, BigQuery-specific and generic), and `shared-context` (cross-agent working memory in a committed `context/` directory, loaded on start-up only with the user's OK).
+Welcome to **expert-ai-developer-skills**, the premium community repository for Google Antigravity (AGY) and Claude Code agent customizations. This workspace houses a professional-grade suite of **35 platform-neutral developer skills**, refactored RFC 2119 rules, and **nine bundled plugins** (Claude Code + Antigravity CLI) — each a self-contained slice of the skills catalog, reusing what already exists rather than duplicating capability: `python-backend` (quality gates, Gitflow, security/MCP for Cloud Run & Firebase), `senior-dev` (the full SDLC orchestration topology), `git-workflow` (commit/PR hygiene + Gitflow gate), `docs-and-quality` (documentation & testing standards), `multi-agent-ops` (parallel-agent orchestration & repo research), `senior-data-engineer` (GCP pipeline design, CDC/SCD, with live BigQuery/Datastream/Dataform/Pub-Sub MCP access), `sql-query-optimizer` (finds and rewrites slow SQL across a codebase, BigQuery-specific and generic), `shared-context` (cross-agent working memory in a committed `context/` directory, loaded on start-up only with the user's OK), and `senior-dev-flutter` (the senior Flutter orchestration/decision/review layer on top of the official Flutter & Dart skill packs).
 
 ---
 
@@ -21,7 +21,7 @@ cd expert-ai-developer-skills
 
 ## 2. Directory Structure & Sitemap
 
-The workspace is cleanly structured into modular **skills** (discrete instructions and automation scripts), **rules** (system constraints for AI agents), **workflows** (playbooks for SDLC processes), **sidecars** (background processes and schedules), and **plugins** (eight self-contained plugins for Claude Code and Antigravity CLI, each bundling a subset of the skills catalog):
+The workspace is cleanly structured into modular **skills** (discrete instructions and automation scripts), **rules** (system constraints for AI agents), **workflows** (playbooks for SDLC processes), **sidecars** (background processes and schedules), and **plugins** (nine self-contained plugins for Claude Code and Antigravity CLI, each bundling a subset of the skills catalog):
 
 ```
 expert-ai-developer-skills/
@@ -90,7 +90,14 @@ expert-ai-developer-skills/
 │   ├── bigquery-query-optimization/    # Query plan diagnosis, JOIN/skew/partitioning rules, static SQL linter
 │   ├── sql-query-optimization/         # EXPLAIN ANALYZE, indexing, pagination for Postgres/MySQL/etc.
 │   ├── context-capture/               # Session record schema, secret redaction, tar.xz packing, decision rollup
-│   └── context-restore/               # Load prior AI-session context at start-up, adopt only on user OK
+│   ├── context-restore/               # Load prior AI-session context at start-up, adopt only on user OK
+│   ├── flutter-senior-orchestration/  # Phase map for running a Flutter feature/fix end to end
+│   ├── flutter-architecture-decisions/ # State-mgmt decision matrix + module boundaries + Flutter ADR template
+│   ├── flutter-review-checklist/      # Senior Flutter review checklist + flutter_project_audit.py
+│   ├── flutter-test-strategy/         # What to test at unit/widget/golden/integration + coverage gates
+│   ├── flutter-performance-profiling/ # DevTools jank hunting, profile mode, shader jank, --trace-startup
+│   ├── flutter-release-engineering/   # Flavors, --dart-define-from-file, signing, build matrix, OTA decision
+│   └── flutter-upgrade-migration/     # Ordered SDK-upgrade sweep, deprecation triage, dependency major bumps
 └── plugins/
     ├── python-backend/
     │   ├── README.md                   # Plugin installation, hooks, & mcp configurations
@@ -136,22 +143,30 @@ expert-ai-developer-skills/
     │   ├── mcp_config.json             # Same 2 servers, Antigravity's format
     │   ├── agents/                     # 1 subagent — host-neutral frontmatter, loads in both hosts; richer Antigravity-only variant in agents/ at root
     │   └── skills/                     # bigquery-query-optimization + sql-query-optimization
-    └── shared-context/
-        ├── README.md                   # Plugin layout, MCP tools, per-host install
+    ├── shared-context/
+    │   ├── README.md                   # Plugin layout, MCP tools, per-host install
+    │   ├── plugin.json                 # Required plugin metadata descriptor
+    │   ├── .mcp.json / mcp_config.json # stdio MCP: both run `sh mcp/run-server.sh`
+    │   ├── hooks.json                  # "hooks" (Claude Code) + "shared-context-relay" group (Antigravity)
+    │   ├── hooks/                      # session-start prompt, periodic checkpoint nudge, stop flush
+    │   ├── rules/                      # Antigravity auto-loads (no SessionStart event there)
+    │   ├── mcp/run-server.sh           # launcher: `uv run --with 'mcp<2'` — no manual pip install
+    │   ├── mcp/mcp_server.py           # 8 tools (context_list/snapshot/read/write/pack/unpack/rollup/search)
+    │   ├── agents/                     # context-keeper subagent (host-neutral frontmatter)
+    │   └── skills/                     # context-capture + context-restore
+    └── senior-dev-flutter/
+        ├── README.md                   # Boundary table + required official companion packs
         ├── plugin.json                 # Required plugin metadata descriptor
-        ├── .mcp.json / mcp_config.json # stdio MCP: both run `sh mcp/run-server.sh`
-        ├── hooks.json                  # "hooks" (Claude Code) + "shared-context-relay" group (Antigravity)
-        ├── hooks/                      # session-start prompt, periodic checkpoint nudge, stop flush
-        ├── rules/                      # Antigravity auto-loads (no SessionStart event there)
-        ├── mcp/run-server.sh           # launcher: `uv run --with 'mcp<2'` — no manual pip install
-        ├── mcp/mcp_server.py           # 8 tools (context_list/snapshot/read/write/pack/unpack/rollup/search)
-        ├── agents/                     # context-keeper subagent (host-neutral frontmatter)
-        └── skills/                     # context-capture + context-restore
+        ├── .mcp.json / mcp_config.json # official Dart & Flutter MCP: `dart mcp-server`
+        ├── hooks.json                  # "hooks" (Claude Code) + "senior-dev-flutter-gates" group (Antigravity)
+        ├── hooks/                      # PreToolUse: block store build / major bump on protected branch; Stop: dart analyze must be clean
+        ├── agents/                     # 5 host-neutral subagents (orchestrator + architect + implementer + reviewer + release-engineer)
+        └── skills/                     # 7 flutter-* skills (decision/checklist/strategy only — never a how-to)
 ```
 
 ---
 
-## 3. In-Depth Developer Skills (28 Packaged Modules)
+## 3. In-Depth Developer Skills (35 Packaged Modules)
 
 Each skill represents an isolated capability loaded with professional guidelines, architectural references, and self-contained command-line automation scripts:
 
@@ -185,6 +200,13 @@ Each skill represents an isolated capability loaded with professional guidelines
 | **`sql-query-optimization`** | EXPLAIN ANALYZE, indexing strategy, and pagination for Postgres/MySQL/SQL Server and other traditional engines. | *Execution plan diagnostic workflow* |
 | **`context-capture`** | Records what a session did, decided, and how into a shared `context/` directory for the next AI agent; secret redaction, `tar.xz` compression, decision rollup. | `context_snapshot.py` (scaffold + git snapshot)<br>`context_pack.py` (compress/restore)<br>`context_rollup.py` (architecture log + retention) |
 | **`context-restore`** | Loads prior AI session context at start-up — summarizes what's there, adopts decisions/preferences only after the user confirms. | `context_list.py` (read-only listing; `exists` flag for hooks) |
+| **`flutter-senior-orchestration`** | Phase map for running a Flutter feature/fix end to end: task sizing, phase sequence, routing each mechanic to the official Flutter/Dart skill. | *Task-sizing + phase table* |
+| **`flutter-architecture-decisions`** | Choosing Flutter state management (Riverpod/Bloc/signals/setState), drawing module boundaries, recording ADRs. | *Decision matrix + ADR template* |
+| **`flutter-review-checklist`** | Senior Flutter review: rebuild scope, `const`, keys, dispose/leaks, `BuildContext` after `await`, list/image perf, a11y, golden coverage. | `flutter_project_audit.py` (file-only project audit; no `flutter`/`dart` binary needed) |
+| **`flutter-test-strategy`** | Deciding unit vs widget vs golden vs integration for each behavior; coverage gates; routes to the official test-writing skills. | *Layer decision matrix* |
+| **`flutter-performance-profiling`** | Jank and slow-startup diagnosis: DevTools timeline, profile mode, UI/raster split, shader jank, `--trace-startup`; fix by symptom. | *Symptom→cause→fix playbook* |
+| **`flutter-release-engineering`** | Flavors + `--dart-define-from-file`, signing, the `flutter build` matrix, version/build-number, store metadata, OTA (Shorebird) decision. | *Build matrix + AppConfig pattern* |
+| **`flutter-upgrade-migration`** | Project-scale Flutter/Dart SDK upgrades, dependency major bumps, deprecation sweeps — ordered around `dart fix` / `dart-resolve-package-conflicts`. | *Ordered upgrade sweep* |
 
 ---
 
@@ -226,7 +248,7 @@ Four smaller plugins carve the rest of the catalog into focused, independently-i
 | :--- | :--- | :--- |
 | [**`git-workflow`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/git-workflow) | `commit-expert`, `pull-request-expert` + a Gitflow branch safety hook | The hook is the Gitflow-check portion of `python-backend`'s `pre-tool-gate.js`, extracted standalone since it has no Python/cloud dependency — usable in any stack. |
 | [**`docs-and-quality`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/docs-and-quality) | `documentation-expert`, `testing-expert`, `guidelines-karpathy` | Skills-only, no hooks/MCP — documentation and testing standards for any language. |
-| [**`multi-agent-ops`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/multi-agent-ops) | `loop-engineering`, `repo-research` | The two catalog skills not yet bundled anywhere else. Its README documents a real platform gap: Claude Code plugins have no static equivalent to the cron-scheduled `sidecars/` daemons below (§14) — verified against current plugin docs, not assumed. |
+| [**`multi-agent-ops`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/multi-agent-ops) | `loop-engineering`, `repo-research` | The two catalog skills not yet bundled anywhere else. Its README documents a real platform gap: Claude Code plugins have no static equivalent to the cron-scheduled `sidecars/` daemons below (§15) — verified against current plugin docs, not assumed. |
 | [**`shared-context`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/shared-context) | `context-capture`, `context-restore` + a stdio MCP server, 3 hooks, an Antigravity rules file, and the `context-keeper` subagent | Cross-agent working memory: agents record decisions/flows into a committed `context/` directory that the *next* agent — Claude Code or Antigravity — is prompted to load at start-up, only with the user's OK. Records are secret-redacted on write and old sessions compress to `tar.xz`. |
 
 ---
@@ -247,7 +269,32 @@ Built from Google Cloud's own "Query Processing and Optimization" training mater
 
 ---
 
-## 9. Generic AI Developer Rules (10 Constraint Profiles)
+## 9. Senior Dev Flutter Plugin
+
+The [**`senior-dev-flutter`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev-flutter) plugin is the **senior Flutter layer on top of the official Flutter & Dart skill packs** — it deliberately does *not* repeat them. The Dart and Flutter teams already publish ~23 agent skills (`flutter/agent-plugins`, `dart-lang/skills`) covering *how* to build layouts, wire routing, serialize JSON, write every kind of test, run the analyzer, and more, plus the official **Dart & Flutter MCP server** (`dart mcp-server`). This plugin installs on top and adds the layer those leave open: orchestrating, deciding, and reviewing.
+
+| Concern | Official packs (required companion, not duplicated) | `senior-dev-flutter` adds |
+| :--- | :--- | :--- |
+| How-to / procedural | layouts, routing, serialization, localization, HTTP, widget/integration/unit tests, `dart analyze`, mocks, coverage, pub conflicts | — |
+| Tools | `dart mcp-server` (analyzer diagnostics, symbol resolution, test runners, runtime inspection) | — (declared in the plugin's MCP config so install wires it) |
+| Orchestration | — | size a task, sequence the official skills, route phases |
+| Architecture | teaches the layered pattern | *choosing* state mgmt (Riverpod/Bloc/signals/setState), module boundaries, ADRs |
+| Review | fixes overflow errors; runs the linter | rebuild scope, `const`, keys, `dispose`, `BuildContext` after `await`, list/image perf, `RepaintBoundary`, a11y semantics, golden coverage, ADR conformance |
+| Test strategy | writes each test type | *what* to test at which layer + coverage gates |
+| Performance | — | DevTools timeline, jank hunting, profile mode, shader jank, `--trace-startup` |
+| Release | — | flavors, `--dart-define-from-file`, signing, `flutter build` matrix, versioning, store metadata, OTA (Shorebird) decision |
+| Upgrade / migration | `dart fix`, `dart-resolve-package-conflicts` | project-scale SDK upgrade sweep, deprecation triage, dependency major bumps |
+
+**Contents**: 5 host-neutral subagents (`flutter-feature-orchestrator` [mainAgent], `flutter-architect`, `flutter-implementer`, `flutter-reviewer`, `flutter-release-engineer`), 7 bundled `flutter-*` skills (all decision/checklist/strategy — none restate a how-to), 2 hooks (`PreToolUse`: block `flutter build appbundle/ipa` and `pub upgrade --major-versions` on `main`/`master`/`develop`; `Stop`: require `dart analyze` clean before finishing), and `.mcp.json`/`mcp_config.json` for `dart mcp-server`.
+
+**Requires**: the official packs installed alongside —
+`npx skills add flutter/agent-plugins --skill '*' --agent universal --yes` and
+`npx skills add dart-lang/skills --skill '*' --agent universal --yes` — plus
+`node` and `dart` on `PATH`. See `plugins/senior-dev-flutter/README.md`.
+
+---
+
+## 10. Generic AI Developer Rules (10 Constraint Profiles)
 
 This workspace provides a root-level [**`rules/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules) directory containing generic, modular developer rules. These rules are designed to be copied directly into AI Agent configuration files (like Cursor `.cursorrules` or Claude Code `.claudecodesettings`) to govern coding, testing, and deployment behavior:
 
@@ -267,7 +314,7 @@ This workspace provides a root-level [**`rules/`**](file:///Users/jggomez/Docume
 
 ---
 
-## 10. Generic AI Developer Workflows (7 Execution Playbooks)
+## 11. Generic AI Developer Workflows (7 Execution Playbooks)
 
 This workspace provides a root-level [**`workflows/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows) directory containing step-by-step developer execution playbooks. These workflows guide developers and AI Agents sequentially through complex tasks:
 
@@ -283,7 +330,7 @@ This workspace provides a root-level [**`workflows/`**](file:///Users/jggomez/Do
 
 ---
 
-## 11. Custom Loop Engineering Agents (Antigravity Subagents)
+## 12. Custom Loop Engineering Agents (Antigravity Subagents)
 
 This workspace provides a root-level [**`agents/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory containing custom agents for the **Google Antigravity (AGY) CLI only** — they form a complete **Loop Engineering** topology of highly specialized subagents. This copy keeps per-agent `model: pro`/`flash` cost tiering, which are not valid Claude Code model values, so **these files do not load in Claude Code**.
 
@@ -300,15 +347,15 @@ This workspace provides a root-level [**`agents/`**](file:///Users/jggomez/Docum
 
 ---
 
-## 12. Comprehensive Installation Guide
+## 13. Comprehensive Installation Guide
 
-This repository fully adheres to the official [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, other teams or users can install any of these 28 skills out-of-the-box using Vercel's official, standard `skills` CLI.
+This repository fully adheres to the official [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, other teams or users can install any of these 35 skills out-of-the-box using Vercel's official, standard `skills` CLI.
 
 ### 12.1 Standard Skills Installation (Using Vercel's `npx skills`)
 This is the recommended and simplest way to discover, add, and manage these skills. They don't need any local setups, just run:
 
 ```bash
-# List all 28 skills available in our repository
+# List all 35 skills available in our repository
 npx skills add jggomez/expert-ai-developer-skills --list
 
 # Install a specific skill (e.g. python-expert) in the active project (.agents/skills)
@@ -317,7 +364,7 @@ npx skills add jggomez/expert-ai-developer-skills --skill python-expert
 # Install a specific skill globally on your system (so all your workspaces can load it)
 npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
 
-# Install ALL 28 skills in the active project
+# Install ALL 35 skills in the active project
 npx skills add jggomez/expert-ai-developer-skills
 ```
 
@@ -333,13 +380,14 @@ npx skills add jggomez/expert-ai-developer-skills
 | `docs-and-quality`, `multi-agent-ops` | ✅ same folder — skills-only, no host-specific format to port | ✅ same folder |
 | `senior-data-engineer`, `sql-query-optimizer` | ✅ same folder — same host-neutral `agents/*.md`; `mcp_config.json` added | ✅ same folder |
 | `shared-context` | ✅ same folder — `hooks.json` carries both hosts' groups, `rules/` covers the missing `SessionStart`, `mcp_config.json` + host-neutral agent | ✅ same folder — `.mcp.json`, `hooks` key |
+| `senior-dev-flutter` | ✅ same folder — `hooks.json` carries both hosts' groups, `mcp_config.json` points at `dart mcp-server`, 5 host-neutral agents. Requires the official `flutter/agent-plugins` + `dart-lang/skills` packs installed alongside | ✅ same folder — `.mcp.json`, `hooks` key |
 
 **Why this took real verification, not a guess**: earlier in this repo's history, `python-backend`'s `hooks.json`/`mcp_config.json` were rewritten to Claude Code's schema (`{"hooks": {...}}`, `.mcp.json` with `type`+`url`) without realizing the *original* format was already correct Antigravity — a real regression, since Antigravity's actual schema (confirmed: named hook groups with an `enabled` flag, events `PreToolUse`/`PostToolUse`/`PreInvocation`/`PostInvocation`/`Stop` — no `SessionStart`; `mcp_config.json` with `serverUrl`/`authProviderType`) is genuinely different from Claude Code's. Both are now supported side by side: `hooks.json` carries a `"hooks"` key for Claude Code and separate named keys for Antigravity in the same file (each host reads only the key it understands); MCP config ships as two separate files (`.mcp.json` and `mcp_config.json`) since the filenames don't collide.
 
 **Three more verified findings, folded in below**:
 - **Claude Code's plugin manifest lives at `.claude-plugin/plugin.json`**, a subdirectory — not `plugin.json` at the plugin root. Every plugin here now ships *both*: root `plugin.json` for Antigravity, `.claude-plugin/plugin.json` (same content) for Claude Code. Without the subdirectory copy, Claude Code does not recognize the directory as a plugin at all.
 - **Antigravity's real global install path is `~/.gemini/antigravity-cli/plugins/<name>/`**, populated by the `agy plugin install <path>` CLI command — not a path you `mkdir`/`cp` into by hand. Use the command below; let `agy` manage the destination.
-- **The `agents/*.md` in `senior-dev`, `senior-data-engineer`, and `sql-query-optimizer` are now host-neutral** — one file per agent that both hosts load. The frontmatter carries only what both accept: `name` + `description` (required by both), `model: inherit` (the sole `model` value valid in Claude Code *and* Antigravity), and Antigravity's `subagent`/`mainAgent`/`commandExecutionPolicy` (Claude Code ignores unknown keys). There is **no `tools` key** — its values are host-specific (`Read`/`Bash` vs `view_file`/`run_command`), so any explicit list breaks one host; omitting it means Claude Code inherits the full tool set and Antigravity applies its default. `subagent`/`mainAgent` are set explicitly on every file because Antigravity does **not** fall back to their documented `true` defaults — a missing key means the agent never registers. `agy plugin install` is therefore safe for all 8 plugins now (`shared-context`'s `context-keeper` follows the same host-neutral rule). The separate root [`agents/`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory (§11) is a **second, Antigravity-only copy** of the same agents — it keeps per-agent `model: pro`/`flash` cost tiering (invalid Claude Code model values) and `skills/<name>` path references, so **it does not load in Claude Code**; use it only on Antigravity, and only when you want that tiering or a project-scoped install instead of `agy plugin install`. Neither set declares a `tools` list — each host applies its own default.
+- **The `agents/*.md` in `senior-dev`, `senior-data-engineer`, and `sql-query-optimizer` are now host-neutral** — one file per agent that both hosts load. The frontmatter carries only what both accept: `name` + `description` (required by both), `model: inherit` (the sole `model` value valid in Claude Code *and* Antigravity), and Antigravity's `subagent`/`mainAgent`/`commandExecutionPolicy` (Claude Code ignores unknown keys). There is **no `tools` key** — its values are host-specific (`Read`/`Bash` vs `view_file`/`run_command`), so any explicit list breaks one host; omitting it means Claude Code inherits the full tool set and Antigravity applies its default. `subagent`/`mainAgent` are set explicitly on every file because Antigravity does **not** fall back to their documented `true` defaults — a missing key means the agent never registers. `agy plugin install` is therefore safe for all 8 plugins now (`shared-context`'s `context-keeper` follows the same host-neutral rule). The separate root [`agents/`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory (§12) is a **second, Antigravity-only copy** of the same agents — it keeps per-agent `model: pro`/`flash` cost tiering (invalid Claude Code model values) and `skills/<name>` path references, so **it does not load in Claude Code**; use it only on Antigravity, and only when you want that tiering or a project-scoped install instead of `agy plugin install`. Neither set declares a `tools` list — each host applies its own default.
 
 **Antigravity CLI — global install via `agy`** (full plugins are global-only; no project-scoped equivalent for a bundled plugin):
 ```bash
@@ -351,6 +399,7 @@ agy plugin install ./plugins/senior-dev
 agy plugin install ./plugins/senior-data-engineer
 agy plugin install ./plugins/sql-query-optimizer
 agy plugin install ./plugins/shared-context
+agy plugin install ./plugins/senior-dev-flutter   # also: npx skills add flutter/agent-plugins + dart-lang/skills
 agy plugin list      # confirm
 agy plugin enable|disable|uninstall <name>
 ```
@@ -374,7 +423,7 @@ cp agents/senior-dev-orchestrator.md agents/product-analyst.md agents/architect-
 
 **Project-scoped Antigravity pieces, without installing a full plugin**: skills → `.agents/skills/<skill-name>/` (global: `~/.gemini/config/skills/`), agents → `.agents/agents/` (global: `~/.gemini/config/agents/`), MCP servers → `.agents/mcp_config.json` (global: `~/.gemini/config/mcp_config.json`). These three are the only Antigravity mechanisms that work per-project; the plugin bundle itself (`agy plugin install`) is global-only.
 
-**All 8 plugins (Claude Code) — global install**:
+**All 9 plugins (Claude Code) — global install**:
 ```bash
 cp -r ./plugins/python-backend ~/.claude/plugins/python-backend
 cp -r ./plugins/senior-dev ~/.claude/plugins/senior-dev
@@ -384,6 +433,7 @@ cp -r ./plugins/multi-agent-ops ~/.claude/plugins/multi-agent-ops
 cp -r ./plugins/senior-data-engineer ~/.claude/plugins/senior-data-engineer
 cp -r ./plugins/sql-query-optimizer ~/.claude/plugins/sql-query-optimizer
 cp -r ./plugins/shared-context ~/.claude/plugins/shared-context
+cp -r ./plugins/senior-dev-flutter ~/.claude/plugins/senior-dev-flutter
 ```
 
 **Claude Code — project-scoped, no install needed**: load any plugin for just the current session with
@@ -394,7 +444,7 @@ claude --plugin-dir ./plugins/python-backend
 
 ---
 
-## 13. Usage and Workflows
+## 14. Usage and Workflows
 
 Once installed, the agent skills and hooks are completely automatic:
 1. **Writing Code**: When you prompt the agent to perform edits or checkouts, the rules in `python-backend-rules.md` guide the coding standard (PEP 8, strict types).
@@ -404,7 +454,7 @@ Once installed, the agent skills and hooks are completely automatic:
 
 ---
 
-## 14. Antigravity Sidecars (Loop Engineering Background Processes)
+## 15. Antigravity Sidecars (Loop Engineering Background Processes)
 
 This workspace provides a root-level [**`sidecars/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/sidecars) directory containing configurations for background processes and schedules that run alongside Antigravity:
 
@@ -418,5 +468,5 @@ To install sidecars globally or per-plugin, review the [**Sidecars Installation 
 
 ---
 
-## 15. License
+## 16. License
 This repository is open-sourced under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for more details.
