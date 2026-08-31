@@ -159,7 +159,13 @@ def test_plugin_mcp_json_schema(workspace_root, plugin_dirs):
 
 def test_plugin_agents_frontmatter(workspace_root, plugin_dirs):
     """Verifies every plugin-bundled subagent .md file (when present) has
-    valid frontmatter with 'name' matching its filename and a 'description'."""
+    valid frontmatter with 'name' matching its filename, a 'description', and
+    the explicit 'subagent'/'mainAgent' booleans Antigravity CLI requires to
+    register the agent at all (it does not fall back to their documented
+    defaults). The frontmatter is kept host-neutral so the same file loads in
+    both Claude Code and Antigravity: no 'tools' key (its values are
+    host-specific), and 'model' is only ever 'inherit' (the sole value both
+    hosts accept)."""
     errors = []
 
     for plugin in plugin_dirs:
@@ -194,15 +200,41 @@ def test_plugin_agents_frontmatter(workspace_root, plugin_dirs):
                     f"{plugin}/agents/{fname}: frontmatter 'name' is '{data.get('name')}' "
                     f"but the file is '{fname}' (they must match)"
                 )
+            for key in ("subagent", "mainAgent"):
+                if not isinstance(data.get(key), bool):
+                    errors.append(
+                        f"{plugin}/agents/{fname}: '{key}' must be an explicit boolean "
+                        "(Antigravity CLI does not register the agent without it)"
+                    )
+            if "tools" in data:
+                errors.append(
+                    f"{plugin}/agents/{fname}: drop the 'tools' key — its values are "
+                    "host-specific, so keeping it breaks the file on one of the two hosts"
+                )
+            if data.get("model") not in (None, "inherit"):
+                errors.append(
+                    f"{plugin}/agents/{fname}: 'model' is '{data.get('model')}' — use "
+                    "'inherit' (the only value both Claude Code and Antigravity accept)"
+                )
+            cep = data.get("commandExecutionPolicy")
+            if cep is not None and cep not in ("off", "auto", "eager", "sandbox"):
+                errors.append(
+                    f"{plugin}/agents/{fname}: 'commandExecutionPolicy' is {cep!r} — must be "
+                    'one of off/auto/eager/sandbox as a string (quote "off", or YAML parses '
+                    "it as the boolean false)"
+                )
 
     assert not errors, "\n".join(errors)
 
 
 def test_root_agents_frontmatter(workspace_root):
-    """Verifies every root-level agents/*.md (the Antigravity subagent
-    definitions) has valid frontmatter with 'name' matching its filename
-    and a 'description' — mirrors test_plugin_agents_frontmatter for the
-    plugin-bundled agents."""
+    """Verifies every root-level agents/*.md (the Antigravity-only subagent
+    definitions) has valid frontmatter with 'name' matching its filename, a
+    'description', explicit 'subagent'/'mainAgent' booleans (Antigravity does
+    not fall back to their documented defaults), no 'tools' key (each host
+    applies its own default set), and a string 'commandExecutionPolicy'.
+    Unlike the plugin copies, these keep per-agent 'model: pro'/'flash' for
+    cost tiering, so 'model' is not constrained to 'inherit' here."""
     agents_dir = os.path.join(workspace_root, "agents")
     errors = []
 
@@ -232,6 +264,22 @@ def test_root_agents_frontmatter(workspace_root):
             errors.append(
                 f"agents/{fname}: frontmatter 'name' is '{data.get('name')}' "
                 f"but the file is '{fname}' (they must match)"
+            )
+        for key in ("subagent", "mainAgent"):
+            if not isinstance(data.get(key), bool):
+                errors.append(
+                    f"agents/{fname}: '{key}' must be an explicit boolean "
+                    "(Antigravity CLI does not register the agent without it)"
+                )
+        if "tools" in data:
+            errors.append(
+                f"agents/{fname}: drop the 'tools' key — each host applies its own default set"
+            )
+        cep = data.get("commandExecutionPolicy")
+        if cep is not None and cep not in ("off", "auto", "eager", "sandbox"):
+            errors.append(
+                f"agents/{fname}: 'commandExecutionPolicy' is {cep!r} — must be one of "
+                'off/auto/eager/sandbox as a string (quote "off", or YAML parses it as false)'
             )
 
     assert not errors, "\n".join(errors)

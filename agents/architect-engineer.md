@@ -1,15 +1,6 @@
 ---
 name: architect-engineer
 description: Specialized subagent for software architecture, system design, Quality Attribute Drivers (QADs), design patterns, and technical blueprints. Use when evaluating non-functional requirements, designing API schemas, defining system topology, and creating architectural documentation.
-tools:
-  - view_file
-  - write_to_file
-  - replace_file_content
-  - multi_replace_file_content
-  - list_dir
-  - grep_search
-  - run_command
-  - ask_question
 subagent: true
 mainAgent: false
 model: pro

@@ -2,7 +2,17 @@
 
 This directory contains definitions for **Custom Agents and Subagents** explicitly designed for execution within the Google Antigravity (AGY) system. These agents form a robust "Loop Engineering" lifecycle topology, leveraging extreme specialization to orchestrate end-to-end software delivery.
 
-**Using Claude Code instead?** The same six agents, reusing the same skills, are packaged as a native Claude Code plugin at [`plugins/senior-dev/`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev) — Claude Code's subagent frontmatter is not compatible with Antigravity's, so the two are kept as separate, natively-formatted directories rather than one shared file.
+> ### ⚠️ Which agent files load where
+>
+> There are **two copies** of every agent in this repo. They are **not** interchangeable:
+>
+> | Location | Claude Code | Antigravity CLI | Why |
+> | :--- | :---: | :---: | :--- |
+> | **this directory** (`agents/*.md`) | ❌ **no** | ✅ yes | frontmatter is Antigravity-only: `model: pro`/`flash` are not valid Claude Code model values, and skills are referenced as `skills/<name>` paths |
+> | **`plugins/<name>/agents/*.md`** | ✅ yes | ✅ yes | host-neutral frontmatter: `model: inherit`, bare skill names, explicit `subagent`/`mainAgent`, no `tools` key |
+>
+> **On Claude Code, always use the plugin copy** ([`plugins/senior-dev/`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev), `plugins/senior-data-engineer/`, `plugins/sql-query-optimizer/`) — never copy a file from *this* directory into a Claude Code project.
+> This directory exists so Antigravity keeps its per-agent `model: pro`/`flash` cost tiering, which a dual-host file can't carry. Neither copy declares a `tools` list; each host applies its own default tool set.
 
 ---
 
@@ -12,7 +22,7 @@ The loop engineering process is driven by a single **Main Agent** (the Orchestra
 
 ### The Subagent Panel
 
-| Agent Profile | Role & Specialization | Execution Policy | Assigned Capabilities |
+| Agent Profile | Role & Specialization | Execution Policy | Typical Actions |
 | :--- | :--- | :--- | :--- |
 | **`senior-dev-orchestrator`** | **Main Orchestrator**: Manages the overarching SDLC lifecycle, delegates sub-tasks, and tracks final release readiness. | `off` | `invoke_subagent`, `manage_subagents` |
 | **`product-analyst`** | **Requirements Engineer**: Clarifies ambiguities with the user and constructs detailed PRDs. | `off` | `ask_question`, `write_to_file` |
@@ -59,5 +69,5 @@ Two more agents live in this directory, outside the Loop Engineering topology �
 | **`senior-data-engineer`** | Google Cloud data pipeline design: lake/warehouse architecture, CDC via Datastream, SCD modeling in BigQuery/Dataform. | `bigquery`, `datastream`, `dataform`, `pubsub` (via `plugins/senior-data-engineer/mcp_config.json`) |
 | **`sql-query-optimizer`** | Finds and rewrites slow SQL — `.sql` files and queries embedded in application code — for both BigQuery and traditional engines. | `bigquery`, `cloudsql` (via `plugins/sql-query-optimizer/mcp_config.json`) |
 
-Their Claude Code equivalents live in `plugins/senior-data-engineer/` and `plugins/sql-query-optimizer/` respectively — same skills, same reasoning, packaged per-platform for the same incompatible-schema reason as the Loop Engineering panel above.
+Their plugin equivalents live in `plugins/senior-data-engineer/` and `plugins/sql-query-optimizer/` respectively — same skills, same reasoning, with host-neutral `agents/*.md` that load in both Claude Code and Antigravity. The copies here are the Antigravity-only variant that keeps `model: pro` for cost tiering, same as the Loop Engineering panel above.
 

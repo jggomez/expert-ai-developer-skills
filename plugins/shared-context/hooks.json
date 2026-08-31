@@ -1,0 +1,75 @@
+{
+  "description": "Shared AI context relay: prompt to load prior context on start, checkpoint periodically, flush + compress on stop.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start-context.js\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/post-tool-autosave.js\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/stop-flush.js\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  },
+  "shared-context-relay": {
+    "enabled": true,
+    "PreInvocation": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./hooks/session-start-context.js",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./hooks/post-tool-autosave.js",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./hooks/stop-flush.js",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

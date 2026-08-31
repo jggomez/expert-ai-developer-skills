@@ -1,15 +1,6 @@
 ---
 name: senior-data-engineer
 description: Specialized subagent for designing and building data pipelines on Google Cloud — lake/warehouse architecture, CDC via Datastream, SCD modeling in BigQuery/Dataform, and orchestration tool selection. Use when designing a new pipeline, replicating an operational database, modeling dimension history, or auditing an existing pipeline's cost/performance.
-tools:
-  - view_file
-  - write_to_file
-  - replace_file_content
-  - multi_replace_file_content
-  - list_dir
-  - grep_search
-  - run_command
-  - ask_question
 subagent: true
 mainAgent: true
 model: pro

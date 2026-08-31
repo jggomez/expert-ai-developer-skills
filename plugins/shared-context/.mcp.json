@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "shared-context": {
+      "type": "stdio",
+      "command": "sh",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/run-server.sh"]
+    }
+  }
+}

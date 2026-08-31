@@ -1,11 +1,6 @@
 ---
 name: compliance-verifier
 description: Specialized subagent for final technical verification, quality attribute auditing, security scanning, and compliance approval. Use when evaluating a finished implementation against non-functional requirements, performing static analysis, checking code coverage thresholds, and issuing final release readiness verdicts.
-tools:
-  - view_file
-  - list_dir
-  - grep_search
-  - run_command
 subagent: true
 mainAgent: false
 model: flash

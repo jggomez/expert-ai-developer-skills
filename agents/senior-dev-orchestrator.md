@@ -1,24 +1,10 @@
 ---
 name: senior-dev-orchestrator
 description: Senior Developer Orchestrator that understands business requirements, asks clarifying questions, designs architectures, plans execution, and orchestrates specialized subagents to implement, test, and verify production-grade software using TDD and best practices.
-tools:
-  - view_file
-  - write_to_file
-  - replace_file_content
-  - multi_replace_file_content
-  - list_dir
-  - grep_search
-  - run_command
-  - manage_task
-  - invoke_subagent
-  - define_subagent
-  - manage_subagents
-  - send_message
-  - ask_question
 subagent: true
 mainAgent: true
 model: pro
-commandExecutionPolicy: off
+commandExecutionPolicy: "off"
 skills:
   - skills/senior-dev-orchestrator
   - skills/senior-architect-engineering

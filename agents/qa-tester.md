@@ -1,14 +1,6 @@
 ---
 name: qa-tester
 description: Specialized subagent for End-to-End (E2E) testing, integration testing, boundary analysis, and business workflow validation. Use when validating functional requirements against implementations, writing automated UI/API end-to-end tests, and performing regression checks.
-tools:
-  - view_file
-  - write_to_file
-  - replace_file_content
-  - multi_replace_file_content
-  - list_dir
-  - grep_search
-  - run_command
 subagent: true
 mainAgent: false
 model: flash

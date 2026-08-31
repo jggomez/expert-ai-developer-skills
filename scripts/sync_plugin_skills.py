@@ -62,6 +62,10 @@ PLUGIN_BUNDLED_SKILLS = {
         "bigquery-query-optimization",
         "sql-query-optimization",
     ],
+    "shared-context": [
+        "context-capture",
+        "context-restore",
+    ],
 }
 
 IGNORE = shutil.ignore_patterns(".DS_Store", "__pycache__", "*.pyc")

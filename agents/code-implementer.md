@@ -1,14 +1,6 @@
 ---
 name: code-implementer
 description: Specialized subagent for writing production-grade code using Test-Driven Development (TDD). Use when implementing user stories, generating unit tests, refactoring clean code, and fixing bug reports.
-tools:
-  - view_file
-  - write_to_file
-  - replace_file_content
-  - multi_replace_file_content
-  - list_dir
-  - grep_search
-  - run_command
 subagent: true
 mainAgent: false
 model: pro

@@ -1,8 +1,10 @@
 ---
 name: compliance-verifier
 description: Specialized subagent for final technical verification, quality attribute auditing, security scanning, and compliance approval. Use when evaluating a finished implementation against non-functional requirements, performing static analysis, checking code coverage thresholds, and issuing final release readiness verdicts.
-tools: Read, Grep, Glob, Bash
-model: haiku
+subagent: true
+mainAgent: false
+model: inherit
+commandExecutionPolicy: sandbox
 skills:
   - compliance-verifier
   - code-smells-expert

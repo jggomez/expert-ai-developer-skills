@@ -4,7 +4,7 @@
 [![Antigravity](https://img.shields.io/badge/Antigravity-Customizations-orange?style=for-the-badge)](https://github.com/google/antigravity)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green?style=for-the-badge)](LICENSE)
 
-Welcome to **expert-ai-developer-skills**, the premium community repository for Google Antigravity (AGY) and Claude Code agent customizations. This workspace houses a professional-grade suite of **26 platform-neutral developer skills**, refactored RFC 2119 rules, and **seven bundled Claude Code plugins** — each a self-contained slice of the skills catalog, reusing what already exists rather than duplicating capability: `python-backend` (quality gates, Gitflow, security/MCP for Cloud Run & Firebase), `senior-dev` (the full SDLC orchestration topology), `git-workflow` (commit/PR hygiene + Gitflow gate), `docs-and-quality` (documentation & testing standards), `multi-agent-ops` (parallel-agent orchestration & repo research), `senior-data-engineer` (GCP pipeline design, CDC/SCD, with live BigQuery/Datastream/Dataform/Pub-Sub MCP access), and `sql-query-optimizer` (finds and rewrites slow SQL across a codebase, BigQuery-specific and generic).
+Welcome to **expert-ai-developer-skills**, the premium community repository for Google Antigravity (AGY) and Claude Code agent customizations. This workspace houses a professional-grade suite of **28 platform-neutral developer skills**, refactored RFC 2119 rules, and **eight bundled plugins** (Claude Code + Antigravity CLI) — each a self-contained slice of the skills catalog, reusing what already exists rather than duplicating capability: `python-backend` (quality gates, Gitflow, security/MCP for Cloud Run & Firebase), `senior-dev` (the full SDLC orchestration topology), `git-workflow` (commit/PR hygiene + Gitflow gate), `docs-and-quality` (documentation & testing standards), `multi-agent-ops` (parallel-agent orchestration & repo research), `senior-data-engineer` (GCP pipeline design, CDC/SCD, with live BigQuery/Datastream/Dataform/Pub-Sub MCP access), `sql-query-optimizer` (finds and rewrites slow SQL across a codebase, BigQuery-specific and generic), and `shared-context` (cross-agent working memory in a committed `context/` directory, loaded on start-up only with the user's OK).
 
 ---
 
@@ -21,7 +21,7 @@ cd expert-ai-developer-skills
 
 ## 2. Directory Structure & Sitemap
 
-The workspace is cleanly structured into modular **skills** (discrete instructions and automation scripts), **rules** (system constraints for AI agents), **workflows** (playbooks for SDLC processes), **sidecars** (background processes and schedules), and **plugins** (seven self-contained Claude Code plugins, each bundling a subset of the skills catalog):
+The workspace is cleanly structured into modular **skills** (discrete instructions and automation scripts), **rules** (system constraints for AI agents), **workflows** (playbooks for SDLC processes), **sidecars** (background processes and schedules), and **plugins** (eight self-contained plugins for Claude Code and Antigravity CLI, each bundling a subset of the skills catalog):
 
 ```
 expert-ai-developer-skills/
@@ -88,7 +88,9 @@ expert-ai-developer-skills/
 │   ├── gcp-data-engineering/           # GCP pipeline architecture: storage, batch/streaming, orchestration, BQ cost
 │   ├── cdc-scd-patterns/               # Datastream CDC checklist + SCD Type 0-6 + Dataform SCD2 scaffolder
 │   ├── bigquery-query-optimization/    # Query plan diagnosis, JOIN/skew/partitioning rules, static SQL linter
-│   └── sql-query-optimization/         # EXPLAIN ANALYZE, indexing, pagination for Postgres/MySQL/etc.
+│   ├── sql-query-optimization/         # EXPLAIN ANALYZE, indexing, pagination for Postgres/MySQL/etc.
+│   ├── context-capture/               # Session record schema, secret redaction, tar.xz packing, decision rollup
+│   └── context-restore/               # Load prior AI-session context at start-up, adopt only on user OK
 └── plugins/
     ├── python-backend/
     │   ├── README.md                   # Plugin installation, hooks, & mcp configurations
@@ -104,7 +106,7 @@ expert-ai-developer-skills/
     │   ├── plugin.json                 # Required plugin metadata descriptor
     │   ├── .mcp.json                   # Reused Cloud Run / Firebase MCP servers, Claude Code's format
     │   ├── mcp_config.json             # Same MCP servers, Antigravity's format
-    │   ├── agents/                     # 6 bundled subagents (orchestrator + 5 specialists) — Claude Code only, see agents/ at root for Antigravity
+    │   ├── agents/                     # 6 bundled subagents (orchestrator + 5 specialists) — host-neutral frontmatter, load in both hosts; richer Antigravity-only variant in agents/ at root
     │   └── skills/                     # Local copy of the 8 skills those agents depend on
     ├── git-workflow/
     │   ├── README.md                   # Plugin installation & Gitflow gate details
@@ -125,20 +127,31 @@ expert-ai-developer-skills/
     │   ├── plugin.json                 # Required plugin metadata descriptor
     │   ├── .mcp.json                   # BigQuery, Datastream, Dataform, Pub/Sub, Claude Code's format
     │   ├── mcp_config.json             # Same 4 servers, Antigravity's format
-    │   ├── agents/                     # 1 subagent — Claude Code only, see agents/ at root for Antigravity
+    │   ├── agents/                     # 1 subagent — host-neutral frontmatter, loads in both hosts; richer Antigravity-only variant in agents/ at root
     │   └── skills/                     # gcp-data-engineering + cdc-scd-patterns
-    └── sql-query-optimizer/
-        ├── README.md                   # Plugin installation, MCP servers, example prompts
+    ├── sql-query-optimizer/
+    │   ├── README.md                   # Plugin installation, MCP servers, example prompts
+    │   ├── plugin.json                 # Required plugin metadata descriptor
+    │   ├── .mcp.json                   # BigQuery + Cloud SQL, Claude Code's format
+    │   ├── mcp_config.json             # Same 2 servers, Antigravity's format
+    │   ├── agents/                     # 1 subagent — host-neutral frontmatter, loads in both hosts; richer Antigravity-only variant in agents/ at root
+    │   └── skills/                     # bigquery-query-optimization + sql-query-optimization
+    └── shared-context/
+        ├── README.md                   # Plugin layout, MCP tools, per-host install
         ├── plugin.json                 # Required plugin metadata descriptor
-        ├── .mcp.json                   # BigQuery + Cloud SQL, Claude Code's format
-        ├── mcp_config.json             # Same 2 servers, Antigravity's format
-        ├── agents/                     # 1 subagent — Claude Code only, see agents/ at root for Antigravity
-        └── skills/                     # bigquery-query-optimization + sql-query-optimization
+        ├── .mcp.json / mcp_config.json # stdio MCP: both run `sh mcp/run-server.sh`
+        ├── hooks.json                  # "hooks" (Claude Code) + "shared-context-relay" group (Antigravity)
+        ├── hooks/                      # session-start prompt, periodic checkpoint nudge, stop flush
+        ├── rules/                      # Antigravity auto-loads (no SessionStart event there)
+        ├── mcp/run-server.sh           # launcher: `uv run --with 'mcp<2'` — no manual pip install
+        ├── mcp/mcp_server.py           # 8 tools (context_list/snapshot/read/write/pack/unpack/rollup/search)
+        ├── agents/                     # context-keeper subagent (host-neutral frontmatter)
+        └── skills/                     # context-capture + context-restore
 ```
 
 ---
 
-## 3. In-Depth Developer Skills (26 Packaged Modules)
+## 3. In-Depth Developer Skills (28 Packaged Modules)
 
 Each skill represents an isolated capability loaded with professional guidelines, architectural references, and self-contained command-line automation scripts:
 
@@ -170,6 +183,8 @@ Each skill represents an isolated capability loaded with professional guidelines
 | **`cdc-scd-patterns`** | Change Data Capture via Datastream and Slowly Changing Dimension (Type 0-6) modeling in BigQuery/Dataform. | `scaffold_scd2_dataform.py` (Generates a parameterized SCD Type 2 template) |
 | **`bigquery-query-optimization`** | Diagnoses BigQuery query plans (skew, shuffle) and rewrites queries: partition/cluster pruning, JOIN ordering, approximate functions. | `lint_sql_query.py` (Scans directories/embedded code for SQL anti-patterns) |
 | **`sql-query-optimization`** | EXPLAIN ANALYZE, indexing strategy, and pagination for Postgres/MySQL/SQL Server and other traditional engines. | *Execution plan diagnostic workflow* |
+| **`context-capture`** | Records what a session did, decided, and how into a shared `context/` directory for the next AI agent; secret redaction, `tar.xz` compression, decision rollup. | `context_snapshot.py` (scaffold + git snapshot)<br>`context_pack.py` (compress/restore)<br>`context_rollup.py` (architecture log + retention) |
+| **`context-restore`** | Loads prior AI session context at start-up — summarizes what's there, adopts decisions/preferences only after the user confirms. | `context_list.py` (read-only listing; `exists` flag for hooks) |
 
 ---
 
@@ -192,26 +207,27 @@ Intercepts editor actions and terminal executions to protect critical assets:
 
 ## 5. Senior Dev Orchestration Plugin
 
-This workspace ships the same Loop Engineering subagent topology (Orchestrator + Product Analyst + Architect + Code Implementer + QA Tester + Compliance Verifier) as **two parallel, natively-formatted entry points** over the same shared skills catalog — pick whichever matches your platform, or use both:
+This workspace ships the same Loop Engineering subagent topology (Orchestrator + Product Analyst + Architect + Code Implementer + QA Tester + Compliance Verifier) over one shared skills catalog. The **[`plugins/senior-dev/`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev) plugin is the entry point for both platforms** — its `agents/*.md` use host-neutral frontmatter that loads unchanged in **Claude Code *and* Antigravity CLI** (`agy plugin install ./plugins/senior-dev`). The root [`agents/`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory is a **second, Antigravity-only copy** of the same agents, kept only for the extras a dual-host file can't carry:
 
-| Platform | Entry Point | Format |
-| :--- | :--- | :--- |
-| **Google Antigravity (AGY)** | root [**`agents/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory | Antigravity subagent frontmatter (`subagent`, `mainAgent`, `commandExecutionPolicy`, `model: pro/flash`) |
-| **Claude Code** | [**`plugins/senior-dev/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev) plugin | Claude Code plugin subagent frontmatter (`tools`, `model: sonnet/haiku`, auto-discovered `agents/` + `skills/`) |
+| Entry Point | Claude Code | Antigravity CLI | Frontmatter |
+| :--- | :---: | :---: | :--- |
+| [**`plugins/senior-dev/agents/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev) | ✅ yes | ✅ yes | host-neutral: `subagent`/`mainAgent` explicit, `model: inherit`, `commandExecutionPolicy`, **no `tools` key**, bare skill names |
+| root [**`agents/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory | ❌ **no** | ✅ yes | Antigravity-only: adds per-agent `model: pro`/`flash` cost tiering (invalid Claude Code values) and `skills/<name>` path refs |
 
-Both entry points reuse the exact same 8 skills, the same agent roles, and the same scaled-pipeline philosophy (the orchestrator sizes the process to the task instead of always running all five subagents) — only the packaging format differs per platform's actual plugin/subagent schema. The `plugins/senior-dev/.mcp.json` reuses the same Cloud Run / Firebase MCP servers already defined for `python-backend`.
+Both copies reuse the exact same 8 skills, the same agent roles, and the same scaled-pipeline philosophy (the orchestrator sizes the process to the task instead of always running all five subagents). Neither declares a `tools` list — each host applies its own default tool set. **On Claude Code, always use the plugin copy**; only reach for the root `agents/` directory on Antigravity, and only when you want its `pro`/`flash` tiering or a project-scoped install instead of `agy plugin install`. The `plugins/senior-dev/.mcp.json` reuses the same Cloud Run / Firebase MCP servers already defined for `python-backend`.
 
 ---
 
 ## 6. Additional Utility Plugins
 
-Three smaller Claude Code plugins split the remaining skills catalog into focused, independently-installable slices — each reuses existing skills/hooks verbatim, adding no new capability of its own:
+Four smaller plugins carve the rest of the catalog into focused, independently-installable slices. The first three reuse existing skills/hooks verbatim; `shared-context` adds one new capability — cross-agent working memory — on top of two bundled skills:
 
 | Plugin | Bundles | Notes |
 | :--- | :--- | :--- |
 | [**`git-workflow`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/git-workflow) | `commit-expert`, `pull-request-expert` + a Gitflow branch safety hook | The hook is the Gitflow-check portion of `python-backend`'s `pre-tool-gate.js`, extracted standalone since it has no Python/cloud dependency — usable in any stack. |
 | [**`docs-and-quality`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/docs-and-quality) | `documentation-expert`, `testing-expert`, `guidelines-karpathy` | Skills-only, no hooks/MCP — documentation and testing standards for any language. |
 | [**`multi-agent-ops`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/multi-agent-ops) | `loop-engineering`, `repo-research` | The two catalog skills not yet bundled anywhere else. Its README documents a real platform gap: Claude Code plugins have no static equivalent to the cron-scheduled `sidecars/` daemons below (§14) — verified against current plugin docs, not assumed. |
+| [**`shared-context`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/shared-context) | `context-capture`, `context-restore` + a stdio MCP server, 3 hooks, an Antigravity rules file, and the `context-keeper` subagent | Cross-agent working memory: agents record decisions/flows into a committed `context/` directory that the *next* agent — Claude Code or Antigravity — is prompted to load at start-up, only with the user's OK. Records are secret-redacted on write and old sessions compress to `tar.xz`. |
 
 ---
 
@@ -269,9 +285,11 @@ This workspace provides a root-level [**`workflows/`**](file:///Users/jggomez/Do
 
 ## 11. Custom Loop Engineering Agents (Antigravity Subagents)
 
-This workspace provides a root-level [**`agents/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory containing definitions for custom agents explicitly designed for execution within the Google Antigravity (AGY) system. They form a complete **Loop Engineering** topology using highly specialized subagents. For the Claude Code equivalent of this same topology, see [**§5 Senior Dev Orchestration Plugin**](#5-senior-dev-orchestration-plugin) and [**`plugins/senior-dev/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev).
+This workspace provides a root-level [**`agents/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory containing custom agents for the **Google Antigravity (AGY) CLI only** — they form a complete **Loop Engineering** topology of highly specialized subagents. This copy keeps per-agent `model: pro`/`flash` cost tiering, which are not valid Claude Code model values, so **these files do not load in Claude Code**.
 
-| Agent Profile | Role & Specialization | Execution Policy | Assigned Capabilities |
+> **Using Claude Code, or want one file for both hosts?** Use the [**`plugins/senior-dev/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev) plugin instead (see [§5](#5-senior-dev-orchestration-plugin)) — its `agents/*.md` are host-neutral (`model: inherit`, no `tools` key) and `agy plugin install` loads them on Antigravity too. Reach for *this* directory only when you specifically want the `pro`/`flash` tiering on Antigravity.
+
+| Agent Profile | Role & Specialization | Execution Policy | Typical Actions |
 | :--- | :--- | :--- | :--- |
 | [**`senior-dev-orchestrator`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/senior-dev-orchestrator.md) | **Main Orchestrator**: Manages the overarching SDLC lifecycle and tracks final release readiness. | `off` | `invoke_subagent`, `manage_subagents` |
 | [**`product-analyst`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/product-analyst.md) | **Requirements Engineer**: Clarifies ambiguities with the user and constructs detailed PRDs. | `off` | `ask_question`, `write_to_file` |
@@ -284,13 +302,13 @@ This workspace provides a root-level [**`agents/`**](file:///Users/jggomez/Docum
 
 ## 12. Comprehensive Installation Guide
 
-This repository fully adheres to the official [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, other teams or users can install any of these 26 skills out-of-the-box using Vercel's official, standard `skills` CLI.
+This repository fully adheres to the official [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, other teams or users can install any of these 28 skills out-of-the-box using Vercel's official, standard `skills` CLI.
 
 ### 12.1 Standard Skills Installation (Using Vercel's `npx skills`)
 This is the recommended and simplest way to discover, add, and manage these skills. They don't need any local setups, just run:
 
 ```bash
-# List all 26 skills available in our repository
+# List all 28 skills available in our repository
 npx skills add jggomez/expert-ai-developer-skills --list
 
 # Install a specific skill (e.g. python-expert) in the active project (.agents/skills)
@@ -299,7 +317,7 @@ npx skills add jggomez/expert-ai-developer-skills --skill python-expert
 # Install a specific skill globally on your system (so all your workspaces can load it)
 npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
 
-# Install ALL 26 skills in the active project
+# Install ALL 28 skills in the active project
 npx skills add jggomez/expert-ai-developer-skills
 ```
 
@@ -310,38 +328,43 @@ npx skills add jggomez/expert-ai-developer-skills
 | Plugin | Antigravity CLI | Claude Code |
 | :--- | :--- | :--- |
 | `python-backend` | ✅ same folder — `hooks.json` carries both hosts' hook groups in one file; scripts detect the host and emit the right decision format; `mcp_config.json` added | ✅ same folder — `.mcp.json` |
-| `senior-dev` | ⚠️ never `agy plugin install` this folder (its `agents/` is Claude-only, unverified how Antigravity's loader treats it) — agents via the separate root [`agents/`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory (§11), `mcp_config.json` copied by hand | ✅ this plugin folder |
+| `senior-dev` | ✅ same folder — `agents/*.md` use host-neutral frontmatter (no `tools`, `model: inherit`, explicit `subagent`/`mainAgent`); `mcp_config.json` added | ✅ same folder — same `agents/*.md`, `.mcp.json` |
 | `git-workflow` | ✅ same folder — `hooks.json` carries both hosts' hook groups; script detects the host | ✅ same folder |
 | `docs-and-quality`, `multi-agent-ops` | ✅ same folder — skills-only, no host-specific format to port | ✅ same folder |
-| `senior-data-engineer`, `sql-query-optimizer` | ⚠️ never `agy plugin install` these folders (same `agents/` risk as `senior-dev`) — agent via the root `agents/` directory, `mcp_config.json` copied by hand | ✅ this plugin folder |
+| `senior-data-engineer`, `sql-query-optimizer` | ✅ same folder — same host-neutral `agents/*.md`; `mcp_config.json` added | ✅ same folder |
+| `shared-context` | ✅ same folder — `hooks.json` carries both hosts' groups, `rules/` covers the missing `SessionStart`, `mcp_config.json` + host-neutral agent | ✅ same folder — `.mcp.json`, `hooks` key |
 
 **Why this took real verification, not a guess**: earlier in this repo's history, `python-backend`'s `hooks.json`/`mcp_config.json` were rewritten to Claude Code's schema (`{"hooks": {...}}`, `.mcp.json` with `type`+`url`) without realizing the *original* format was already correct Antigravity — a real regression, since Antigravity's actual schema (confirmed: named hook groups with an `enabled` flag, events `PreToolUse`/`PostToolUse`/`PreInvocation`/`PostInvocation`/`Stop` — no `SessionStart`; `mcp_config.json` with `serverUrl`/`authProviderType`) is genuinely different from Claude Code's. Both are now supported side by side: `hooks.json` carries a `"hooks"` key for Claude Code and separate named keys for Antigravity in the same file (each host reads only the key it understands); MCP config ships as two separate files (`.mcp.json` and `mcp_config.json`) since the filenames don't collide.
 
 **Three more verified findings, folded in below**:
 - **Claude Code's plugin manifest lives at `.claude-plugin/plugin.json`**, a subdirectory — not `plugin.json` at the plugin root. Every plugin here now ships *both*: root `plugin.json` for Antigravity, `.claude-plugin/plugin.json` (same content) for Claude Code. Without the subdirectory copy, Claude Code does not recognize the directory as a plugin at all.
 - **Antigravity's real global install path is `~/.gemini/antigravity-cli/plugins/<name>/`**, populated by the `agy plugin install <path>` CLI command — not a path you `mkdir`/`cp` into by hand. Use the command below; let `agy` manage the destination.
-- **`agy plugin install` is not safe for `senior-dev`, `senior-data-engineer`, or `sql-query-optimizer`.** These 3 plugins bundle an `agents/*.md` folder written in Claude Code's subagent frontmatter (`tools: Read, Write, Edit`, `model: sonnet`) — a different YAML schema than Antigravity's (`tools: [view_file, run_command]`, `mainAgent`, `subagent`, `commandExecutionPolicy`). Whether Antigravity's loader auto-discovers a plugin's `agents/` folder the same way it does `skills/` isn't documented, so whether it silently ignores those incompatible files or errors on them is unverified — running `agy plugin install` on these 3 is an avoidable risk for no benefit, since Antigravity never uses that `agents/` folder anyway (its own agent copies live at the repo root, see below). **Don't run `agy plugin install` on these 3 plugins** — copy their `mcp_config.json` by hand instead (shown below). The other 4 plugins (`python-backend`, `git-workflow`, `docs-and-quality`, `multi-agent-ops`) have no `agents/` folder at all, so `agy plugin install` is unambiguously safe for them.
+- **The `agents/*.md` in `senior-dev`, `senior-data-engineer`, and `sql-query-optimizer` are now host-neutral** — one file per agent that both hosts load. The frontmatter carries only what both accept: `name` + `description` (required by both), `model: inherit` (the sole `model` value valid in Claude Code *and* Antigravity), and Antigravity's `subagent`/`mainAgent`/`commandExecutionPolicy` (Claude Code ignores unknown keys). There is **no `tools` key** — its values are host-specific (`Read`/`Bash` vs `view_file`/`run_command`), so any explicit list breaks one host; omitting it means Claude Code inherits the full tool set and Antigravity applies its default. `subagent`/`mainAgent` are set explicitly on every file because Antigravity does **not** fall back to their documented `true` defaults — a missing key means the agent never registers. `agy plugin install` is therefore safe for all 8 plugins now (`shared-context`'s `context-keeper` follows the same host-neutral rule). The separate root [`agents/`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory (§11) is a **second, Antigravity-only copy** of the same agents — it keeps per-agent `model: pro`/`flash` cost tiering (invalid Claude Code model values) and `skills/<name>` path references, so **it does not load in Claude Code**; use it only on Antigravity, and only when you want that tiering or a project-scoped install instead of `agy plugin install`. Neither set declares a `tools` list — each host applies its own default.
 
-**Antigravity CLI — global install via `agy`** (safe: no `agents/` folder in these 4; full plugins are global-only, no project-scoped equivalent):
+**Antigravity CLI — global install via `agy`** (full plugins are global-only; no project-scoped equivalent for a bundled plugin):
 ```bash
 agy plugin install ./plugins/python-backend
 agy plugin install ./plugins/git-workflow
 agy plugin install ./plugins/docs-and-quality
 agy plugin install ./plugins/multi-agent-ops
+agy plugin install ./plugins/senior-dev
+agy plugin install ./plugins/senior-data-engineer
+agy plugin install ./plugins/sql-query-optimizer
+agy plugin install ./plugins/shared-context
 agy plugin list      # confirm
 agy plugin enable|disable|uninstall <name>
 ```
 
-**`senior-dev`, `senior-data-engineer`, `sql-query-optimizer` (Antigravity CLI)** — skip `agy plugin install` for these; copy the two pieces Antigravity actually needs by hand instead:
+**Project-scoped alternative for `senior-dev`, `senior-data-engineer`, `sql-query-optimizer` (Antigravity CLI)** — if you don't want a global plugin install, copy the two pieces by hand instead:
 ```bash
 # 1. MCP servers — merge each plugin's mcp_config.json into your Antigravity MCP config
-#    (project-scoped):
-cat plugins/senior-dev/mcp_config.json               # merge its "mcpServers" into .agents/mcp_config.json
-cat plugins/senior-data-engineer/mcp_config.json      # merge into .agents/mcp_config.json
-cat plugins/sql-query-optimizer/mcp_config.json       # merge into .agents/mcp_config.json
-#    (global equivalent: merge into ~/.gemini/config/mcp_config.json instead)
+#    (project-scoped .agents/mcp_config.json; global: ~/.gemini/config/mcp_config.json):
+cat plugins/senior-dev/mcp_config.json               # merge its "mcpServers"
+cat plugins/senior-data-engineer/mcp_config.json     # merge its "mcpServers"
+cat plugins/sql-query-optimizer/mcp_config.json      # merge its "mcpServers"
 
-# 2. Agents — Antigravity-format copies already exist at the repo root, not inside these plugins:
+# 2. Agents — the host-neutral files in the plugin folder work as-is, or use the
+#    richer Antigravity-only copies at the repo root:
 mkdir -p .agents/agents      # project-scoped; use ~/.gemini/config/agents/ for global
 cp agents/senior-dev-orchestrator.md agents/product-analyst.md agents/architect-engineer.md \
    agents/code-implementer.md agents/qa-tester.md agents/compliance-verifier.md \
@@ -351,7 +374,7 @@ cp agents/senior-dev-orchestrator.md agents/product-analyst.md agents/architect-
 
 **Project-scoped Antigravity pieces, without installing a full plugin**: skills → `.agents/skills/<skill-name>/` (global: `~/.gemini/config/skills/`), agents → `.agents/agents/` (global: `~/.gemini/config/agents/`), MCP servers → `.agents/mcp_config.json` (global: `~/.gemini/config/mcp_config.json`). These three are the only Antigravity mechanisms that work per-project; the plugin bundle itself (`agy plugin install`) is global-only.
 
-**All 7 plugins (Claude Code) — global install**:
+**All 8 plugins (Claude Code) — global install**:
 ```bash
 cp -r ./plugins/python-backend ~/.claude/plugins/python-backend
 cp -r ./plugins/senior-dev ~/.claude/plugins/senior-dev
@@ -360,6 +383,7 @@ cp -r ./plugins/docs-and-quality ~/.claude/plugins/docs-and-quality
 cp -r ./plugins/multi-agent-ops ~/.claude/plugins/multi-agent-ops
 cp -r ./plugins/senior-data-engineer ~/.claude/plugins/senior-data-engineer
 cp -r ./plugins/sql-query-optimizer ~/.claude/plugins/sql-query-optimizer
+cp -r ./plugins/shared-context ~/.claude/plugins/shared-context
 ```
 
 **Claude Code — project-scoped, no install needed**: load any plugin for just the current session with
@@ -376,6 +400,7 @@ Once installed, the agent skills and hooks are completely automatic:
 1. **Writing Code**: When you prompt the agent to perform edits or checkouts, the rules in `python-backend-rules.md` guide the coding standard (PEP 8, strict types).
 2. **Making Commits**: The pre-commit gate hooks check the staged files against AST smells, linting limits, and secret exposures before allowing git commits to proceed.
 3. **Closing Tasks**: When you or the agent finish a task, the Stop lifecycle hook runs `verify_tests.py` and stops completion if tests fail.
+4. **Cross-agent hand-off** (`shared-context` plugin): at session start the agent is prompted to load prior `context/` — only with your OK; a periodic hook nudges checkpoints; on Stop it is reminded to flush a session record, roll decisions into `architecture.md`, and compress old sessions. Records are secret-redacted on write.
 
 ---
 

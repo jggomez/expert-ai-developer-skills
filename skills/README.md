@@ -1,9 +1,9 @@
 # Expert AI Agent Skills Catalog
 
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
-[![Skills Count](https://img.shields.io/badge/Skills-26%20Optimized-orange?style=flat-square)](file:///./)
+[![Skills Count](https://img.shields.io/badge/Skills-28%20Optimized-orange?style=flat-square)](file:///./)
 
-This directory contains a premium catalog of **26 agent skills** designed to automate code quality checks, enforce programming best practices, detect code smells, validate commit history, and implement self-correcting development loops. Every `SKILL.md` here is platform-neutral (no Antigravity- or Claude-Code-specific tool names in its instructions), so the same catalog works whether you're on Google Antigravity (AGY) or Claude Code.
+This directory contains a premium catalog of **28 agent skills** designed to automate code quality checks, enforce programming best practices, detect code smells, validate commit history, and implement self-correcting development loops. Every `SKILL.md` here is platform-neutral (no Antigravity- or Claude-Code-specific tool names in its instructions), so the same catalog works whether you're on Google Antigravity (AGY) or Claude Code.
 
 Seven plugins in this repository bundle physical copies of a subset of these skills so they can be distributed standalone: [`python-backend`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/python-backend) (11 backend skills), [`senior-dev`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev) (8 SDLC-orchestration skills), [`git-workflow`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/git-workflow) (2), [`docs-and-quality`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/docs-and-quality) (3), [`multi-agent-ops`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/multi-agent-ops) (2), [`senior-data-engineer`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-data-engineer) (2, GCP-focused), and [`sql-query-optimizer`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/sql-query-optimizer) (2, BigQuery + generic SQL). Edit skills here, then run `python3 scripts/sync_plugin_skills.py` to re-sync all of them.
 
@@ -11,13 +11,13 @@ Seven plugins in this repository bundle physical copies of a subset of these ski
 
 ## 1. Quick Installation & Setup
 
-These skills fully comply with the [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, you can install any of these 26 skills out-of-the-box using Vercel's official, standard `skills` CLI.
+These skills fully comply with the [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, you can install any of these 28 skills out-of-the-box using Vercel's official, standard `skills` CLI.
 
 ### Option A: Standard Installation (Recommended)
 This is the recommended and simplest way to discover, add, and manage these skills. There's no need for local configuration or downloading extra packages. Simply run:
 
 ```bash
-# List all 26 skills available in our repository
+# List all 28 skills available in our repository
 npx skills add jggomez/expert-ai-developer-skills --list
 
 # Install a specific skill (e.g. python-expert) in the active project (.agents/skills)
@@ -26,7 +26,7 @@ npx skills add jggomez/expert-ai-developer-skills --skill python-expert
 # Install a specific skill globally on your system (so all your workspaces can load it)
 npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
 
-# Install ALL 26 skills in the active project
+# Install ALL 28 skills in the active project
 npx skills add jggomez/expert-ai-developer-skills
 ```
 
@@ -73,6 +73,8 @@ This table provides a comprehensive overview of every modular skill, its core pu
 | **`cdc-scd-patterns`** | Change Data Capture via Datastream and Slowly Changing Dimension (Type 0-6) modeling in BigQuery/Dataform. | `references/scd-type2-sql.md` | `scaffold_scd2_dataform.py` (Generates a parameterized SCD Type 2 `.sqlx` template). |
 | **`bigquery-query-optimization`** | Diagnoses BigQuery query plans (skew, shuffle) and rewrites queries: partition/cluster pruning, JOIN ordering, approximate functions, SQL vs. JS UDFs. | `references/bigquery-optimization-patterns.md` | `lint_sql_query.py` (Scans directories/code for SQL anti-patterns, no live connection needed). |
 | **`sql-query-optimization`** | EXPLAIN ANALYZE, indexing strategy, and pagination for Postgres/MySQL/SQL Server and other traditional engines. | `SKILL.md` | Diagnostic workflow for reading execution plans. |
+| **`context-capture`** | Records what a session did, decided, and how, into a shared `context/` directory other AI agents (Claude Code, Antigravity) can load. Secret redaction, `tar.xz` compression of old sessions, decision rollup. | `references/record-schema.md` | `context_snapshot.py` (scaffold + git snapshot)<br>`context_pack.py` (compress/decompress)<br>`context_rollup.py` (architecture log + retention). |
+| **`context-restore`** | Loads prior AI session context from `context/` at session start — summarizes what's there and adopts decisions/preferences only after the user confirms. | `references/restore-checklist.md` | `context_list.py` (read-only session listing; `exists` boolean for hooks). |
 
 ---
 
@@ -110,6 +112,15 @@ Checks markdown layout nesting and validates relative paths:
 python3 ./skills/documentation-expert/scripts/validate_docs.py
 ```
 
+### 3.6 Shared Context Store (cross-agent hand-off)
+Records/loads what a session did, decided, and how, so a different AI agent can resume it. Stdlib-only; `context/` defaults to the current repo.
+```bash
+python3 ./skills/context-capture/scripts/context_snapshot.py --task "<one line>" --agent "<model id>"
+python3 ./skills/context-capture/scripts/context_rollup.py     # decisions -> architecture.md + retention
+python3 ./skills/context-capture/scripts/context_pack.py --auto # compress all but the newest sessions
+python3 ./skills/context-restore/scripts/context_list.py --json # what prior sessions exist (used by the hooks)
+```
+
 ---
 
 ## 4. Example Activation Prompts
@@ -144,3 +155,5 @@ A skill activates when its `description` matches what you ask for — you don't 
 | `cdc-scd-patterns` | "Design a CDC pipeline from Cloud SQL into BigQuery and model the customer dimension as SCD Type 2." |
 | `bigquery-query-optimization` | "Scan this repo for slow BigQuery queries and optimize whatever you find." |
 | `sql-query-optimization` | "Run EXPLAIN ANALYZE on this query and tell me if it needs an index." |
+| `context-capture` | "Save the context for this session — what we did, the decisions, and the flow — so the next agent can pick it up." |
+| `context-restore` | "Check the shared context directory and tell me what previous sessions worked on before we start." |

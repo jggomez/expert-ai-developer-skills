@@ -1,8 +1,10 @@
 ---
 name: architect-engineer
 description: Specialized subagent for software architecture, system design, Quality Attribute Drivers (QADs), design patterns, and technical blueprints. Use when evaluating non-functional requirements, designing API schemas, defining system topology, and creating architectural documentation.
-tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion
-model: sonnet
+subagent: true
+mainAgent: false
+model: inherit
+commandExecutionPolicy: sandbox
 skills:
   - senior-architect-engineering
 ---

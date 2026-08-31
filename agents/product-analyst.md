@@ -1,18 +1,10 @@
 ---
 name: product-analyst
 description: Specialized subagent for product discovery, requirements engineering, and business logic analysis. Use when analyzing user requests, gathering functional and non-functional requirements, identifying ambiguities, and crafting structured Product Requirements Documents (PRDs).
-tools:
-  - view_file
-  - write_to_file
-  - replace_file_content
-  - multi_replace_file_content
-  - list_dir
-  - grep_search
-  - ask_question
 subagent: true
 mainAgent: false
 model: pro
-commandExecutionPolicy: off
+commandExecutionPolicy: "off"
 skills:
   - skills/product-analyst
 ---

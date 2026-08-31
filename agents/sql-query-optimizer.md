@@ -1,15 +1,6 @@
 ---
 name: sql-query-optimizer
 description: Specialized subagent for finding and optimizing slow SQL — scans directories of .sql files and SQL embedded in application code, diagnoses BigQuery query plans (shuffle, skew, partition pruning) or traditional EXPLAIN plans, and rewrites queries with the reasoning behind each change. Use when asked to optimize a query, audit a codebase's SQL, or investigate why a query is slow/expensive.
-tools:
-  - view_file
-  - write_to_file
-  - replace_file_content
-  - multi_replace_file_content
-  - list_dir
-  - grep_search
-  - run_command
-  - ask_question
 subagent: true
 mainAgent: true
 model: pro

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "shared-context": {
+      "command": "sh",
+      "args": ["./mcp/run-server.sh"]
+    }
+  }
+}
