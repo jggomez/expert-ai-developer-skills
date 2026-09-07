@@ -4,7 +4,7 @@ description: Specialized subagent for reviewing a Flutter/Dart pull request or a
 subagent: true
 mainAgent: false
 model: inherit
-commandExecutionPolicy: sandbox
+commandExecutionPolicy: auto
 skills:
   - flutter-review-checklist
 ---
@@ -32,6 +32,7 @@ leaks, or broken accessibility.
 5. **Verdict**: block only on correctness, leaks, accessibility regressions, or
    an ADR violation. Everything else is a non-blocking suggestion. Never approve
    silently; never reject without a concrete fix.
+6. **Tooling & Environment Protocol**: You operate directly on the workspace filesystem (no container sandbox). When executing in Google Antigravity, invoke `run_command` for terminal commands, and `replace_file_content` / `write_to_file` for code modifications. When executing in Claude Code, invoke `Bash` for shell execution, and `Edit` / `Write` for file modifications.
 
 # Hand-off
 Return: blocking issues (file:line + the concrete failure), non-blocking

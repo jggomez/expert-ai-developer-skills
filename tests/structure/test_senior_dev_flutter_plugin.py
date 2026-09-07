@@ -92,7 +92,8 @@ def test_hooks_json_serves_both_hosts():
     assert {"PreToolUse", "Stop"} <= set(events)
     for event in events:
         for g in agy[event]:
-            for hook in g["hooks"]:
+            hooks = g.get("hooks", [g]) if isinstance(g, dict) else []
+            for hook in hooks:
                 assert hook["command"].startswith("node ./hooks/")
 
 
@@ -103,7 +104,7 @@ def test_all_five_agents_are_host_neutral():
         assert isinstance(fm["subagent"], bool) and isinstance(fm["mainAgent"], bool), name
         assert "tools" not in fm, f"{name} must not declare a tools key"
         assert fm["model"] == "inherit", name
-        assert fm["commandExecutionPolicy"] in ("off", "auto", "eager", "sandbox"), name
+        assert fm["commandExecutionPolicy"] in ("off", "auto", "eager"), name
         assert isinstance(fm.get("skills"), list) and fm["skills"], name
     orch = yaml.safe_load(_read("agents/flutter-feature-orchestrator.md").split("---", 2)[1])
     assert orch["mainAgent"] is True

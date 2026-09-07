@@ -4,23 +4,30 @@ const fs = require('fs');
 
 const isClaudeCode = Boolean(process.env.CLAUDE_PLUGIN_ROOT);
 
+function allow() {
+  if (!isClaudeCode) {
+    console.log(JSON.stringify({ decision: 'allow' }));
+  }
+  process.exit(0);
+}
+
 // Read input payload from stdin
 let inputData = '';
 try {
   inputData = fs.readFileSync(0, 'utf-8');
 } catch (e) {
-  process.exit(0);
+  allow();
 }
 
 if (!inputData.trim()) {
-  process.exit(0);
+  allow();
 }
 
 let payload;
 try {
   payload = JSON.parse(inputData);
 } catch (e) {
-  process.exit(0);
+  allow();
 }
 
 function deny(reason) {
@@ -63,4 +70,4 @@ if (isShellTool && gitWriteRegex.test(commandLine)) {
 }
 
 // Default: allow tool execution
-process.exit(0);
+allow();

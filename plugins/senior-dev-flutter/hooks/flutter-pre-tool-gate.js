@@ -14,19 +14,26 @@ const path = require('path');
 const isClaudeCode = Boolean(process.env.CLAUDE_PLUGIN_ROOT);
 const PROTECTED = new Set(['main', 'master', 'develop']);
 
+function allow() {
+  if (!isClaudeCode) {
+    console.log(JSON.stringify({ decision: 'allow' }));
+  }
+  process.exit(0);
+}
+
 let raw = '';
 try {
   raw = fs.readFileSync(0, 'utf-8');
 } catch (e) {
-  process.exit(0);
+  allow();
 }
-if (!raw.trim()) process.exit(0);
+if (!raw.trim()) allow();
 
 let payload;
 try {
   payload = JSON.parse(raw);
 } catch (e) {
-  process.exit(0);
+  allow();
 }
 
 // Normalize Claude Code (tool_name/tool_input/cwd) and Antigravity
@@ -41,18 +48,18 @@ const cwd =
   process.cwd();
 
 const isShellTool = toolName === 'Bash' || toolName === 'run_command';
-if (!isShellTool || !command) process.exit(0);
+if (!isShellTool || !command) allow();
 
 // Only care about Flutter/Dart repos.
-if (!fs.existsSync(path.join(cwd, 'pubspec.yaml'))) process.exit(0);
+if (!fs.existsSync(path.join(cwd, 'pubspec.yaml'))) allow();
 
 let branch = '';
 try {
   branch = execSync('git symbolic-ref --short HEAD', { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
 } catch (e) {
-  process.exit(0); // not a git repo / detached
+  allow(); // not a git repo / detached
 }
-if (!PROTECTED.has(branch)) process.exit(0);
+if (!PROTECTED.has(branch)) allow();
 
 const storeBuild = /\bflutter\s+build\s+(appbundle|aab|ipa)\b/i;
 const majorBump = /\b(flutter|dart)\s+pub\s+upgrade\b.*--major-versions\b/i;
@@ -71,7 +78,7 @@ if (storeBuild.test(command)) {
     `Create a chore/ branch and run it there.`;
 }
 
-if (!reason) process.exit(0);
+if (!reason) allow();
 
 if (isClaudeCode) {
   console.log(JSON.stringify({

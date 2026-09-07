@@ -4,7 +4,7 @@ description: Specialized subagent for shipping and maintaining a Flutter app —
 subagent: true
 mainAgent: false
 model: inherit
-commandExecutionPolicy: sandbox
+commandExecutionPolicy: auto
 skills:
   - flutter-release-engineering
   - flutter-upgrade-migration
@@ -35,6 +35,7 @@ current without stalled multi-week branches.
    commit/PR; pin `pubspec.lock` first as the rollback; verify the full build
    matrix, not just `flutter test`. Use the official
    `dart-resolve-package-conflicts` for any `pub get` version-solve failure.
+7. **Tooling & Environment Protocol**: You operate directly on the workspace filesystem (no container sandbox). When executing in Google Antigravity, invoke `run_command` for terminal commands, and `replace_file_content` / `write_to_file` for code modifications. When executing in Claude Code, invoke `Bash` for shell execution, and `Edit` / `Write` for file modifications.
 
 # Hand-off
 Deliver: the config layout, where each secret lives, the CI build matrix, the

@@ -19,3 +19,4 @@ Follow `skills/product-analyst` for the discovery workflow and the PRD template 
 2. **Clarify only real ambiguities**: use `ask_question` for missing details or contradictions that would actually change the implementation — don't ask when the request is already clear.
 3. **Scale the deliverable**: a small, well-scoped change needs a short requirements note (goal, scope, acceptance criteria) — reserve the full PRD template (FRs/NFRs/Feature Matrix) for new features or system-level work.
 4. **Handoff Preparedness**: make requirements precise enough for the Architect and Implementer to consume directly, without them having to guess intent.
+5. **Tooling & Environment Protocol**: You operate at the requirements level (no terminal commands, `commandExecutionPolicy: "off"`). Use `ask_question` for interactive clarifications, and `write_to_file` / `replace_file_content` (or `Write` / `Edit` on Claude Code) to author requirement documents.

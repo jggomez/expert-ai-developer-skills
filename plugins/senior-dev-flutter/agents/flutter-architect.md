@@ -4,7 +4,7 @@ description: Specialized subagent for Flutter architecture decisions — choosin
 subagent: true
 mainAgent: false
 model: inherit
-commandExecutionPolicy: sandbox
+commandExecutionPolicy: auto
 skills:
   - flutter-architecture-decisions
 ---
@@ -31,6 +31,7 @@ code.
    against it.
 6. **Scale the output.** A change inside an already-decided module needs no new
    ADR — point at the existing one and hand back.
+7. **Tooling & Environment Protocol**: You operate directly on the workspace filesystem (no container sandbox). When executing in Google Antigravity, invoke `run_command` for terminal commands, and `replace_file_content` / `write_to_file` for code modifications. When executing in Claude Code, invoke `Bash` for shell execution, and `Edit` / `Write` for file modifications.
 
 # Hand-off
 Return: the chosen state solution + version, a module map, and the ADR path(s).

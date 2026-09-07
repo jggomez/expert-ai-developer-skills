@@ -217,12 +217,23 @@ def test_plugin_agents_frontmatter(workspace_root, plugin_dirs):
                     "'inherit' (the only value both Claude Code and Antigravity accept)"
                 )
             cep = data.get("commandExecutionPolicy")
-            if cep is not None and cep not in ("off", "auto", "eager", "sandbox"):
+            if cep == "sandbox":
+                errors.append(
+                    f"{plugin}/agents/{fname}: 'commandExecutionPolicy' cannot be 'sandbox' "
+                    "(no container sandbox is assumed; use 'auto' or 'off')"
+                )
+            elif cep is not None and cep not in ("off", "auto", "eager"):
                 errors.append(
                     f"{plugin}/agents/{fname}: 'commandExecutionPolicy' is {cep!r} — must be "
-                    'one of off/auto/eager/sandbox as a string (quote "off", or YAML parses '
+                    'one of off/auto/eager as a string (quote "off", or YAML parses '
                     "it as the boolean false)"
                 )
+            if agent_name in ("senior-dev-orchestrator", "flutter-feature-orchestrator", "product-analyst"):
+                if cep != "off":
+                    errors.append(f"{plugin}/agents/{fname}: orchestrator must have commandExecutionPolicy: 'off', got {cep!r}")
+            else:
+                if cep != "auto":
+                    errors.append(f"{plugin}/agents/{fname}: worker agent must have commandExecutionPolicy: 'auto', got {cep!r}")
 
     assert not errors, "\n".join(errors)
 
@@ -276,11 +287,22 @@ def test_root_agents_frontmatter(workspace_root):
                 f"agents/{fname}: drop the 'tools' key — each host applies its own default set"
             )
         cep = data.get("commandExecutionPolicy")
-        if cep is not None and cep not in ("off", "auto", "eager", "sandbox"):
+        if cep == "sandbox":
+            errors.append(
+                f"agents/{fname}: 'commandExecutionPolicy' cannot be 'sandbox' "
+                "(no container sandbox is assumed; use 'auto' or 'off')"
+            )
+        elif cep is not None and cep not in ("off", "auto", "eager"):
             errors.append(
                 f"agents/{fname}: 'commandExecutionPolicy' is {cep!r} — must be one of "
-                'off/auto/eager/sandbox as a string (quote "off", or YAML parses it as false)'
+                'off/auto/eager as a string (quote "off", or YAML parses it as false)'
             )
+        if agent_name in ("senior-dev-orchestrator", "flutter-feature-orchestrator", "product-analyst"):
+            if cep != "off":
+                errors.append(f"agents/{fname}: orchestrator must have commandExecutionPolicy: 'off', got {cep!r}")
+        else:
+            if cep != "auto":
+                errors.append(f"agents/{fname}: worker agent must have commandExecutionPolicy: 'auto', got {cep!r}")
 
     assert not errors, "\n".join(errors)
 

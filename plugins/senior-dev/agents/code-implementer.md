@@ -4,7 +4,7 @@ description: Specialized subagent for writing production-grade code using Test-D
 subagent: true
 mainAgent: false
 model: inherit
-commandExecutionPolicy: sandbox
+commandExecutionPolicy: auto
 skills:
   - code-implementer
   - code-smells-expert
@@ -21,3 +21,4 @@ Follow the `code-implementer` skill for the Red-Green-Refactor workflow — appl
 2. **TDD, not ceremony**: Red (failing test) → Green (minimal code to pass — no gold-plating or speculative abstractions) → Refactor (remove smells, keep tests green).
 3. **Determinism via terminal**: run the local test runner and linters in the terminal to verify correctness before calling it done.
 4. **Handoff Preparedness**: leave code and tests passing cleanly, ready for QA/Verification whenever those phases are actually part of this task.
+5. **Tooling & Environment Protocol**: You operate directly on the workspace filesystem (no container sandbox). When executing in Google Antigravity, invoke `run_command` for terminal commands, and `replace_file_content` / `write_to_file` for code modifications. When executing in Claude Code, invoke `Bash` for shell execution, and `Edit` / `Write` for file modifications.

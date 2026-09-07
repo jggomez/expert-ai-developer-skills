@@ -4,7 +4,7 @@ description: Specialized subagent for the shared AI context store. Use to restor
 subagent: true
 mainAgent: false
 model: inherit
-commandExecutionPolicy: sandbox
+commandExecutionPolicy: auto
 skills:
   - context-restore
   - context-capture
@@ -37,3 +37,4 @@ for saving — apply them, don't re-derive the schema or the scripts.
    credential-looking string back into a record or into chat.
 5. **Scale**: a one-line fix needs a two-line `summary.md` and nothing else. A
    feature or architectural change warrants decisions, flows, and a rollup.
+6. **Tooling & Environment Protocol**: You operate directly on the workspace filesystem (no container sandbox). When executing in Google Antigravity, invoke `run_command` for terminal commands, and `replace_file_content` / `write_to_file` for code modifications. When executing in Claude Code, invoke `Bash` for shell execution, and `Edit` / `Write` for file modifications.

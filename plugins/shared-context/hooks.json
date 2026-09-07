@@ -40,17 +40,14 @@
     "enabled": true,
     "PreInvocation": [
       {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ./hooks/session-start-context.js",
-            "timeout": 15
-          }
-        ]
+        "type": "command",
+        "command": "node ./hooks/session-start-context.js",
+        "timeout": 15
       }
     ],
     "PostToolUse": [
       {
+        "matcher": "*",
         "hooks": [
           {
             "type": "command",
@@ -62,13 +59,9 @@
     ],
     "Stop": [
       {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ./hooks/stop-flush.js",
-            "timeout": 30
-          }
-        ]
+        "type": "command",
+        "command": "node ./hooks/stop-flush.js",
+        "timeout": 30
       }
     ]
   }

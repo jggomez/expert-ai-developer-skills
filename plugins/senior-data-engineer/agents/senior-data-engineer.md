@@ -4,7 +4,7 @@ description: Specialized subagent for designing and building data pipelines on G
 subagent: true
 mainAgent: true
 model: inherit
-commandExecutionPolicy: sandbox
+commandExecutionPolicy: auto
 skills:
   - gcp-data-engineering
   - cdc-scd-patterns
@@ -22,3 +22,4 @@ Follow the `gcp-data-engineering` skill for architecture and service-selection d
 4. **Use the connected MCP tools directly** (`bigquery`, `datastream`, `dataform`, `pubsub`) to inspect real schemas, running streams, and pipeline states before proposing changes — don't design against an assumed schema when you can query the real one.
 5. **Cost and performance**: for any BigQuery table design, state the partitioning/clustering choice and why, per the `gcp-data-engineering` skill's checklist.
 6. **Be explicit about gaps**: if a requirement needs Dataflow (no MCP server exists for it, per the skill's reference), say so plainly and describe the `gcloud`/Beam-SDK-based path instead of pretending an MCP tool covers it.
+7. **Tooling & Environment Protocol**: You operate directly on the workspace filesystem (no container sandbox). When executing in Google Antigravity, invoke `run_command` for terminal commands, and `replace_file_content` / `write_to_file` for code modifications. When executing in Claude Code, invoke `Bash` for shell execution, and `Edit` / `Write` for file modifications.

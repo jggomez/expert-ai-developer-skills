@@ -2,31 +2,38 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 
-// Read input payload from stdin
-let inputData = '';
-try {
-  inputData = fs.readFileSync(0, 'utf-8');
-} catch (e) {
-  process.exit(0);
-}
-
-if (!inputData.trim()) {
-  process.exit(0);
-}
-
-let payload;
-try {
-  payload = JSON.parse(inputData);
-} catch (e) {
-  process.exit(0);
-}
-
 // Claude Code sets CLAUDE_PLUGIN_ROOT when running plugin hooks; Antigravity
 // does not, so anything else falls back to Antigravity's real PreToolUse
 // contract: a top-level {"decision": "allow"|"deny"|"ask", "reason": ...}
 // (verified against antigravity.google/docs/hooks — this is NOT the same
 // shape as Claude Code's hookSpecificOutput.permissionDecision).
 const isClaudeCode = Boolean(process.env.CLAUDE_PLUGIN_ROOT);
+
+function allow() {
+  if (!isClaudeCode) {
+    console.log(JSON.stringify({ decision: 'allow' }));
+  }
+  process.exit(0);
+}
+
+// Read input payload from stdin
+let inputData = '';
+try {
+  inputData = fs.readFileSync(0, 'utf-8');
+} catch (e) {
+  allow();
+}
+
+if (!inputData.trim()) {
+  allow();
+}
+
+let payload;
+try {
+  payload = JSON.parse(inputData);
+} catch (e) {
+  allow();
+}
 
 function ask(reason) {
   if (isClaudeCode) {
@@ -110,4 +117,4 @@ if (isShellTool && gitWriteRegex.test(commandLine)) {
 }
 
 // Default: allow tool execution
-process.exit(0);
+allow();

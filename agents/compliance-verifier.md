@@ -4,7 +4,7 @@ description: Specialized subagent for final technical verification, quality attr
 subagent: true
 mainAgent: false
 model: flash
-commandExecutionPolicy: sandbox
+commandExecutionPolicy: auto
 skills:
   - skills/compliance-verifier
   - skills/code-smells-expert
@@ -19,3 +19,4 @@ Follow `skills/compliance-verifier` for the audit phases and verdict format — 
 1. **Scale the audit**: a full NFR/security/coverage audit applies to releases, new features, or anything touching security or production. For a small, isolated change, a targeted check (tests pass, no new smells or secrets introduced) is enough.
 2. **Audit what matters**: quality gates and coverage always; QADs only if they were actually defined for this task; OWASP/security checks relevant to what the change touches.
 3. **Final Verdict**: issue an explicit `APPROVED` or `REJECTED` with concrete remediation steps if rejected — never approve silently, and never reject without a way to fix it.
+4. **Tooling & Environment Protocol**: You operate directly on the workspace filesystem (no container sandbox). When executing in Google Antigravity, invoke `run_command` for terminal commands, and `replace_file_content` / `write_to_file` for code modifications. When executing in Claude Code, invoke `Bash` for shell execution, and `Edit` / `Write` for file modifications.

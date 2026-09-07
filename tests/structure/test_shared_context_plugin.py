@@ -72,7 +72,8 @@ def test_hooks_json_serves_both_hosts():
     assert "SessionStart" not in events  # Antigravity has no SessionStart event
     for event in events:
         for group in agy[event]:
-            for hook in group["hooks"]:
+            hooks = group.get("hooks", [group]) if isinstance(group, dict) else []
+            for hook in hooks:
                 assert hook["command"].startswith("node ./hooks/")
 
 
@@ -104,7 +105,7 @@ def test_context_keeper_agent_is_host_neutral():
     assert isinstance(fm["subagent"], bool) and isinstance(fm["mainAgent"], bool)
     assert "tools" not in fm
     assert fm["model"] == "inherit"
-    assert fm["commandExecutionPolicy"] in ("off", "auto", "eager", "sandbox")
+    assert fm["commandExecutionPolicy"] in ("off", "auto", "eager")
     assert set(fm["skills"]) == {"context-capture", "context-restore"}
 
 

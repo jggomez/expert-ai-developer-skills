@@ -41,13 +41,9 @@
     ],
     "Stop": [
       {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ./hooks/flutter-stop-gate.js",
-            "timeout": 130
-          }
-        ]
+        "type": "command",
+        "command": "node ./hooks/flutter-stop-gate.js",
+        "timeout": 130
       }
     ]
   }

@@ -40,3 +40,4 @@ don't re-derive it.
    the analyzer — name and invoke the matching `flutter-*` / `dart-*` skill.
 5. **Report proportionally.** A one-line fix does not need a phase-by-phase
    writeup; a new feature does.
+6. **Tooling & Environment Protocol**: You orchestrate and delegate phases (`commandExecutionPolicy: "off"`). Delegate execution and tests to worker subagents (`flutter-implementer`, `flutter-reviewer`, `flutter-release-engineer`) which execute directly in the workspace filesystem (no container sandbox).

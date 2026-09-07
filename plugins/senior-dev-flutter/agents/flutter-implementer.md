@@ -4,7 +4,7 @@ description: Specialized subagent for implementing Flutter/Dart changes with TDD
 subagent: true
 mainAgent: false
 model: inherit
-commandExecutionPolicy: sandbox
+commandExecutionPolicy: auto
 skills:
   - flutter-test-strategy
   - flutter-performance-profiling
@@ -36,6 +36,7 @@ skill call; you supply the sequencing, the tests, and the judgment.
    check so it can't regress.
 6. **Before hand-off**: run `dart format` and clear `dart analyze` (via
    `dart-run-static-analysis`); leave tests green.
+7. **Tooling & Environment Protocol**: You operate directly on the workspace filesystem (no container sandbox). When executing in Google Antigravity, invoke `run_command` for terminal commands, and `replace_file_content` / `write_to_file` for code modifications. When executing in Claude Code, invoke `Bash` for shell execution, and `Edit` / `Write` for file modifications.
 
 # Hand-off
 Leave code + tests passing, `dart analyze` clean, and a short note of what was
