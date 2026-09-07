@@ -115,3 +115,44 @@ def test_no_hardcoded_user_absolute_paths(skills_dirs):
             errors.append(f"{skill_name}: Contains hardcoded user absolute path: {matches[:3]}")
             
     assert not errors, "\n".join(errors)
+
+
+def test_skills_required_sections(skills_dirs):
+    """Verifies that all SKILL.md files define the standard best-practice sections:
+    Overview, When to Use (or When to Run), Process (or Workflow), Usage (or How to Use),
+    Red Flags (or Anti-Patterns), and Verification (or Checklist/Quality Gates)."""
+    errors = []
+
+    for skill_dir in skills_dirs:
+        skill_name = os.path.basename(skill_dir)
+        skill_md = os.path.join(skill_dir, "SKILL.md")
+
+        with open(skill_md, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        has_overview = bool(re.search(r"^##\s+.*Overview", content, re.MULTILINE | re.IGNORECASE))
+        has_when = bool(re.search(r"^##\s+.*When to (?:Use|Run)", content, re.MULTILINE | re.IGNORECASE))
+        has_process = bool(re.search(r"^##\s+.*(?:Process|Workflow|Execution Lifecycle)", content, re.MULTILINE | re.IGNORECASE))
+        has_usage = bool(re.search(r"^##\s+.*(?:Usage|How to Use|Invocations)", content, re.MULTILINE | re.IGNORECASE))
+        has_red_flags = bool(re.search(r"^##\s+.*(?:Red Flags|Anti-Patterns|Pitfalls|Red-Lines)", content, re.MULTILINE | re.IGNORECASE))
+        has_verification = bool(re.search(r"^##\s+.*(?:Verification|Quality Gates|Validation Checklist|Quality Checklist)", content, re.MULTILINE | re.IGNORECASE))
+
+        missing = []
+        if not has_overview:
+            missing.append("Overview (## Overview)")
+        if not has_when:
+            missing.append("When to Use (## When to Use)")
+        if not has_process:
+            missing.append("Process (## Process)")
+        if not has_usage:
+            missing.append("Usage (## Usage)")
+        if not has_red_flags:
+            missing.append("Red Flags (## Red Flags)")
+        if not has_verification:
+            missing.append("Verification (## Verification)")
+
+        if missing:
+            errors.append(f"{skill_name}: Missing required sections: {', '.join(missing)}")
+
+    assert not errors, f"Skills missing required sections:\n" + "\n".join(errors)
+

@@ -5,62 +5,97 @@ description: Use when reviewing a Flutter/Dart pull request or auditing existing
 
 # Flutter Review Checklist
 
-`dart analyze` catches lint violations. `flutter-fix-layout-issues` fixes render
-overflows. This skill is the review pass in between: the framework-specific
-mistakes that compile, pass the linter, and still ship jank, leaks, or broken
-accessibility.
+## Overview
+The **Flutter Review Checklist** skill equips reviewers, tech leads, and autonomous agents with a systematic quality audit for Flutter and Dart codebases. Operating across **Claude Code** and **Google Antigravity**, this skill bridges the gap between static linter checks (`dart analyze`) and high-level architectural guidelines by detecting nuanced runtime hazards—such as wasteful widget rebuild trees, unclosed stream subscriptions, controller memory leaks, asynchronous `BuildContext` violations, missing accessibility semantics, and broken golden test coverage.
 
-## When to run
+## When to Use
 
-- Reviewing any PR that touches `lib/**` widgets, state, or platform code.
-- Auditing a screen that "feels slow" or a codebase before a release.
+### Trigger Scenarios
+- Conducting code reviews on Pull Requests that modify `lib/**` widgets, state controllers, or native platform channels.
+- Auditing UI screens that experience frame drops, sluggish scrolling, or memory leaks.
+- Preparing production release candidates for accessibility (a11y) and performance compliance.
+- Verifying adherence to project-wide Architecture Decision Records (ADRs).
 
-## How to run
+### When NOT to Use
+- **Syntax and formatting errors**: Use `dart analyze` and `dart format` to catch routine formatting and analyzer issues.
+- **Visual constraint layout bugs**: For `RenderFlex` overflow errors ("yellow-and-black stripes"), use `flutter-fix-layout-issues`.
+- **Backend-only code**: For backend microservices or APIs, use `refactor-codebase` or `code-smells-expert`.
 
-1. **Baseline with the tools first** — don't hand-review what a machine finds:
-   ```bash
-   dart analyze
-   dart format --output=none --set-exit-if-changed .
-   flutter test --coverage
-   python3 ./skills/flutter-review-checklist/scripts/flutter_project_audit.py
-   ```
-   Use the official `dart-run-static-analysis` skill to clear analyzer findings
-   before the human pass.
-2. **Walk the checklist**: [references/flutter-review-checklist.md](references/flutter-review-checklist.md).
-   Only raise an item when you can point at the line and name the concrete
-   failure (a rebuild that will happen, a controller that will leak) — not "this
-   could be cleaner".
-3. **Check against the ADRs** (`doc/adr/`): does the PR follow the recorded state
-   management and module-boundary decisions? A deviation needs its own ADR, not
-   a review nit.
-4. **Verdict**: block only on correctness, leaks, accessibility regressions, or
-   an ADR violation. Everything else is a non-blocking suggestion.
+## Process
 
-## The high-value checks (full list in the reference)
+```mermaid
+flowchart TD
+    A[PR / Diff Submitted] --> B[Step 1: Automated Tool Baseline]
+    B --> C[Step 2: Walk Review Checklist]
+    C --> D[Step 3: ADR Compliance Check]
+    D --> E{Blocking Issues Found?}
+    E -->|Yes| F[Block PR with File:Line & Failure Mode]
+    E -->|No| G[Approve with Non-blocking Suggestions]
+```
 
-- **Rebuild scope** — `setState` / `notifyListeners` rebuilding a whole page
-  instead of a leaf; missing `const`; `MediaQuery.of(context)` /
-  `Theme.of(context)` read high in the tree causing wide rebuilds.
-- **Lifecycle** — every `AnimationController`, `TextEditingController`,
-  `StreamSubscription`, `FocusNode`, `ScrollController` has a matching
-  `dispose()`.
-- **`BuildContext` after `await`** — using `context` after an async gap without a
-  `mounted` check.
-- **Lists** — `ListView(children: [...])` for long/unbounded lists instead of
-  `ListView.builder`; missing `RepaintBoundary` around expensive repeating
-  items; no `cacheExtent` tuning where it matters.
-- **Images** — network images without `cacheWidth`/`cacheHeight` or a caching
-  package; decoding full-res images into small boxes.
-- **Keys** — reorderable/inserted list items without stable `Key`s; `GlobalKey`
-  used where a `ValueKey` would do.
-- **Accessibility** — icon-only buttons without `Semantics`/`tooltip`; text that
-  ignores `MediaQuery.textScaler`; tap targets under 48dp.
-- **Testing** — new widget with branching UI and no widget test; visual change
-  with no golden; business logic added with no unit test (see
-  `flutter-test-strategy`).
+### 1. Tool Baseline
+Run automated checks first to eliminate mechanical issues before starting manual or semantic review:
+- Execute `dart analyze` and format checks.
+- Execute test suites with coverage.
+- Run the specialized Flutter project audit script to flag un-disposed resources and missing `const` constructors.
 
-## Hand-off
+### 2. Walk the Review Checklist
+Review diffs against [references/flutter-review-checklist.md](references/flutter-review-checklist.md), focusing on high-impact areas:
+- **Rebuild Scope**: Ensure `setState` and reactive consumers target leaf widgets rather than entire scaffold screens.
+- **Resource Lifecycle**: Confirm every `AnimationController`, `TextEditingController`, `StreamSubscription`, `FocusNode`, and `ScrollController` is closed in `dispose()`.
+- **Async BuildContext**: Verify all usages of `context` after an `await` gap are guarded by `if (!mounted) return;`.
+- **List & Image Performance**: Confirm `ListView.builder` or `CustomScrollView` is used for unbounded lists, and network images specify `cacheWidth`/`cacheHeight`.
+- **Accessibility**: Ensure tap targets meet the 48x48dp minimum and icon buttons declare explicit semantics or tooltips.
 
-Return an explicit list: blocking issues (file:line + the concrete failure),
-non-blocking suggestions, and any ADR deviation. Pass release-affecting findings
-to `flutter-release-engineer`.
+### 3. Verify ADR Compliance
+Check whether state management or module splits violate recorded ADRs in `doc/adr/`. Deviations require a dedicated ADR update, not casual review approval.
+
+### 4. Provide Structured Verdict
+Classify findings into:
+- **Blocking**: Correctness bugs, resource leaks, accessibility regressions, or ADR violations.
+- **Non-blocking**: Ergonomic recommendations, style suggestions, or optional micro-optimizations.
+
+## Usage
+
+### Commands & Automation Scripts
+Execute the automated Flutter project audit script to scan for un-disposed controllers, missing mounted checks, and oversized widgets:
+```bash
+python3 ./skills/flutter-review-checklist/scripts/flutter_project_audit.py
+```
+
+Standard automated checks:
+```bash
+dart analyze
+dart format --output=none --set-exit-if-changed .
+flutter test --coverage
+```
+
+### Example Prompts
+```text
+"Review this Flutter PR for widget rebuild inefficiencies, memory leaks in controllers, and proper async context handling."
+```
+```text
+"Run the Flutter project audit script on our codebase and report any unclosed stream subscriptions or missing dispose calls."
+```
+
+### Host Execution Instructions
+- **Claude Code**: Invoke via `/skill flutter-review-checklist` or ask for Flutter code review in conversation.
+- **Google Antigravity**: Run the audit script and analyzer commands via terminal or integrate with automated PR review workflows.
+
+## Red Flags
+- Calling `BuildContext` methods (`Navigator.of(context)`, `ScaffoldMessenger.of(context)`) after an `await` without verifying `mounted`.
+- Instantiating controllers (`TextEditingController`, `AnimationController`) inside `build()` methods instead of `StatefulWidget` state.
+- Forgetting to invoke `controller.dispose()` or `subscription.cancel()` in `dispose()`.
+- Using `ListView(children: [...])` for lists with dynamic or unbounded length instead of `ListView.builder`.
+- Omitting semantics labels or tooltips on custom interactive icon buttons.
+
+## Verification
+- [ ] Automated baseline passes: `dart analyze` and `dart format` return zero exit codes.
+- [ ] Project audit script `python3 ./skills/flutter-review-checklist/scripts/flutter_project_audit.py` reports zero unhandled controller leaks.
+- [ ] All `BuildContext` references across async gaps guarded with `mounted`.
+- [ ] All controllers and subscriptions safely disposed.
+- [ ] Accessibility semantics and tap target sizes verified.
+- [ ] Changes adhere strictly to recorded ADRs in `doc/adr/`.
+
+## References
+- [Flutter Comprehensive Review Checklist](references/flutter-review-checklist.md)

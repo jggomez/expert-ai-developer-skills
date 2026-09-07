@@ -3,19 +3,86 @@ name: loop-engineering
 description: Implements self-correcting agent execution loops, multi-agent parallel workflows, workspace isolation (Git Worktrees), and automated cron-based Pull Request auditing. Use this skill when asked to orchestrate parallel workers or construct review loops.
 ---
 
-### Role & Mindset
-You are a **Loop Engineering & Multi-Agent Orchestrator**. You design systems where agents manage other agents, perform parallel feature branch implementations on isolated workspace checkouts, and run validation crons to continuously verify build artifacts.
+# Loop Engineering Skill
 
-### Loop Engineering & PR Audit Workflow
-Review the architecture documentation before orchestrating subagents:
-[Loop Engineering & Multi-Agent Orchestration Reference](references/loop-architecture.md)
+## Overview
+This skill designs and executes multi-agent workflows, isolated parallel worker topologies, and self-correcting development loops. It acts as a Loop Engineering and Multi-Agent Orchestrator, enabling manager agents to coordinate multiple worker agents operating concurrently in dedicated git worktrees, protected by automated review crons and quality verification gates.
 
-Focus on:
-1. **Parallel Worker Dispatching**: Provision one isolated git worktree + branch per task, then launch one subagent per worktree via the host's Agent/subagent tool. Subagents are always launched live by the model in-session — there is no importable SDK for spawning one from a standalone script, on either Antigravity or Claude Code.
-2. **Branch Isolation**: Assign dedicated `feature/` or `bugfix/` branches to workers, ensuring no files conflict during compilation or validation.
-3. **Continuous Review Crons**: Schedule automated checkers to run periodically. Use git diff checkups to scan PRs and append review comments.
-4. **Self-Correction Loop**: If verification gates fail, automatically check out the branch, fix the code, push updates to the branch, and re-trigger review.
+## When to Use
+### Trigger Scenarios
+- Orchestrating multi-agent parallel execution across disjoint modules or features.
+- Provisioning isolated git worktrees to prevent mutational file conflicts among concurrent agents.
+- Setting up automated periodic review crons to audit open pull requests and branches.
+- Establishing self-correcting execution loops that detect build/test failures and automatically remediate code.
 
-### Running Automations
-- **Provision Parallel Worktrees**: Run [run_parallel_agents.py](scripts/run_parallel_agents.py) to create one isolated git worktree + branch per task; it prints the exact prompt to hand each subagent you then launch via your host's Agent/subagent tool.
-- **Run the PR Auditor Check**: Execute [pr_cron_reviewer.py](scripts/pr_cron_reviewer.py) to scan open `feature/`/`bugfix/` branches and run quality gates on their diffs.
+### When NOT to Use
+- **Single-agent sequential development tasks**: Standard execution suffices.
+- **Trivial isolated fixes**: Avoid worktree provisioning overhead.
+- **Pure git commit message validation**: Route to `commit-expert`.
+- **Stand-alone manual code reviews**: Route to `pull-request-expert`.
+
+## Process
+### Phase 1: Task Decomposition & Worktree Provisioning
+1. Identify independent, disjoint tasks with zero shared mutational state.
+2. Run the worktree provisioning script to create one isolated git worktree and branch per task:
+   ```bash
+   python3 ./skills/loop-engineering/scripts/run_parallel_agents.py --tasks "task1:path1" "task2:path2"
+   ```
+   The script creates the worktree directories and outputs ready-to-use prompts for each subagent.
+
+### Phase 2: Parallel Subagent Dispatching
+1. Launch concurrent subagents via host-native subagent tools (`invoke_subagent` on Antigravity, Task on Claude Code).
+2. Assign each subagent to its dedicated worktree directory and branch.
+3. Subagents execute implementation and local testing autonomously within their isolated directories.
+
+### Phase 3: Continuous Review Crons & Quality Gates
+1. Run automated PR/branch auditors to scan feature and bugfix branches:
+   ```bash
+   python3 ./skills/loop-engineering/scripts/pr_cron_reviewer.py
+   ```
+2. The auditor runs static analyzers, test runners, and secret scanners against git diffs, appending actionable comments to the review log.
+
+### Phase 4: Self-Correction Loop
+1. If quality gates fail, the manager or worker agent checks out the branch, reads the error traceback, applies targeted fixes, and pushes updates.
+2. Re-trigger the review cron until 100% of quality checks pass.
+
+## Usage
+### Commands & Automation Scripts
+```bash
+# Provision isolated worktrees and generate subagent prompts
+python3 ./skills/loop-engineering/scripts/run_parallel_agents.py
+
+# Execute automated PR and branch diff quality review cron
+python3 ./skills/loop-engineering/scripts/pr_cron_reviewer.py
+```
+
+### Example Prompts
+- *"Provision isolated worktrees for these 3 independent API routes and dispatch parallel subagents."*
+- *"Run the PR review cron to inspect all active feature branches for quality gate compliance."*
+- *"Orchestrate a self-correcting development loop for this refactoring until all tests pass."*
+
+### Host Execution Instructions
+- **Claude Code**: Run `run_parallel_agents.py` to create worktrees, then dispatch subagents into each worktree path.
+- **Antigravity**: Launch subagents with `Workspace='branch'` or `Workspace='share'` and monitor execution reactively.
+
+## Red Flags
+- Spawning parallel subagents in the same directory without worktree isolation (causing race conditions and file collisions).
+- Bypassing the self-correction loop when quality gates fail.
+- Allowing subagents to commit directly to production branches without PR review.
+- Running parallel subagents on heavily coupled tasks with shared mutable state.
+
+## Verification
+- [ ] Worktrees provisioned cleanly with isolated branches:
+  ```bash
+  python3 ./skills/loop-engineering/scripts/run_parallel_agents.py
+  ```
+- [ ] Subagents execute and commit changes to their respective branches without collision.
+- [ ] PR cron reviewer passes with zero gate failures:
+  ```bash
+  python3 ./skills/loop-engineering/scripts/pr_cron_reviewer.py
+  ```
+- [ ] Self-correction loop successfully resolves any test or lint failures before merge.
+
+## References
+- [Loop Engineering & Multi-Agent Orchestration Reference](references/loop-architecture.md)
+

@@ -3,44 +3,82 @@ name: gcp-data-engineering
 description: Guides architecture decisions for data pipelines on Google Cloud — lake/warehouse/lakehouse design, batch vs. streaming, orchestration tool selection (Dataform, Cloud Composer/Airflow, Dataflow/Beam), and BigQuery cost/performance tuning (partitioning, clustering, slots). Use when designing a new pipeline, choosing a GCP data service, or optimizing BigQuery cost/performance.
 ---
 
-### Role & Mindset
-You are a **Senior Data Engineer** specialized in Google Cloud. You design pipelines that are correct, cost-aware, and no more complex than the data volume and latency requirement actually demand — you don't reach for streaming when nightly batch is enough, and you don't reach for a hand-rolled Dataflow job when a Dataform SQL model does the same job with less to maintain.
+# GCP Data Engineering Skill
 
----
+## Overview
+This skill guides architectural decisions for data pipelines, data lakehouses, and analytical storage on Google Cloud Platform (GCP). It acts as a Senior GCP Data Architect, balancing data volume, ingestion latency, operational complexity, and cloud costs. It prioritizes simple, warehouse-native ELT patterns (Dataform, BigQuery) over complex custom streaming pipelines (Dataflow/Beam) unless business SLAs strictly require sub-minute freshness.
 
-### Architecture Decision Workflow
+## When to Use
+### Trigger Scenarios
+- Designing enterprise data platforms on GCP (Cloud Storage, BigQuery, Pub/Sub, Dataflow, Composer).
+- Selecting ingestion patterns (Batch loading vs. Log-based CDC vs. Streaming event buffers).
+- Choosing orchestration engines (Dataform for warehouse-internal SQL vs. Cloud Composer for multi-service DAGs).
+- Designing BigQuery table partitioning, clustering, and Medallion architecture layers (`bronze` → `silver` → `gold`).
 
-#### 1. Storage Layer
-- **Data Lake (Cloud Storage)**: raw, immutable landing zone for files/events before any transformation. Use for schema-on-read, large unstructured data, or archival.
-- **Data Warehouse (BigQuery)**: the default analytical store for this stack — columnar, serverless, scales to petabytes without cluster management.
-- **Lakehouse pattern**: land raw data in Cloud Storage, load/stream into BigQuery, model in layers (see Medallion pattern below). Default to this unless there's a concrete reason not to.
-- **Medallion layering**: `bronze` (raw, as-ingested) → `silver` (cleaned, deduplicated, typed) → `gold` (business-level aggregates/marts). Keep bronze immutable so any downstream bug is always re-derivable.
+### When NOT to Use
+- **Replicating operational databases via CDC and SCD Type 2 modeling**: Route to `cdc-scd-patterns`.
+- **Tuning slow or expensive BigQuery SQL query plans**: Route to `bigquery-query-optimization`.
+- **Traditional single-node RDBMS optimization**: Route to `sql-query-optimization`.
+- **General application backend development**: Route to `python-expert`.
 
-#### 2. Ingestion: Batch vs. Streaming
-Default to **batch**. Only choose streaming when the business actually needs sub-minute freshness (e.g. fraud detection, live dashboards) — streaming pipelines cost more to build, operate, and debug.
+## Process
+### Phase 1: Storage Layer & Medallion Architecture
+1. **Data Lake (Cloud Storage)**: Use GCS as the immutable landing zone for raw external files (CSV, JSON, Parquet, Avro). Retain raw files to ensure re-derivability if downstream bugs occur.
+2. **Data Warehouse (BigQuery)**: Serverless, petabyte-scale analytical store.
+3. **Medallion Layers**:
+   - `Bronze`: Raw, ingested change-log or file dumps (append-only, immutable).
+   - `Silver`: Cleaned, deduplicated, schema-validated, and typed tables.
+   - `Gold`: High-value business aggregates, metrics marts, and reporting views.
 
-| Need | Choose |
-| :--- | :--- |
-| Nightly/hourly loads from files or APIs | Batch load into BigQuery, orchestrated by Dataform or Cloud Composer |
-| Change data capture from an operational database (Cloud SQL, AlloyDB, Oracle) | **Datastream** — see [`cdc-scd-patterns`](../cdc-scd-patterns/SKILL.md) skill |
-| Event streams (clickstream, IoT, app events) | **Pub/Sub** as the ingestion buffer, then Dataflow (Beam) or a Pub/Sub BigQuery subscription for near-real-time landing |
-| Complex streaming transforms (windowing, joins across streams) | **Dataflow (Apache Beam)** — reach for this only when Pub/Sub's direct BigQuery subscription isn't expressive enough |
+### Phase 2: Ingestion Pattern Selection
+Default to **batch** unless business requirements dictate sub-minute SLAs:
+- **Nightly / Scheduled Loads**: Batch load into BigQuery via Dataform, Cloud Storage transfer, or Cloud Composer.
+- **Operational Database Replication**: Use **Datastream** for log-based CDC into BigQuery.
+- **High-throughput Event Streaming**: Use **Pub/Sub** buffer with direct BigQuery subscription (or Dataflow if stream joins/windowing are required).
 
-#### 3. Orchestration & Transformation
-- **Dataform**: SQL-first transformation and orchestration *inside* BigQuery (like dbt). Default choice for warehouse-native ELT — dependency graphs, incremental tables, assertions, scheduled/triggered workflow invocations.
-- **Cloud Composer (managed Apache Airflow)**: choose when a pipeline spans *multiple systems* (e.g. trigger a Dataflow job, then a Vertex AI training run, then a Dataform invocation) — Dataform alone can't orchestrate outside BigQuery.
-- **Dataflow (Apache Beam)**: choose for custom streaming logic or large-scale batch transforms that don't fit as SQL (e.g. ML feature engineering, complex windowed aggregation, non-tabular data processing).
-- Rule of thumb: if the transform can be expressed in SQL and stays inside BigQuery, use Dataform. Reach for Composer/Dataflow only when you have a concrete requirement Dataform can't satisfy.
+### Phase 3: Orchestration & Transformation Engine Selection
+- **Dataform**: SQLX-native transformation inside BigQuery. Default choice for warehouse-native ELT, assertions, and table dependencies.
+- **Cloud Composer (Managed Airflow)**: Use when orchestrating across multiple GCP services (e.g. GCS → Dataflow → Vertex AI → BigQuery).
+- **Dataflow (Apache Beam)**: Use exclusively for complex streaming transforms, custom windowed joins, or heavy Python/Java non-SQL transformations.
 
-#### 4. BigQuery Performance & Cost
-- **Partition** large tables by ingestion time or a date/timestamp column — every query should be able to prune partitions via a `WHERE` filter on that column.
-- **Cluster** on columns used in frequent `WHERE`/`JOIN` filters (up to 4 columns), ordered by filter selectivity.
-- Prefer `SELECT` specific columns over `SELECT *` — BigQuery is columnar and charges (or counts slot-time) per column scanned.
-- Use `--dry-run` / the query validator to check bytes-scanned *before* running a query against a large table.
-- Materialize expensive repeated aggregations as scheduled tables or materialized views instead of recomputing them per dashboard load.
+### Phase 4: BigQuery Cost & Performance Governance
+- **Partitioning**: Partition tables by date/timestamp or ingestion time; require partition filters in `WHERE` clauses.
+- **Clustering**: Cluster on up to 4 frequently filtered or joined columns, sorted from highest to lowest selectivity.
+- **Column Pruning**: Explicitly name required columns; never run `SELECT *` across large analytical tables.
+- **Dry-Run Validation**: Always validate query byte consumption before execution.
 
----
+## Usage
+### CLI Invocations & Verification Commands
+```bash
+# Check query byte scan estimation using bq dry-run
+bq query --use_legacy_sql=false --dry_run "SELECT id, created_at FROM \`my_project.analytics.events\` WHERE event_date = '2026-09-01'"
 
-### Reference Manual
-For the full GCP data service catalog (Bigtable, Firestore, Spanner as sources; Pub/Sub, Managed Kafka; Data lineage/Dataplex governance) and MCP-server-backed tooling for this stack:
-[GCP Data Stack Reference](references/gcp-data-stack.md)
+# Validate Dataform project compilation
+dataform compile
+```
+
+### Example Prompts
+- *"Design a cost-effective GCP pipeline to ingest 50M daily events from Cloud Storage into BigQuery."*
+- *"Should we use Dataform or Cloud Composer for our daily analytical reporting pipeline?"*
+- *"Design the Medallion architecture and clustering strategy for our customer analytics dataset."*
+
+### Host Execution Instructions
+- **Claude Code**: Provide architecture blueprints and run `bq` CLI dry-run checks in the workspace.
+- **Antigravity**: Formulate GCP architectural designs and integrate with GCP BigQuery tools.
+
+## Red Flags
+- Reaching for complex streaming architectures (Dataflow/Kafka) when hourly batch loads satisfy business SLAs.
+- Running `SELECT *` queries on multi-terabyte BigQuery tables without partition filters.
+- Using Cloud Composer to run pure SQL transformations that Dataform handles natively with lower cost and complexity.
+- Querying raw CDC change-log tables directly from BI dashboards without a silver deduplication layer.
+
+## Verification
+- [ ] Table designs specify appropriate partitioning column and clustering keys.
+- [ ] Medallion layer boundaries (`bronze`, `silver`, `gold`) clearly delineated.
+- [ ] Ingestion tool chosen matches data velocity and freshness requirements.
+- [ ] BigQuery dry-run confirms scanned bytes comply with cost budgets.
+
+## References
+For the full GCP data services matrix, MCP server mappings, and governance blueprints:
+- [GCP Data Stack Reference](references/gcp-data-stack.md)
+

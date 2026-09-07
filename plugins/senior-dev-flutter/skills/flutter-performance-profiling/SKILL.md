@@ -5,50 +5,100 @@ description: Use when a Flutter app janks, drops frames, is slow to start, or fe
 
 # Flutter Performance Profiling
 
-`flutter-fix-layout-issues` fixes *errors* the framework reports. This skill is
-for the app that runs fine and still feels bad: jank, slow scroll, long
-time-to-interactive. Measure first, fix the named cause, measure again.
+## Overview
+The **Flutter Performance Profiling** skill delivers rigorous diagnosis, instrumentation, and remediation workflows for Flutter runtime performance issues. Compatible across **Claude Code** and **Google Antigravity**, this skill guides developers to profile before optimizing—distinguishing UI thread bottlenecks (expensive widget trees, redundant layout computations) from raster thread stalls (shader warmup jank, excessive layer clipping, overdraw, expensive saveLayer calls) to ensure smooth 60fps / 120fps frame rates.
 
-## When to run
+## When to Use
 
-- "This screen stutters when I scroll."
-- "The app takes 3 seconds to show anything."
-- A perf regression report, or a pre-release perf pass.
+### Trigger Scenarios
+- Investigating frame drops, stutter, or jank during scrolling and route transitions.
+- Profiling and reducing cold/warm app startup latency.
+- Diagnosing memory leaks, image bloat, or climbing heap allocations over extended sessions.
+- Pre-release performance qualification for production releases.
 
-## Never guess — measure in profile mode
+### When NOT to Use
+- **Layout overflow bugs**: For layout constraint violations and overflow render errors, use `flutter-fix-layout-issues`.
+- **Backend or network latency**: For slow API queries or backend database bottlenecks, use `performance-scalability`.
+- **Static code formatting**: For simple syntax formatting, use `dart format`.
 
-```bash
-flutter run --profile               # NOT debug (debug is not representative) and NOT release (no tooling)
-flutter run --profile --trace-startup --verbose   # for startup analysis; writes start_up_info.json
+## Process
+
+```mermaid
+flowchart TD
+    A[Performance Issue Reported] --> B[Run Profile Mode: flutter run --profile]
+    B --> C[Capture Timeline in DevTools]
+    C --> D{Diagnose Thread Bottleneck}
+    D -->|UI Thread > 16ms| E[Optimize Build/Layout Scope & Compute Offload]
+    D -->|Raster Thread > 16ms| F[Reduce Overdraw, Clips & saveLayer Calls]
+    D -->|First-run Stutter| G[Shader Warmup / Impeller Engine Migration]
+    E --> H[Verify Frame Metrics Before vs. After]
+    F --> H
+    G --> H
 ```
 
-Open **DevTools → Performance**. Record while reproducing the problem. Read:
+### 1. Measure in Profile Mode (Never Guess)
+Never attempt performance profiling in Debug mode (unoptimized JIT engine) or Release mode (stripped of DevTools hooks). Run in Profile mode:
+```bash
+flutter run --profile
+flutter run --profile --trace-startup --verbose
+```
 
-- **UI thread** (Dart) frames over ~16ms (60Hz) / ~8ms (120Hz) → your
-  `build`/layout/paint is too expensive.
-- **Raster thread** frames over budget → GPU work: shaders, saveLayer,
-  large/complex clips, opacity layers, overdraw.
-- **"Shader compilation"** entries on first run of an animation → shader jank.
+### 2. Isolate the Thread Bottleneck in DevTools
+Inspect the DevTools Performance timeline:
+- **UI Thread (Dart Runtime)**: Frame budget exceeded (>16ms for 60fps, >8ms for 120fps). Indicates expensive `build()` logic, massive widget trees, or synchronous JSON parsing.
+- **Raster Thread (GPU Engine)**: GPU rendering stalled. Indicates expensive `saveLayer()` invocations, heavy `BackdropFilter`, complex `ClipPath`/`ClipRRect`, or un-cached raster assets.
+- **Shader Compilation**: Spikes appearing exclusively on the initial execution of an animation indicate shader compilation jank.
 
-## Diagnose → fix by symptom
+### 3. Apply Targeted Remediation
+- **UI Thread Jank**: Narrow rebuild scopes with `const` constructors, use `ListView.builder`, and offload expensive parsing to background isolates via `compute()`.
+- **Raster Thread Jank**: Replace dynamic `ClipRRect` with decorated `BoxDecoration(borderRadius: ...)`, wrap isolated animated subtrees with `RepaintBoundary`, and specify `cacheWidth`/`cacheHeight` on images.
+- **Shader Jank**: Migrate to the Impeller rendering engine or warm up shaders via SkSL cache bundling.
+- **Startup Latency**: Defer heavy synchronous initialization in `main()`, launching `runApp()` with a lightweight splash skeleton.
 
-| Symptom in the timeline | Likely cause | Fix |
-| :--- | :--- | :--- |
-| Tall **UI thread** bars during scroll | rebuilding too much per frame | narrow rebuild scope (see `flutter-review-checklist` §1); `const`; `ListView.builder`; selectors instead of whole-tree `watch` |
-| Tall UI bars, spikes on data change | expensive work in `build()` | memoise; move compute to `initState` / an isolate (`compute()`); precompute derived lists |
-| Tall **raster** bars, steady | `Opacity`, `ClipRRect`/`ClipPath`, `ShaderMask`, `BackdropFilter` on a big/animated subtree | use decoration `borderRadius`, `AnimatedOpacity`, pre-clipped assets; add `RepaintBoundary` to isolate |
-| Raster spikes only the **first** time an animation plays | shader compilation jank | bundle a shader warm-up (SkSL) — `flutter run --profile --cache-sksl --purge-persistent-cache`, capture, ship via `--bundle-sksl-path`; or use Impeller (default on iOS; enable on Android and re-test) |
-| Long gap before first frame | heavy synchronous work in `main()` / first `build` | defer non-critical init; `runApp` early with a lightweight first frame; lazy-load |
-| Jank only on low-end Android | overdraw, big images | check "Highlight repaints" / "Highlight oversized images" in DevTools; set `cacheWidth`/`cacheHeight`; reduce layers |
-| Memory climbs over time | leaked controllers / subscriptions | `flutter-review-checklist` §2; DevTools → Memory → diff snapshots |
+### 4. Continuous Regression Guardrails
+- Record before-and-after frame timeline metrics in PR descriptions.
+- Add integration benchmarks running in profile mode: `flutter test integration_test --profile`.
 
-## Guardrails to keep a regression from coming back
+## Usage
 
-- Keep a scripted scroll/interaction and check frame times in CI where feasible
-  (`integration_test` + `flutter drive --profile`, or `flutter test integration_test --profile`).
-- Add a `RepaintBoundary` + a golden for the isolated expensive component.
-- Record the before/after frame numbers in the PR.
+### Profiling Commands
+Launch profile execution and trace startup time:
+```bash
+flutter run --profile
+flutter run --profile --trace-startup --verbose
+```
 
-## Reference
+Profile integration benchmarks:
+```bash
+flutter drive --profile --target=test_driver/perf.dart
+```
 
-- [Jank-hunting playbook — step by step](references/jank-hunting-playbook.md)
+### Example Prompts
+```text
+"Profile our Flutter catalog feed screen that experiences frame drops during rapid scrolling and isolate UI vs raster thread spikes."
+```
+```text
+"Analyze our app startup timeline and identify blocking synchronous tasks before runApp."
+```
+
+### Host Execution Instructions
+- **Claude Code**: Invoke via `/skill flutter-performance-profiling` or request runtime performance diagnosis.
+- **Google Antigravity**: Execute profiling commands via terminal and capture trace metrics for analysis.
+
+## Red Flags
+- Profiling performance in Debug mode where assertions, debug banners, and JIT compilation skew frame metrics.
+- Blindly wrapping widgets in `RepaintBoundary` without measuring GPU layer memory overhead.
+- Parsing large JSON payloads directly on the UI isolate instead of using `compute()`.
+- Decoding massive multi-megabyte images into tiny thumbnail avatar widgets without `cacheWidth`/`cacheHeight`.
+- Speculative optimization without DevTools timeline verification.
+
+## Verification
+- [ ] Profiling performed strictly in `flutter run --profile` mode.
+- [ ] DevTools Performance timeline inspected and thread bottleneck (UI vs Raster) identified.
+- [ ] Frame build and raster times stay consistently under 16ms (60fps) / 8ms (120fps).
+- [ ] Heavy CPU calculations offloaded to background isolates using `compute()`.
+- [ ] Image assets set explicit memory dimensions (`cacheWidth`/`cacheHeight`).
+- [ ] Before and after frame metrics documented in the review record.
+
+## References
+- [Jank-Hunting Playbook — Step by Step](references/jank-hunting-playbook.md)

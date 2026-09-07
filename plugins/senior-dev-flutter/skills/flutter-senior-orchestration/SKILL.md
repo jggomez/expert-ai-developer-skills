@@ -5,66 +5,101 @@ description: Use to run a Flutter feature or fix end to end — sizing the task,
 
 # Flutter Senior Orchestration
 
-The phase breakdown for taking a Flutter change from request to merged, using
-the official Dart/Flutter skills for every "how", and this repo's `senior-dev-flutter`
-subagents for the "which", "in what order", and "is it good enough".
+## Overview
+The **Flutter Senior Orchestration** skill directs the end-to-end delivery lifecycle of Flutter and Dart applications—from initial task sizing and architectural decision-making through TDD implementation, comprehensive static/dynamic code review, and release packaging. Designed for seamless execution across both **Claude Code** and **Google Antigravity**, this skill sequences specialized subagents (`flutter-architect`, `flutter-implementer`, `flutter-reviewer`, and `flutter-release-engineer`) while delegating low-level mechanics to official `flutter-*` and `dart-*` skills.
 
-## Prerequisite
+## When to Use
 
-The official skill packs are installed:
-`npx skills add flutter/agent-plugins --skill '*' --agent universal --yes`
-and `npx skills add dart-lang/skills --skill '*' --agent universal --yes`,
-plus the Dart & Flutter MCP server (`dart mcp-server`).
+### Trigger Scenarios
+- Orchestrating new Flutter features, complex domain flows, or cross-cutting architectural changes.
+- Sizing incoming technical tasks and selecting the minimal sufficient execution phases.
+- Coordinating multi-agent workflows across architecture, testing, implementation, and release.
+- Addressing systemic performance jank or planning major framework/dependency migrations.
 
-## Size the task first
+### When NOT to Use
+- **Direct code edits**: For trivial one-line text/padding fixes, delegate directly to implementation without full multi-agent orchestration.
+- **Pure backend tasks**: For Python, Go, or database migrations, use language-specific skills like `python-expert` or `database-migration-expert`.
+- **Ad-hoc layout tweaks**: For basic layout overflow errors, use official `flutter-fix-layout-issues`.
 
-| Task shape | Phases to run |
-| :--- | :--- |
-| One-widget fix, no logic, no new dep | Implement + targeted test. Skip architecture, skip release. |
-| Small feature inside an existing, ADR-covered module | Light plan → Implement (TDD) → Review. |
-| New feature area, new state, new deps, or crosses module boundaries | Full: Architecture → Implement → Test → Review → (Release if it ships this cycle). |
-| SDK / dependency upgrade | `flutter-upgrade-migration` drives; Review + build-matrix verify. |
-| "It's slow / it janks" | `flutter-performance-profiling` drives; Review guards the fix. |
+## Process
 
-When the right size is unclear, ask the user — do not default to the full
-pipeline "to be safe".
+```mermaid
+flowchart TD
+    A[Incoming Request] --> B[Task Sizing & Phase Selection]
+    B --> C{Decision Required?}
+    C -->|Yes| D[Phase 1: Architecture & ADR]
+    C -->|No| E[Phase 2: Test Strategy & Layering]
+    D --> E
+    E --> F[Phase 3: TDD Implementation]
+    F --> G[Phase 4: Code & Quality Review]
+    G --> H{Ships This Cycle?}
+    H -->|Yes| I[Phase 5: Release Packaging]
+    H -->|No| J[Complete / Merge Ready]
+    I --> J
+```
 
-## Phases
+### 1. Task Sizing & Phase Selection
+Before delegating work, size the task shape to avoid unnecessary ceremony:
+- **One-widget fix (no logic/dep)**: Implement + targeted test. Skip architecture and release.
+- **Small feature in existing module**: Light plan → Implement (TDD) → Review.
+- **New feature area / new dependencies / module boundary**: Full pipeline (Architecture → Test → Implement → Review → Release).
+- **SDK or major dependency bump**: `flutter-upgrade-migration` drives → Review + build matrix.
+- **Jank / Stutter / Sluggishness**: `flutter-performance-profiling` drives → Review.
 
-### 1. Architecture — only when a real decision exists
-Route to **`flutter-architect`**. It applies the official
-`flutter-apply-architecture-best-practices` for the layered split, then uses
-`flutter-architecture-decisions` to choose state management, draw module
-boundaries, and record an ADR. Output: the ADR path + a module map.
-Skip entirely for a change inside an already-decided module.
+### 2. Phase 1: Architecture & ADR
+- Delegated to `flutter-architect`.
+- Uses layered boundaries (UI, domain/logic, data).
+- Selects state management (Riverpod, Bloc, signals, or setState) using `flutter-architecture-decisions`.
+- Records decisions in `doc/adr/` following standard ADR formats.
 
-### 2. Test plan
-Route to **`flutter-implementer`** carrying `flutter-test-strategy`: which layer
-each new behavior is tested at, which official skill writes it
-(`dart-add-unit-test`, `flutter-add-widget-test`, `flutter-add-integration-test`,
-`flutter-add-widget-preview`, `dart-generate-test-mocks`), and the coverage gate.
+### 3. Phase 2: Test Strategy & Layering
+- Delegated to `flutter-implementer` carrying `flutter-test-strategy`.
+- Defines unit, widget, golden, and integration test coverage boundaries.
+- Identifies mocking needs and ensures tests are placed at the lowest possible layer capable of catching failures.
 
-### 3. Implement (TDD)
-**`flutter-implementer`**: red → green → refactor. For every mechanic — layout,
-routing, serialization, localization, HTTP, writing a given test kind — it
-invokes the matching official `flutter-*` / `dart-*` skill rather than
-improvising. It runs `dart analyze` (via `dart-run-static-analysis`) and
-`dart format` before handing off.
+### 4. Phase 3: TDD Implementation
+- Delegated to `flutter-implementer` following strict Red-Green-Refactor cycles.
+- Runs `dart analyze` and `dart format` continuously.
+- Implements features against abstract repository/service interfaces.
 
-### 4. Review
-**`flutter-reviewer`**: runs the tool baseline, walks
-`flutter-review-checklist`, and checks the diff against the ADRs. Verdict:
-block only on correctness, leaks, accessibility regressions, or an ADR
-violation.
+### 5. Phase 4: Code & Quality Review
+- Delegated to `flutter-reviewer` using `flutter-review-checklist`.
+- Verifies widget rebuild scopes, lifecycle dispose methods, async BuildContext guards, and ADR compliance.
+- Blocks only on correctness, memory leaks, accessibility violations, or architectural regressions.
 
-### 5. Release (only if this change ships now)
-**`flutter-release-engineer`**: config via `--dart-define-from-file`, signing,
-the `flutter build` matrix, version/build-number, store notes, and the OTA
-decision — per `flutter-release-engineering`.
+### 6. Phase 5: Release Packaging
+- Delegated to `flutter-release-engineer` using `flutter-release-engineering`.
+- Manages `--dart-define-from-file`, flavor separation, app signing, and release build verification.
 
-## Orchestrator rules
+## Usage
 
-- Delegate; don't reimplement. Each subagent carries its own skills.
-- Run only the phases the task size calls for.
-- Keep the user-facing summary proportional to the change.
-- Every "how" question goes to an official skill, never a hand-written procedure.
+### Example Prompts
+```text
+"Orchestrate the development of the checkout payment flow in Flutter, including state architecture, repository integration, and automated test coverage."
+```
+```text
+"Size and execute the upgrade to Flutter 3.29 along with our core Riverpod dependencies."
+```
+
+### Host Execution Instructions
+- **Claude Code**: Invoke via `/skill flutter-senior-orchestration` or request senior Flutter orchestration in the prompt.
+- **Google Antigravity**: Invoke subagents using `invoke_subagent` with the role `flutter-feature-orchestrator`, or execute direct CLI analysis:
+```bash
+flutter analyze
+flutter test
+```
+
+## Red Flags
+- Defaulting to the full multi-agent pipeline for a single widget layout or text color change.
+- Re-litigating state management or architecture patterns in PR comments without recording an ADR.
+- Skipping task sizing and jumping straight into implementation without test plan definition.
+- Committing secrets or production API keys in Dart code instead of `--dart-define-from-file`.
+- Allowing `BuildContext` usage across asynchronous gaps without checking `mounted`.
+
+## Verification
+- [ ] Task sizing explicitly determined and documented before subagent dispatch.
+- [ ] ADR recorded in `doc/adr/` for any new state management, module boundary, or core library choice.
+- [ ] Unit and widget tests pass with zero analyzer warnings (`dart analyze`).
+- [ ] Code formatted according to standard rules (`dart format --set-exit-if-changed .`).
+- [ ] Review checklist verified for memory leaks, controller disposal, and accessibility tags.
+- [ ] Release targets build successfully in staging/prod configurations without embedded secrets.

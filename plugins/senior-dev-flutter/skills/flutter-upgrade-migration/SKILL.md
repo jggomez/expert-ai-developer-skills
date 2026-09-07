@@ -5,89 +5,115 @@ description: Use when upgrading the Flutter/Dart SDK, bumping dependencies acros
 
 # Flutter Upgrade & Migration
 
-`dart fix` applies mechanical fixes. `dart-resolve-package-conflicts` untangles
-`pub get`. This skill is the plan around them: upgrading the SDK and major
-dependencies across a whole app without a stalled multi-week branch.
+## Overview
+The **Flutter Upgrade & Migration** skill establishes an ordered, risk-mitigated strategy for upgrading Flutter and Dart SDK versions, migrating breaking dependency majors, and systematically clearing codebase-wide deprecation warnings. Working across **Claude Code** and **Google Antigravity**, this skill structures major migrations into isolated, reviewable commits—preventing long-running broken branches and untangling dependency solver deadlocks.
 
-## When to run
+## When to Use
 
-- Moving to a new Flutter stable (e.g. 3.24 → 3.29 → next).
-- A dependency you rely on releases a breaking major.
-- Deprecation warnings have accumulated and `dart analyze` is noisy.
+### Trigger Scenarios
+- Upgrading to a new Flutter stable milestone (e.g., 3.24 → 3.27 → 3.29).
+- Bumping core dependencies across major breaking versions (e.g., GoRouter, Riverpod, Dio).
+- Clearing accumulated deprecation warnings across a large multi-module codebase.
+- Resolving transitive package version dependency conflicts during `flutter pub get`.
 
-## Principles
+### When NOT to Use
+- **Automatic single-file lint fixes**: Use `dart fix` or `dart-run-static-analysis` for local automated fixes.
+- **Trivial patch version updates**: Routine minor bug fix dependency bumps (`^1.2.3` to `^1.2.4`) should proceed without full migration planning.
+- **Python or backend upgrades**: For Python version transitions or library upgrades, use `python-expert` or `managing-python-dependencies`.
 
-1. **One axis at a time.** SDK bump, then deprecations, then dependency majors —
-   separate commits, ideally separate PRs. Never bundle.
-2. **Pin before you start.** Record the current Flutter version (`.fvmrc` /
-   `flutter --version`) and commit a green `pubspec.lock`. That's your rollback.
-3. **Tests are the safety net.** If coverage is thin, the upgrade is riskier —
-   consider adding tests to the hot paths first (`flutter-test-strategy`).
-4. **Small, reviewable steps.** A 400-file "migrate everything" diff gets
-   rubber-stamped. Slice by package/feature.
+## Process
 
-## The ordered sweep
+```mermaid
+flowchart TD
+    A[Migration Plan Initiated] --> B[Step 1: SDK Bump & Pin Baseline]
+    B --> C[Step 2: Automated dart fix & Deprecation Triage]
+    C --> D[Step 3: Dependency Major Version Bumps]
+    D --> E[Step 4: Release Matrix & Integration Verification]
+    E --> F[Update .fvmrc & Lockfile]
+```
 
-### Step 1 — SDK upgrade
+### 1. Upgrade Principles
+- **One Axis at a Time**: Never bundle an SDK upgrade, major dependency upgrades, and linter rule changes into a single PR.
+- **Pin Before Starting**: Commit a green `pubspec.lock` and record the baseline Flutter version (`flutter --version` / `.fvmrc`).
+- **Tests as Safety Net**: Ensure test suites pass before touching dependencies.
 
+### 2. Step 1 — SDK Upgrade Sweep
 ```bash
 git switch -c chore/flutter-<version>
-flutter --version                 # record the OLD version in the PR
-flutter upgrade                    # or fvm use <version>
+flutter --version
+flutter upgrade
 flutter pub get
-dart analyze                       # capture the new warnings/errors
-flutter test                       # capture new failures
+dart analyze
+flutter test
 ```
+- Review official Flutter and Dart release notes for breaking API changes.
+- Apply minimal fixes required to achieve a clean compilation and passing test suite.
 
-- Read the release notes for that Flutter version and the embedded Dart
-  version. Note **breaking changes** and **deprecations** that apply.
-- Fix only what the SDK bump broke. Keep this commit to compile + tests green.
-
-### Step 2 — mechanical deprecation fixes
-
+### 3. Step 2 — Mechanical Deprecation Fixes
 ```bash
-dart fix --dry-run                 # review
+dart fix --dry-run
 dart fix --apply
 dart format .
-dart analyze                       # should be quieter now
+dart analyze
+```
+- Categorize remaining deprecations:
+  - Few warnings: Fix immediately within the upgrade PR.
+  - Dozens on one API: Fix in a single dedicated follow-up PR.
+  - Hundreds across multiple APIs: Create tracked migration tickets and address progressively.
+
+### 4. Step 3 — Dependency Major Bumps
+- Audit outdated packages: `flutter pub outdated`.
+- Upgrade dependencies individually by blast radius (e.g., authentication or state libraries before utility packages).
+- Resolve package constraint conflicts using `dart-resolve-package-conflicts`.
+
+### 5. Step 4 — Verification Sweep
+- Verify analyzer status: `dart analyze` returns zero issues.
+- Run full test suite: `flutter test` and critical journey integration tests.
+- Verify native release builds per `flutter-release-engineering` matrix (Gradle/AGP, Xcode, Impeller).
+
+## Usage
+
+### Migration Commands
+Review outdated dependencies:
+```bash
+flutter pub outdated
 ```
 
-- `dart fix` handles the codemods the SDK ships (e.g. renamed APIs,
-  `withOpacity` → `withValues`, `MediaQuery.of` → `MediaQuery.sizeOf`).
-- What `dart fix` can't do, do by hand, grouped by deprecation, one commit each:
-  `grep -rn "<deprecated symbol>" lib test`.
+Perform automated codemods:
+```bash
+dart fix --dry-run
+dart fix --apply
+```
 
-### Step 3 — dependency majors
+Execute static verification and tests:
+```bash
+dart analyze
+flutter test
+```
 
-- List them: `flutter pub outdated`. Sort by blast radius (a router or state lib
-  is a project; a lint pack is a line).
-- One dependency per branch. Read its CHANGELOG/migration guide. Update usages
-  behind your own abstraction where one exists (repository, wrapper).
-- Bump `flutter_lints` / `very_good_analysis` last and clear the new lints as
-  their own PR.
-- Use `dart-resolve-package-conflicts` for any `pub get` version-solve failure —
-  don't hand-edit constraints blindly.
+### Example Prompts
+```text
+"Plan and execute the migration of our Flutter project to Flutter 3.29, isolating the SDK upgrade from Riverpod 3 breaking changes."
+```
+```text
+"Triage deprecation warnings across our Flutter app and run automated dart fix repairs."
+```
 
-### Step 4 — verify
+### Host Execution Instructions
+- **Claude Code**: Invoke via `/skill flutter-upgrade-migration` or prompt for Flutter SDK/dependency migration.
+- **Google Antigravity**: Run upgrade and analysis commands via terminal or coordinate via `flutter-feature-orchestrator`.
 
-- `dart analyze` clean (or a documented, ticketed allowlist).
-- `flutter test` + `integration_test` green.
-- Build every target in the release matrix (`flutter-release-engineering`) —
-  breakage often shows only at build time (Gradle/AGP, Xcode, Impeller).
-- Manual smoke of the critical journeys.
-- Update `.fvmrc` / CI Flutter version and the "record the OLD version" note
-  becomes the PR's before/after.
+## Red Flags
+- Bundling an SDK upgrade, multiple major dependency bumps, and linter migrations into a single massive PR.
+- Upgrading Flutter or dependencies on a branch with existing failing tests.
+- Blindly editing version constraints in `pubspec.yaml` with `any` instead of resolving dependency trees properly.
+- Ignoring native build breakage (Android Gradle Plugin, CocoaPods, Xcode signing) until release day.
+- Suppressing deprecation warnings globally instead of addressing or ticketing them.
 
-## Deprecation triage
-
-| Warning volume | Action |
-| :--- | :--- |
-| A handful | fix in the SDK-upgrade PR |
-| Dozens, all one API | `dart fix` if covered, else one dedicated PR |
-| Hundreds across many APIs | a tracked migration: one PR per API family, a checklist issue, do not block the SDK upgrade on it |
-
-## Hand-off
-
-Deliver: the before/after Flutter+Dart versions, the list of breaking changes
-handled, remaining deprecations with a ticket, dependency majors done vs.
-deferred, and confirmation the release build matrix passes.
+## Verification
+- [ ] Baseline Flutter version recorded and `pubspec.lock` committed prior to upgrade.
+- [ ] SDK upgrade isolated in a dedicated commit or PR.
+- [ ] Automated `dart fix --apply` executed and results formatted with `dart format`.
+- [ ] `flutter pub outdated` reviewed and major dependency bumps handled in isolation.
+- [ ] `dart analyze` and `flutter test` pass with zero failures.
+- [ ] Release builds verified across Android and iOS target matrices.

@@ -5,86 +5,105 @@ description: Use when setting up or reviewing how a Flutter app ships — build 
 
 # Flutter Release Engineering
 
-The official skills stop at feature code. This one covers getting that code to
-users safely and repeatably: config, signing, the build matrix, versioning, and
-OTA updates.
+## Overview
+The **Flutter Release Engineering** skill provides the complete deployment, packaging, and configuration lifecycle for Flutter applications across mobile (Android/iOS), web, and desktop. Operating across **Claude Code** and **Google Antigravity**, this skill guides teams through environment configuration injection (`--dart-define-from-file`), flavor schemes, secure app signing without in-repo credentials, reproducible CI build matrices, semver versioning, and over-the-air (OTA) patching via Shorebird.
 
-## When to run
+## When to Use
 
-- First real release of an app, or adding a new environment (staging).
-- CI produces artifacts that aren't reproducible or leak config.
-- A decision about Shorebird / code-push is on the table.
+### Trigger Scenarios
+- Configuring environment flavors (dev, staging, production) and injecting configuration files.
+- Setting up automated CI/CD build matrices for App Store (IPA), Google Play (AAB), Web, and Desktop.
+- Establishing secure key signing pipelines for Android Keystores and Apple Provisioning Profiles.
+- Evaluating and deploying over-the-air code patching (Shorebird) while managing store compliance.
 
-## 1. Environment config — never hard-code
+### When NOT to Use
+- **Day-to-day feature implementation**: Use `flutter-implementer` and official `flutter-*` skills for widget and domain coding.
+- **Pure backend container builds**: For Docker or Cloud Run builds, use `build-and-ci-gates`.
+- **Local code formatting**: Use `dart format` and `dart analyze`.
 
-- One config file per environment, injected at build time:
+## Process
+
+```mermaid
+flowchart TD
+    A[Release Candidate Ready] --> B[Step 1: Environment Config Injection]
+    B --> C[Step 2: Credential & Signing Validation]
+    C --> D[Step 3: Multi-Platform Release Build Matrix]
+    D --> E[Step 4: Obfuscation & Symbol Archival]
+    E --> F[Step 5: Automated Store Packaging & Metadata]
+```
+
+### 1. Environment Configuration
+- Inject non-secret configuration variables using build-time definition files:
   `flutter build <target> --dart-define-from-file=config/prod.json`
-  (`dev.json`, `staging.json`, `prod.json`). Read with
-  `String.fromEnvironment` / `int.fromEnvironment` behind a typed `AppConfig`.
-- `config/*.json` for **non-secret** switches (base URL, feature flags, log
-  level). Real secrets (signing keys, service-account JSON, API keys that must
-  not ship) go in the CI secret store and platform-native config, never in Dart
-  source or `pubspec.yaml`.
-- Android **product flavors** + iOS **schemes/xcconfig** for anything that must
-  differ at the native layer (app id suffix, app name, icons, Firebase file).
-  Pair with `--flavor`.
+- Access values in Dart via a typed `AppConfig` wrapping `String.fromEnvironment` and `bool.fromEnvironment`.
+- Manage native variations (package IDs, bundle names, icons, Firebase configs) using Android product flavors and iOS schemes/xcconfig.
+- **Never commit production secrets, service keys, or keystores into source control.** Store secrets strictly in CI encrypted stores.
 
-## 2. Signing
+### 2. Signing Security
+- **Android**: Configure `key.properties` (git-ignored) with keystore paths injected via CI environment variables. Prefer Google Play App Signing.
+- **iOS**: Manage signing identities and provisioning profiles via fastlane `match` or App Store Connect API keys in CI. Zero `.p12` files in the repository.
+- Verify signature integrity on build artifacts before distribution (`apksigner verify`, `codesign -dv`).
 
-- **Android**: `key.properties` (git-ignored) + `keystore` in the CI secret
-  store; `signingConfigs` in `build.gradle` reads it; never commit the keystore.
-  Prefer Play App Signing (upload key only in CI).
-- **iOS**: managed signing via Xcode/App Store Connect API key in CI (e.g.
-  `match`/fastlane or `xcodebuild -allowProvisioningUpdates` with an ASC key).
-  No `.p12` / profiles in the repo.
-- Verify a release build is actually signed before shipping (`apksigner verify`,
-  `codesign -dv`).
+### 3. Multi-Platform Build Matrix
+Build from clean, pinned checkouts using Flutter Version Management (FVM):
+- **Android App Bundle (Play Store)**:
+  `flutter build appbundle --release --flavor prod --dart-define-from-file=config/prod.json`
+- **Android APK (QA/Sideload)**:
+  `flutter build apk --release --flavor staging --dart-define-from-file=config/staging.json`
+- **iOS IPA (App Store)**:
+  `flutter build ipa --release --flavor prod --export-options-plist=ios/exportOptions.plist --dart-define-from-file=config/prod.json`
+- **Web**:
+  `flutter build web --release --dart-define-from-file=config/prod.json`
 
-## 3. Build matrix
+### 4. Obfuscation & Crash Symbol Storage
+Enable code obfuscation and split debug symbols:
+`--obfuscate --split-debug-info=build/symbols`
+Archive `build/symbols` in CI storage with release build tags for crash symbolication in Sentry or Firebase Crashlytics.
 
-| Target | Command | Artifact |
-| :--- | :--- | :--- |
-| Android (store) | `flutter build appbundle --release --flavor prod --dart-define-from-file=config/prod.json` | `.aab` |
-| Android (sideload/QA) | `flutter build apk --release --flavor staging ...` | `.apk` |
-| iOS | `flutter build ipa --release --flavor prod --export-options-plist=...` | `.ipa` |
-| Web | `flutter build web --release --dart-define-from-file=...` | `build/web` |
-| Desktop | `flutter build {macos,windows,linux} --release` | platform bundle |
+### 5. Versioning & Over-The-Air Updates
+- Maintain `version: X.Y.Z+BUILD` in `pubspec.yaml`, setting `+BUILD` dynamically in CI via `--build-number=$CI_PIPELINE_IID`.
+- Tag git releases (`vX.Y.Z`) following Conventional Commits.
+- Evaluate Shorebird OTA patching only for Dart-level bug fixes; never bypass app store review for native modifications or permissions changes.
 
-- Build in CI from a clean checkout with a pinned Flutter version
-  (`.fvmrc` / `flutter --version` recorded). Local builds are not releases.
-- Keep debug symbols: `--obfuscate --split-debug-info=build/symbols` and archive
-  `build/symbols` per release for crash de-obfuscation.
+## Usage
 
-## 4. Versioning
+### Build Commands & Matrix
+Production Android release build:
+```bash
+flutter build appbundle --release --flavor prod --dart-define-from-file=config/prod.json --obfuscate --split-debug-info=build/symbols
+```
 
-- `pubspec.yaml` `version: X.Y.Z+BUILD`. `X.Y.Z` is the user-facing semver;
-  `+BUILD` is a monotonic integer, set by CI (`--build-number=$CI_RUN`), never
-  hand-bumped.
-- Tag the release commit `vX.Y.Z`. The changelog is generated from
-  Conventional Commits since the last tag (see the `commit-expert` skill).
+Production iOS release build:
+```bash
+flutter build ipa --release --flavor prod --dart-define-from-file=config/prod.json --export-options-plist=ios/exportOptions.plist
+```
 
-## 5. Store metadata
+### Example Prompts
+```text
+"Set up --dart-define-from-file configuration and product flavors for dev, staging, and prod in our Flutter repository."
+```
+```text
+"Configure our CI GitHub Actions workflow to build release AAB and IPA artifacts with debug symbol archiving."
+```
 
-- Keep screenshots, descriptions, and release notes in-repo under
-  `store/<platform>/<locale>/` and push with fastlane
-  `deliver`/`supply`, so metadata is reviewable and versioned.
-- Release notes per version, per locale — not "bug fixes".
+### Host Execution Instructions
+- **Claude Code**: Invoke via `/skill flutter-release-engineering` or prompt for Flutter release/flavor setup.
+- **Google Antigravity**: Run build and signing validation commands via terminal or integrate with release automation pipelines.
 
-## 6. OTA / code-push decision (Shorebird)
+## Red Flags
+- Hard-coding API URLs, backend endpoints, or environment flags in Dart source files.
+- Committing Android `.jks`/`.keystore` files or iOS `.p12` certificates to git history.
+- Manually incrementing build numbers in `pubspec.yaml` instead of driving monotonically in CI.
+- Shipping release builds without stripping and archiving debug symbols.
+- Using Shorebird OTA updates to push native permission or manifest changes.
 
-Use it when: you ship Dart-only fixes often and store review latency hurts, and
-your compliance allows patching in place.
-Do **not** rely on it for: native code / plugin changes, permission changes,
-anything the stores require review for. Treat patches as still going through the
-same CI, tests, and staged rollout — a patch is a release.
+## Verification
+- [ ] No plaintext secrets or keys committed in source files or `pubspec.yaml`.
+- [ ] Configuration separated cleanly across `config/*.json` and loaded via `--dart-define-from-file`.
+- [ ] Production Android bundle (`.aab`) and iOS IPA (`.ipa`) build cleanly.
+- [ ] Code obfuscation and split debug symbols generated and archived in `build/symbols`.
+- [ ] Signing certificates verified with `apksigner` and `codesign`.
+- [ ] Native flavors aligned between Android `build.gradle` and iOS Xcode schemes.
 
-## Hand-off
-
-Produce: the config file layout, the signing setup (where each secret lives),
-the CI build matrix, the versioning scheme, and the OTA decision with its
-rationale. Flag anything `flutter-reviewer` should enforce (no secrets in Dart,
-`--dart-define-from-file` only).
-
-## Reference
-
-- [Flavors, config, and the AppConfig pattern](references/flavors-and-config.md)
+## References
+- [Flavors, Config, and the AppConfig Pattern](references/flavors-and-config.md)
