@@ -79,7 +79,9 @@ plugins/senior-dev-flutter/
 │   ├── flutter-implementer.md            # TDD; invokes official flutter-*/dart-* skills; also drives perf fixes
 │   ├── flutter-reviewer.md               # the review checklist + dart analyze + ADR conformance
 │   └── flutter-release-engineer.md       # flavors, signing, build matrix, versioning, OTA, SDK/dep upgrades
-└── skills/                       # physical copy of the 7 root flutter-* skills
+├── rules/
+│   └── flutter-rules.md                  # Flutter architectural boundaries & 9-stage cycle rules
+└── skills/                               # physical copy of the 7 root flutter-* skills
 ```
 
 ---
@@ -98,22 +100,40 @@ plugins/senior-dev-flutter/
 
 ---
 
-## 5. The Agents
+## 5. The Agents & Execution Policies
 
 Five host-neutral subagents (`model: inherit`, explicit `subagent`/`mainAgent`,
 no `tools` key — load in both Claude Code and Antigravity):
 
-| Agent | Role |
-| :--- | :--- |
-| **`flutter-feature-orchestrator`** (`mainAgent`) | Sizes a Flutter task and routes phases. Delegates every "how" to an official skill. `commandExecutionPolicy: off`. |
-| **`flutter-architect`** | Chooses state management, draws module boundaries, records ADRs. |
-| **`flutter-implementer`** | TDD implementation via the official `flutter-*` / `dart-*` skills; also drives `flutter-performance-profiling`. |
-| **`flutter-reviewer`** | Runs the tool baseline, walks `flutter-review-checklist`, checks ADR conformance. |
-| **`flutter-release-engineer`** | Config, signing, build matrix, versioning, OTA, and SDK/dependency upgrades. |
+| Agent | Role | Execution Policy | Typical Action |
+| :--- | :--- | :--- | :--- |
+| **`flutter-feature-orchestrator`** (`mainAgent`) | Sizes a Flutter task and routes phases. Delegates every "how" to an official skill. | `off` | `invoke_subagent`, `send_message` |
+| **`flutter-architect`** | Chooses state management, draws module boundaries, records ADRs. | `auto` | `write_to_file`, `run_command` |
+| **`flutter-implementer`** | TDD implementation via official `flutter-*`/`dart-*` skills; drives perf fixes. | `auto` | `run_command`, `replace_file_content` |
+| **`flutter-reviewer`** | Runs tool baseline, walks `flutter-review-checklist`, checks ADR conformance. | `auto` | `run_command`, `replace_file_content` |
+| **`flutter-release-engineer`** | Config, signing, build matrix, versioning, OTA, and SDK/dependency upgrades. | `auto` | `run_command`, `replace_file_content` |
 
 ---
 
-## 6. Hooks
+## 6. The 9-Stage Command Framework
+
+The Flutter subagents and orchestrator execute along the 9-stage engineering cycle, governed by `rules/flutter-rules.md`:
+
+| Phase | Command | Key Principle | Flutter Implementation |
+| :--- | :--- | :--- | :--- |
+| **Define what to build** | `/spec` | Spec before code | Target platforms, screen resolutions, offline-first behavior |
+| **Plan how to build it** | `/plan` | Small, atomic tasks | State management ADR (Riverpod/Bloc/Signals), module contracts |
+| **Build incrementally** | `/build` | One slice at a time | Widget/logic TDD via official Flutter skills, atomic vertical slices |
+| **Prove it works** | `/test` | Tests are proof | Unit, widget, golden, and integration test coverage (`flutter test`) |
+| **Set the quality bar** | `/constraints` | Decide once, enforce everywhere | `analysis_options.yaml`, zero analyzer warnings, strict typing |
+| **Review before merge** | `/review` | Improve code health | Rebuild scope audit, `const` constructors, `dispose()` checks |
+| **Audit performance** | `/perf` | Measure before you optimize | DevTools timeline, shader warm-up, raster/UI thread jank |
+| **Simplify the code** | `/code-simplify` | Clarity over cleverness | Dead code pruning, widget nesting flattening, KISS |
+| **Ship to production** | `/ship` | Faster is safer | Flavors, `--dart-define-from-file`, signing, store readiness |
+
+---
+
+## 7. Hooks
 
 | Event | Hook | Behavior |
 | :--- | :--- | :--- |
@@ -125,7 +145,7 @@ host expects.
 
 ---
 
-## 7. Example Prompts
+## 8. Example Prompts
 
 - "Use the flutter-feature-orchestrator agent to build a profile-edit feature end to end."
 - "Have the flutter-architect agent choose state management for this app and write the ADR."
@@ -135,7 +155,7 @@ host expects.
 
 ---
 
-## 8. Installation
+## 9. Installation
 
 **Claude Code** — project-scoped (no copy):
 ```bash

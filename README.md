@@ -24,9 +24,9 @@ cd expert-ai-developer-skills
 The workspace is cleanly structured into modular **skills** (discrete instructions and automation scripts), **rules** (system constraints for AI agents), **workflows** (playbooks for SDLC processes), **sidecars** (background processes and schedules), and **plugins** (nine self-contained plugins for Claude Code and Antigravity CLI, each bundling a subset of the skills catalog):
 
 ```
-expert-ai-developer-skills/
+ expert-ai-developer-skills/
 ├── README.md                           # Main community reference guide (this file)
-├── agents/                             # Subagent configurations (Orchestrator, Architect, etc.)
+├── agents/                             # 14 custom subagents with Antigravity tool access & execution policies
 ├── images/                             # Instagram post design graphics (Overview, Skills, Rules, etc.)
 ├── rules/
 │   ├── README.md                       # Guide on integrating rules into AI agents
@@ -39,7 +39,7 @@ expert-ai-developer-skills/
 │   ├── context-and-token-optimization.md # Prompt token minimization and local script execution
 │   ├── documentation-and-diagrams.md   # Comment, docstring, README, and Mermaid integrity
 │   ├── pull-requests.md                # Pull Request line limits and self-review checklists
-│   ├── loop-engineering-workflow.md    # 7-stage cycle with subagent parallelization & auditing
+│   ├── loop-engineering-workflow.md    # 9-stage cycle (/spec to /ship) with dynamic orchestrator sizing & delegation
 │   └── tdd-best-practices.md           # TDD Red-Green-Refactor enforcement & agent verification
 ├── tests/
 │   ├── README.md                       # Test architecture, subdirectories, & pytest commands
@@ -49,6 +49,15 @@ expert-ai-developer-skills/
 │   └── integration/                    # End-to-end multi-skill integration tests
 ├── workflows/
 │   ├── README.md                       # Guide on executing workflows with AI agents
+│   ├── spec-workflow.md                # /spec - Spec before code & requirements clarification
+│   ├── plan-workflow.md                # /plan - Small, atomic tasks & risk assessment
+│   ├── build-workflow.md               # /build - One slice at a time incremental execution
+│   ├── test-workflow.md                # /test - Tests are proof & verification enforcement
+│   ├── constraints-workflow.md         # /constraints - Decide once, enforce everywhere
+│   ├── review-workflow.md              # /review - Improve code health & architecture audit
+│   ├── perf-workflow.md                # /perf - Measure before you optimize & latency profiling
+│   ├── code-simplify-workflow.md       # /code-simplify - Clarity over cleverness & dead code elimination
+│   ├── ship-workflow.md                # /ship - Faster is safer & release orchestration
 │   ├── pull-request-workflow.md        # Branch creation and PR preparation playbook
 │   ├── commit-workflow.md              # Staging, semantic committing, and pushing workflow
 │   ├── test-execution-workflow.md      # Locating, running, and debugging test suites
@@ -114,6 +123,7 @@ expert-ai-developer-skills/
     │   ├── .mcp.json                   # Reused Cloud Run / Firebase MCP servers, Claude Code's format
     │   ├── mcp_config.json             # Same MCP servers, Antigravity's format
     │   ├── agents/                     # 6 bundled subagents (orchestrator + 5 specialists) — host-neutral frontmatter, load in both hosts; richer Antigravity-only variant in agents/ at root
+    │   ├── rules/                      # Senior dev 9-stage cycle & tool execution rules
     │   └── skills/                     # Local copy of the 8 skills those agents depend on
     ├── git-workflow/
     │   ├── README.md                   # Plugin installation & Gitflow gate details
@@ -135,6 +145,7 @@ expert-ai-developer-skills/
     │   ├── .mcp.json                   # BigQuery, Datastream, Dataform, Pub/Sub, Claude Code's format
     │   ├── mcp_config.json             # Same 4 servers, Antigravity's format
     │   ├── agents/                     # 1 subagent — host-neutral frontmatter, loads in both hosts; richer Antigravity-only variant in agents/ at root
+    │   ├── rules/                      # GCP data architecture & 9-stage pipeline rules
     │   └── skills/                     # gcp-data-engineering + cdc-scd-patterns
     ├── sql-query-optimizer/
     │   ├── README.md                   # Plugin installation, MCP servers, example prompts
@@ -161,6 +172,7 @@ expert-ai-developer-skills/
         ├── hooks.json                  # "hooks" (Claude Code) + "senior-dev-flutter-gates" group (Antigravity)
         ├── hooks/                      # PreToolUse: block store build / major bump on protected branch; Stop: dart analyze must be clean
         ├── agents/                     # 5 host-neutral subagents (orchestrator + architect + implementer + reviewer + release-engineer)
+        ├── rules/                      # Flutter architectural boundaries & 9-stage cycle rules
         └── skills/                     # 7 flutter-* skills (decision/checklist/strategy only — never a how-to)
 ```
 
@@ -309,14 +321,30 @@ This workspace provides a root-level [**`rules/`**](file:///Users/jggomez/Docume
 | [**`context-and-token-optimization.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/context-and-token-optimization.md) | Optimizes token-window consumption through incremental surgical edits and local scripts. | Minimal file views + offloading logic parsing to local runs. |
 | [**`documentation-and-diagrams.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/documentation-and-diagrams.md) | Ensures docstrings, README files, and Mermaid diagrams are updated concurrently with changes. | Mermaid diagram validation + comment alignment. |
 | [**`pull-requests.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/pull-requests.md) | Mandates PR size limits, structured templates, and agent self-review checklist boundaries. | Local lint/test sweeps + 200-line change target limits. |
-| [**`loop-engineering-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/loop-engineering-workflow.md) | 7-stage cycle (`PLAN->TASK->BUILD->TEST->VERIFICATION->DOCUMENTATION->COMMIT`), scaled to task size, with subagent parallelization. | Manager audit checklist + empirical runtime validation. |
+| [**`loop-engineering-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/loop-engineering-workflow.md) | 9-stage cycle (`/spec` to `/ship`), scaled to task size, with dynamic orchestrator sizing and subagent delegation. | Manager audit checklist + empirical runtime validation. |
 | [**`tdd-best-practices.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/rules/tdd-best-practices.md) | Enforces TDD Red-Green-Refactor cycles, empirical runtime verification, and clean mock boundaries. | 100% test pass + empirical execution proof. |
 
 ---
 
-## 11. Generic AI Developer Workflows (7 Execution Playbooks)
+## 11. Generic AI Developer Workflows (16 Execution Playbooks)
 
 This workspace provides a root-level [**`workflows/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows) directory containing step-by-step developer execution playbooks. These workflows guide developers and AI Agents sequentially through complex tasks:
+
+### 11.1 The Core 9-Stage Command Framework
+
+| What you're doing | Command | Key Principle | Playbook File | Primary Focus |
+| :--- | :--- | :--- | :--- | :--- |
+| **Define what to build** | `/spec` | Spec before code | [**`spec-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/spec-workflow.md) | Requirements, PRD, user stories, acceptance criteria |
+| **Plan how to build it** | `/plan` | Small, atomic tasks | [**`plan-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/plan-workflow.md) | Architecture ADR, task decomposition, subagent delegation |
+| **Build incrementally** | `/build` | One slice at a time | [**`build-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/build-workflow.md) | TDD implementation, vertical slices, official skills |
+| **Prove it works** | `/test` | Tests are proof | [**`test-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/test-workflow.md) | Unit, integration, widget, E2E tests, AAA pattern |
+| **Set the quality bar** | `/constraints` | Decide once, enforce everywhere | [**`constraints-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/constraints-workflow.md) | NFRs, security gates, secrets, linter rules |
+| **Review before merge** | `/review` | Improve code health | [**`review-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/review-workflow.md) | PR review, static analysis, leaks, code smells |
+| **Audit performance** | `/perf` | Measure before you optimize | [**`perf-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/perf-workflow.md) | Profiling first, jank/slots/query bottlenecks |
+| **Simplify the code** | `/code-simplify` | Clarity over cleverness | [**`code-simplify-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/code-simplify-workflow.md) | Dead code elimination, cyclomatic complexity, DRY/KISS |
+| **Ship to production** | `/ship` | Faster is safer | [**`ship-workflow.md`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/ship-workflow.md) | Conventional commits, changelog, versioning, release |
+
+### 11.2 Specialized Operational Playbooks
 
 | Workflow File | Core Execution Sequence | Primary Quality Gate |
 | :--- | :--- | :--- |
@@ -330,20 +358,40 @@ This workspace provides a root-level [**`workflows/`**](file:///Users/jggomez/Do
 
 ---
 
-## 12. Custom Loop Engineering Agents (Antigravity Subagents)
+## 12. Custom Loop Engineering Agents (14 Antigravity Subagents)
 
-This workspace provides a root-level [**`agents/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory containing custom agents for the **Google Antigravity (AGY) CLI only** — they form a complete **Loop Engineering** topology of highly specialized subagents. This copy keeps per-agent `model: pro`/`flash` cost tiering, which are not valid Claude Code model values, so **these files do not load in Claude Code**.
+This workspace provides a root-level [**`agents/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory containing 14 custom agents for the **Google Antigravity (AGY) CLI only** — they form a complete **Loop Engineering** topology of highly specialized subagents. This copy keeps per-agent `model: pro`/`flash` cost tiering, which are not valid Claude Code model values, so **these files do not load in Claude Code**.
 
-> **Using Claude Code, or want one file for both hosts?** Use the [**`plugins/senior-dev/`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/plugins/senior-dev) plugin instead (see [§5](#5-senior-dev-orchestration-plugin)) — its `agents/*.md` are host-neutral (`model: inherit`, no `tools` key) and `agy plugin install` loads them on Antigravity too. Reach for *this* directory only when you specifically want the `pro`/`flash` tiering on Antigravity.
+> **Using Claude Code, or want one file for both hosts?** Use the plugin copies instead (`plugins/senior-dev/`, `plugins/senior-dev-flutter/`, `plugins/senior-data-engineer/`, `plugins/sql-query-optimizer/`, `plugins/shared-context/`) — their `agents/*.md` are host-neutral (`model: inherit`, no `tools` key) and `agy plugin install` loads them on Antigravity too. Reach for *this* directory only when you specifically want the `pro`/`flash` tiering on Antigravity. Agents execute directly on the workspace filesystem (`auto` policy, no container sandbox).
+
+### General Software Development Panel
 
 | Agent Profile | Role & Specialization | Execution Policy | Typical Actions |
 | :--- | :--- | :--- | :--- |
-| [**`senior-dev-orchestrator`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/senior-dev-orchestrator.md) | **Main Orchestrator**: Manages the overarching SDLC lifecycle and tracks final release readiness. | `off` | `invoke_subagent`, `manage_subagents` |
-| [**`product-analyst`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/product-analyst.md) | **Requirements Engineer**: Clarifies ambiguities with the user and constructs detailed PRDs. | `off` | `ask_question`, `write_to_file` |
-| [**`architect-engineer`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/architect-engineer.md) | **System Designer**: Evaluates Quality Attribute Drivers (QADs) and drafts architecture blueprints. | `sandbox` | `write_to_file`, `replace_file_content` |
-| [**`code-implementer`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/code-implementer.md) | **TDD Implementer**: Executes strict Red-Green-Refactor cycles to write production code. | `sandbox` | `write_to_file`, `run_command` |
-| [**`qa-tester`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/qa-tester.md) | **E2E Tester**: Traces requirements back to End-to-End integration test suites. | `sandbox` | `run_command`, `grep_search` |
-| [**`compliance-verifier`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/compliance-verifier.md) | **Quality Auditor**: Verifies strict compliance with NFRs, security gates, and code smells. | `sandbox` | `run_command`, `list_dir` |
+| [**`senior-dev-orchestrator`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/senior-dev-orchestrator.md) | **Main Orchestrator**: Manages overarching SDLC lifecycle, scales tasks dynamically, tracks release readiness. | `off` | `invoke_subagent`, `manage_subagents` |
+| [**`product-analyst`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/product-analyst.md) | **Requirements Engineer**: Clarifies ambiguities with user, constructs detailed PRDs. | `off` | `ask_question`, `write_to_file` |
+| [**`architect-engineer`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/architect-engineer.md) | **System Designer**: Evaluates Quality Attribute Drivers (QADs), drafts architecture blueprints and ADRs. | `auto` | `write_to_file`, `replace_file_content` |
+| [**`code-implementer`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/code-implementer.md) | **TDD Implementer**: Executes strict Red-Green-Refactor cycles to write production code. | `auto` | `write_to_file`, `run_command` |
+| [**`qa-tester`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/qa-tester.md) | **E2E Tester**: Traces requirements back to End-to-End integration test suites. | `auto` | `run_command`, `grep_search` |
+| [**`compliance-verifier`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/compliance-verifier.md) | **Quality Auditor**: Verifies strict compliance with NFRs, security gates, and code smells. | `auto` | `run_command`, `list_dir` |
+
+### Flutter & Dart Development Panel
+
+| Agent Profile | Role & Specialization | Execution Policy | Typical Actions |
+| :--- | :--- | :--- | :--- |
+| [**`flutter-feature-orchestrator`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/flutter-feature-orchestrator.md) | **Flutter Orchestrator**: Sizes Flutter tasks, sequences official Dart/Flutter skills, delegates phases. | `off` | `invoke_subagent`, `send_message` |
+| [**`flutter-architect`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/flutter-architect.md) | **State & Boundaries**: Selects state management (Riverpod/Bloc/Signals) and commits ADRs. | `auto` | `write_to_file`, `run_command` |
+| [**`flutter-implementer`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/flutter-implementer.md) | **TDD & Performance**: Implements UI/logic via official skills, profiles jank, ensures green tests. | `auto` | `run_command`, `replace_file_content` |
+| [**`flutter-reviewer`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/flutter-reviewer.md) | **Code & Quality Audit**: Checks rebuild loops, memory leaks, accessibility semantics, ADR conformance. | `auto` | `run_command`, `replace_file_content` |
+| [**`flutter-release-engineer`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/flutter-release-engineer.md) | **Build & Ship**: Manages `--dart-define-from-file`, flavors, signing, store readiness, upgrades. | `auto` | `run_command`, `replace_file_content` |
+
+### Standalone Domain Specialists
+
+| Agent Profile | Role & Specialization | Execution Policy | Typical Actions |
+| :--- | :--- | :--- | :--- |
+| [**`senior-data-engineer`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/senior-data-engineer.md) | **Data Engineer**: GCP data pipeline design, lakehouse/warehouse, CDC Datastream, SCD modeling. | `auto` | `run_command`, `write_to_file`, MCP |
+| [**`sql-query-optimizer`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/sql-query-optimizer.md) | **SQL Optimizer**: Finds and rewrites slow SQL for BigQuery and traditional databases via query plans. | `auto` | `run_command`, `replace_file_content`, MCP |
+| [**`context-keeper`**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/context-keeper.md) | **Context Keeper**: Shared cross-agent memory maintainer, capture/restore, decision rollups. | `auto` | `run_command`, `write_to_file` |
 
 ---
 

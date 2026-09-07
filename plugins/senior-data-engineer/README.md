@@ -23,6 +23,8 @@ plugins/senior-data-engineer/
 ├── mcp_config.json                 # Same 4 servers, Antigravity's format (serverUrl + authProviderType)
 ├── agents/
 │   └── senior-data-engineer.md     # The subagent — host-neutral frontmatter, loads in Claude Code and Antigravity
+├── rules/
+│   └── data-engineer-rules.md      # GCP data architecture & 9-stage pipeline rules
 └── skills/
     ├── gcp-data-engineering/       # Architecture decisions: storage, batch/streaming, orchestration, BQ cost/perf
     └── cdc-scd-patterns/           # Datastream CDC checklist + SCD Type 0-6 + a Dataform SCD2 scaffolder script
@@ -30,13 +32,22 @@ plugins/senior-data-engineer/
 
 ---
 
-## 2. The Agent
+## 2. The Agent & 9-Stage Pipeline Integration
 
-| Agent | Role | Model | Tools |
+| Agent | Role | Model | Execution Policy |
 | :--- | :--- | :--- | :--- |
-| `senior-data-engineer` | Designs pipelines, defaults to the simplest architecture that fits the requirement, implements CDC/SCD correctly, uses the connected MCP tools to inspect real schemas/streams instead of guessing. | `sonnet` | Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion |
+| `senior-data-engineer` | Designs pipelines, defaults to simplest architecture, implements CDC/SCD, inspects real schemas/streams via MCP tools. | `sonnet` / `pro` | `auto` (direct command & file execution) |
 
-This is intentionally a single agent, not a multi-role panel — it's one area of expertise, not an SDLC pipeline with distinct phases. If you later need a separate "pipeline reviewer/auditor" role, that's a natural second agent to add.
+This specialist executes autonomously across the 9-stage engineering cycle (`/spec` to `/ship`) governed by `rules/data-engineer-rules.md`:
+- **/spec**: Data pipeline specifications, volume/latency SLAs, and source schema contracts.
+- **/plan**: Architecture selection (batch vs streaming, Dataform vs Airflow vs Dataflow), SCD Type determination.
+- **/build**: Incremental SQLX/SQL/Dataform code generation, partitioned/clustered DDLs.
+- **/test**: Schema validation tests, idempotency checks, zero-duplication row assertions.
+- **/constraints**: Cost safety gates (slot reservations, partition pruning, no full-table scans).
+- **/review**: Code health, JOIN skew prevention, shuffle optimization.
+- **/perf**: Query plan profiling (stages, slot time vs elapsed time).
+- **/code-simplify**: Elimination of redundant subqueries and complex JavaScript UDFs.
+- **/ship**: Migration deployment, pipeline scheduling, and documentation sync.
 
 ---
 
