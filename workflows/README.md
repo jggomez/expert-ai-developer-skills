@@ -6,18 +6,30 @@ Unlike **Rules** (which enforce constraints and passive checks) or **Skills** (w
 
 ---
 
-## 1. Directory Structure & Sitemap
+## 1. The Core 9-Stage Command Framework
 
-These workflows cover the entire software development lifecycle (SDLC) and can be executed individually or referenced sequentially:
+These 9 core playbooks align directly with user slash commands and engineering principles:
 
-* [**README.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/README.md): This index and workflow execution guide.
-* [**pull-request-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/pull-request-workflow.md): Step-by-step playbook for branch creation, preparation, writing descriptions, and submitting PRs.
-* [**commit-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/commit-workflow.md): Step-by-step guide to staging changes, writing semantic Conventional Commits, and safely pushing changes.
-* [**test-execution-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/test-execution-workflow.md): Workflow for identifying, running, and debugging unit, integration, and code coverage test suites.
-* [**code-smell-review-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/code-smell-review-workflow.md): Review playbook to scan for cognitive complexity, duplication, SOLID violations, and refactoring candidates.
-* [**secure-code-review-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/secure-code-review-workflow.md): Playbook for scanning credentials leakage, verifying injection preventions, and compliance checks.
-* [**feature-development-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/feature-development-workflow.md): End-to-end development cycle combining design specs, TDD, code review, and merge procedures.
-* [**grill-me-alignment-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/grill-me-alignment-workflow.md): Playbook for structured requirements gathering and design interviews.
+| What you're doing | Command | Key Principle | Playbook File | Primary Focus |
+| :--- | :--- | :--- | :--- | :--- |
+| **Define what to build** | `/spec` | Spec before code | [spec-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/spec-workflow.md) | Requirements, PRD, acceptance criteria, boundaries |
+| **Plan how to build it** | `/plan` | Small, atomic tasks | [plan-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/plan-workflow.md) | Architecture ADR, task decomposition, subagent delegation |
+| **Build incrementally** | `/build` | One slice at a time | [build-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/build-workflow.md) | TDD implementation, vertical slices, official skills |
+| **Prove it works** | `/test` | Tests are proof | [test-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/test-workflow.md) | Unit, integration, widget, E2E tests, AAA pattern |
+| **Set the quality bar** | `/constraints` | Decide it once, enforce it everywhere | [constraints-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/constraints-workflow.md) | NFRs, security gates, secrets, linter rules |
+| **Review before merge** | `/review` | Improve code health | [review-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/review-workflow.md) | PR review, static analysis, leaks, code smells |
+| **Audit performance** | `/perf` | Measure before you optimize | [perf-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/perf-workflow.md) | Profiling first, jank/slots/query bottlenecks |
+| **Simplify the code** | `/code-simplify` | Clarity over cleverness | [code-simplify-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/code-simplify-workflow.md) | Dead code elimination, cyclomatic complexity, DRY/KISS |
+| **Ship to production** | `/ship` | Faster is safer | [ship-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/ship-workflow.md) | Conventional commits, changelog, versioning, PR/deploy |
+
+### Specialized Operational Playbooks
+* [**feature-development-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/feature-development-workflow.md): Comprehensive end-to-end SDLC lifecycle playbook.
+* [**pull-request-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/pull-request-workflow.md): Branch preparation, commit rebasing, PR templates.
+* [**commit-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/commit-workflow.md): Staging changes, Conventional Commits format, git safety.
+* [**test-execution-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/test-execution-workflow.md): Locating, executing, and reporting coverage test suites.
+* [**code-smell-review-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/code-smell-review-workflow.md): Scanning for architectural code smells and debt.
+* [**secure-code-review-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/secure-code-review-workflow.md): Credential scanning, OWASP Top 10, security rules audit.
+* [**grill-me-alignment-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/grill-me-alignment-workflow.md): Structured requirements interview and design review.
 
 ---
 
@@ -25,7 +37,7 @@ These workflows cover the entire software development lifecycle (SDLC) and can b
 
 These files act as active instructions. You can guide your AI agent to follow a specific workflow by linking to it or prompting:
 
-> *"Please follow the workflow detailed in [test-execution-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/test-execution-workflow.md) to run and verify tests before making changes."*
+> *"Please follow the workflow detailed in [test-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/test-workflow.md) to run and verify tests before making changes."*
 
 More example prompts, one per workflow:
 - "Follow the pull-request-workflow to prepare this branch and write the PR description." (`pull-request-workflow.md`)

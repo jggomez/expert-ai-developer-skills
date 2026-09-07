@@ -380,3 +380,130 @@ def test_plugin_readme_bundled_skills_exist(workspace_root, plugin_dirs):
                 errors.append(f"{plugin}: README references skill '{name}' not bundled in the plugin")
 
     assert not errors, "\n".join(errors)
+
+
+def test_all_agents_have_canonical_sections(workspace_root, plugin_dirs):
+    """Verifies all agent definition files (both in root agents/ and in
+    plugins/<name>/agents/) strictly contain the 7 canonical architecture
+    sections:
+    1. # Role & Objective
+    2. # When to Use & Routing Triggers
+    3. # Operating Guidelines & Workflow
+    4. # Tooling & Environment Protocol
+    5. # Inputs, Outputs & Hand-off Protocol
+    6. # Quality Standards & Anti-Patterns (Red Flags)
+    7. # Verification & Completion Checklist"""
+    required_sections = [
+        "# Role & Objective",
+        "# When to Use & Routing Triggers",
+        "# Operating Guidelines & Workflow",
+        "# Tooling & Environment Protocol",
+        "# Inputs, Outputs & Hand-off Protocol",
+        "# Quality Standards & Anti-Patterns (Red Flags)",
+        "# Verification & Completion Checklist",
+    ]
+    errors = []
+
+    # Check root agents
+    agents_dir = os.path.join(workspace_root, "agents")
+    for fname in os.listdir(agents_dir):
+        if not fname.endswith(".md") or fname == "README.md":
+            continue
+        agent_path = os.path.join(agents_dir, fname)
+        with open(agent_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        for section in required_sections:
+            if section not in content:
+                errors.append(f"agents/{fname}: missing required section '{section}'")
+
+    # Check plugin agents
+    for plugin in plugin_dirs:
+        plugin_agents_dir = os.path.join(workspace_root, "plugins", plugin, "agents")
+        if not os.path.isdir(plugin_agents_dir):
+            continue
+        for fname in os.listdir(plugin_agents_dir):
+            if not fname.endswith(".md"):
+                continue
+            agent_path = os.path.join(plugin_agents_dir, fname)
+            with open(agent_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            for section in required_sections:
+                if section not in content:
+                    errors.append(f"plugins/{plugin}/agents/{fname}: missing required section '{section}'")
+
+    assert not errors, "\n".join(errors)
+
+
+def test_plugin_rules_validity(workspace_root, plugin_dirs):
+    """Verifies that plugins with rules directories (senior-dev, senior-dev-flutter,
+    senior-data-engineer, python-backend, shared-context) contain valid markdown rules
+    with non-empty content and valid frontmatter when present."""
+    expected_rule_plugins = {
+        "senior-dev": "senior-dev-rules.md",
+        "senior-dev-flutter": "flutter-rules.md",
+        "senior-data-engineer": "data-engineer-rules.md",
+        "python-backend": "python-backend-rules.md",
+        "shared-context": "shared-context-rules.md",
+    }
+    errors = []
+
+    for plugin, rule_file in expected_rule_plugins.items():
+        rule_path = os.path.join(workspace_root, "plugins", plugin, "rules", rule_file)
+        if not os.path.isfile(rule_path):
+            errors.append(f"plugins/{plugin}/rules/{rule_file}: rule file does not exist")
+            continue
+
+        with open(rule_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        if len(content.strip()) < 50:
+            errors.append(f"plugins/{plugin}/rules/{rule_file}: rule file is suspiciously short or empty")
+
+        match = re.search(r"^---\s*\n(.*?)\n---\s*\n", content, re.DOTALL)
+        if match:
+            try:
+                data = yaml.safe_load(match.group(1))
+                if not isinstance(data, dict):
+                    errors.append(f"plugins/{plugin}/rules/{rule_file}: frontmatter must be a YAML mapping")
+            except Exception as e:
+                errors.append(f"plugins/{plugin}/rules/{rule_file}: invalid YAML frontmatter ({e})")
+
+    assert not errors, "\n".join(errors)
+
+
+def test_command_workflows_exist_and_mirrored(workspace_root):
+    """Verifies all 9 core command workflows exist in workflows/ and are mirrored
+    to .agents/workflows/ so Antigravity registers them as slash commands."""
+    core_commands = {
+        "spec-workflow.md": "/spec",
+        "plan-workflow.md": "/plan",
+        "build-workflow.md": "/build",
+        "test-workflow.md": "/test",
+        "constraints-workflow.md": "/constraints",
+        "review-workflow.md": "/review",
+        "perf-workflow.md": "/perf",
+        "code-simplify-workflow.md": "/code-simplify",
+        "ship-workflow.md": "/ship",
+    }
+    errors = []
+
+    for wf_file, cmd in core_commands.items():
+        root_wf = os.path.join(workspace_root, "workflows", wf_file)
+        agent_wf = os.path.join(workspace_root, ".agents", "workflows", wf_file)
+
+        if not os.path.isfile(root_wf):
+            errors.append(f"workflows/{wf_file}: missing core workflow file")
+            continue
+        if not os.path.isfile(agent_wf):
+            errors.append(f".agents/workflows/{wf_file}: missing mirrored workflow file in .agents/workflows")
+            continue
+
+        with open(root_wf, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        if cmd not in content:
+            errors.append(f"workflows/{wf_file}: does not mention command '{cmd}'")
+
+    assert not errors, "\n".join(errors)
+
+

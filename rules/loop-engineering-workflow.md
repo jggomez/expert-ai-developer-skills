@@ -1,36 +1,40 @@
 ---
 trigger: model_decision
-description: 7-stage Loop Engineering cycle (PLAN->TASK->BUILD->TEST->VERIFICATION->DOCUMENTATION->COMMIT) with parallel subagent delegation, skill orchestration, and manager auditing, scaled to the size of the task.
+description: 9-stage engineering execution cycle (/spec, /plan, /build, /test, /constraints, /review, /perf, /code-simplify, /ship) with dynamic orchestrator sizing and subagent delegation.
 ---
 
-# Rule: Loop Engineering Execution Workflow
+# Rule: Engineering Execution Workflow
 
 **Identifier**: `loop-engineering-workflow`
 
-## 1. Scaled 7-Stage Cycle
+## 1. The 9-Stage Cycle & Key Principles
 
-The 7-stage cycle below applies in full to new features and system-level changes. **MUST** scale it down for smaller work:
+Every software modification follows this standardized command lifecycle:
 
-`1. PLAN -> 2. TASK -> 3. BUILD -> 4. TEST -> 5. VERIFICATION -> 6. DOCUMENTATION -> 7. COMMIT`
+| What you're doing | Command | Key Principle | Primary Focus |
+| :--- | :--- | :--- | :--- |
+| **Define what to build** | `/spec` | Spec before code | Requirements, PRD, scope boundaries, acceptance criteria |
+| **Plan how to build it** | `/plan` | Small, atomic tasks | Architecture ADRs, task decomposition, subagent delegation |
+| **Build incrementally** | `/build` | One slice at a time | TDD implementation, vertical slices, official skills |
+| **Prove it works** | `/test` | Tests are proof | Unit, widget, integration tests, AAA pattern, empirical exit 0 |
+| **Set the quality bar** | `/constraints` | Decide it once, enforce it everywhere | NFRs, security gates, secrets, linter rules, branch protection |
+| **Review before merge** | `/review` | Improve code health | PR review, static analysis, leaks, code smells, blocking verdicts |
+| **Audit performance** | `/perf` | Measure before you optimize | Profiling first, jank/slots/query bottlenecks, benchmarks |
+| **Simplify the code** | `/code-simplify` | Clarity over cleverness | Dead code elimination, cyclomatic complexity reduction, DRY/KISS |
+| **Ship to production** | `/ship` | Faster is safer | Conventional commits, changelog, versioning, CI matrix, PR/deploy |
 
-* Trivial fix / isolated bug: skip PLAN and TASK, go straight to BUILD -> TEST -> COMMIT.
-* Small, well-scoped change: skip TASK (no parallelization needed); keep the rest.
-* **NEVER** default to running all 7 stages "to be safe" — that is itself over-engineering.
+## 2. Dynamic Entry Points & Orchestrator Sizing
 
-## 2. Stage Specifications & Skill Orchestration
+Orchestrators **MUST** size the workflow dynamically based on task nature. **NEVER** run all 9 stages blindly:
 
-| Stage | Objective | Directives & Mandatory Skills |
-| :--- | :--- | :--- |
-| **1. PLAN** | Architectural Alignment | **MUST NOT** write code without an approved plan, when this stage applies. Use `senior-architect-engineering`, `design-spec-expert`. |
-| **2. TASK** | Breakdown & Parallelization | For work that splits into disjoint files, **MUST** perform dependency analysis and spawn subagents in isolated workspaces (e.g. separate git worktrees) for each. |
-| **3. BUILD** | Implementation | **MUST** write clean, typed code in English adhering to SOLID. Use `python-expert` or the relevant language-expert skill. |
-| **4. TEST** | TDD Validation | **MUST** follow Red-Green-Refactor. **NEVER** ignore failing test output. Use `test-driven-development`, `testing-expert`. |
-| **5. VERIFICATION**| Manager Audit | **MUST** audit subagent deliverables and pass static analysis + security gates. Use `build-and-ci-gates`, `security-audit`. |
-| **6. DOCS** | System Documentation | **MUST** update docstrings, READMEs, and Mermaid diagrams. Use `documentation-expert`, `repo-research`. |
-| **7. COMMIT** | Semantic Commit | **MUST** format conventional commit and verify git status. Use `commit-expert`, `/commit-push` workflow. |
+- **Trivial Fix / Bug**: Jump to `/test` (write reproducing test) -> `/build` (minimal fix) -> `/review` -> `/ship`.
+- **New Feature / Subsystem**: Full sequence starting at `/spec`.
+- **Refactoring / Debt**: Jump to `/code-simplify` -> `/test` (regression check) -> `/review` -> `/ship`.
+- **Performance Tuning**: Jump to `/perf` (profile first) -> `/build` (targeted optimization) -> `/test` -> `/perf` (re-profile) -> `/review` -> `/ship`.
+- **Direct Command Invocation**: When the user invokes a slash command directly (e.g. `/review` or `/test`), immediately execute that phase.
 
-## 3. Manager Quality Gates
+## 3. Mandatory Execution Gates
 
-* **NEVER** declare victory in Stage 5 without empirical runtime execution evidence (`exit code 0`).
-* **NEVER** allow subagents to mutate overlapping files concurrently without isolation.
-* **MUST** execute full regression tests after integrating subagent outputs.
+- **Tests are Proof**: Never declare victory without empirical execution evidence (`exit code 0`).
+- **Isolation Protocol**: Never allow parallel subagents to concurrently edit overlapping files without isolated workspaces.
+- **Verification Guarantee**: Always re-run automated tests after integrating subagent outputs.
