@@ -63,7 +63,7 @@ These are plain `.md` files, not a packaged plugin — Antigravity auto-discover
 
 ### Key Features
 * **Cost Optimization**: Complex reasoning agents (Orchestrators, Architects, Implementers, Release Engineers) operate using the `pro` model, whereas validation agents (QA Tester, Verifier, Flutter Reviewer) utilize the faster, cost-efficient `flash` model.
-* **Execution Policy Control**: Orchestrators are restricted from running terminal commands directly (`commandExecutionPolicy: "off"`), delegating execution to worker agents with direct filesystem access (`commandExecutionPolicy: auto`; no container sandbox).
+* **Execution Policy Control**: All agents utilize `commandExecutionPolicy: auto`, allowing non-destructive inspection commands, git status checks, and test runner executions directly in the workspace while prompting for safety on destructive operations (no container sandbox).
 * **Skill Integration**: Each agent's system prompt points directly to its bundled skill (e.g. `skills/code-implementer`, `skills/senior-architect-engineering`, `skills/flutter-test-strategy`) for the actual workflow/templates instead of restating them, keeping skills as the single source of truth.
 * **Scaled, Not Fixed, Pipeline**: Orchestrators dynamically size the pipeline to the task — a trivial fix goes straight to implementer/reviewer, while a new feature runs the full lifecycle.
 

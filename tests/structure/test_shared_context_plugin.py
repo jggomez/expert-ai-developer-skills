@@ -103,7 +103,7 @@ def test_context_keeper_agent_is_host_neutral():
     fm = yaml.safe_load(_read("agents/context-keeper.md").split("---", 2)[1])
     assert fm["name"] == "context-keeper"
     assert isinstance(fm["subagent"], bool) and isinstance(fm["mainAgent"], bool)
-    assert "tools" not in fm
+    assert isinstance(fm.get("tools"), list) and "write_to_file" in fm["tools"]
     assert fm["model"] == "inherit"
     assert fm["commandExecutionPolicy"] in ("off", "auto", "eager")
     assert set(fm["skills"]) == {"context-capture", "context-restore"}

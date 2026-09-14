@@ -102,13 +102,14 @@ def test_all_five_agents_are_host_neutral():
         fm = yaml.safe_load(_read(f"agents/{name}.md").split("---", 2)[1])
         assert fm["name"] == name, name
         assert isinstance(fm["subagent"], bool) and isinstance(fm["mainAgent"], bool), name
-        assert "tools" not in fm, f"{name} must not declare a tools key"
+        assert isinstance(fm.get("tools"), list) and "write_to_file" in fm["tools"], f"{name} must declare tools with write_to_file"
         assert fm["model"] == "inherit", name
         assert fm["commandExecutionPolicy"] in ("off", "auto", "eager"), name
         assert isinstance(fm.get("skills"), list) and fm["skills"], name
     orch = yaml.safe_load(_read("agents/flutter-feature-orchestrator.md").split("---", 2)[1])
     assert orch["mainAgent"] is True
-    assert orch["commandExecutionPolicy"] == "off"
+    assert orch["commandExecutionPolicy"] == "auto"
+    assert "invoke_subagent" in orch["tools"]
 
 
 def test_readme_declares_official_packs_as_required_companion():
