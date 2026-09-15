@@ -23,8 +23,8 @@ SNAP = os.path.join(CAP, "context_snapshot.py")
 PACK = os.path.join(CAP, "context_pack.py")
 ROLL = os.path.join(CAP, "context_rollup.py")
 LIST = os.path.join(RES, "context_list.py")
-MCP_SERVER = os.path.join(ROOT, "plugins/shared-context/mcp/mcp_server.py")
-MCP_LAUNCHER = os.path.join(ROOT, "plugins/shared-context/mcp/run-server.sh")
+MCP_SERVER = os.path.join(ROOT, "plugins/antigravity/shared-context/mcp/mcp_server.py")
+MCP_LAUNCHER = os.path.join(ROOT, "plugins/antigravity/shared-context/mcp/run-server.sh")
 HOST_VARS = ("CLAUDE_PLUGIN_ROOT", "CLAUDE_PROJECT_DIR", "CLAUDECODE", "ANTIGRAVITY", "AGY_PLUGIN_ROOT")
 
 

@@ -10,7 +10,7 @@ import sys
 
 import pytest
 
-MCP_PATH = os.path.abspath("plugins/shared-context/mcp/mcp_server.py")
+MCP_PATH = os.path.abspath("plugins/antigravity/shared-context/mcp/mcp_server.py")
 
 
 @pytest.fixture(scope="module")

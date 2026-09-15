@@ -15,11 +15,11 @@ import pytest
 pytestmark = pytest.mark.skipif(shutil.which("node") is None, reason="node not available")
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-GIT_GATE = os.path.join(REPO_ROOT, "plugins", "git-workflow", "hooks", "gitflow-branch-gate.js")
-PYTHON_PRE_GATE = os.path.join(REPO_ROOT, "plugins", "python-backend", "hooks", "pre-tool-gate.js")
-PYTHON_STOP_GATE = os.path.join(REPO_ROOT, "plugins", "python-backend", "hooks", "stop-gate.js")
-FLUTTER_PRE_GATE = os.path.join(REPO_ROOT, "plugins", "senior-dev-flutter", "hooks", "flutter-pre-tool-gate.js")
-FLUTTER_STOP_GATE = os.path.join(REPO_ROOT, "plugins", "senior-dev-flutter", "hooks", "flutter-stop-gate.js")
+GIT_GATE = os.path.join(REPO_ROOT, "plugins", "antigravity", "git-workflow", "hooks", "gitflow-branch-gate.js")
+PYTHON_PRE_GATE = os.path.join(REPO_ROOT, "plugins", "antigravity", "python-backend", "hooks", "pre-tool-gate.js")
+PYTHON_STOP_GATE = os.path.join(REPO_ROOT, "plugins", "antigravity", "python-backend", "hooks", "stop-gate.js")
+FLUTTER_PRE_GATE = os.path.join(REPO_ROOT, "plugins", "antigravity", "senior-dev-flutter", "hooks", "flutter-pre-tool-gate.js")
+FLUTTER_STOP_GATE = os.path.join(REPO_ROOT, "plugins", "antigravity", "senior-dev-flutter", "hooks", "flutter-stop-gate.js")
 
 HOST_VARS = ("CLAUDE_PLUGIN_ROOT", "CLAUDE_PROJECT_DIR", "CLAUDECODE", "ANTIGRAVITY", "AGY_PLUGIN_ROOT")
 

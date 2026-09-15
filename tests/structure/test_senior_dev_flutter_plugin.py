@@ -15,7 +15,7 @@ import sys
 import pytest
 import yaml
 
-PLUGIN = os.path.abspath("plugins/senior-dev-flutter")
+PLUGIN = os.path.abspath("plugins/antigravity/senior-dev-flutter")
 
 EXPECTED_FILES = [
     ".claude-plugin/plugin.json",

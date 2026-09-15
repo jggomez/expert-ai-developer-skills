@@ -14,7 +14,7 @@ import pytest
 
 pytestmark = pytest.mark.skipif(shutil.which("node") is None, reason="node not available")
 
-HOOKS = os.path.abspath("plugins/senior-dev-flutter/hooks")
+HOOKS = os.path.abspath("plugins/antigravity/senior-dev-flutter/hooks")
 PRE = os.path.join(HOOKS, "flutter-pre-tool-gate.js")
 STOP = os.path.join(HOOKS, "flutter-stop-gate.js")
 HOST_VARS = ("CLAUDE_PLUGIN_ROOT", "CLAUDE_PROJECT_DIR", "CLAUDECODE", "ANTIGRAVITY")

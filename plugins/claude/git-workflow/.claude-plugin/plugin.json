@@ -1,0 +1,8 @@
+{
+  "name": "git-workflow",
+  "version": "1.0.0",
+  "description": "Gitflow workflow branch safety and conventional pull request verification.",
+  "author": {
+    "name": "jggomez"
+  }
+}

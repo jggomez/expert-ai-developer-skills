@@ -8,10 +8,10 @@ import yaml
 
 
 def _discover_plugins(workspace_root):
-    plugins_dir = os.path.join(workspace_root, "plugins")
+    plugins_dir = os.path.join(workspace_root, "plugins", "antigravity")
     return sorted(
         name for name in os.listdir(plugins_dir)
-        if os.path.isdir(os.path.join(plugins_dir, name)) and name not in ("claude", "antigravity", ".DS_Store")
+        if os.path.isdir(os.path.join(plugins_dir, name)) and not name.startswith(".")
     )
 
 
@@ -31,7 +31,7 @@ def test_plugin_manifest_locations(workspace_root, plugin_dirs):
     errors = []
 
     for plugin in plugin_dirs:
-        plugin_path = os.path.join(workspace_root, "plugins", plugin)
+        plugin_path = os.path.join(workspace_root, "plugins", "antigravity", plugin)
 
         antigravity_manifest = os.path.join(plugin_path, "plugin.json")
         claude_manifest = os.path.join(plugin_path, ".claude-plugin", "plugin.json")
@@ -69,7 +69,7 @@ def test_plugin_hooks_json_schema(workspace_root, plugin_dirs):
     errors = []
 
     for plugin in plugin_dirs:
-        hooks_path = os.path.join(workspace_root, "plugins", plugin, "hooks.json")
+        hooks_path = os.path.join(workspace_root, "plugins", "antigravity", plugin, "hooks.json")
         if not os.path.isfile(hooks_path):
             continue
 
@@ -124,7 +124,7 @@ def test_plugin_mcp_json_schema(workspace_root, plugin_dirs):
     errors = []
 
     for plugin in plugin_dirs:
-        plugin_path = os.path.join(workspace_root, "plugins", plugin)
+        plugin_path = os.path.join(workspace_root, "plugins", "antigravity", plugin)
 
         claude_mcp_path = os.path.join(plugin_path, ".mcp.json")
         if os.path.isfile(claude_mcp_path):
@@ -169,7 +169,7 @@ def test_plugin_agents_frontmatter(workspace_root, plugin_dirs):
     errors = []
 
     for plugin in plugin_dirs:
-        agents_dir = os.path.join(workspace_root, "plugins", plugin, "agents")
+        agents_dir = os.path.join(workspace_root, "plugins", "antigravity", plugin, "agents")
         if not os.path.isdir(agents_dir):
             continue
 
@@ -251,7 +251,7 @@ def test_plugin_skills_match_root_skills(workspace_root, plugin_dirs):
     errors = []
 
     for plugin in plugin_dirs:
-        plugin_skills = os.path.join(workspace_root, "plugins", plugin, "skills")
+        plugin_skills = os.path.join(workspace_root, "plugins", "antigravity", plugin, "skills")
         if not os.path.isdir(plugin_skills):
             continue
 
@@ -290,11 +290,11 @@ def test_plugin_readme_bundled_skills_exist(workspace_root, plugin_dirs):
     errors = []
 
     for plugin in plugin_dirs:
-        plugin_skills = os.path.join(workspace_root, "plugins", plugin, "skills")
+        plugin_skills = os.path.join(workspace_root, "plugins", "antigravity", plugin, "skills")
         if not os.path.isdir(plugin_skills):
             continue
 
-        readme_path = os.path.join(workspace_root, "plugins", plugin, "README.md")
+        readme_path = os.path.join(workspace_root, "plugins", "antigravity", plugin, "README.md")
         if not os.path.isfile(readme_path):
             continue
 
@@ -341,7 +341,7 @@ def test_all_agents_have_canonical_sections(workspace_root, plugin_dirs):
 
     # Check plugin agents (Antigravity canonical plugins)
     for plugin in plugin_dirs:
-        plugin_agents_dir = os.path.join(workspace_root, "plugins", plugin, "agents")
+        plugin_agents_dir = os.path.join(workspace_root, "plugins", "antigravity", plugin, "agents")
         if not os.path.isdir(plugin_agents_dir):
             continue
         for fname in os.listdir(plugin_agents_dir):
@@ -371,7 +371,7 @@ def test_plugin_rules_validity(workspace_root, plugin_dirs):
     errors = []
 
     for plugin, rule_file in expected_rule_plugins.items():
-        rule_path = os.path.join(workspace_root, "plugins", plugin, "rules", rule_file)
+        rule_path = os.path.join(workspace_root, "plugins", "antigravity", plugin, "rules", rule_file)
         if not os.path.isfile(rule_path):
             errors.append(f"plugins/{plugin}/rules/{rule_file}: rule file does not exist")
             continue
@@ -437,7 +437,7 @@ def test_agents_execution_policy_and_tools(workspace_root, plugin_dirs):
     or run_command."""
     search_dirs = []
     for p in plugin_dirs:
-        plugin_agents = os.path.join(workspace_root, "plugins", p, "agents")
+        plugin_agents = os.path.join(workspace_root, "plugins", "antigravity", p, "agents")
         if os.path.isdir(plugin_agents):
             search_dirs.append(plugin_agents)
 

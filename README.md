@@ -107,78 +107,26 @@ The workspace is cleanly structured into modular **skills** (discrete instructio
 │   ├── flutter-release-engineering/   # Flavors, --dart-define-from-file, signing, build matrix, OTA decision
 │   └── flutter-upgrade-migration/     # Ordered SDK-upgrade sweep, deprecation triage, dependency major bumps
 └── plugins/
-    ├── python-backend/
-    │   ├── README.md                   # Plugin installation, hooks, & mcp configurations
-    │   ├── plugin.json                 # Required plugin metadata descriptor
-    │   ├── .mcp.json                   # Cloud Run + Firebase MCP, Claude Code's format
-    │   ├── mcp_config.json             # Same MCP servers, Antigravity's format
-    │   ├── hooks.json                  # Lifecycle hooks for both hosts, in one file
-    │   ├── hooks/                      # SessionStart, PreToolUse, & Stop event scripts (host-aware JS)
-    │   ├── rules/                      # System-wide architecture rules & hook policies
-    │   └── skills/                     # Local backend-compatible copy of the skills catalog
-    ├── senior-dev/
-    │   ├── README.md                   # Plugin installation & subagent panel
-    │   ├── plugin.json                 # Required plugin metadata descriptor
-    │   ├── .mcp.json                   # Reused Cloud Run / Firebase MCP servers, Claude Code's format
-    │   ├── mcp_config.json             # Same MCP servers, Antigravity's format
-    │   ├── agents/                     # 6 bundled subagents (orchestrator + 5 specialists) — Antigravity native tools & auto execution
-    │   ├── rules/                      # Senior dev 9-stage cycle & tool execution rules
-    │   └── skills/                     # Local copy of the 8 skills those agents depend on
-    ├── git-workflow/
-    │   ├── README.md                   # Plugin installation & Gitflow gate details
-    │   ├── plugin.json                 # Required plugin metadata descriptor
-    │   ├── hooks.json                  # PreToolUse hook for both hosts, in one file
-    │   ├── hooks/                      # Gitflow branch safety gate (host-aware, extracted from python-backend)
-    │   └── skills/                     # commit-expert + pull-request-expert
-    ├── docs-and-quality/
-    │   ├── README.md                   # Plugin installation & skill summaries
-    │   ├── plugin.json                 # Required plugin metadata descriptor
-    │   └── skills/                     # documentation-expert + testing-expert + guidelines-karpathy
-    ├── multi-agent-ops/
-    │   ├── README.md                   # Plugin installation & platform-gap notes
-    │   ├── plugin.json                 # Required plugin metadata descriptor
-    │   └── skills/                     # loop-engineering + repo-research
-    ├── senior-data-engineer/
-    │   ├── README.md                   # Plugin installation, MCP servers, known gaps
-    │   ├── plugin.json                 # Required plugin metadata descriptor
-    │   ├── .mcp.json                   # BigQuery, Datastream, Dataform, Pub/Sub, Claude Code's format
-    │   ├── mcp_config.json             # Same 4 servers, Antigravity's format
-    │   ├── agents/                     # 1 subagent — Antigravity native tools & auto execution
-    │   ├── rules/                      # GCP data architecture & 9-stage pipeline rules
-    │   └── skills/                     # gcp-data-engineering + cdc-scd-patterns
-    ├── sql-query-optimizer/
-    │   ├── README.md                   # Plugin installation, MCP servers, example prompts
-    │   ├── plugin.json                 # Required plugin metadata descriptor
-    │   ├── .mcp.json                   # BigQuery + Cloud SQL, Claude Code's format
-    │   ├── mcp_config.json             # Same 2 servers, Antigravity's format
-    │   ├── agents/                     # 1 subagent — Antigravity native tools & auto execution
-    │   └── skills/                     # bigquery-query-optimization + sql-query-optimization
-    ├── shared-context/
-    │   ├── README.md                   # Plugin layout, MCP tools, per-host install
-    │   ├── plugin.json                 # Required plugin metadata descriptor
-    │   ├── .mcp.json / mcp_config.json # stdio MCP: both run `sh mcp/run-server.sh`
-    │   ├── hooks.json                  # "hooks" (Claude Code) + "shared-context-relay" group (Antigravity)
-    │   ├── hooks/                      # session-start prompt, periodic checkpoint nudge, stop flush
-    │   ├── rules/                      # Antigravity auto-loads (no SessionStart event there)
-    │   ├── mcp/run-server.sh           # launcher: `uv run --with 'mcp<2'` — no manual pip install
-    │   ├── mcp/mcp_server.py           # 8 tools (context_list/snapshot/read/write/pack/unpack/rollup/search)
-    │   ├── agents/                     # context-keeper subagent — Antigravity native tools & auto execution
-    │   └── skills/                     # context-capture + context-restore
-    ├── senior-dev-flutter/
-    │   ├── README.md                   # Boundary table + required official companion packs
-    │   ├── plugin.json                 # Required plugin metadata descriptor
-    │   ├── .mcp.json / mcp_config.json # official Dart & Flutter MCP: `dart mcp-server`
-    │   ├── hooks.json                  # "hooks" (Claude Code) + "senior-dev-flutter-gates" group (Antigravity)
-    │   ├── hooks/                      # PreToolUse: block store build / major bump on protected branch; Stop: dart analyze must be clean
-    │   ├── agents/                     # 5 subagents (orchestrator + 4 specialists) — Antigravity native tools & auto execution
-    │   ├── rules/                      # Flutter architectural boundaries & 9-stage cycle rules
-    │   └── skills/                     # 7 flutter-* skills (decision/checklist/strategy only — never a how-to)
-    └── claude/                         # Claude Code builds (synced with native tools: Bash, Read, Write, Edit, Glob, Grep, Agent)
+    ├── antigravity/                    # Complete plugins for Google Antigravity (native tools & auto execution)
+    │   ├── senior-dev/                 # Orchestrator + 5 specialists, TDD, clean code, verification
+    │   ├── senior-dev-flutter/         # Flutter orchestrator, architecture decisions, profiling, release
+    │   ├── senior-data-engineer/       # GCP data engineering subagent, BigQuery, Datastream, Dataform
+    │   ├── shared-context/             # Cross-agent working memory (Antigravity & Claude handoff)
+    │   ├── sql-query-optimizer/        # BigQuery & relational SQL diagnosis and query plan optimization
+    │   ├── python-backend/             # FastAPI, TDD, database migrations, CI/CD, performance
+    │   ├── git-workflow/               # Gitflow branch safety gate and conventional PR verification
+    │   ├── docs-and-quality/           # Technical documentation, BDD testing, Karpathy behavioral rules
+    │   └── multi-agent-ops/            # Self-correcting agent execution loops & repo research
+    └── claude/                         # Complete plugins for Claude Code (native tools: Bash, Read, Write, Edit, Glob, Grep, Agent)
         ├── senior-dev/
         ├── senior-dev-flutter/
         ├── senior-data-engineer/
         ├── shared-context/
-        └── sql-query-optimizer/
+        ├── sql-query-optimizer/
+        ├── python-backend/
+        ├── git-workflow/
+        ├── docs-and-quality/
+        └── multi-agent-ops/
 ```
 
 ---
@@ -250,10 +198,10 @@ This workspace ships the same Loop Engineering subagent topology (Orchestrator +
 
 | Host Platform | Plugin Entry Point | Tools Configuration | Frontmatter Specification |
 | :--- | :--- | :--- | :--- |
-| **Google Antigravity** | [`plugins/senior-dev/`](plugins/senior-dev) | Native Antigravity tools (`run_command`, `write_to_file`, `replace_file_content`, `view_file`, etc.) | `commandExecutionPolicy: auto`, `subagent: true`, `mainAgent: true`, `model: inherit` |
+| **Google Antigravity** | [`plugins/antigravity/senior-dev/`](plugins/antigravity/senior-dev) | Native Antigravity tools (`run_command`, `write_to_file`, `replace_file_content`, `view_file`, etc.) | `commandExecutionPolicy: auto`, `subagent: true`, `mainAgent: true`, `model: inherit` |
 | **Claude Code** | [`plugins/claude/senior-dev/`](plugins/claude/senior-dev) | Native Claude tools (`Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Agent`) | Claude Code compatible frontmatter, verified via `/plugin install` |
 
-Both variants reuse the exact same skills, agent roles, and scaled-pipeline philosophy (the orchestrator sizes the process to the task instead of always running all five subagents). Tools are strictly separated per host so neither engine suffers from missing tool errors (`unknown tool: Bash` in Antigravity or missing tools in Claude Code). The `plugins/senior-dev/.mcp.json` / `mcp_config.json` reuse the Cloud Run / Firebase MCP servers.
+Both variants reuse the exact same skills, agent roles, and scaled-pipeline philosophy (the orchestrator sizes the process to the task instead of always running all five subagents). Tools are strictly separated per host so neither engine suffers from missing tool errors (`unknown tool: Bash` in Antigravity or missing tools in Claude Code). The `plugins/antigravity/senior-dev/mcp_config.json` and `.mcp.json` reuse the Cloud Run / Firebase MCP servers.
 
 ---
 
@@ -263,16 +211,16 @@ Four smaller plugins carve the rest of the catalog into focused, independently-i
 
 | Plugin | Bundles | Notes |
 | :--- | :--- | :--- |
-| [**`git-workflow`**](plugins/git-workflow) | `commit-expert`, `pull-request-expert` + a Gitflow branch safety hook | The hook is the Gitflow-check portion of `python-backend`'s `pre-tool-gate.js`, extracted standalone since it has no Python/cloud dependency — usable in any stack. |
-| [**`docs-and-quality`**](plugins/docs-and-quality) | `documentation-expert`, `testing-expert`, `guidelines-karpathy` | Skills-only, no hooks/MCP — documentation and testing standards for any language. |
-| [**`multi-agent-ops`**](plugins/multi-agent-ops) | `loop-engineering`, `repo-research` | The two catalog skills not yet bundled anywhere else. Its README documents a real platform gap: Claude Code plugins have no static equivalent to the cron-scheduled `sidecars/` daemons below (§15) — verified against current plugin docs, not assumed. |
-| [**`shared-context`**](plugins/shared-context) | `context-capture`, `context-restore` + a stdio MCP server, 3 hooks, an Antigravity rules file, and the `context-keeper` subagent | Cross-agent working memory: agents record decisions/flows into a committed `context/` directory that the *next* agent — Claude Code or Antigravity — is prompted to load at start-up, only with the user's OK. Records are secret-redacted on write and old sessions compress to `tar.xz`. |
+| [**`git-workflow`**](plugins/antigravity/git-workflow) | `commit-expert`, `pull-request-expert` + a Gitflow branch safety hook | The hook is the Gitflow-check portion of `python-backend`'s `pre-tool-gate.js`, extracted standalone since it has no Python/cloud dependency — usable in any stack. |
+| [**`docs-and-quality`**](plugins/antigravity/docs-and-quality) | `documentation-expert`, `testing-expert`, `guidelines-karpathy` | Skills-only, no hooks/MCP — documentation and testing standards for any language. |
+| [**`multi-agent-ops`**](plugins/antigravity/multi-agent-ops) | `loop-engineering`, `repo-research` | The two catalog skills not yet bundled anywhere else. Its README documents a real platform gap: Claude Code plugins have no static equivalent to the cron-scheduled `sidecars/` daemons below (§15) — verified against current plugin docs, not assumed. |
+| [**`shared-context`**](plugins/antigravity/shared-context) | `context-capture`, `context-restore` + a stdio MCP server, 3 hooks, an Antigravity rules file, and the `context-keeper` subagent | Cross-agent working memory: agents record decisions/flows into a committed `context/` directory that the *next* agent — Claude Code or Antigravity — is prompted to load at start-up, only with the user's OK. Records are secret-redacted on write and old sessions compress to `tar.xz`. |
 
 ---
 
 ## 7. Senior Data Engineer Plugin
 
-The [**`senior-data-engineer`**](plugins/senior-data-engineer) plugin packages a Google Cloud data engineering expert: one subagent, two skills (`gcp-data-engineering` for architecture decisions, `cdc-scd-patterns` for Change Data Capture and Slowly Changing Dimension modeling specifically), and direct MCP access to **BigQuery, Datastream, Dataform, and Pub/Sub** — Google's own hosted "remote MCP servers" (HTTP + native OAuth; Claude Code handles the browser consent flow itself, no embedded credentials needed).
+The [**`senior-data-engineer`**](plugins/antigravity/senior-data-engineer) plugin packages a Google Cloud data engineering expert: one subagent, two skills (`gcp-data-engineering` for architecture decisions, `cdc-scd-patterns` for Change Data Capture and Slowly Changing Dimension modeling specifically), and direct MCP access to **BigQuery, Datastream, Dataform, and Pub/Sub** — Google's own hosted "remote MCP servers" (HTTP + native OAuth; Claude Code handles the browser consent flow itself, no embedded credentials needed).
 
 Researched before building, not assumed: there is no dedicated Dataflow MCP server as of this writing — custom Beam pipelines still go through `gcloud`/Terraform/the Beam SDK directly, and the agent says so rather than pretending otherwise. For a fully autonomous, deployable data agent (not just a chat-based design assistant), the natural next step is Google's [Agent Development Kit](https://adk.dev) (`agents-cli scaffold create`) — a separate, heavier build than this plugin.
 
@@ -280,7 +228,7 @@ Researched before building, not assumed: there is no dedicated Dataflow MCP serv
 
 ## 8. SQL Query Optimizer Plugin
 
-The [**`sql-query-optimizer`**](plugins/sql-query-optimizer) plugin finds and rewrites slow SQL — both standalone `.sql` files and queries embedded in application code — as one subagent, two skills, and direct MCP access to BigQuery and Cloud SQL for real query plans.
+The [**`sql-query-optimizer`**](plugins/antigravity/sql-query-optimizer) plugin finds and rewrites slow SQL — both standalone `.sql` files and queries embedded in application code — as one subagent, two skills, and direct MCP access to BigQuery and Cloud SQL for real query plans.
 
 Built from Google Cloud's own "Query Processing and Optimization" training material (`bigquery-query-optimization`: partition/cluster pruning, JOIN ordering, shuffle/skew, approximate functions, SQL vs. JS UDFs) plus generic cross-engine practices (`sql-query-optimization`: EXPLAIN ANALYZE, indexing, keyset pagination) so the same agent handles BigQuery and traditional engines without misapplying one engine's advice to the other. Its bundled `lint_sql_query.py` recursively scans a whole project — `.sql` files and SQL string literals inside `.py`/`.js`/`.ts`/`.java`/`.go`/`.rb`/`.scala` — for text-detectable anti-patterns before any live database connection is needed.
 
@@ -288,7 +236,7 @@ Built from Google Cloud's own "Query Processing and Optimization" training mater
 
 ## 9. Senior Dev Flutter Plugin
 
-The [**`senior-dev-flutter`**](plugins/senior-dev-flutter) plugin is the **senior Flutter layer on top of the official Flutter & Dart skill packs** — it deliberately does *not* repeat them. The Dart and Flutter teams already publish ~23 agent skills (`flutter/agent-plugins`, `dart-lang/skills`) covering *how* to build layouts, wire routing, serialize JSON, write every kind of test, run the analyzer, and more, plus the official **Dart & Flutter MCP server** (`dart mcp-server`). This plugin installs on top and adds the layer those leave open: orchestrating, deciding, and reviewing.
+The [**`senior-dev-flutter`**](plugins/antigravity/senior-dev-flutter) plugin is the **senior Flutter layer on top of the official Flutter & Dart skill packs** — it deliberately does *not* repeat them. The Dart and Flutter teams already publish ~23 agent skills (`flutter/agent-plugins`, `dart-lang/skills`) covering *how* to build layouts, wire routing, serialize JSON, write every kind of test, run the analyzer, and more, plus the official **Dart & Flutter MCP server** (`dart mcp-server`). This plugin installs on top and adds the layer those leave open: orchestrating, deciding, and reviewing.
 
 | Concern | Official packs (required companion, not duplicated) | `senior-dev-flutter` adds |
 | :--- | :--- | :--- |
@@ -307,7 +255,7 @@ The [**`senior-dev-flutter`**](plugins/senior-dev-flutter) plugin is the **senio
 **Requires**: the official packs installed alongside —
 `npx skills add flutter/agent-plugins --skill '*' --agent universal --yes` and
 `npx skills add dart-lang/skills --skill '*' --agent universal --yes` — plus
-`node` and `dart` on `PATH`. See `plugins/senior-dev-flutter/README.md`.
+`node` and `dart` on `PATH`. See `plugins/antigravity/senior-dev-flutter/README.md`.
 
 ---
 
@@ -366,37 +314,37 @@ This workspace provides a root-level [**`workflows/`**](workflows) directory con
 ## 12. Custom Loop Engineering Agents (14 Subagents)
 
 All 14 specialized subagents are packaged directly inside their respective plugins across both ecosystems:
-- **For Google Antigravity**: Packaged in `plugins/<plugin-name>/agents/*.md` with native AGY tools (`run_command`, `write_to_file`, `replace_file_content`, `view_file`, etc.) and `commandExecutionPolicy: auto`. Installed via `agy plugin install ./plugins/<plugin-name>`.
+- **For Google Antigravity**: Packaged in `plugins/antigravity/<plugin-name>/agents/*.md` with native AGY tools (`run_command`, `write_to_file`, `replace_file_content`, `view_file`, etc.) and `commandExecutionPolicy: auto`. Installed via `agy plugin install ./plugins/antigravity/<plugin-name>`.
 - **For Claude Code**: Packaged in `plugins/claude/<plugin-name>/agents/*.md` with native Claude Code tools (`Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Agent`). Installed via `/plugin install <plugin-name>` or `claude plugin install plugins/claude/<plugin-name>`.
 
 ### General Software Development Panel (`senior-dev` plugin)
 
 | Agent Profile | Role & Specialization | Execution Policy | Typical Actions |
 | :--- | :--- | :--- | :--- |
-| [**`senior-dev-orchestrator`**](plugins/senior-dev/agents/senior-dev-orchestrator.md) | **Main Orchestrator**: Manages overarching SDLC lifecycle, scales tasks dynamically, tracks release readiness. | `off` | `invoke_subagent`, `manage_subagents` |
-| [**`product-analyst`**](plugins/senior-dev/agents/product-analyst.md) | **Requirements Engineer**: Clarifies ambiguities with user, constructs detailed PRDs. | `off` | `ask_question`, `write_to_file` |
-| [**`architect-engineer`**](plugins/senior-dev/agents/architect-engineer.md) | **System Designer**: Evaluates Quality Attribute Drivers (QADs), drafts architecture blueprints and ADRs. | `auto` | `write_to_file`, `replace_file_content` |
-| [**`code-implementer`**](plugins/senior-dev/agents/code-implementer.md) | **TDD Implementer**: Executes strict Red-Green-Refactor cycles to write production code. | `auto` | `write_to_file`, `run_command` |
-| [**`qa-tester`**](plugins/senior-dev/agents/qa-tester.md) | **E2E Tester**: Traces requirements back to End-to-End integration test suites. | `auto` | `run_command`, `grep_search` |
-| [**`compliance-verifier`**](plugins/senior-dev/agents/compliance-verifier.md) | **Quality Auditor**: Verifies strict compliance with NFRs, security gates, and code smells. | `auto` | `run_command`, `list_dir` |
+| [**`senior-dev-orchestrator`**](plugins/antigravity/senior-dev/agents/senior-dev-orchestrator.md) | **Main Orchestrator**: Manages overarching SDLC lifecycle, scales tasks dynamically, tracks release readiness. | `off` | `invoke_subagent`, `manage_subagents` |
+| [**`product-analyst`**](plugins/antigravity/senior-dev/agents/product-analyst.md) | **Requirements Engineer**: Clarifies ambiguities with user, constructs detailed PRDs. | `off` | `ask_question`, `write_to_file` |
+| [**`architect-engineer`**](plugins/antigravity/senior-dev/agents/architect-engineer.md) | **System Designer**: Evaluates Quality Attribute Drivers (QADs), drafts architecture blueprints and ADRs. | `auto` | `write_to_file`, `replace_file_content` |
+| [**`code-implementer`**](plugins/antigravity/senior-dev/agents/code-implementer.md) | **TDD Implementer**: Executes strict Red-Green-Refactor cycles to write production code. | `auto` | `write_to_file`, `run_command` |
+| [**`qa-tester`**](plugins/antigravity/senior-dev/agents/qa-tester.md) | **E2E Tester**: Traces requirements back to End-to-End integration test suites. | `auto` | `run_command`, `grep_search` |
+| [**`compliance-verifier`**](plugins/antigravity/senior-dev/agents/compliance-verifier.md) | **Quality Auditor**: Verifies strict compliance with NFRs, security gates, and code smells. | `auto` | `run_command`, `list_dir` |
 
 ### Flutter & Dart Development Panel (`senior-dev-flutter` plugin)
 
 | Agent Profile | Role & Specialization | Execution Policy | Typical Actions |
 | :--- | :--- | :--- | :--- |
-| [**`flutter-feature-orchestrator`**](plugins/senior-dev-flutter/agents/flutter-feature-orchestrator.md) | **Flutter Orchestrator**: Sizes Flutter tasks, sequences official Dart/Flutter skills, delegates phases. | `off` | `invoke_subagent`, `send_message` |
-| [**`flutter-architect`**](plugins/senior-dev-flutter/agents/flutter-architect.md) | **State & Boundaries**: Selects state management (Riverpod/Bloc/Signals) and commits ADRs. | `auto` | `write_to_file`, `run_command` |
-| [**`flutter-implementer`**](plugins/senior-dev-flutter/agents/flutter-implementer.md) | **TDD & Performance**: Implements UI/logic via official skills, profiles jank, ensures green tests. | `auto` | `run_command`, `replace_file_content` |
-| [**`flutter-reviewer`**](plugins/senior-dev-flutter/agents/flutter-reviewer.md) | **Code & Quality Audit**: Checks rebuild loops, memory leaks, accessibility semantics, ADR conformance. | `auto` | `run_command`, `replace_file_content` |
-| [**`flutter-release-engineer`**](plugins/senior-dev-flutter/agents/flutter-release-engineer.md) | **Build & Ship**: Manages `--dart-define-from-file`, flavors, signing, store readiness, upgrades. | `auto` | `run_command`, `replace_file_content` |
+| [**`flutter-feature-orchestrator`**](plugins/antigravity/senior-dev-flutter/agents/flutter-feature-orchestrator.md) | **Flutter Orchestrator**: Sizes Flutter tasks, sequences official Dart/Flutter skills, delegates phases. | `off` | `invoke_subagent`, `send_message` |
+| [**`flutter-architect`**](plugins/antigravity/senior-dev-flutter/agents/flutter-architect.md) | **State & Boundaries**: Selects state management (Riverpod/Bloc/Signals) and commits ADRs. | `auto` | `write_to_file`, `run_command` |
+| [**`flutter-implementer`**](plugins/antigravity/senior-dev-flutter/agents/flutter-implementer.md) | **TDD & Performance**: Implements UI/logic via official skills, profiles jank, ensures green tests. | `auto` | `run_command`, `replace_file_content` |
+| [**`flutter-reviewer`**](plugins/antigravity/senior-dev-flutter/agents/flutter-reviewer.md) | **Code & Quality Audit**: Checks rebuild loops, memory leaks, accessibility semantics, ADR conformance. | `auto` | `run_command`, `replace_file_content` |
+| [**`flutter-release-engineer`**](plugins/antigravity/senior-dev-flutter/agents/flutter-release-engineer.md) | **Build & Ship**: Manages `--dart-define-from-file`, flavors, signing, store readiness, upgrades. | `auto` | `run_command`, `replace_file_content` |
 
 ### Standalone Domain Specialists
 
 | Agent Profile | Role & Specialization | Plugin | Execution Policy | Typical Actions |
 | :--- | :--- | :--- | :--- | :--- |
-| [**`senior-data-engineer`**](plugins/senior-data-engineer/agents/senior-data-engineer.md) | **Data Engineer**: GCP data pipeline design, lakehouse/warehouse, CDC Datastream, SCD modeling. | `senior-data-engineer` | `auto` | `run_command`, `write_to_file`, MCP |
-| [**`sql-query-optimizer`**](plugins/sql-query-optimizer/agents/sql-query-optimizer.md) | **SQL Optimizer**: Finds and rewrites slow SQL for BigQuery and traditional databases via query plans. | `sql-query-optimizer` | `auto` | `run_command`, `replace_file_content`, MCP |
-| [**`context-keeper`**](plugins/shared-context/agents/context-keeper.md) | **Context Keeper**: Shared cross-agent memory maintainer, capture/restore, decision rollups. | `shared-context` | `auto` | `run_command`, `write_to_file` |
+| [**`senior-data-engineer`**](plugins/antigravity/senior-data-engineer/agents/senior-data-engineer.md) | **Data Engineer**: GCP data pipeline design, lakehouse/warehouse, CDC Datastream, SCD modeling. | `senior-data-engineer` | `auto` | `run_command`, `write_to_file`, MCP |
+| [**`sql-query-optimizer`**](plugins/antigravity/sql-query-optimizer/agents/sql-query-optimizer.md) | **SQL Optimizer**: Finds and rewrites slow SQL for BigQuery and traditional databases via query plans. | `sql-query-optimizer` | `auto` | `run_command`, `replace_file_content`, MCP |
+| [**`context-keeper`**](plugins/antigravity/shared-context/agents/context-keeper.md) | **Context Keeper**: Shared cross-agent memory maintainer, capture/restore, decision rollups. | `shared-context` | `auto` | `run_command`, `write_to_file` |
 
 ---
 
@@ -441,21 +389,21 @@ npx skills add jggomez/expert-ai-developer-skills
 - **Claude Code's plugin manifest lives at `.claude-plugin/plugin.json`**, a subdirectory — not `plugin.json` at the plugin root. Every plugin here now ships *both*: root `plugin.json` for Antigravity, `.claude-plugin/plugin.json` (same content) for Claude Code. Without the subdirectory copy, Claude Code does not recognize the directory as a plugin at all.
 - **Antigravity's real global install path is `~/.gemini/antigravity-cli/plugins/<name>/`**, populated by the `agy plugin install <path>` CLI command — not a path you `mkdir`/`cp` into by hand. Use the command below; let `agy` manage the destination.
 - **Subagents are packaged directly inside plugins with native tool bindings**:
-  - In `plugins/<plugin>/agents/*.md`, agents declare native Antigravity tools (`run_command`, `write_to_file`, `replace_file_content`, `view_file`, etc.) with `commandExecutionPolicy: auto` and `subagent: true`.
+  - In `plugins/antigravity/<plugin>/agents/*.md`, agents declare native Antigravity tools (`run_command`, `write_to_file`, `replace_file_content`, `view_file`, etc.) with `commandExecutionPolicy: auto` and `subagent: true`.
   - In `plugins/claude/<plugin>/agents/*.md`, agents declare native Claude Code tools (`Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Agent`).
   - This architecture eliminates missing tools and tool incompatibility errors in both engines.
 
 **Antigravity CLI — global install via `agy`** (full plugins are global-only; no project-scoped equivalent for a bundled plugin):
 ```bash
-agy plugin install ./plugins/python-backend
-agy plugin install ./plugins/git-workflow
-agy plugin install ./plugins/docs-and-quality
-agy plugin install ./plugins/multi-agent-ops
-agy plugin install ./plugins/senior-dev
-agy plugin install ./plugins/senior-data-engineer
-agy plugin install ./plugins/sql-query-optimizer
-agy plugin install ./plugins/shared-context
-agy plugin install ./plugins/senior-dev-flutter   # also: npx skills add flutter/agent-plugins + dart-lang/skills
+agy plugin install ./plugins/antigravity/python-backend
+agy plugin install ./plugins/antigravity/git-workflow
+agy plugin install ./plugins/antigravity/docs-and-quality
+agy plugin install ./plugins/antigravity/multi-agent-ops
+agy plugin install ./plugins/antigravity/senior-dev
+agy plugin install ./plugins/antigravity/senior-data-engineer
+agy plugin install ./plugins/antigravity/sql-query-optimizer
+agy plugin install ./plugins/antigravity/shared-context
+agy plugin install ./plugins/antigravity/senior-dev-flutter   # also: npx skills add flutter/agent-plugins + dart-lang/skills
 agy plugin list      # confirm
 agy plugin enable|disable|uninstall <name>
 ```
@@ -464,16 +412,16 @@ agy plugin enable|disable|uninstall <name>
 ```bash
 # 1. MCP servers — merge each plugin's mcp_config.json into your Antigravity MCP config
 #    (project-scoped .agents/mcp_config.json; global: ~/.gemini/config/mcp_config.json):
-cat plugins/senior-dev/mcp_config.json               # merge its "mcpServers"
-cat plugins/senior-data-engineer/mcp_config.json     # merge its "mcpServers"
-cat plugins/sql-query-optimizer/mcp_config.json      # merge its "mcpServers"
+cat plugins/antigravity/senior-dev/mcp_config.json               # merge its "mcpServers"
+cat plugins/antigravity/senior-data-engineer/mcp_config.json     # merge its "mcpServers"
+cat plugins/antigravity/sql-query-optimizer/mcp_config.json      # merge its "mcpServers"
 
 # 2. Agents — copy directly from the plugin directories into your project .agents/agents/:
 mkdir -p .agents/agents      # project-scoped; use ~/.gemini/config/agents/ for global
-cp plugins/senior-dev/agents/*.md \
-   plugins/senior-data-engineer/agents/*.md \
-   plugins/sql-query-optimizer/agents/*.md \
-   plugins/shared-context/agents/*.md \
+cp plugins/antigravity/senior-dev/agents/*.md \
+   plugins/antigravity/senior-data-engineer/agents/*.md \
+   plugins/antigravity/sql-query-optimizer/agents/*.md \
+   plugins/antigravity/shared-context/agents/*.md \
    .agents/agents/
 ```
 
@@ -507,10 +455,10 @@ claude plugin install plugins/claude/shared-context
 claude plugin install plugins/claude/sql-query-optimizer
 
 # Shared capability plugins
-claude plugin install plugins/python-backend
-claude plugin install plugins/git-workflow
-claude plugin install plugins/docs-and-quality
-claude plugin install plugins/multi-agent-ops
+claude plugin install plugins/claude/python-backend
+claude plugin install plugins/claude/git-workflow
+claude plugin install plugins/claude/docs-and-quality
+claude plugin install plugins/claude/multi-agent-ops
 ```
 
 **Claude Code — Native Plugin Architecture**:

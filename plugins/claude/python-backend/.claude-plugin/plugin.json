@@ -1,0 +1,8 @@
+{
+  "name": "python-backend",
+  "version": "1.0.0",
+  "description": "Production Python backend engineering skills: FastAPI, TDD, migrations, CI/CD, and performance.",
+  "author": {
+    "name": "jggomez"
+  }
+}

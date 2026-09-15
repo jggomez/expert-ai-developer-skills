@@ -14,7 +14,7 @@ import pytest
 
 pytestmark = pytest.mark.skipif(shutil.which("node") is None, reason="node not available")
 
-HOOKS = os.path.abspath("plugins/shared-context/hooks")
+HOOKS = os.path.abspath("plugins/antigravity/shared-context/hooks")
 SNAPSHOT = os.path.abspath("skills/context-capture/scripts/context_snapshot.py")
 HOST_VARS = ("CLAUDE_PLUGIN_ROOT", "CLAUDE_PROJECT_DIR", "CLAUDECODE", "ANTIGRAVITY", "AGY_PLUGIN_ROOT")
 

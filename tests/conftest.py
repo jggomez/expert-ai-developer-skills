@@ -21,8 +21,8 @@ def skills_dirs():
             if os.path.isdir(full_path) and os.path.exists(os.path.join(full_path, "SKILL.md")):
                 skill_paths.append(full_path)
                 
-    # 2. /plugins directory
-    plugins_root = os.path.join(WORKSPACE_ROOT, "plugins")
+    # 2. /plugins/antigravity directory
+    plugins_root = os.path.join(WORKSPACE_ROOT, "plugins", "antigravity")
     if os.path.exists(plugins_root):
         for plugin in os.listdir(plugins_root):
             plugin_skills = os.path.join(plugins_root, plugin, "skills")

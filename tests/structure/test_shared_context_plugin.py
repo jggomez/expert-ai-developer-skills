@@ -14,7 +14,7 @@ import sys
 import pytest
 import yaml
 
-PLUGIN = os.path.abspath("plugins/shared-context")
+PLUGIN = os.path.abspath("plugins/antigravity/shared-context")
 
 EXPECTED_FILES = [
     ".claude-plugin/plugin.json",

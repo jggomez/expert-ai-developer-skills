@@ -97,8 +97,8 @@ def format_claude_agent(content: str, name: str) -> str:
 def sync_claude_plugins() -> None:
     PLUGINS_CLAUDE_DIR.mkdir(parents=True, exist_ok=True)
 
-    for plugin_name, agent_files in PLUGIN_AGENTS_MAP.items():
-        src_plugin = PLUGINS_DIR / plugin_name
+    for plugin_name in PLUGIN_DESCRIPTIONS.keys():
+        src_plugin = PLUGINS_AGY_DIR / plugin_name
         dest_plugin = PLUGINS_CLAUDE_DIR / plugin_name
         dest_plugin.mkdir(parents=True, exist_ok=True)
 
@@ -115,14 +115,16 @@ def sync_claude_plugins() -> None:
         }
         (claude_plugin_dir / "plugin.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
-        # 2. agents/ (with pure Claude tools)
-        agents_dir = dest_plugin / "agents"
-        agents_dir.mkdir(parents=True, exist_ok=True)
-        for afname in agent_files:
-            src_af = src_plugin / "agents" / afname
-            raw_content = src_af.read_text(encoding="utf-8")
-            claude_text = format_claude_agent(raw_content, src_af.stem)
-            (agents_dir / afname).write_text(claude_text, encoding="utf-8")
+        # 2. agents/ (with pure Claude tools if plugin has agents)
+        if plugin_name in PLUGIN_AGENTS_MAP:
+            agent_files = PLUGIN_AGENTS_MAP[plugin_name]
+            agents_dir = dest_plugin / "agents"
+            agents_dir.mkdir(parents=True, exist_ok=True)
+            for afname in agent_files:
+                src_af = src_plugin / "agents" / afname
+                raw_content = src_af.read_text(encoding="utf-8")
+                claude_text = format_claude_agent(raw_content, src_af.stem)
+                (agents_dir / afname).write_text(claude_text, encoding="utf-8")
 
         # 3. skills/
         src_skills = src_plugin / "skills"
@@ -164,39 +166,15 @@ def sync_claude_plugins() -> None:
         print(f"✅ Generated Claude plugin: {dest_plugin}")
 
 
-def sync_antigravity_plugin_links() -> None:
-    PLUGINS_AGY_DIR.mkdir(parents=True, exist_ok=True)
-    for plugin_name in PLUGIN_AGENTS_MAP:
-        dest_link = PLUGINS_AGY_DIR / plugin_name
-        target = Path("..") / plugin_name
-        if dest_link.is_symlink() or dest_link.exists():
-            dest_link.unlink(missing_ok=True)
-        dest_link.symlink_to(target, target_is_directory=True)
-    print(f"✅ Linked Antigravity plugins in {PLUGINS_AGY_DIR}")
-
-
 def generate_marketplace_json() -> None:
     MARKETPLACE_JSON.parent.mkdir(parents=True, exist_ok=True)
     plugins_entry = []
 
-    # 1. Claude-specialized plugins (with pure Claude agents)
-    for plugin_name in sorted(PLUGIN_AGENTS_MAP.keys()):
+    for plugin_name in sorted(PLUGIN_DESCRIPTIONS.keys()):
         plugins_entry.append({
             "name": plugin_name,
             "source": f"./plugins/claude/{plugin_name}",
             "description": PLUGIN_DESCRIPTIONS.get(plugin_name, f"{plugin_name} plugin"),
-        })
-
-    # 2. Universal non-agent plugins (shared skills/hooks)
-    for pdir in sorted(PLUGINS_DIR.iterdir()):
-        if not pdir.is_dir() or pdir.name in ("claude", "antigravity", ".DS_Store"):
-            continue
-        if pdir.name in PLUGIN_AGENTS_MAP:
-            continue
-        plugins_entry.append({
-            "name": pdir.name,
-            "source": f"./plugins/{pdir.name}",
-            "description": PLUGIN_DESCRIPTIONS.get(pdir.name, f"{pdir.name} developer skills plugin"),
         })
 
     marketplace_data = {
@@ -217,7 +195,6 @@ def generate_marketplace_json() -> None:
 def main() -> None:
     print("🚀 Synchronizing plugins (Everything is a Plugin)...")
     sync_claude_plugins()
-    sync_antigravity_plugin_links()
     generate_marketplace_json()
     print("🎉 All plugin targets synchronized successfully!")
 

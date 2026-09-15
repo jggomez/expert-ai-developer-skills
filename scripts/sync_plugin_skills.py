@@ -14,7 +14,7 @@ from pathlib import Path
 
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
 SOURCE_SKILLS_DIR = WORKSPACE_ROOT / "skills"
-PLUGINS_DIR = WORKSPACE_ROOT / "plugins"
+PLUGINS_DIR = WORKSPACE_ROOT / "plugins" / "antigravity"
 
 # Must match each plugin's "Bundled Skills" list in its own README.md
 PLUGIN_BUNDLED_SKILLS = {
