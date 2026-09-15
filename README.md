@@ -471,24 +471,42 @@ cp agents/senior-dev-orchestrator.md agents/product-analyst.md agents/architect-
 
 **Project-scoped Antigravity pieces, without installing a full plugin**: skills → `.agents/skills/<skill-name>/` (global: `~/.gemini/config/skills/`), agents → `.agents/agents/` (global: `~/.gemini/config/agents/`), MCP servers → `.agents/mcp_config.json` (global: `~/.gemini/config/mcp_config.json`). These three are the only Antigravity mechanisms that work per-project; the plugin bundle itself (`agy plugin install`) is global-only.
 
-**All 9 plugins (Claude Code) — global install**:
+**Claude Code — Marketplace Install (Recommended)**:
+You can register this repository as a native Claude Code marketplace and install any plugin directly:
 ```bash
-cp -r ./plugins/python-backend ~/.claude/plugins/python-backend
-cp -r ./plugins/senior-dev ~/.claude/plugins/senior-dev
-cp -r ./plugins/git-workflow ~/.claude/plugins/git-workflow
-cp -r ./plugins/docs-and-quality ~/.claude/plugins/docs-and-quality
-cp -r ./plugins/multi-agent-ops ~/.claude/plugins/multi-agent-ops
-cp -r ./plugins/senior-data-engineer ~/.claude/plugins/senior-data-engineer
-cp -r ./plugins/sql-query-optimizer ~/.claude/plugins/sql-query-optimizer
-cp -r ./plugins/shared-context ~/.claude/plugins/shared-context
-cp -r ./plugins/senior-dev-flutter ~/.claude/plugins/senior-dev-flutter
+# 1. Add marketplace from GitHub
+/plugin marketplace add jggomez/expert-ai-developer-skills
+
+# 2. Install plugins (automatically routes to specialized Claude Code builds)
+/plugin install senior-dev
+/plugin install senior-dev-flutter
+/plugin install senior-data-engineer
+/plugin install shared-context
+/plugin install sql-query-optimizer
+/plugin install python-backend
+/plugin install git-workflow
+/plugin install docs-and-quality
+/plugin install multi-agent-ops
 ```
 
-**Claude Code — project-scoped, no install needed**: load any plugin for just the current session with
+**Claude Code — Direct Local Install via CLI**:
 ```bash
-claude --plugin-dir ./plugins/python-backend
+# Agent-powered plugins (uses pure Claude tools: Bash, Read, Write, Edit, Glob, Grep, Agent)
+claude plugin install plugins/claude/senior-dev
+claude plugin install plugins/claude/senior-dev-flutter
+claude plugin install plugins/claude/senior-data-engineer
+claude plugin install plugins/claude/shared-context
+claude plugin install plugins/claude/sql-query-optimizer
+
+# Shared capability plugins
+claude plugin install plugins/python-backend
+claude plugin install plugins/git-workflow
+claude plugin install plugins/docs-and-quality
+claude plugin install plugins/multi-agent-ops
 ```
-(repeat the flag per plugin to load several at once). This is the direct Claude Code answer to "install it in the project" — no copy, no marketplace registration, scoped to that invocation.
+
+**Claude Code — Workspace Auto-Discovery**:
+All 14 subagents are mirrored in `.claude/agents/*.md` with native Claude Code frontmatter (`tools: [Bash, Read, Write, Edit, Glob, Grep, Agent]`). When working inside this repository or copying `.claude/agents/` to your project root, Claude Code auto-discovers all 14 subagents without requiring manual plugin installation.
 
 ---
 

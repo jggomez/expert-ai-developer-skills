@@ -1,3 +1,8 @@
 {
-  "name": "docs-and-quality"
+  "name": "docs-and-quality",
+  "version": "1.0.0",
+  "description": "Documentation standards, test-driven development, and Karpathy guidelines.",
+  "author": {
+    "name": "jggomez"
+  }
 }

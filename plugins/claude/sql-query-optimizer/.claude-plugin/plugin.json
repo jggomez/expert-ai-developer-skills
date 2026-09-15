@@ -1,0 +1,8 @@
+{
+  "name": "sql-query-optimizer",
+  "version": "1.0.0",
+  "description": "Diagnoses and rewrites slow BigQuery and relational SQL queries using real execution plans.",
+  "author": {
+    "name": "jggomez"
+  }
+}

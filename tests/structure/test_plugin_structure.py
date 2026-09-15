@@ -11,7 +11,7 @@ def _discover_plugins(workspace_root):
     plugins_dir = os.path.join(workspace_root, "plugins")
     return sorted(
         name for name in os.listdir(plugins_dir)
-        if os.path.isdir(os.path.join(plugins_dir, name))
+        if os.path.isdir(os.path.join(plugins_dir, name)) and name not in ("claude", "antigravity", ".DS_Store")
     )
 
 
@@ -590,6 +590,114 @@ def test_agents_execution_policy_and_tools(workspace_root, plugin_dirs):
                     )
 
     assert not errors, "\n".join(errors)
+
+
+def test_claude_plugins_manifest_and_tools(workspace_root):
+    """Verifies all Claude Code specialized plugins in plugins/claude/
+    declare valid .claude-plugin/plugin.json manifests and pure Claude Code tools
+    (Bash, Read, Write, Edit, Glob, Grep, Agent) with zero Antigravity tool leakage."""
+    claude_plugins_dir = os.path.join(workspace_root, "plugins", "claude")
+    assert os.path.isdir(claude_plugins_dir), "plugins/claude directory does not exist"
+
+    valid_claude_tools = {"Bash", "Read", "Write", "Edit", "Glob", "Grep", "Agent", "WebSearch", "WebFetch"}
+    antigravity_only_tools = {"run_command", "view_file", "write_to_file", "replace_file_content"}
+    errors = []
+
+    for plugin_name in os.listdir(claude_plugins_dir):
+        plugin_path = os.path.join(claude_plugins_dir, plugin_name)
+        if not os.path.isdir(plugin_path) or plugin_name == ".DS_Store":
+            continue
+
+        manifest_path = os.path.join(plugin_path, ".claude-plugin", "plugin.json")
+        if not os.path.isfile(manifest_path):
+            errors.append(f"plugins/claude/{plugin_name}: missing .claude-plugin/plugin.json")
+            continue
+
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if data.get("name") != plugin_name:
+            errors.append(f"plugins/claude/{plugin_name}: manifest name '{data.get('name')}' != '{plugin_name}'")
+
+        agents_dir = os.path.join(plugin_path, "agents")
+        if os.path.isdir(agents_dir):
+            for fname in os.listdir(agents_dir):
+                if not fname.endswith(".md"):
+                    continue
+                fpath = os.path.join(agents_dir, fname)
+                with open(fpath, "r", encoding="utf-8") as f:
+                    content = f.read()
+                match = re.search(r"^---\s*\n(.*?)\n---\s*\n", content, re.DOTALL)
+                if not match:
+                    errors.append(f"plugins/claude/{plugin_name}/agents/{fname}: missing YAML frontmatter")
+                    continue
+                fm = yaml.safe_load(match.group(1))
+                tools = fm.get("tools", [])
+                for t in tools:
+                    if t not in valid_claude_tools:
+                        errors.append(f"plugins/claude/{plugin_name}/agents/{fname}: non-Claude tool '{t}'")
+                    if t in antigravity_only_tools:
+                        errors.append(f"plugins/claude/{plugin_name}/agents/{fname}: leaked Antigravity tool '{t}'")
+                for key in ("subagent", "mainAgent", "commandExecutionPolicy"):
+                    if key in fm:
+                        errors.append(f"plugins/claude/{plugin_name}/agents/{fname}: leaked Antigravity key '{key}'")
+
+    assert not errors, "\n".join(errors)
+
+
+def test_claude_workspace_agents(workspace_root):
+    """Verifies all 14 subagents in .claude/agents/ exist and declare pure Claude Code tools."""
+    dot_claude_agents = os.path.join(workspace_root, ".claude", "agents")
+    assert os.path.isdir(dot_claude_agents), ".claude/agents/ directory does not exist"
+
+    agent_files = [f for f in os.listdir(dot_claude_agents) if f.endswith(".md") and f != "README.md"]
+    assert len(agent_files) >= 14, f"Expected 14 Claude subagents, found {len(agent_files)}"
+
+    valid_claude_tools = {"Bash", "Read", "Write", "Edit", "Glob", "Grep", "Agent", "WebSearch", "WebFetch"}
+    errors = []
+    for fname in agent_files:
+        fpath = os.path.join(dot_claude_agents, fname)
+        with open(fpath, "r", encoding="utf-8") as f:
+            content = f.read()
+        match = re.search(r"^---\s*\n(.*?)\n---\s*\n", content, re.DOTALL)
+        if not match:
+            errors.append(f".claude/agents/{fname}: missing frontmatter")
+            continue
+        fm = yaml.safe_load(match.group(1))
+        tools = fm.get("tools", [])
+        for t in tools:
+            if t not in valid_claude_tools:
+                errors.append(f".claude/agents/{fname}: invalid Claude tool '{t}'")
+        for key in ("subagent", "mainAgent", "commandExecutionPolicy"):
+            if key in fm:
+                errors.append(f".claude/agents/{fname}: leaked Antigravity key '{key}'")
+
+    assert not errors, "\n".join(errors)
+
+
+def test_claude_marketplace_manifest(workspace_root):
+    """Verifies .claude-plugin/marketplace.json exists, is valid JSON,
+    and all declared plugin sources exist on disk."""
+    market_path = os.path.join(workspace_root, ".claude-plugin", "marketplace.json")
+    assert os.path.isfile(market_path), ".claude-plugin/marketplace.json does not exist"
+
+    with open(market_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    assert data.get("name") == "expert-ai-developer-skills"
+    assert "plugins" in data and len(data["plugins"]) >= 5
+
+    errors = []
+    for p in data["plugins"]:
+        source = p.get("source")
+        if not source:
+            errors.append(f"Plugin '{p.get('name')}' missing 'source'")
+            continue
+        full_path = os.path.normpath(os.path.join(workspace_root, source))
+        if not os.path.isdir(full_path):
+            errors.append(f"Plugin '{p.get('name')}' source path does not exist: {source}")
+
+    assert not errors, "\n".join(errors)
+
 
 
 

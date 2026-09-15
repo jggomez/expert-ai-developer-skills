@@ -1,0 +1,8 @@
+{
+  "name": "shared-context",
+  "version": "1.0.0",
+  "description": "Cross-agent working memory: captures and restores architecture decisions across AI sessions.",
+  "author": {
+    "name": "jggomez"
+  }
+}

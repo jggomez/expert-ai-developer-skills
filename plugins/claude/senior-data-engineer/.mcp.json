@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "bigquery": {
+      "type": "http",
+      "url": "https://bigquery.googleapis.com/mcp"
+    },
+    "datastream": {
+      "type": "http",
+      "url": "https://datastream.googleapis.com/mcp"
+    },
+    "dataform": {
+      "type": "http",
+      "url": "https://dataform.${GCP_REGION:-us-central1}.rep.googleapis.com/mcp",
+      "oauth": {
+        "scopes": "https://www.googleapis.com/auth/bigquery"
+      }
+    },
+    "pubsub": {
+      "type": "http",
+      "url": "https://pubsub.googleapis.com/mcp",
+      "oauth": {
+        "scopes": "https://www.googleapis.com/auth/pubsub"
+      }
+    }
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "expert-ai-developer-skills",
+  "version": "1.0.0",
+  "description": "Production-grade skills, subagents, and plugins for Claude Code and Google Antigravity.",
+  "owner": {
+    "name": "jggomez"
+  },
+  "plugins": [
+    {
+      "name": "senior-data-engineer",
+      "source": "./plugins/claude/senior-data-engineer",
+      "description": "Google Cloud data engineering subagent with BigQuery, Datastream, Dataform, and Pub/Sub MCP access."
+    },
+    {
+      "name": "senior-dev",
+      "source": "./plugins/claude/senior-dev",
+      "description": "Senior Developer Orchestrator and specialized subagents for SDLC execution using TDD, clean code, and automated verification."
+    },
+    {
+      "name": "senior-dev-flutter",
+      "source": "./plugins/claude/senior-dev-flutter",
+      "description": "Senior Flutter orchestrator, architecture decisions, profiling, and release engineering."
+    },
+    {
+      "name": "shared-context",
+      "source": "./plugins/claude/shared-context",
+      "description": "Cross-agent working memory: captures and restores architecture decisions across AI sessions."
+    },
+    {
+      "name": "sql-query-optimizer",
+      "source": "./plugins/claude/sql-query-optimizer",
+      "description": "Diagnoses and rewrites slow BigQuery and relational SQL queries using real execution plans."
+    },
+    {
+      "name": "docs-and-quality",
+      "source": "./plugins/docs-and-quality",
+      "description": "Documentation standards, test-driven development, and Karpathy guidelines."
+    },
+    {
+      "name": "git-workflow",
+      "source": "./plugins/git-workflow",
+      "description": "Gitflow workflow branch safety and conventional pull request verification."
+    },
+    {
+      "name": "multi-agent-ops",
+      "source": "./plugins/multi-agent-ops",
+      "description": "Self-correcting loop engineering and automated codebase research."
+    },
+    {
+      "name": "python-backend",
+      "source": "./plugins/python-backend",
+      "description": "Production Python backend engineering skills: FastAPI, TDD, migrations, CI/CD, and performance."
+    }
+  ]
+}
