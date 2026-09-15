@@ -8,10 +8,10 @@ Welcome to the **Developer Sidecars Catalog**. Sidecars are persistent backgroun
 
 This directory contains generic, highly reusable sidecar configurations that can be registered globally or inside plugins to automate background loops:
 
-* [**README.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/sidecars/README.md): This index and sidecars documentation guide.
-* [**pr-reviewer-cron/**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/sidecars/pr-reviewer-cron/sidecar.json): An hourly scheduled agent task that searches the repository for open PRs and audits their diffs for credentials leaks and TODO comments.
-* [**incoming-reviews-alert/**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/sidecars/incoming-reviews-alert/sidecar.json): A 30-minute scheduled check that prompts the agent to fetch and list incoming code review assignments from the remote origin.
-* [**workspace-daemon/**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/sidecars/workspace-daemon/sidecar.json): A persistent python background daemon that monitors files for modification and automatically triggers linters or formatters.
+* [**README.md**](sidecars/README.md): This index and sidecars documentation guide.
+* [**pr-reviewer-cron/**](sidecars/pr-reviewer-cron/sidecar.json): An hourly scheduled agent task that searches the repository for open PRs and audits their diffs for credentials leaks and TODO comments.
+* [**incoming-reviews-alert/**](sidecars/incoming-reviews-alert/sidecar.json): A 30-minute scheduled check that prompts the agent to fetch and list incoming code review assignments from the remote origin.
+* [**workspace-daemon/**](sidecars/workspace-daemon/sidecar.json): A persistent python background daemon that monitors files for modification and automatically triggers linters or formatters.
 
 ---
 

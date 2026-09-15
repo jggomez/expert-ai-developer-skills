@@ -5,7 +5,8 @@
 
 The `sql-query-optimizer` plugin finds and rewrites slow SQL — standalone `.sql` files and queries embedded in application code — for **both Antigravity CLI and Claude Code**: one subagent, two skills (BigQuery-specific, and generic SQL for traditional engines), and direct MCP access to BigQuery and Cloud SQL for real query plans.
 
-**Antigravity CLI users**: `agy plugin install ./plugins/sql-query-optimizer` works — this folder's `agents/sql-query-optimizer.md` uses host-neutral frontmatter (`name` + `description`, `model: inherit`, explicit `subagent`/`mainAgent`/`commandExecutionPolicy`, no `tools` key). `subagent`/`mainAgent` are spelled out because Antigravity does not fall back to their documented `true` defaults. The root [`agents/sql-query-optimizer.md`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/sql-query-optimizer.md) keeps the Antigravity-only variant that retains `model: pro`, for tuning or a project-scoped install — see §7. Neither declares a `tools` list; each host applies its own default.
+- **Google Antigravity**: Install via `agy plugin install ./plugins/sql-query-optimizer`. Subagent in `agents/` declares native Antigravity tools (`run_command`, `write_to_file`, `replace_file_content`, `view_file`, etc.) with `commandExecutionPolicy: auto`.
+- **Claude Code**: Install via `/plugin install sql-query-optimizer` from the marketplace or `claude plugin install plugins/claude/sql-query-optimizer`. Subagent uses native Claude Code tools (`Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Agent`).
 
 Built from Google Cloud's own "Query Processing and Optimization" training material (partitioning/clustering pruning, JOIN ordering, shuffle/skew, broadcast vs. hash joins, approximate functions) plus general cross-engine practices (EXPLAIN ANALYZE, indexing, avoiding functions on indexed columns).
 
@@ -103,12 +104,11 @@ claude --plugin-dir ./plugins/sql-query-optimizer
 agy plugin install ./plugins/sql-query-optimizer
 agy plugin list      # confirm
 ```
-**Antigravity CLI** — project-scoped, if you don't want a global plugin install, copy the two pieces by hand:
+**Antigravity CLI** — project-scoped, if you don't want a global plugin install, copy the pieces by hand:
 ```bash
-# 1. Agent — the host-neutral file in this plugin folder works as-is, or use the
-#    richer Antigravity-only copy at the repo root:
+# 1. Agent — copy the subagent from this plugin folder:
 mkdir -p .agents/agents/          # project-scoped; use ~/.gemini/config/agents/ for global
-cp agents/sql-query-optimizer.md .agents/agents/
+cp plugins/sql-query-optimizer/agents/sql-query-optimizer.md .agents/agents/
 
 # 2. MCP servers — merge this plugin's mcp_config.json manually:
 cat plugins/sql-query-optimizer/mcp_config.json   # merge its "mcpServers" into .agents/mcp_config.json

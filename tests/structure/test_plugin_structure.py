@@ -240,76 +240,7 @@ def test_plugin_agents_frontmatter(workspace_root, plugin_dirs):
     assert not errors, "\n".join(errors)
 
 
-def test_root_agents_frontmatter(workspace_root):
-    """Verifies every root-level agents/*.md (the Antigravity-only subagent
-    definitions) has valid frontmatter with 'name' matching its filename, a
-    'description', explicit 'subagent'/'mainAgent' booleans (Antigravity does
-    not fall back to their documented defaults), no 'tools' key (each host
-    applies its own default set), and a string 'commandExecutionPolicy'.
-    Unlike the plugin copies, these keep per-agent 'model: pro'/'flash' for
-    cost tiering, so 'model' is not constrained to 'inherit' here."""
-    agents_dir = os.path.join(workspace_root, "agents")
-    errors = []
 
-    for fname in os.listdir(agents_dir):
-        if not fname.endswith(".md") or fname == "README.md":
-            continue
-        agent_name = fname[:-3]
-        agent_path = os.path.join(agents_dir, fname)
-
-        with open(agent_path, "r", encoding="utf-8") as f:
-            content = f.read()
-
-        match = re.search(r"^---\s*\n(.*?)\n---\s*\n", content, re.DOTALL)
-        if not match:
-            errors.append(f"agents/{fname}: missing or invalid YAML frontmatter")
-            continue
-
-        try:
-            data = yaml.safe_load(match.group(1))
-        except Exception as e:
-            errors.append(f"agents/{fname}: invalid YAML frontmatter ({e})")
-            continue
-
-        if not data.get("description"):
-            errors.append(f"agents/{fname}: 'description' field is missing or empty")
-        if data.get("name") != agent_name:
-            errors.append(
-                f"agents/{fname}: frontmatter 'name' is '{data.get('name')}' "
-                f"but the file is '{fname}' (they must match)"
-            )
-        for key in ("subagent", "mainAgent"):
-            if not isinstance(data.get(key), bool):
-                errors.append(
-                    f"agents/{fname}: '{key}' must be an explicit boolean "
-                    "(Antigravity CLI does not register the agent without it)"
-                )
-        tools = data.get("tools")
-        if not isinstance(tools, list) or not tools:
-            errors.append(f"agents/{fname}: must declare explicit 'tools' list so Antigravity equips write and execution capabilities")
-        else:
-            for required_tool in ("run_command", "view_file", "write_to_file", "replace_file_content"):
-                if required_tool not in tools:
-                    errors.append(f"agents/{fname}: 'tools' list missing required capability '{required_tool}'")
-            if agent_name in ("senior-dev-orchestrator", "flutter-feature-orchestrator"):
-                for orch_tool in ("invoke_subagent", "manage_subagents", "send_message"):
-                    if orch_tool not in tools:
-                        errors.append(f"agents/{fname}: orchestrator 'tools' missing '{orch_tool}'")
-        cep = data.get("commandExecutionPolicy")
-        if cep == "sandbox":
-            errors.append(
-                f"agents/{fname}: 'commandExecutionPolicy' cannot be 'sandbox' "
-                "(no container sandbox is assumed; use 'auto' or 'off')"
-            )
-        elif cep is not None and cep not in ("off", "auto", "eager"):
-            errors.append(
-                f"agents/{fname}: 'commandExecutionPolicy' is {cep!r} — must be one of "
-                'off/auto/eager as a string (quote "off", or YAML parses it as false)'
-            )
-        if cep != "auto":
-            errors.append(f"agents/{fname}: agent must have commandExecutionPolicy: 'auto', got {cep!r}")
-
-    assert not errors, "\n".join(errors)
 
 
 def test_plugin_skills_match_root_skills(workspace_root, plugin_dirs):
@@ -388,9 +319,8 @@ def test_plugin_readme_bundled_skills_exist(workspace_root, plugin_dirs):
 
 
 def test_all_agents_have_canonical_sections(workspace_root, plugin_dirs):
-    """Verifies all agent definition files (both in root agents/ and in
-    plugins/<name>/agents/) strictly contain the 7 canonical architecture
-    sections:
+    """Verifies all agent definition files in plugins/<name>/agents/
+    strictly contain the 7 canonical architecture sections:
     1. # Role & Objective
     2. # When to Use & Routing Triggers
     3. # Operating Guidelines & Workflow
@@ -409,19 +339,7 @@ def test_all_agents_have_canonical_sections(workspace_root, plugin_dirs):
     ]
     errors = []
 
-    # Check root agents
-    agents_dir = os.path.join(workspace_root, "agents")
-    for fname in os.listdir(agents_dir):
-        if not fname.endswith(".md") or fname == "README.md":
-            continue
-        agent_path = os.path.join(agents_dir, fname)
-        with open(agent_path, "r", encoding="utf-8") as f:
-            content = f.read()
-        for section in required_sections:
-            if section not in content:
-                errors.append(f"agents/{fname}: missing required section '{section}'")
-
-    # Check plugin agents
+    # Check plugin agents (Antigravity canonical plugins)
     for plugin in plugin_dirs:
         plugin_agents_dir = os.path.join(workspace_root, "plugins", plugin, "agents")
         if not os.path.isdir(plugin_agents_dir):
@@ -512,43 +430,12 @@ def test_command_workflows_exist_and_mirrored(workspace_root):
     assert not errors, "\n".join(errors)
 
 
-def test_agents_mirrored_in_dot_agents(workspace_root):
-    """Verifies all 14 Antigravity agents in agents/ are physically mirrored in
-    .agents/agents/ so Antigravity automatically discovers them as callable subagents
-    in any workspace."""
-    root_agents_dir = os.path.join(workspace_root, "agents")
-    dot_agents_dir = os.path.join(workspace_root, ".agents", "agents")
-
-    assert os.path.isdir(dot_agents_dir), ".agents/agents/ directory does not exist"
-
-    errors = []
-    agent_files = [
-        f for f in os.listdir(root_agents_dir)
-        if f.endswith(".md") and f != "README.md"
-    ]
-    assert len(agent_files) >= 14, f"Expected at least 14 agents in agents/, found {len(agent_files)}"
-
-    for f in agent_files:
-        src = os.path.join(root_agents_dir, f)
-        dst = os.path.join(dot_agents_dir, f)
-        if not os.path.isfile(dst):
-            errors.append(f".agents/agents/{f}: missing mirrored agent definition")
-            continue
-        if not filecmp.cmp(src, dst, shallow=False):
-            errors.append(f".agents/agents/{f}: out of sync with agents/{f}")
-
-    assert not errors, "\n".join(errors)
-
-
 def test_agents_execution_policy_and_tools(workspace_root, plugin_dirs):
-    """Verifies that no agent definition in agents/, .agents/agents/, or plugins/*/agents/
+    """Verifies that no agent definition in plugins/*/agents/
     has commandExecutionPolicy: 'off' (which revokes run_command and paralyzes Antigravity),
     and verifies that no agent has a restrictive 'tools:' whitelist that omits write_to_file
     or run_command."""
-    search_dirs = [
-        os.path.join(workspace_root, "agents"),
-        os.path.join(workspace_root, ".agents", "agents"),
-    ]
+    search_dirs = []
     for p in plugin_dirs:
         plugin_agents = os.path.join(workspace_root, "plugins", p, "agents")
         if os.path.isdir(plugin_agents):
@@ -644,34 +531,7 @@ def test_claude_plugins_manifest_and_tools(workspace_root):
     assert not errors, "\n".join(errors)
 
 
-def test_claude_workspace_agents(workspace_root):
-    """Verifies all 14 subagents in .claude/agents/ exist and declare pure Claude Code tools."""
-    dot_claude_agents = os.path.join(workspace_root, ".claude", "agents")
-    assert os.path.isdir(dot_claude_agents), ".claude/agents/ directory does not exist"
 
-    agent_files = [f for f in os.listdir(dot_claude_agents) if f.endswith(".md") and f != "README.md"]
-    assert len(agent_files) >= 14, f"Expected 14 Claude subagents, found {len(agent_files)}"
-
-    valid_claude_tools = {"Bash", "Read", "Write", "Edit", "Glob", "Grep", "Agent", "WebSearch", "WebFetch"}
-    errors = []
-    for fname in agent_files:
-        fpath = os.path.join(dot_claude_agents, fname)
-        with open(fpath, "r", encoding="utf-8") as f:
-            content = f.read()
-        match = re.search(r"^---\s*\n(.*?)\n---\s*\n", content, re.DOTALL)
-        if not match:
-            errors.append(f".claude/agents/{fname}: missing frontmatter")
-            continue
-        fm = yaml.safe_load(match.group(1))
-        tools = fm.get("tools", [])
-        for t in tools:
-            if t not in valid_claude_tools:
-                errors.append(f".claude/agents/{fname}: invalid Claude tool '{t}'")
-        for key in ("subagent", "mainAgent", "commandExecutionPolicy"):
-            if key in fm:
-                errors.append(f".claude/agents/{fname}: leaked Antigravity key '{key}'")
-
-    assert not errors, "\n".join(errors)
 
 
 def test_claude_marketplace_manifest(workspace_root):

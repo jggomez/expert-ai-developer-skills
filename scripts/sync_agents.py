@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 """Unified Agent and Plugin Synchronizer for Google Antigravity & Claude Code.
 
-This script maintains strict host separation:
-1. Canonical Agent Prompts in /agents/*.md are the single source of truth.
-2. Generates /.agents/agents/*.md with 100% pure Antigravity tools (run_command, write_to_file, etc.).
-3. Generates /.claude/agents/*.md with 100% pure Claude Code tools (Bash, Read, Write, Edit, Glob, Grep, Agent).
-4. Generates /plugins/claude/<plugin>/ with pure Claude Code subagents, skills, hooks, and .claude-plugin/plugin.json.
-5. Links /plugins/antigravity/<plugin>/ to canonical /plugins/<plugin>/ for symmetrical CLI installation.
-6. Generates /.claude-plugin/marketplace.json so Claude Code users can install via marketplace.
+Everything is a Plugin:
+1. Canonical agent definitions live directly inside plugins/<plugin>/agents/*.md.
+2. Generates plugins/claude/<plugin>/ with pure Claude Code subagents, skills, hooks, and .claude-plugin/plugin.json.
+3. Links plugins/antigravity/<plugin>/ to canonical plugins/<plugin>/ for symmetrical CLI installation.
+4. Generates .claude-plugin/marketplace.json so Claude Code users can install via marketplace.
 
 Usage:
     python3 scripts/sync_agents.py
@@ -21,9 +19,6 @@ from pathlib import Path
 import yaml
 
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
-AGENTS_DIR = WORKSPACE_ROOT / "agents"
-DOT_AGENTS_DIR = WORKSPACE_ROOT / ".agents" / "agents"
-DOT_CLAUDE_AGENTS_DIR = WORKSPACE_ROOT / ".claude" / "agents"
 PLUGINS_DIR = WORKSPACE_ROOT / "plugins"
 PLUGINS_CLAUDE_DIR = PLUGINS_DIR / "claude"
 PLUGINS_AGY_DIR = PLUGINS_DIR / "antigravity"
@@ -33,16 +28,6 @@ ORCHESTRATORS = {"senior-dev-orchestrator", "flutter-feature-orchestrator"}
 
 CLAUDE_ORCHESTRATOR_TOOLS = ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "Agent"]
 CLAUDE_WORKER_TOOLS = ["Bash", "Read", "Write", "Edit", "Glob", "Grep"]
-
-AGY_ORCHESTRATOR_TOOLS = [
-    "run_command", "view_file", "write_to_file", "replace_file_content",
-    "list_dir", "grep_search", "find_by_name",
-    "invoke_subagent", "manage_subagents", "send_message", "ask_question"
-]
-AGY_WORKER_TOOLS = [
-    "run_command", "view_file", "write_to_file", "replace_file_content",
-    "list_dir", "grep_search", "find_by_name", "ask_question"
-]
 
 PLUGIN_AGENTS_MAP = {
     "senior-dev": [
@@ -109,53 +94,6 @@ def format_claude_agent(content: str, name: str) -> str:
     return f"---\n{dumped}---\n{body}"
 
 
-def format_agy_agent(content: str, name: str, model: str = "inherit") -> str:
-    fm, body = parse_frontmatter(content)
-    is_orch = name in ORCHESTRATORS
-    tools = AGY_ORCHESTRATOR_TOOLS if is_orch else AGY_WORKER_TOOLS
-
-    agy_fm = {
-        "name": name,
-        "description": fm.get("description", ""),
-        "subagent": True,
-        "mainAgent": True,
-        "model": model,
-        "commandExecutionPolicy": "auto",
-        "tools": tools,
-    }
-    if "skills" in fm and fm["skills"]:
-        agy_fm["skills"] = fm["skills"]
-
-    dumped = yaml.dump(agy_fm, sort_keys=False, allow_unicode=True)
-    return f"---\n{dumped}---\n{body}"
-
-
-def sync_workspace_agents() -> None:
-    DOT_AGENTS_DIR.mkdir(parents=True, exist_ok=True)
-    DOT_CLAUDE_AGENTS_DIR.mkdir(parents=True, exist_ok=True)
-
-    agy_count = 0
-    claude_count = 0
-
-    for agent_file in AGENTS_DIR.glob("*.md"):
-        if agent_file.name == "README.md":
-            continue
-        agent_name = agent_file.stem
-        raw_content = agent_file.read_text(encoding="utf-8")
-
-        # 1. Antigravity workspace agent (byte-for-byte identical to canonical agents/)
-        shutil.copy2(agent_file, DOT_AGENTS_DIR / agent_file.name)
-        agy_count += 1
-
-        # 2. Claude Code workspace agent
-        claude_text = format_claude_agent(raw_content, agent_name)
-        (DOT_CLAUDE_AGENTS_DIR / agent_file.name).write_text(claude_text, encoding="utf-8")
-        claude_count += 1
-
-    print(f"✅ Generated {agy_count} pure Antigravity agents in {DOT_AGENTS_DIR}")
-    print(f"✅ Generated {claude_count} pure Claude Code agents in {DOT_CLAUDE_AGENTS_DIR}")
-
-
 def sync_claude_plugins() -> None:
     PLUGINS_CLAUDE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -181,7 +119,7 @@ def sync_claude_plugins() -> None:
         agents_dir = dest_plugin / "agents"
         agents_dir.mkdir(parents=True, exist_ok=True)
         for afname in agent_files:
-            src_af = AGENTS_DIR / afname
+            src_af = src_plugin / "agents" / afname
             raw_content = src_af.read_text(encoding="utf-8")
             claude_text = format_claude_agent(raw_content, src_af.stem)
             (agents_dir / afname).write_text(claude_text, encoding="utf-8")
@@ -277,12 +215,11 @@ def generate_marketplace_json() -> None:
 
 
 def main() -> None:
-    print("🚀 Running full agent and plugin synchronization...")
-    sync_workspace_agents()
+    print("🚀 Synchronizing plugins (Everything is a Plugin)...")
     sync_claude_plugins()
     sync_antigravity_plugin_links()
     generate_marketplace_json()
-    print("🎉 All Antigravity and Claude Code targets synchronized successfully!")
+    print("🎉 All plugin targets synchronized successfully!")
 
 
 if __name__ == "__main__":

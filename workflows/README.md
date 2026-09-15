@@ -12,24 +12,24 @@ These 9 core playbooks align directly with user slash commands and engineering p
 
 | What you're doing | Command | Key Principle | Playbook File | Primary Focus |
 | :--- | :--- | :--- | :--- | :--- |
-| **Define what to build** | `/spec` | Spec before code | [spec-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/spec-workflow.md) | Requirements, PRD, acceptance criteria, boundaries |
-| **Plan how to build it** | `/plan` | Small, atomic tasks | [plan-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/plan-workflow.md) | Architecture ADR, task decomposition, subagent delegation |
-| **Build incrementally** | `/build` | One slice at a time | [build-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/build-workflow.md) | TDD implementation, vertical slices, official skills |
-| **Prove it works** | `/test` | Tests are proof | [test-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/test-workflow.md) | Unit, integration, widget, E2E tests, AAA pattern |
-| **Set the quality bar** | `/constraints` | Decide it once, enforce it everywhere | [constraints-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/constraints-workflow.md) | NFRs, security gates, secrets, linter rules |
-| **Review before merge** | `/review` | Improve code health | [review-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/review-workflow.md) | PR review, static analysis, leaks, code smells |
-| **Audit performance** | `/perf` | Measure before you optimize | [perf-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/perf-workflow.md) | Profiling first, jank/slots/query bottlenecks |
-| **Simplify the code** | `/code-simplify` | Clarity over cleverness | [code-simplify-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/code-simplify-workflow.md) | Dead code elimination, cyclomatic complexity, DRY/KISS |
-| **Ship to production** | `/ship` | Faster is safer | [ship-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/ship-workflow.md) | Conventional commits, changelog, versioning, PR/deploy |
+| **Define what to build** | `/spec` | Spec before code | [spec-workflow.md](workflows/spec-workflow.md) | Requirements, PRD, acceptance criteria, boundaries |
+| **Plan how to build it** | `/plan` | Small, atomic tasks | [plan-workflow.md](workflows/plan-workflow.md) | Architecture ADR, task decomposition, subagent delegation |
+| **Build incrementally** | `/build` | One slice at a time | [build-workflow.md](workflows/build-workflow.md) | TDD implementation, vertical slices, official skills |
+| **Prove it works** | `/test` | Tests are proof | [test-workflow.md](workflows/test-workflow.md) | Unit, integration, widget, E2E tests, AAA pattern |
+| **Set the quality bar** | `/constraints` | Decide it once, enforce it everywhere | [constraints-workflow.md](workflows/constraints-workflow.md) | NFRs, security gates, secrets, linter rules |
+| **Review before merge** | `/review` | Improve code health | [review-workflow.md](workflows/review-workflow.md) | PR review, static analysis, leaks, code smells |
+| **Audit performance** | `/perf` | Measure before you optimize | [perf-workflow.md](workflows/perf-workflow.md) | Profiling first, jank/slots/query bottlenecks |
+| **Simplify the code** | `/code-simplify` | Clarity over cleverness | [code-simplify-workflow.md](workflows/code-simplify-workflow.md) | Dead code elimination, cyclomatic complexity, DRY/KISS |
+| **Ship to production** | `/ship` | Faster is safer | [ship-workflow.md](workflows/ship-workflow.md) | Conventional commits, changelog, versioning, PR/deploy |
 
 ### Specialized Operational Playbooks
-* [**feature-development-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/feature-development-workflow.md): Comprehensive end-to-end SDLC lifecycle playbook.
-* [**pull-request-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/pull-request-workflow.md): Branch preparation, commit rebasing, PR templates.
-* [**commit-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/commit-workflow.md): Staging changes, Conventional Commits format, git safety.
-* [**test-execution-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/test-execution-workflow.md): Locating, executing, and reporting coverage test suites.
-* [**code-smell-review-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/code-smell-review-workflow.md): Scanning for architectural code smells and debt.
-* [**secure-code-review-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/secure-code-review-workflow.md): Credential scanning, OWASP Top 10, security rules audit.
-* [**grill-me-alignment-workflow.md**](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/grill-me-alignment-workflow.md): Structured requirements interview and design review.
+* [**feature-development-workflow.md**](workflows/feature-development-workflow.md): Comprehensive end-to-end SDLC lifecycle playbook.
+* [**pull-request-workflow.md**](workflows/pull-request-workflow.md): Branch preparation, commit rebasing, PR templates.
+* [**commit-workflow.md**](workflows/commit-workflow.md): Staging changes, Conventional Commits format, git safety.
+* [**test-execution-workflow.md**](workflows/test-execution-workflow.md): Locating, executing, and reporting coverage test suites.
+* [**code-smell-review-workflow.md**](workflows/code-smell-review-workflow.md): Scanning for architectural code smells and debt.
+* [**secure-code-review-workflow.md**](workflows/secure-code-review-workflow.md): Credential scanning, OWASP Top 10, security rules audit.
+* [**grill-me-alignment-workflow.md**](workflows/grill-me-alignment-workflow.md): Structured requirements interview and design review.
 
 ---
 
@@ -37,7 +37,7 @@ These 9 core playbooks align directly with user slash commands and engineering p
 
 These files act as active instructions. You can guide your AI agent to follow a specific workflow by linking to it or prompting:
 
-> *"Please follow the workflow detailed in [test-workflow.md](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/workflows/test-workflow.md) to run and verify tests before making changes."*
+> *"Please follow the workflow detailed in [test-workflow.md](workflows/test-workflow.md) to run and verify tests before making changes."*
 
 More example prompts, one per workflow:
 - "Follow the pull-request-workflow to prepare this branch and write the PR description." (`pull-request-workflow.md`)

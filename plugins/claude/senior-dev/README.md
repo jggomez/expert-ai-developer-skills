@@ -3,11 +3,10 @@
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
 [![Plugin](https://img.shields.io/badge/Plugin-senior--dev-green?style=flat-square)](file:///./)
 
-The `senior-dev` plugin packages the repository's Loop Engineering subagent topology — a Senior Developer Orchestrator plus five specialized subagents (Product Analyst, Architect, Code Implementer, QA Tester, Compliance Verifier) — as a self-contained Claude Code plugin. It bundles nothing new: every agent, skill, and MCP server here already exists in the root `agents/`, `skills/`, and `plugins/python-backend/.mcp.json` of this repository.
+The `senior-dev` plugin packages the repository's Loop Engineering subagent topology — a Senior Developer Orchestrator plus five specialized subagents (Product Analyst, Architect, Code Implementer, QA Tester, Compliance Verifier) — as a self-contained plugin for both Google Antigravity and Claude Code.
 
-Its `plugin.json`/`agents/`/`.mcp.json`/`${CLAUDE_PLUGIN_ROOT}` layout follows the **Claude Code plugin format**. Claude Code auto-discovers each `.md` file under `agents/` as a subagent and each `SKILL.md` under `skills/` as a skill — no separate manifest entry is needed for either.
-
-**Antigravity CLI users**: `agy plugin install ./plugins/senior-dev` works — the `agents/*.md` here use host-neutral frontmatter (`name` + `description`, `model: inherit`, explicit `subagent`/`mainAgent`/`commandExecutionPolicy`, and **no `tools` key** since its values differ per host). `subagent`/`mainAgent` are spelled out on every file because Antigravity does not fall back to their documented `true` defaults — omit them and the agent never registers. The separate root [`agents/`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents) directory keeps the Antigravity-only variant that retains per-agent `model: pro`/`flash` cost tiering, for when you want that or a project-scoped install — see §7. Neither set declares a `tools` list; each host applies its own default.
+- **Google Antigravity**: Install via `agy plugin install ./plugins/senior-dev`. Subagents in `agents/` declare native Antigravity tools (`run_command`, `write_to_file`, `replace_file_content`, `view_file`, etc.) with `commandExecutionPolicy: auto`.
+- **Claude Code**: Install via `/plugin install senior-dev` from the marketplace or `claude plugin install plugins/claude/senior-dev`. Subagents use native Claude Code tools (`Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Agent`).
 
 > **Maintaining the bundled skills**: `skills/` below is a physical copy of the matching directories in the root `/skills` catalog, kept self-contained so the plugin folder can be distributed on its own. After editing any bundled skill under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo root to re-sync this copy — don't hand-edit both. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills` fails CI if the two ever drift.
 
@@ -56,7 +55,7 @@ plugins/senior-dev/
 | `qa-tester` | E2E/integration tester: test depth proportional to the change. | `haiku` / `flash` | `auto` (direct test execution) |
 | `compliance-verifier` | Release auditor: final `APPROVED`/`REJECTED` verdict. | `haiku` / `flash` | `auto` (direct verification & lint tools) |
 
-**Scaled pipeline**: the orchestrator does not run all five subagents for every request — see each agent's system prompt for when it's skipped. This mirrors the same scaling rule already documented in the root `agents/README.md`.
+**Scaled pipeline**: the orchestrator does not run all five subagents for every request — see each agent's system prompt for when it's skipped. This mirrors the same scaling rule documented in [loop-engineering-workflow.md](../../rules/loop-engineering-workflow.md).
 
 **Cost split**: reasoning-heavy agents (orchestrator, architect, implementer) use `sonnet` / `pro`; validation agents (QA, verifier) use the faster `haiku` / `flash`.
 
@@ -139,14 +138,11 @@ Once installed, invoke `senior-dev-orchestrator` (or any of the five subagents d
 agy plugin install ./plugins/senior-dev
 agy plugin list      # confirm
 ```
-**Antigravity CLI** — project-scoped, if you don't want a global plugin install, copy the two pieces by hand:
+**Antigravity CLI** — project-scoped, if you don't want a global plugin install, copy the pieces by hand:
 ```bash
-# 1. Agents — the host-neutral files in this plugin folder work as-is, or use the
-#    richer Antigravity-only copies at the repo root:
+# 1. Agents — copy the subagents from this plugin folder:
 mkdir -p .agents/agents/          # project-scoped; use ~/.gemini/config/agents/ for global
-cp agents/senior-dev-orchestrator.md agents/product-analyst.md agents/architect-engineer.md \
-   agents/code-implementer.md agents/qa-tester.md agents/compliance-verifier.md \
-   .agents/agents/
+cp plugins/senior-dev/agents/*.md .agents/agents/
 
 # 2. MCP servers — merge this plugin's mcp_config.json manually:
 cat plugins/senior-dev/mcp_config.json   # merge its "mcpServers" into .agents/mcp_config.json

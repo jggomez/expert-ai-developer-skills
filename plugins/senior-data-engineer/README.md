@@ -5,7 +5,8 @@
 
 The `senior-data-engineer` plugin packages a Google Cloud data engineering expert for **both Antigravity CLI and Claude Code**: one subagent, two skills (architecture decisions, and CDC/SCD patterns specifically), and direct MCP access to BigQuery, Datastream, Dataform, and Pub/Sub.
 
-**Antigravity CLI users**: `agy plugin install ./plugins/senior-data-engineer` works — this folder's `agents/senior-data-engineer.md` uses host-neutral frontmatter (`name` + `description`, `model: inherit`, explicit `subagent`/`mainAgent`/`commandExecutionPolicy`, no `tools` key). `subagent`/`mainAgent` are spelled out because Antigravity does not fall back to their documented `true` defaults. The root [`agents/senior-data-engineer.md`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/agents/senior-data-engineer.md) keeps the Antigravity-only variant that retains `model: pro`, for tuning or a project-scoped install — see §7. Neither declares a `tools` list; each host applies its own default.
+- **Google Antigravity**: Install via `agy plugin install ./plugins/senior-data-engineer`. Subagent in `agents/` declares native Antigravity tools (`run_command`, `write_to_file`, `replace_file_content`, `view_file`, etc.) with `commandExecutionPolicy: auto`.
+- **Claude Code**: Install via `/plugin install senior-data-engineer` from the marketplace or `claude plugin install plugins/claude/senior-data-engineer`. Subagent uses native Claude Code tools (`Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Agent`).
 
 > **Maintaining the bundled skills**: `skills/` below is a physical copy of the matching directories in the root `/skills` catalog. After editing `gcp-data-engineering` or `cdc-scd-patterns` under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo root to re-sync this copy. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills` fails CI if the two ever drift.
 
@@ -112,12 +113,11 @@ claude --plugin-dir ./plugins/senior-data-engineer
 agy plugin install ./plugins/senior-data-engineer
 agy plugin list      # confirm
 ```
-**Antigravity CLI** — project-scoped, if you don't want a global plugin install, copy the two pieces by hand:
+**Antigravity CLI** — project-scoped, if you don't want a global plugin install, copy the pieces by hand:
 ```bash
-# 1. Agent — the host-neutral file in this plugin folder works as-is, or use the
-#    richer Antigravity-only copy at the repo root:
+# 1. Agent — copy the subagent from this plugin folder:
 mkdir -p .agents/agents/          # project-scoped; use ~/.gemini/config/agents/ for global
-cp agents/senior-data-engineer.md .agents/agents/
+cp plugins/senior-data-engineer/agents/senior-data-engineer.md .agents/agents/
 
 # 2. MCP servers — merge this plugin's mcp_config.json manually:
 cat plugins/senior-data-engineer/mcp_config.json   # merge its "mcpServers" into .agents/mcp_config.json

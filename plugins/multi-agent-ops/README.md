@@ -27,13 +27,13 @@ plugins/multi-agent-ops/
 ## 2. Bundled Skills (2 Packaged Modules)
 
 1. **`loop-engineering`**: Guides parallel subagent dispatching in isolated workspaces (e.g. separate git worktrees per worker), self-correction loops, and PR review automation patterns.
-2. **`repo-research`**: Analyzes a repository's structure, technologies, and dependency graph to produce or update a project context document — the same script the root `agents/README.md`/`plugins/senior-dev` topology can call on to ground itself before planning.
+2. **`repo-research`**: Analyzes a repository's structure, technologies, and dependency graph to produce or update a project context document — the same script the `plugins/senior-dev` topology can call on to ground itself before planning.
 
 ---
 
 ## 3. On Scheduled/Background Automation (Important Platform Gap)
 
-This repository's root [`sidecars/`](file:///Users/jggomez/Documents/jggomez/code/skills-programming-ai/sidecars) directory describes **Antigravity-only** cron-scheduled background daemons (`pr-reviewer-cron`, `incoming-reviews-alert`, `workspace-daemon`) declared via a `sidecar.json` manifest that Antigravity's runtime auto-discovers.
+This repository's root [`sidecars/`](sidecars) directory describes **Antigravity-only** cron-scheduled background daemons (`pr-reviewer-cron`, `incoming-reviews-alert`, `workspace-daemon`) declared via a `sidecar.json` manifest that Antigravity's runtime auto-discovers.
 
 **Claude Code plugins have no equivalent static manifest for recurring scheduled tasks.** Verified against current Claude Code plugin docs: there is no `cron/`, `schedule.json`, or sidecar-style directory a plugin can bundle to auto-register a periodic job. The closest Claude Code features are:
 - **Routines** (the `/schedule` command) — created interactively per-account, not declared inside a plugin.
