@@ -23,9 +23,26 @@ Refactor complex, convoluted, or over-engineered code to minimize cognitive over
 4. **Continuous Regression Testing**:
    - Run tests after every single transformation to ensure zero behavior changes.
 
-## 3. Delegation & Tools
-- **Antigravity Subagent**: Delegate to `code-implementer` or `flutter-implementer`.
-- **Primary Skills**: `refactor-codebase`, `detect-code-smells`, `karpathy-guidelines`.
+## 3. Subagent Delegation & Role Boundaries
+- **Role Boundary**: The Lead Orchestrator directs simplification objectives; actual code modifications are delegated to `code-implementer` (or `flutter-implementer`).
+- **Subagent Delegation across Runners**:
+  * **Google Antigravity**:
+    ```python
+    invoke_subagent(
+        name="code-implementer",
+        prompt="Surgically refactor and simplify code to remove smells while keeping all tests passing for: <file-or-module>"
+    )
+    ```
+    *(For Flutter applications, use `name="flutter-implementer"`)*
+  * **Anthropic Claude Code**:
+    ```python
+    Agent(
+        agent="code-implementer",
+        prompt="Surgically refactor and simplify code to remove smells while keeping all tests passing for: <file-or-module>"
+    )
+    ```
+    *(For Flutter applications, use `agent="flutter-implementer"`)*
+- **Primary Skills**: `refactoring-code-expert`, `code-smells-expert`, `guidelines-karpathy`.
 
 ## 4. Quality Gate Checklist
 - [ ] Automated tests pass with 100% success before and after refactoring.

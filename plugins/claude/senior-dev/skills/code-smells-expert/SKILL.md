@@ -59,7 +59,7 @@ python3 ./skills/code-smells-expert/scripts/detect_smells.py path/to/target_file
 
 ### Host Execution Instructions
 - **Claude Code**: Run `detect_smells.py` in the shell and summarize findings using the diagnostic reporting format.
-- **Antigravity**: Execute `detect_smells.py` via `run_command` and formulate the architectural assessment.
+- **Antigravity**: Execute `detect_smells.py` via `Bash` and formulate the architectural assessment.
 
 ## Red Flags
 - Modifying or refactoring code while acting in the diagnosis role (separation of concerns).

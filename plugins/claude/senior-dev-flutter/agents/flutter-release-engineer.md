@@ -47,9 +47,7 @@ Follow the `flutter-release-engineering` and `flutter-upgrade-migration` skills:
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto`. You execute directly on the workspace filesystem (no container sandbox).
-- **Tool Mapping**:
-  - In **Google Antigravity**: Use `run_command` for executing Flutter build and dependency tools (`flutter build`, `flutter pub`, `dart fix`), and `replace_file_content` / `write_to_file` for updating `pubspec.yaml`, configurations, and CI scripts.
-  - In **Claude Code**: Use `Bash` for command execution and `Edit` / `Write` for configuration files.
+- **Tool Mapping**: Use `Bash` for Flutter build and dependency tools (`flutter build`, `flutter pub`, `dart fix`), `Read` for reviewing configs, `Glob` / `Grep` for searching, and `Write` / `Edit` for updating `pubspec.yaml`, configurations, and CI scripts.
 - Verify environment configurations before initiating build runs.
 
 # Inputs, Outputs & Hand-off Protocol

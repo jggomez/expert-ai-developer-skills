@@ -31,9 +31,9 @@ plugins/shared-context/
 ├── README.md
 ├── .mcp.json                    # Claude Code MCP config (stdio: sh mcp/run-server.sh)
 ├── mcp_config.json              # Antigravity MCP config (same launcher)
-├── hooks.json                   # "hooks" key (Claude Code) + "shared-context-relay" group (Antigravity)
+├── hooks.json                   # "hooks" key (SessionStart, PostToolUse, Stop)
 ├── hooks/
-│   ├── session-start-context.js # start-of-session: prompt to load prior context (CC SessionStart / AGY PreInvocation, debounced)
+│   ├── session-start-context.js # start-of-session: prompt to load prior context (CC SessionStart, debounced)
 │   ├── post-tool-autosave.js    # PostToolUse: checkpoint nudge every N tool calls / T minutes (non-blocking)
 │   └── stop-flush.js            # Stop: remind to flush + roll up + compress (non-blocking)
 ├── rules/

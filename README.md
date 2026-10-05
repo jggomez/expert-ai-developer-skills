@@ -2,190 +2,225 @@
 
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=for-the-badge&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
 [![Plugins](https://img.shields.io/badge/Plugins-9%20Antigravity%20%7C%209%20Claude-orange?style=for-the-badge)](plugins)
-[![Skills Standard](https://img.shields.io/badge/AgentSkills.io-35%20Verified-green?style=for-the-badge)](skills)
+[![Skills Standard](https://img.shields.io/badge/AgentSkills.io-35%20Canonical%20Skills-green?style=for-the-badge)](skills)
+[![Constitution](https://img.shields.io/badge/Constitution-AGENTS.md%20Universal-purple?style=for-the-badge)](AGENTS.md)
 [![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey?style=for-the-badge)](LICENSE)
 
-Production-grade engineering customizations, subagents, and modular skills for **Google Antigravity (AGY)** and **Claude Code**.
+Production-grade engineering customizations, autonomous subagents, deterministic lifecycle hooks, and modular skills for **Google Antigravity (AGY)** and **Anthropic Claude Code**.
 
-This repository organizes software engineering best practices into **installable plugins**, **modular skills**, **quality rules**, and **execution workflows**.
-
----
-
-## 1. Repository Overview
-
-At a high level, the repository provides 5 core components:
-
-* **[Plugins](plugins/)**: 9 self-contained packages bundling specialized subagents, native tools, MCP servers, and lifecycle hooks.
-* **[Skills](skills/README.md)**: 35 modular skills adhering to the open [Agent Skills Standard](https://agentskills.io) with deterministic Python automation scripts.
-* **[Rules](rules/README.md)**: 10 passive constraint rule profiles enforcing clean code, TDD, branch safety, token optimization, and security.
-* **[Workflows](workflows/README.md)**: 16 step-by-step operational playbooks guiding complex tasks (including the 9-stage `/spec` to `/ship` framework).
-* **[Sidecars](sidecars/README.md)**: Background daemons and cron schedules for continuous monitoring and automated reviews.
-
-> For in-depth technical details, subagent prompts, or script documentation, refer to the README file in each component's directory.
+This repository organizes software engineering best practices into **dual-ecosystem installable plugins**, **35 canonical skills**, **a universal agent constitution**, **deterministic lifecycle hooks**, and **16 operational workflows**.
 
 ---
 
-## 2. Available Plugins & How to Install Them
+## 1. Dual Ecosystem Architecture
 
-Plugins are pre-configured packages that integrate specialized subagents, native tools, lifecycle hooks, and MCP servers directly into your agent environment.
+The repository natively supports two premier AI coding ecosystems side-by-side with zero cross-environment contamination:
 
-### 2.1 Available Plugins Catalog
+```mermaid
+flowchart TD
+    ROOT["skills-programming-ai (Root Repository)"]
+    ROOT --> CANONICAL["Canonical /skills (35 Standardized Skills)"]
+    ROOT --> CONST["Universal Constitution (AGENTS.md)"]
 
-| Plugin | Capabilities & Core Purpose | Documentation |
-| :--- | :--- | :--- |
-| **`senior-dev`** | Complete SDLC subagent panel: Orchestrator, Product Analyst, Architect, TDD Implementer, QA Tester, and Compliance Verifier. | [Read Guide](plugins/antigravity/senior-dev/README.md) |
-| **`senior-dev-flutter`** | Senior Flutter & Dart engineering: state architecture (Riverpod/Bloc), DevTools profiling, release matrix, and Dart MCP. | [Read Guide](plugins/antigravity/senior-dev-flutter/README.md) |
-| **`senior-data-engineer`** | Google Cloud data engineering: lakehouse architecture, Datastream CDC, BigQuery SCD Type 2 modeling, and remote GCP MCP. | [Read Guide](plugins/antigravity/senior-data-engineer/README.md) |
-| **`sql-query-optimizer`** | SQL query plan diagnosis: BigQuery skew/shuffle optimization, relational indexes, and static SQL linting. | [Read Guide](plugins/antigravity/sql-query-optimizer/README.md) |
-| **`shared-context`** | Cross-agent working memory: captures decisions and hand-off context between Antigravity and Claude Code sessions. | [Read Guide](plugins/antigravity/shared-context/README.md) |
-| **`python-backend`** | Python backend engineering: FastAPI standards, strict TDD, Alembic migrations, CI/CD gates, Cloud Run & Firebase MCP. | [Read Guide](plugins/antigravity/python-backend/README.md) |
-| **`git-workflow`** | Git safety & hygiene: Gitflow branch protection gate, conventional commit formatting, and PR templates. | [Read Guide](plugins/antigravity/git-workflow/README.md) |
-| **`docs-and-quality`** | Documentation & QA standards: Diátaxis framework, Mermaid.js diagrams, Gherkin BDD testing, and Karpathy guidelines. | [Read Guide](plugins/antigravity/docs-and-quality/README.md) |
-| **`multi-agent-ops`** | Multi-agent operations: self-correcting parallel worker execution loops, PR cron review, and codebase research. | [Read Guide](plugins/antigravity/multi-agent-ops/README.md) |
+    ROOT --> AGY["plugins/antigravity/ (9 Plugins)"]
+    ROOT --> CLAUDE["plugins/claude/ (9 Plugins)"]
 
-### 2.2 Installing Plugins in Google Antigravity
+    AGY --> AGY_TOOLS["Native Tools: run_command, write_to_file, replace_file_content, invoke_subagent, manage_subagents"]
+    AGY --> AGY_MANIFEST["Manifest: plugin.json at plugin root"]
+    AGY --> AGY_POLICY["Execution Policy: commandExecutionPolicy: auto"]
 
-Antigravity installs plugins globally into `~/.gemini/antigravity-cli/plugins/` using the `agy` CLI command:
-
-```bash
-# Install a specific plugin from ./plugins/antigravity/<name>
-agy plugin install ./plugins/antigravity/senior-dev
-agy plugin install ./plugins/antigravity/senior-dev-flutter
-agy plugin install ./plugins/antigravity/senior-data-engineer
-agy plugin install ./plugins/antigravity/sql-query-optimizer
-agy plugin install ./plugins/antigravity/shared-context
-agy plugin install ./plugins/antigravity/python-backend
-agy plugin install ./plugins/antigravity/git-workflow
-agy plugin install ./plugins/antigravity/docs-and-quality
-agy plugin install ./plugins/antigravity/multi-agent-ops
-
-# Install all plugins in one command
-for p in ./plugins/antigravity/*; do agy plugin install "$p"; done
-
-# Useful management commands
-agy plugin list                    # List all installed plugins
-agy plugin enable <name>           # Enable a plugin
-agy plugin disable <name>          # Temporarily disable a plugin
-agy plugin uninstall <name>        # Remove an installed plugin
+    CLAUDE --> CLAUDE_TOOLS["Native Tools: Bash, Read, Write, Edit, Glob, Grep, Agent"]
+    CLAUDE --> CLAUDE_MANIFEST["Manifest: .claude-plugin/plugin.json & marketplace.json"]
+    CLAUDE --> CLAUDE_HOOKS["Claude Hooks: SessionStart, PreToolUse, PostToolUse, Stop"]
 ```
 
-### 2.3 Installing Plugins in Claude Code
+### Ecosystem Comparison & Tool Mapping
 
-In Claude Code, install plugins via the official marketplace:
+| Dimension | Google Antigravity (`plugins/antigravity/`) | Anthropic Claude Code (`plugins/claude/`) |
+| :--- | :--- | :--- |
+| **Plugin Manifest** | `plugin.json` (at plugin root) | `.claude-plugin/plugin.json` |
+| **Marketplace Manifest**| Local path installation via `agy plugin install` | `.claude-plugin/marketplace.json` |
+| **Command Execution** | `run_command` (`commandExecutionPolicy: auto`) | `Bash` |
+| **File Reading** | `view_file` | `Read` |
+| **File Creation** | `write_to_file` | `Write` |
+| **File Editing** | `replace_file_content` | `Edit` |
+| **File Search** | Grep / directory tools | `Glob`, `Grep` |
+| **Subagent Delegation**| `invoke_subagent(name="...", prompt="...")` | `Agent(agent="...", prompt="...")` |
+| **Agent Coordination**| `manage_subagents`, `send_message` | `Agent` session orchestration |
+| **Hook Schema** | Named hook groups: `{"PreToolUse": [...], "Stop": [...]}` | Host object: `{"hooks": {"PreToolUse": [...], "Stop": [...]}}` |
 
+---
+
+## 2. Universal Constitution: `AGENTS.md`
+
+All agents in this repository operate under the supreme governance of the **Universal AI Coding Agent Constitution** located at [`AGENTS.md`](AGENTS.md).
+
+To guarantee uniform discovery across development tools and AI runners, host-specific configuration files are maintained as symlinks to `AGENTS.md`:
+* **`CLAUDE.md`** &rarr; symlink to `AGENTS.md` (read automatically by Anthropic Claude Code)
+* **`AGENT.md`** &rarr; symlink to `AGENTS.md` (read by Antigravity / Cursor / IDE assistants)
+
+### Inviolable Invariants
+
+1. **Plan-First Mandatory Gate**:
+   * No application code modifications may occur without an up-to-date `PLAN.md` file authored and saved to disk.
+2. **Orchestrator Role Boundaries**:
+   * Lead Orchestrators (`senior-dev-orchestrator`, `flutter-feature-orchestrator`) are **strictly prohibited from directly writing application source code**.
+   * File editing tools (`write_to_file`, `replace_file_content`, `Write`, `Edit`) in orchestrator sessions are reserved exclusively for `PLAN.md`, ADRs, and documentation.
+   * All implementation code **MUST** be delegated to `code-implementer` or `flutter-implementer`.
+3. **Strict Test-Driven Development (TDD)**:
+   * Red-Green-Refactor cycle: failing test first, minimal production code, refactor to clean code.
+   * Tests are empirical proof: a task is complete only with verified terminal output showing `exit code 0`.
+4. **Anti-Lazy Code Policy**:
+   * Zero tolerance for placeholders (`TODO: implement later`, `# ... rest of code`, `pass # placeholder`, `/* unimplemented */`).
+   * Every edit must provide 100% complete, working code. Deterministically enforced by `anti-lazy-code-gate.js`.
+5. **Self-Correction Protocol (3-Loop Cap)**:
+   * Auto-remediation is strictly capped at a maximum of 3 cycles. If a defect persists after 3 cycles, agents must halt and escalate to the user with a diagnostic report.
+
+---
+
+## 3. Graph Engineering State Machine (DAG)
+
+Multi-agent coordination follows a deterministic Directed Acyclic Graph (DAG) state machine:
+
+```mermaid
+flowchart TD
+    GATE["[PLAN FIRST GATE]<br/>PLAN.md created/updated"] --> DISCOVERY["[DISCOVERY (Optional)]<br/>product-analyst | architect-engineer"]
+    DISCOVERY --> BUILD["[BUILD (Mandatory)]<br/>code-implementer | flutter-implementer"]
+    GATE --> BUILD
+    BUILD --> TEST["[TEST (Mandatory)]<br/>qa-tester (exit code 0 proof)"]
+    TEST -->|Fail: Red State (Loop <= 3)| BUILD
+    TEST -->|Pass: Green State| AUDIT["[AUDIT (Mandatory)]<br/>compliance-verifier (APPROVED verdict)"]
+    AUDIT -->|Reject: Gap Found (Loop <= 3)| BUILD
+    AUDIT -->|Pass: Approved| SHIP["[SHIP]<br/>git commit & finish"]
+    TEST -->|Loop > 3: Cap Exceeded| ESCALATE["[HALT & ESCALATE]<br/>Diagnostic report to user"]
+    AUDIT -->|Loop > 3: Cap Exceeded| ESCALATE
+```
+
+### Multi-Agent Topologies Taxonomy
+1. **Manager-Worker Topology**: Orchestrator coordinates high-level objectives and delegates atomic tasks to isolated workers operating in dedicated branches or git worktrees.
+2. **Sequential Pipeline (DAG)**: Deterministic progression through Plan &rarr; Build &rarr; Test &rarr; Audit &rarr; Ship with bounded failure loops.
+3. **Review Committee**: Parallel specialist evaluations where multiple agents evaluate diffs concurrently across distinct concerns (Security, Quality, Performance, Architecture).
+
+---
+
+## 4. Deterministic Lifecycle Hooks
+
+Plugins enforce safety and quality invariants via deterministic Node.js lifecycle hooks executing on host tool events:
+
+```
+plugins/
+├── antigravity/<plugin>/hooks/
+│   ├── gitflow-branch-gate.js     # Blocks commits to main/develop, validates branch prefixes
+│   ├── anti-lazy-code-gate.js     # Scans diffs for TODOs, pass stubs, and incomplete placeholders
+│   ├── stop-gate.js               # Enforces test pass (exit code 0) before session completion
+│   ├── pre-tool-gate.js           # Enforces workspace path boundaries and safe command flags
+│   └── context-*.js               # Cross-agent memory capture and restoration
+└── claude/<plugin>/hooks/
+    ├── (Identical deterministic gate scripts tailored for Claude Code hooks.json events)
+```
+
+### Active Hook Gates
+* **Gitflow Branch Protection Gate** (`gitflow-branch-gate.js`): Prevents destructive direct commits or pushes to protected branches (`main`, `master`, `develop`, `release/*`). Requires semantic branch naming (`feat/*`, `fix/*`, `chore/*`).
+* **Anti-Lazy Code Stop Gate** (`anti-lazy-code-gate.js`): Inspects git diffs before session termination. Exits with code 2 if placeholder comments (`TODO: implement later`, `# ... rest of code`) are detected.
+* **Test Verification Stop Gate** (`stop-gate.js` / `verify_tests.py`): Blocks session termination if automated test suites are failing.
+* **Shared Context Keeper** (`context_common.py`, `context_snapshot.py`, `context_list.py`): Preserves decisions, architectural choices, and hand-off state across sessions and between Antigravity and Claude Code.
+
+---
+
+## 5. 35 Canonical Skills Catalog
+
+The [`skills/`](skills/README.md) directory contains 35 modular skills compliant with the [Open Agent Skills Standard (`agentskills.io`)](https://agentskills.io). Each skill includes a platform-neutral `SKILL.md`, reference documentation, and deterministic Python automation scripts.
+
+### 9 Distributed Plugins & Bundled Skills
+
+Both plugin ecosystems bundle physical copies of the skills they require to remain fully self-contained:
+
+| Plugin Name | Bundled Skills Count | Bundled Skills |
+| :--- | :---: | :--- |
+| **`senior-dev`** | 8 | `senior-dev-orchestrator`, `product-analyst`, `senior-architect-engineering`, `code-implementer`, `code-smells-expert`, `refactoring-code-expert`, `qa-tester`, `compliance-verifier` |
+| **`senior-dev-flutter`** | 7 | `flutter-senior-orchestration`, `flutter-architecture-decisions`, `flutter-review-checklist`, `flutter-test-strategy`, `flutter-performance-profiling`, `flutter-release-engineering`, `flutter-upgrade-migration` |
+| **`python-backend`** | 11 | `python-expert`, `test-driven-development`, `pull-request-expert`, `code-smells-expert`, `refactoring-code-expert`, `security-audit`, `performance-scalability`, `database-migration-expert`, `senior-architect-engineering`, `design-spec-expert`, `build-and-ci-gates` |
+| **`senior-data-engineer`** | 2 | `gcp-data-engineering`, `cdc-scd-patterns` |
+| **`sql-query-optimizer`** | 2 | `bigquery-query-optimization`, `sql-query-optimization` |
+| **`shared-context`** | 2 | `context-capture`, `context-restore` |
+| **`git-workflow`** | 2 | `commit-expert`, `pull-request-expert` |
+| **`docs-and-quality`** | 3 | `documentation-expert`, `testing-expert`, `guidelines-karpathy` |
+| **`multi-agent-ops`** | 2 | `loop-engineering`, `repo-research` |
+
+---
+
+## 6. Operational Workflows (16 Playbooks)
+
+Operational playbooks in [`workflows/`](workflows/README.md) and [`.agents/workflows/`](.agents/workflows/) guide complex development sequences:
+
+### The 9 Core Slash Commands
+* **`/spec`** ([`spec-workflow.md`](workflows/spec-workflow.md)): Clarify user goals, define NFRs, draft PRD.
+* **`/plan`** ([`plan-workflow.md`](workflows/plan-workflow.md)): Author `PLAN.md`, decompose into atomic tasks, record ADRs.
+* **`/build`** ([`build-workflow.md`](workflows/build-workflow.md)): Incremental TDD implementation via `code-implementer`.
+* **`/test`** ([`test-workflow.md`](workflows/test-workflow.md)): Empirical testing and verification evidence (`exit code 0`).
+* **`/constraints`** ([`constraints-workflow.md`](workflows/constraints-workflow.md)): Set NFR budgets, linter rules, security gates.
+* **`/review`** ([`review-workflow.md`](workflows/review-workflow.md)): Machine-first code review and smell audit.
+* **`/perf`** ([`perf-workflow.md`](workflows/perf-workflow.md)): Performance benchmarking, flamegraphs, latency tuning.
+* **`/code-simplify`** ([`code-simplify-workflow.md`](workflows/code-simplify-workflow.md)): Clarity over cleverness, dead code pruning.
+* **`/ship`** ([`ship-workflow.md`](workflows/ship-workflow.md)): Conventional commit, release packaging, PR submission.
+
+### Specialized Engineering Playbooks
+* **`feature-development-workflow.md`**: Complete end-to-end SDLC lifecycle playbook.
+* **`test-execution-workflow.md`**: Test discovery, targeted execution, coverage auditing.
+* **`secure-code-review-workflow.md`**: OWASP top 10 auditing, SAST analysis, secret scanning.
+* **`pull-request-workflow.md`**: Pre-PR self-audit, diff inspection, PR description templating.
+* **`commit-workflow.md`**: Selective git staging, Conventional Commits formatting, hook safety.
+* **`code-smell-review-workflow.md`**: AST smell detection, cyclomatic complexity reduction.
+* **`grill-me-alignment-workflow.md`**: Google `/grill-me` interactive design interview playbook.
+
+---
+
+## 7. Developer Runbooks
+
+### 7.1 Run Full Test Suite
+Verify repository structural integrity, schema compliance, hook contracts, and unit tests:
 ```bash
-# 1. Add repository marketplace
+pytest tests/structure/ tests/unit/
+```
+
+### 7.2 Validate Lifecycle Hook Syntax
+Ensure all JavaScript lifecycle hook scripts pass Node.js syntax checks without errors:
+```bash
+node --check plugins/antigravity/*/hooks/*.js plugins/claude/*/hooks/*.js
+```
+
+### 7.3 Synchronize Canonical Skills into All Plugins
+After updating any canonical skill in `/skills/`, synchronize the changes into both `plugins/antigravity/` and `plugins/claude/` (with automated tool sanitization):
+```bash
+python3 scripts/sync_plugin_skills.py
+```
+
+### 7.4 Plugin Installation Commands
+
+#### In Google Antigravity:
+```bash
+# Install a specific plugin
+agy plugin install ./plugins/antigravity/senior-dev
+
+# Install all plugins in one pass
+for p in ./plugins/antigravity/*; do agy plugin install "$p"; done
+```
+
+#### In Anthropic Claude Code:
+```bash
+# Add repository marketplace
 /plugin marketplace add jggomez/expert-ai-developer-skills
 
-# 2. Install any plugin(s)
+# Install plugins
 /plugin install senior-dev
 /plugin install senior-dev-flutter
-/plugin install senior-data-engineer
-/plugin install sql-query-optimizer
-/plugin install shared-context
-/plugin install python-backend
-/plugin install git-workflow
-/plugin install docs-and-quality
-/plugin install multi-agent-ops
 
-# Or install directly from local build:
+# Or install from local directory:
 claude plugin install plugins/claude/senior-dev
 ```
 
 ---
 
-## 3. Installing and Using Skills in Google Antigravity
-
-**Skills** provide on-demand capabilities and scripts (progressive disclosure) that the agent activates when relevant to the task.
-
-### Option A: Standard Install via Vercel Skills CLI (Recommended)
-
-You can install any skill directly into your current project without manual cloning:
-
-```bash
-# Discover all 35 skills
-npx skills add jggomez/expert-ai-developer-skills --list
-
-# Install a specific skill (e.g. python-expert) in the active project (.agents/skills)
-npx skills add jggomez/expert-ai-developer-skills --skill python-expert
-
-# Install a specific skill globally on your system
-npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
-
-# Install all 35 skills in the active project
-npx skills add jggomez/expert-ai-developer-skills
-```
-
-### Option B: Manual Setup
-
-If you have cloned this repository, copy the desired skills:
-
-* **Project-level (version-controlled with team)**:
-  ```bash
-  mkdir -p .agents/skills/
-  cp -r skills/<skill-name> .agents/skills/
-  ```
-* **Global machine-level (available across all projects)**:
-  ```bash
-  mkdir -p ~/.gemini/config/skills/
-  cp -r skills/<skill-name> ~/.gemini/config/skills/
-  ```
-
----
-
-## 4. Using Rules in Google Antigravity
-
-**Rules** are passive system constraints that Antigravity loads to govern coding style, test enforcement, security checks, and token budgets.
-
-### Where to Place Rules
-
-1. **Project Scope (Recommended)**:
-   Copy rules to `.agents/rules/`:
-   ```bash
-   mkdir -p .agents/rules/
-   cp rules/*.md .agents/rules/
-   ```
-   Antigravity automatically discovers and applies these rules for anyone working in the repository.
-
-2. **Global Scope**:
-   Copy rules to your user configuration directory:
-   ```bash
-   mkdir -p ~/.gemini/config/rules/
-   cp rules/*.md ~/.gemini/config/rules/
-   ```
-
-### How Rules Activate
-Rules require no manual invocation. Antigravity activates them contextually based on your prompt (e.g., enforcing TDD during code changes, blocking direct commits to `main`, or requiring secrets scans).
-
----
-
-## 5. Using Workflows in Google Antigravity
-
-**Workflows** are active, step-by-step playbooks for standard engineering procedures.
-
-### How to Use Workflows in Sessions
-
-1. **Direct Reference in Prompt**:
-   Instruct the agent to follow a specific playbook using `@` or the relative path:
-   ```text
-   "Follow the workflow @workflows/spec-workflow.md to draft requirements for this feature."
-   "Execute @workflows/code-smell-review-workflow.md on the auth module."
-   ```
-
-2. **The 9-Stage Command Framework**:
-   The workflows implement the end-to-end SDLC lifecycle:
-   * `/spec` (`workflows/spec-workflow.md`): Clarify requirements and write PRD before code.
-   * `/plan` (`workflows/plan-workflow.md`): Decompose into atomic tasks and define architecture.
-   * `/build` (`workflows/build-workflow.md`): Incremental TDD implementation.
-   * `/test` (`workflows/test-workflow.md`): Empirical testing and proof of functionality.
-   * `/constraints` (`workflows/constraints-workflow.md`): NFR checks, linter rules, and safety gates.
-   * `/review` (`workflows/review-workflow.md`): Code smell and architecture health review.
-   * `/perf` (`workflows/perf-workflow.md`): Profiling before optimization.
-   * `/code-simplify` (`workflows/code-simplify-workflow.md`): Clarity over cleverness, dead code pruning.
-   * `/ship` (`workflows/ship-workflow.md`): Conventional commit, release packaging, and merge.
-
----
-
-## 6. License
+## 8. License
 
 This repository is open-sourced under the [Apache License, Version 2.0](LICENSE).

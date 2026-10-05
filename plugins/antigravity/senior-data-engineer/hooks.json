@@ -1,0 +1,25 @@
+{
+  "description": "Senior Data Engineer gates: enforces Plan-First, blocks destructive BigQuery/GCS operations, and validates Dataform/ETL compile on Stop.",
+  "senior-data-engineer-gates": {
+    "enabled": true,
+    "PreToolUse": [
+      {
+        "matcher": "run_command|call_mcp_tool|write_to_file|replace_file_content",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./hooks/data-safety-gate.js",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node ./hooks/data-quality-gate.js",
+        "timeout": 120
+      }
+    ]
+  }
+}

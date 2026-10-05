@@ -1,0 +1,18 @@
+{
+  "description": "Multi-agent operations gates: protects token budget by preventing unbounded reads on massive files.",
+  "multi-agent-ops-gates": {
+    "enabled": true,
+    "PreToolUse": [
+      {
+        "matcher": "view_file",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./hooks/context-guard-gate.js",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

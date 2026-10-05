@@ -1,0 +1,18 @@
+{
+  "description": "SQL Query Optimizer gates: blocks destructive DDL/DML and enforces BigQuery dry-runs.",
+  "sql-query-optimizer-gates": {
+    "enabled": true,
+    "PreToolUse": [
+      {
+        "matcher": "run_command|call_mcp_tool",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./hooks/sql-safety-gate.js",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

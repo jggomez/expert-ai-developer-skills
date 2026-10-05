@@ -1,0 +1,17 @@
+{
+  "description": "SQL query optimizer safety gates: prevent destructive DDL/DML operations and enforce --dry_run on BigQuery queries.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/sql-safety-gate.js\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

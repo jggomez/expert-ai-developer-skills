@@ -11,7 +11,7 @@ def detect_and_run_tests(root_dir="."):
     pkg_json = os.path.join(root_dir, "package.json")
     if os.path.exists(pkg_json):
         print("Detected Node.js project. Running npm test...")
-        return run_command(["npm", "test"], root_dir)
+        return execute_subprocess(["npm", "test"], root_dir)
         
     # 2. Python (pytest, unittest, or pyproject.toml)
     pyproject = os.path.join(root_dir, "pyproject.toml")
@@ -23,32 +23,32 @@ def detect_and_run_tests(root_dir="."):
         try:
             subprocess.run(["pytest", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             print("Detected Python project with pytest. Running pytest...")
-            return run_command(["pytest"], root_dir)
+            return execute_subprocess(["pytest"], root_dir)
         except FileNotFoundError:
             print("Detected Python project. Running python3 -m unittest...")
-            return run_command(["python3", "-m", "unittest", "discover", "-s", "tests"], root_dir)
+            return execute_subprocess(["python3", "-m", "unittest", "discover", "-s", "tests"], root_dir)
             
     # 3. Go (go.mod)
     go_mod = os.path.join(root_dir, "go.mod")
     if os.path.exists(go_mod):
         print("Detected Go project. Running go test ./...")
-        return run_command(["go", "test", "./..."], root_dir)
+        return execute_subprocess(["go", "test", "./..."], root_dir)
         
     # 4. Rust (Cargo.toml)
     cargo_toml = os.path.join(root_dir, "Cargo.toml")
     if os.path.exists(cargo_toml):
         print("Detected Rust project. Running cargo test...")
-        return run_command(["cargo", "test"], root_dir)
+        return execute_subprocess(["cargo", "test"], root_dir)
         
     # Fallback search for a tests/ folder
     if os.path.isdir(tests_dir):
         print("Found a tests/ directory. Running fallback python3 -m unittest...")
-        return run_command(["python3", "-m", "unittest", "discover", "-s", "tests"], root_dir)
+        return execute_subprocess(["python3", "-m", "unittest", "discover", "-s", "tests"], root_dir)
         
     print("❌ No recognizable test suite detected in the project.")
     return 1
 
-def run_command(cmd, cwd):
+def execute_subprocess(cmd, cwd):
     try:
         # Run command with outputs piped to console
         result = subprocess.run(cmd, cwd=cwd)

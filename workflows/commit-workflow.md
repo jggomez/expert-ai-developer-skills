@@ -1,7 +1,7 @@
 # Workflow: Staging, Committing & Pushing Code
 
 **Identifier**: `commit-workflow`  
-**Purpose**: Playbook to guide developers and agents on how to selectively stage changes, write semantic commit messages, validate syntax, and safely push work to version control using the Antigravity Gitflow safety gates.
+**Purpose**: Playbook to guide developers and agents on how to selectively stage changes, write semantic commit messages, validate syntax, and safely push work to version control using subagent delegation and Gitflow safety gates.
 
 ---
 
@@ -11,7 +11,28 @@
 
 ---
 
-## 2. Step-by-Step Workflow
+## 2. Subagent Delegation & Role Boundaries
+- **Role Boundary**: The Lead Orchestrator delegates commit verification, Conventional Commit validation, and branch gate checks to `compliance-verifier`.
+- **Subagent Delegation across Runners**:
+  * **Google Antigravity Runner**:
+    ```python
+    invoke_subagent(
+        name="compliance-verifier",
+        prompt="Verify commit message syntax and branch safety compliance for staged changes."
+    )
+    ```
+  * **Anthropic Claude Code Runner**:
+    ```python
+    Agent(
+        agent="compliance-verifier",
+        prompt="Verify commit message syntax and branch safety compliance for staged changes."
+    )
+    ```
+- **Primary Skills**: `commit-expert`, `compliance-verifier`, `git-workflow`.
+
+---
+
+## 3. Step-by-Step Workflow
 
 ```mermaid
 graph TD
@@ -45,13 +66,14 @@ graph TD
   ```
 
 ### Step 4: Validate Commit Message
-* **Antigravity Best Practice**: Run the AST commit-message validator from the local commit skill to verify formatting before committing:
+* Run the Conventional Commit message validator:
   ```bash
   python3 skills/commit-expert/scripts/validate_commit_msg.py .git/COMMIT_EDITMSG
   ```
-* Ensure the message follows the Conventional Commit structure:
-  * **Header**: `<type>(<scope>): <description>` (max 72 chars, lowercase, imperative mood, no ending period).
-  * **Body (Optional)**: Detail *Why* the change was made.
+* Ensure the message follows the Conventional Commit regex:
+  * Pattern: `^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9._-]+\))?: .+$`
+  * **Header**: `<type>(<scope>): <description>` (max 50 chars, lowercase, imperative mood, no ending period).
+  * **Body (Optional)**: Detail *Why* the change was made (wrapped at 72 chars).
   * **Footer (Optional)**: Link issue numbers (`Closes #14`).
 
 ### Step 5: Execute Commit and Run Hooks
@@ -59,8 +81,8 @@ graph TD
   ```bash
   git commit -m "feat(auth): add google oauth provider integration"
   ```
-* **Gitflow Hook Validation**: If the workspace `PreToolUse` hook detects you are on `main` or `develop`, it will automatically block the commit.
-* If pre-commit hooks (linters, formatting gates) fail:
+* **Gitflow Hook Validation**: The `PreToolUse` hook (`gitflow-branch-gate.js`) blocks commits if executed directly on `main` or `develop`.
+* If pre-commit hooks fail:
   1. Read the hook error output.
   2. Fix formatting/linting issues in the codebase.
   3. Re-stage the modified files using `git add`.
@@ -72,13 +94,13 @@ graph TD
   git pull origin feature/your-branch-name --rebase
   git push origin feature/your-branch-name
   ```
-* **Gitflow Safety**: The workspace `PreToolUse` hook blocks pushes made directly on `main` or `develop`, regardless of how they're triggered.
 
 ---
 
-## 3. Quality Gate & Verification
+## 4. Quality Gate & Verification
 
 Before executing `git push`, verify:
 - [ ] No local configuration files (e.g. `.env`, keys) are listed in `git status` under "Changes to be committed".
-- [ ] The commit message starts with a standard type: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `build`, `ci`, `chore`.
-- [ ] Pre-commit hooks run successfully and returned code `0`.
+- [ ] The commit message starts with a standard type: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`.
+- [ ] Commit message conforms to `^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)...`.
+- [ ] Pre-commit hooks run successfully and return exit code `0`.

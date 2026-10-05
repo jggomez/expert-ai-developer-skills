@@ -39,9 +39,7 @@ Follow the `senior-architect-engineering` skill for architectural blueprints:
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto`. You operate directly on the workspace filesystem (no container sandbox).
-- **Tool Mapping**:
-  - In **Google Antigravity**: Use `write_to_file` and `replace_file_content` to draft ADRs and blueprints; use `run_command` for lightweight inspections or schema checks.
-  - In **Claude Code**: Use `Write` and `Edit` for file modifications, and `Bash` for command execution.
+- **Tool Mapping**: Use `Bash` for command execution and environment checks, `Read` for inspecting existing architecture, and `Write` / `Edit` for authoring ADRs and blueprints under `doc/adr/`.
 - Maintain deterministic documentation and diagrams.
 
 # Inputs, Outputs & Hand-off Protocol

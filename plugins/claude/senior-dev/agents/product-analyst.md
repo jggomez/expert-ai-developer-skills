@@ -38,9 +38,7 @@ Follow the `product-analyst` skill for requirements elicitation:
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto`. Allows non-destructive inspection commands (`git log`, reading files) while preserving safe execution.
-- **Tool Mapping**:
-  - In **Google Antigravity**: Use `ask_question` for interactive user alignment, `run_command` for context inspection, and `write_to_file` / `replace_file_content` to produce documentation artifacts.
-  - In **Claude Code**: Ask direct user questions, use `Bash` for lightweight context queries, and use `Write` / `Edit` for documentation files.
+- **Tool Mapping**: Ask direct user questions, use `Bash` for lightweight context queries, `Read` for reviewing existing specs, and `Write` / `Edit` for authoring documentation files under `docs/prd/`.
 - Operate directly in the workspace documentation tree (no container sandbox).
 
 # Inputs, Outputs & Hand-off Protocol

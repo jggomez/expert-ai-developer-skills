@@ -1,5 +1,5 @@
 {
-  "description": "Python backend quality gates: Gitflow branch safety, deployment guardrails, and TDD verification.",
+  "description": "Python backend quality gates: Plan-First enforcement, Gitflow branch safety, deployment guardrails, and TDD verification.",
   "hooks": {
     "SessionStart": [
       {
@@ -15,7 +15,17 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Bash|run_command|call_mcp_tool|mcp__cloudrun__.*|mcp__firebase-mcp-server__.*",
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-gate.js\"",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|mcp__cloudrun__.*|mcp__firebase-mcp-server__.*",
         "hooks": [
           {
             "type": "command",
@@ -31,31 +41,9 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/stop-gate.js\"",
-            "timeout": 30
+            "timeout": 60
           }
         ]
-      }
-    ]
-  },
-  "python-backend-safety-gates": {
-    "enabled": true,
-    "PreToolUse": [
-      {
-        "matcher": "run_command",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ./hooks/pre-tool-gate.js",
-            "timeout": 15
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "type": "command",
-        "command": "node ./hooks/stop-gate.js",
-        "timeout": 30
       }
     ]
   }

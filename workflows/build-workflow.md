@@ -21,11 +21,33 @@ Construct production-ready code fulfilling the planned tasks incrementally, adhe
 4. **Static Analysis & Formatting**:
    - Format code (`ruff format`, `dart format`, `prettier`) and verify type-checking (`mypy`, `tsc`, `dart analyze`).
 
-## 3. Delegation & Tools
-- **Antigravity Subagent**: Delegate to `code-implementer` (or `flutter-implementer`).
-- **Primary Skills**: `python-expert`, `fastapi-expert`, official Flutter/Dart skills, `code-smells-expert`.
+## 3. Subagent Delegation & Inviolable Role Boundaries
+- **Inviolable Role Boundaries**:
+  * **Orchestrators are strictly prohibited from writing or editing production application code directly.**
+  * All code authoring and modifications **MUST** be delegated to `code-implementer` (or `flutter-implementer` for Flutter apps).
+  * The Orchestrator's role is strictly confined to plan governance, task dispatch, and report synthesis.
+- **Subagent Delegation across Runners**:
+  * **Google Antigravity**:
+    ```python
+    invoke_subagent(
+        name="code-implementer",
+        prompt="Implement the following task using strict TDD: <task-description>"
+    )
+    ```
+    *(For Flutter applications, use `name="flutter-implementer"`)*
+  * **Anthropic Claude Code**:
+    ```python
+    Agent(
+        agent="code-implementer",
+        prompt="Implement the following task using strict TDD: <task-description>"
+    )
+    ```
+    *(For Flutter applications, use `agent="flutter-implementer"`)*
+- **Primary Skills**: `python-expert`, `test-driven-development`, `code-implementer`, `code-smells-expert`, `flutter-test-strategy`.
 
 ## 4. Quality Gate Checklist
-- [ ] Production code accompanied by automated unit tests.
+- [ ] Orchestrator made zero direct edits to application source code.
+- [ ] Code modifications authored strictly by `code-implementer` or `flutter-implementer` via TDD.
+- [ ] Production code accompanied by passing automated unit tests.
 - [ ] Zero unhandled compiler/linter warnings or type errors.
 - [ ] All code, comments, and identifiers written in clear English.

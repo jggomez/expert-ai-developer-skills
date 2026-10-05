@@ -1,12 +1,15 @@
 #!/usr/bin/env node
+/**
+ * Python Backend PreToolUse gate.
+ * 1. Plan-First Gate: Requires PLAN.md before creating or editing Python backend code (*.py).
+ * 2. Deployment Guardrail: Requires explicit user approval for deployment commands.
+ * 3. MCP Guardrail: Requires explicit user approval for Cloud Run deploy or Firestore mutations.
+ * 4. Gitflow Safety: Blocks commits directly on main or develop.
+ */
 const { execSync } = require('child_process');
 const fs = require('fs');
+const path = require('path');
 
-// Claude Code sets CLAUDE_PLUGIN_ROOT when running plugin hooks; Antigravity
-// does not, so anything else falls back to Antigravity's real PreToolUse
-// contract: a top-level {"decision": "allow"|"deny"|"ask", "reason": ...}
-// (verified against antigravity.google/docs/hooks — this is NOT the same
-// shape as Claude Code's hookSpecificOutput.permissionDecision).
 const isClaudeCode = Boolean(process.env.CLAUDE_PLUGIN_ROOT);
 
 function allow() {
@@ -14,25 +17,6 @@ function allow() {
     console.log(JSON.stringify({ decision: 'allow' }));
   }
   process.exit(0);
-}
-
-// Read input payload from stdin
-let inputData = '';
-try {
-  inputData = fs.readFileSync(0, 'utf-8');
-} catch (e) {
-  allow();
-}
-
-if (!inputData.trim()) {
-  allow();
-}
-
-let payload;
-try {
-  payload = JSON.parse(inputData);
-} catch (e) {
-  allow();
 }
 
 function ask(reason) {
@@ -65,24 +49,62 @@ function deny(reason) {
   process.exit(0);
 }
 
-// Normalize across Claude Code (tool_name/tool_input/cwd) and Antigravity
-// (toolCall.name/toolCall.args) payload shapes.
-const toolName = payload.tool_name || payload.toolCall?.name || '';
-const toolInput = payload.tool_input || payload.toolCall?.args || {};
+let inputData = '';
+try {
+  inputData = fs.readFileSync(0, 'utf-8');
+} catch (e) {
+  allow();
+}
+if (!inputData.trim()) allow();
+
+let payload;
+try {
+  payload = JSON.parse(inputData);
+} catch (e) {
+  allow();
+}
+
+const toolCall = payload.toolCall || {};
+const toolName = toolCall.name || payload.tool_name || '';
+const toolInput = toolCall.args || payload.tool_input || {};
 const commandLine = toolInput.command || toolInput.CommandLine || '';
 const cwd = payload.cwd || toolInput.Cwd || payload.workspacePaths?.[0] || process.cwd();
 
-const isShellTool = toolName === 'Bash' || toolName === 'run_command';
+// 1. GATE: Plan-First before creating/modifying Python code
+const isFileModTool = /^(write_to_file|replace_file_content)$/i.test(toolName);
+if (isFileModTool) {
+  const targetFile = toolInput.TargetFile || toolInput.file_path || '';
+  const basename = path.basename(targetFile);
+  const ext = path.extname(targetFile).toLowerCase();
 
-// 1. Deployment Guardrail (never deploy without explicit user approval)
+  const isDoc =
+    /^PLAN(\.[\w-]+)?\.md$/i.test(basename) ||
+    targetFile.includes('/docs/') ||
+    ext === '.md' ||
+    ext === '.txt';
+
+  if (!isDoc && ext === '.py') {
+    const hasPlan =
+      fs.existsSync(path.join(cwd, 'PLAN.md')) ||
+      fs.existsSync(path.join(cwd, 'docs', 'PLAN.md'));
+
+    if (!hasPlan) {
+      deny(
+        `[PYTHON BACKEND GRAPH GATE - PLAN FIRST]: No "PLAN.md" found in "${cwd}".\n` +
+        `You MUST create a "PLAN.md" defining API routes, schemas, and migrations before writing Python backend code.`
+      );
+    }
+  }
+}
+
+// 2. GATE: Deployment Guardrail
+const isShellTool = toolName === 'Bash' || toolName === 'run_command';
 const deployRegex = /\b(deploy|apply\s+-f|firebase\s+deploy|gcloud\s+run\s+deploy)\b/i;
 if (isShellTool && deployRegex.test(commandLine)) {
   ask(`Deployment command detected: "${commandLine}". Deployment operations require explicit user approval.`);
 }
 
-// 2. MCP Tools Guardrail (Cloud Run & Firebase writes)
-// Claude Code names MCP tools "mcp__<server>__<tool>"; Antigravity uses a
-// dedicated call_mcp_tool wrapper with ServerName/ToolName fields.
+// 3. GATE: MCP Guardrail
 let mcpServer = '';
 let mcpTool = '';
 if (toolName.startsWith('mcp__')) {
@@ -103,7 +125,7 @@ if (mcpServer === 'firebase-mcp-server' && firestoreWriteRegex.test(mcpTool)) {
   ask(`Firestore mutation via MCP detected: "${mcpTool}". Data modification operations require explicit user approval.`);
 }
 
-// 3. Gitflow Branch Safety Gate (never commit/push directly on main or develop)
+// 4. GATE: Gitflow Branch Safety Gate
 const gitWriteRegex = /\b(git\s+commit|git\s+push|git\s+add|git\s+merge)\b/i;
 if (isShellTool && gitWriteRegex.test(commandLine)) {
   try {
@@ -112,9 +134,8 @@ if (isShellTool && gitWriteRegex.test(commandLine)) {
       deny(`Gitflow Safety Blocked: directly running git add/commit/push/merge on "${activeBranch}" is prohibited. Use a feature/ or bugfix/ branch and merge via Pull Request.`);
     }
   } catch (e) {
-    // Not a git repository, or the command failed — let it proceed.
+    // Not a git repository
   }
 }
 
-// Default: allow tool execution
 allow();

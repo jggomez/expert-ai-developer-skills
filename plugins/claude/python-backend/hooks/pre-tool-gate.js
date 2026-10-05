@@ -1,22 +1,41 @@
 #!/usr/bin/env node
+/**
+ * python-backend PreToolUse gate for Claude Code.
+ * 1. "Plan First" for Python code: If Write or Edit targets a .py file (app/, src/, tests/, or root),
+ *    enforces that an active PLAN.md exists in the workspace.
+ * 2. Deployment Guardrail: Prompts for explicit confirmation before running deployment commands.
+ * 3. Gitflow Branch Safety: Denies committing or pushing directly to main/develop branches.
+ */
 const { execSync } = require('child_process');
 const fs = require('fs');
-
-// Claude Code sets CLAUDE_PLUGIN_ROOT when running plugin hooks; Antigravity
-// does not, so anything else falls back to Antigravity's real PreToolUse
-// contract: a top-level {"decision": "allow"|"deny"|"ask", "reason": ...}
-// (verified against antigravity.google/docs/hooks — this is NOT the same
-// shape as Claude Code's hookSpecificOutput.permissionDecision).
-const isClaudeCode = Boolean(process.env.CLAUDE_PLUGIN_ROOT);
+const path = require('path');
 
 function allow() {
-  if (!isClaudeCode) {
-    console.log(JSON.stringify({ decision: 'allow' }));
-  }
   process.exit(0);
 }
 
-// Read input payload from stdin
+function ask(reason) {
+  console.log(JSON.stringify({
+    hookSpecificOutput: {
+      hookEventName: 'PreToolUse',
+      permissionDecision: 'ask',
+      permissionDecisionReason: reason,
+    },
+  }));
+  process.exit(0);
+}
+
+function deny(reason) {
+  console.log(JSON.stringify({
+    hookSpecificOutput: {
+      hookEventName: 'PreToolUse',
+      permissionDecision: 'deny',
+      permissionDecisionReason: reason,
+    },
+  }));
+  process.exit(0);
+}
+
 let inputData = '';
 try {
   inputData = fs.readFileSync(0, 'utf-8');
@@ -24,9 +43,7 @@ try {
   allow();
 }
 
-if (!inputData.trim()) {
-  allow();
-}
+if (!inputData.trim()) allow();
 
 let payload;
 try {
@@ -35,85 +52,62 @@ try {
   allow();
 }
 
-function ask(reason) {
-  if (isClaudeCode) {
-    console.log(JSON.stringify({
-      hookSpecificOutput: {
-        hookEventName: 'PreToolUse',
-        permissionDecision: 'ask',
-        permissionDecisionReason: reason,
-      },
-    }));
-  } else {
-    console.log(JSON.stringify({ decision: 'ask', reason }));
+const toolName = payload.tool_name || '';
+const toolInput = payload.tool_input || {};
+const cwd = payload.cwd || (payload.workspacePaths && payload.workspacePaths[0]) || process.cwd();
+
+// --- 1. Plan-First Enforcement for Write | Edit on Python files ---
+if (toolName === 'Write' || toolName === 'Edit') {
+  const targetFile = toolInput.file_path || toolInput.path || '';
+  if (targetFile.endsWith('.py')) {
+    const possiblePlanPaths = [
+      path.join(cwd, 'PLAN.md'),
+      path.join(cwd, 'docs', 'PLAN.md'),
+      path.join(cwd, '.agents', 'PLAN.md'),
+      path.join(cwd, '.claude', 'PLAN.md')
+    ];
+    const hasPlan = possiblePlanPaths.some(p => fs.existsSync(p));
+
+    if (!hasPlan) {
+      deny(
+        `[PLAN-FIRST VIOLATION]: Cannot modify Python code in "${targetFile}" without an active "PLAN.md".\n` +
+        `Per Python Backend Architecture standards, you must create and structure a "PLAN.md" ` +
+        `defining architecture, data schemas, API contracts, and subagent assignments before writing or modifying code.`
+      );
+    }
   }
-  process.exit(0);
 }
 
-function deny(reason) {
-  if (isClaudeCode) {
-    console.log(JSON.stringify({
-      hookSpecificOutput: {
-        hookEventName: 'PreToolUse',
-        permissionDecision: 'deny',
-        permissionDecisionReason: reason,
-      },
-    }));
-  } else {
-    console.log(JSON.stringify({ decision: 'deny', reason }));
+// --- 2. Deployment Guardrail (Bash commands) ---
+const commandLine = toolInput.command || '';
+if (toolName === 'Bash' && commandLine) {
+  const deployRegex = /\b(deploy|apply\s+-f|firebase\s+deploy|gcloud\s+run\s+deploy)\b/i;
+  if (deployRegex.test(commandLine)) {
+    ask(`Deployment command detected: "${commandLine}". Deployment operations require explicit user approval.`);
   }
-  process.exit(0);
+
+  // --- 3. Gitflow Branch Safety Gate ---
+  const gitWriteRegex = /\b(git\s+commit|git\s+push|git\s+add|git\s+merge)\b/i;
+  if (gitWriteRegex.test(commandLine)) {
+    try {
+      const activeBranch = execSync('git symbolic-ref --short HEAD', { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+      if (activeBranch === 'main' || activeBranch === 'develop') {
+        deny(`Gitflow Safety Blocked: directly running git add/commit/push/merge on "${activeBranch}" is prohibited. Use a feature/ or bugfix/ branch and merge via Pull Request.`);
+      }
+    } catch (e) {
+      // Not a git repository or detached HEAD — proceed
+    }
+  }
 }
 
-// Normalize across Claude Code (tool_name/tool_input/cwd) and Antigravity
-// (toolCall.name/toolCall.args) payload shapes.
-const toolName = payload.tool_name || payload.toolCall?.name || '';
-const toolInput = payload.tool_input || payload.toolCall?.args || {};
-const commandLine = toolInput.command || toolInput.CommandLine || '';
-const cwd = payload.cwd || toolInput.Cwd || payload.workspacePaths?.[0] || process.cwd();
-
-const isShellTool = toolName === 'Bash' || toolName === 'run_command';
-
-// 1. Deployment Guardrail (never deploy without explicit user approval)
-const deployRegex = /\b(deploy|apply\s+-f|firebase\s+deploy|gcloud\s+run\s+deploy)\b/i;
-if (isShellTool && deployRegex.test(commandLine)) {
-  ask(`Deployment command detected: "${commandLine}". Deployment operations require explicit user approval.`);
-}
-
-// 2. MCP Tools Guardrail (Cloud Run & Firebase writes)
-// Claude Code names MCP tools "mcp__<server>__<tool>"; Antigravity uses a
-// dedicated call_mcp_tool wrapper with ServerName/ToolName fields.
-let mcpServer = '';
-let mcpTool = '';
-if (toolName.startsWith('mcp__')) {
-  const parts = toolName.split('__');
-  mcpServer = parts[1] || '';
-  mcpTool = parts.slice(2).join('__');
-} else if (toolName === 'call_mcp_tool') {
-  mcpServer = toolInput.ServerName || '';
-  mcpTool = toolInput.ToolName || '';
-}
-
-if (mcpServer === 'cloudrun' && /^deploy_/.test(mcpTool)) {
-  ask(`Cloud Run deployment via MCP detected: "${mcpTool}". Deployment operations require explicit user approval.`);
+// --- 4. MCP Tools Guardrail (Cloud Run & Firebase writes) ---
+if (toolName.startsWith('mcp__cloudrun__') && /^deploy_/.test(toolName.replace('mcp__cloudrun__', ''))) {
+  ask(`Cloud Run deployment via MCP detected: "${toolName}". Deployment operations require explicit user approval.`);
 }
 
 const firestoreWriteRegex = /(add|update|delete|set|create_database)/i;
-if (mcpServer === 'firebase-mcp-server' && firestoreWriteRegex.test(mcpTool)) {
-  ask(`Firestore mutation via MCP detected: "${mcpTool}". Data modification operations require explicit user approval.`);
-}
-
-// 3. Gitflow Branch Safety Gate (never commit/push directly on main or develop)
-const gitWriteRegex = /\b(git\s+commit|git\s+push|git\s+add|git\s+merge)\b/i;
-if (isShellTool && gitWriteRegex.test(commandLine)) {
-  try {
-    const activeBranch = execSync('git symbolic-ref --short HEAD', { cwd, encoding: 'utf8' }).trim();
-    if (activeBranch === 'main' || activeBranch === 'develop') {
-      deny(`Gitflow Safety Blocked: directly running git add/commit/push/merge on "${activeBranch}" is prohibited. Use a feature/ or bugfix/ branch and merge via Pull Request.`);
-    }
-  } catch (e) {
-    // Not a git repository, or the command failed — let it proceed.
-  }
+if (toolName.startsWith('mcp__firebase-mcp-server__') && firestoreWriteRegex.test(toolName.replace('mcp__firebase-mcp-server__', ''))) {
+  ask(`Firestore mutation via MCP detected: "${toolName}". Data modification operations require explicit user approval.`);
 }
 
 // Default: allow tool execution

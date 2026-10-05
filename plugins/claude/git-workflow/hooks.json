@@ -1,9 +1,9 @@
 {
-  "description": "Git hygiene: Gitflow branch safety gate, commit message standards, and PR conventions.",
+  "description": "Git hygiene: Gitflow branch safety gate, Conventional Commits validation, and clean merge/rebase verification.",
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash|run_command",
+        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
@@ -12,17 +12,13 @@
           }
         ]
       }
-    ]
-  },
-  "gitflow-branch-safety": {
-    "enabled": true,
-    "PreToolUse": [
+    ],
+    "Stop": [
       {
-        "matcher": "run_command",
         "hooks": [
           {
             "type": "command",
-            "command": "node ./hooks/gitflow-branch-gate.js",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/git-clean-stop-gate.js\"",
             "timeout": 15
           }
         ]

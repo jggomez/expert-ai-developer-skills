@@ -6,7 +6,7 @@ description: Behavioral guidelines to reduce common LLM coding mistakes. Use whe
 # Karpathy Guidelines Skill
 
 ## Overview
-This skill enforces behavioral and architectural restraint to prevent common LLM coding pitfalls, derived from Andrej Karpathy's observations on LLM developer tendencies. It acts as an Architectural Pragmatist and Code Simplicity Sentinel, curbing over-engineering, preventing speculative abstractions, enforcing surgical modifications, and insisting on empirical, test-backed verification.
+This skill enforces behavioral and architectural restraint to prevent common LLM coding pitfalls, derived from Andrej Karpathy's observations on LLM developer tendencies. It acts as an Architectural Pragmatist and Code Simplicity Sentinel, curbing over-engineering, preventing speculative abstractions, enforcing surgical modifications, and insisting on empirical, test-backed verification. It is deterministically backed by the Anti-Lazy Code Gate (`anti-lazy-code-gate.js`) to block placeholder stubs before session completion.
 
 ## When to Use
 ### Trigger Scenarios
@@ -38,7 +38,18 @@ This skill enforces behavioral and architectural restraint to prevent common LLM
 - Do NOT "improve", reformat, or refactor adjacent working code or comments unrelated to the task.
 - Remove variables, imports, and functions that your edits made redundant; leave pre-existing dead code untouched unless requested.
 
-### Rule 4: Goal-Driven Execution & Loop Verification
+### Rule 4: Anti-Lazy Code Policy (Deterministic Gate)
+- Enforce **zero tolerance** for lazy placeholders or incomplete stubbed code:
+  * Prohibited patterns include `TODO: implement later`, `# ... rest of code`, `// ... rest of code`, `pass # placeholder`, `/* unimplemented */`, or bare `raise NotImplementedError`.
+- Provide 100% complete, fully implemented, working code in every single edit.
+- In both runtime ecosystems, this rule is guarded deterministically by `anti-lazy-code-gate.js`: any diff containing placeholder stubs immediately fails the Stop gate with exit code 2.
+
+### Rule 5: Anti-Premature Abstraction (Premature Abstraction Smell)
+- Guard against the **Premature Abstraction Smell**: avoid over-engineering interfaces, generic base classes, factory layers, or strategy patterns when a simple, pure function suffices.
+- Follow the Rule of Three: do not extract an abstraction until at least three concrete instances exist and the duplication causes demonstrable maintenance friction.
+- Three slightly similar lines of transparent code are far superior to a premature indirection layer that complicates debugging.
+
+### Rule 6: Goal-Driven Execution & Loop Verification
 - Establish concrete, verifiable success criteria (e.g. specific tests that must pass) before editing.
 - Loop and iterate until tests pass; never assume victory without running the verification command.
 
@@ -46,21 +57,23 @@ This skill enforces behavioral and architectural restraint to prevent common LLM
 ### Example Prompts
 - *"Review this proposed solution against the Karpathy guidelines: are we overcomplicating the architecture?"*
 - *"Fix this bug surgically without touching or refactoring any adjacent functions."*
-- *"Implement the simplest possible solution for this feature without speculative abstractions."*
+- *"Implement the simplest possible solution for this feature without speculative abstractions or lazy stubs."*
 
 ### Host Execution Instructions
-- **Claude Code**: Keep changes atomic and surgical, avoiding gratuitous refactoring of unrelated code.
-- **Antigravity**: Apply Karpathy principles during the PLAN and BUILD phases of the Loop Engineering workflow.
+- **Claude Code**: Keep changes atomic and surgical. The plugin's Stop hook (`anti-lazy-code-gate.js`) automatically guarantees no lazy placeholder stubs are committed.
+- **Antigravity**: Apply Karpathy principles during the PLAN and BUILD phases, verified by `anti-lazy-code-gate.js` before task completion.
 
 ## Red Flags
+- Leaving `TODO: implement later` or placeholder comments instead of writing full implementations.
 - Adding "future-proofing" flags, hooks, or interfaces for features not explicitly requested.
+- Prematurely creating multi-tiered class hierarchies or factory patterns when a pure function suffices.
 - Refactoring or reformatting adjacent working functions during a focused bug fix.
-- Creating multi-tiered inheritance or factory patterns when a simple 10-line function suffices.
 - Declaring a solution complete without executing the relevant test suite.
 
 ## Verification
 - [ ] Assumptions stated and confirmed before implementing.
 - [ ] Minimum lines of code written to solve the problem (zero speculative abstractions).
+- [ ] Complete code implementations provided (zero lazy stubs; `anti-lazy-code-gate.js` passes cleanly).
 - [ ] Only target files modified; adjacent working code untouched.
 - [ ] Automated tests executed and passing cleanly.
 

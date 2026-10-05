@@ -1,39 +1,44 @@
 ---
-trigger: model_decision
-description: Google Cloud data engineering rules enforcing the 9-stage cycle, batch-first SLAs, BigQuery partition/clustering, and CDC/SCD modeling.
+trigger: always_on
+description: Google Cloud data engineering rules enforcing Graph Engineering DAG, batch-first SLAs, BigQuery partition/clustering, data safety, and CDC/SCD modeling.
 ---
 
-# Google Cloud Data Engineering Rules
+# Google Cloud Data Engineering Rules & Graph Protocol
 
 **Identifier**: `data-engineer-rules`
 
-## 1. The Data Engineering 9-Stage Command Lifecycle
+## 1. The Lakehouse Graph Engineering DAG
 
-Follow this command cycle for Google Cloud analytical and streaming data platforms:
+Every analytical or streaming pipeline must transition through this explicit DAG:
 
-| What you're doing | Command | Key Principle | Primary Focus |
-| :--- | :--- | :--- | :--- |
-| **Define what to build** | `/spec` | Spec before code | Data sources, SLAs (batch vs stream), schema contracts |
-| **Plan how to build it** | `/plan` | Small, atomic tasks | Bronze/Silver/Gold Lakehouse, SCD Type 1/2 modeling |
-| **Build incrementally** | `/build` | One slice at a time | Dataform `.sqlx`, Datastream CDC, BigQuery DDL |
-| **Prove it works** | `/test` | Tests are proof | Data quality assertions, idempotency checks, mock runs |
-| **Set the quality bar** | `/constraints` | Decide it once, enforce it everywhere | IAM governance, CMEK, VPC-SC, column masking |
-| **Review before merge** | `/review` | Improve code health | Schema drift audit, pipeline lineage, DAG dependencies |
-| **Audit performance** | `/perf` | Measure before you optimize | BigQuery slots, shuffle latency, partition pruning |
-| **Simplify the code** | `/code-simplify` | Clarity over cleverness | Eliminate redundant CTEs/joins, clean Dataform models |
-| **Ship to production** | `/ship` | Faster is safer | Cloud Composer DAG release, CI/CD deployment |
+```
+[PLAN FIRST GATE: PLAN.md] ──(Define Sources, SLAs, Schemas)
+          │
+          ▼
+[ARCHITECTURE (Bronze / Silver / Gold Lakehouse & SCD Type 1/2)]
+          │
+          ▼
+[BUILD DDL & MODELS (.sqlx / Datastream CDC / BigQuery DDL)]
+          │
+          ▼
+[TEST & VALIDATE (Quality Assertions, Schema Invariants, Idempotency)]
+          │ (exit 0)
+          ▼
+[GOVERNANCE & AUDIT (IAM, CMEK, VPC-SC, Partition/Cluster Pruning)]
+          │
+          ▼
+[SHIP (Composer / Airflow DAG Release, CI/CD Deployment)]
+```
 
-## 2. Dynamic Entry Points & Sizing
+## 2. Inviolable Role Boundaries & Safety
 
-The data engineer sizes the workflow dynamically:
-- **Ad-hoc Query / Transformation Fix**: Start at `/build` (SQL rewrite) -> `/test` -> `/perf` -> `/ship`.
-- **New Lakehouse Pipeline**: Full sequence starting at `/spec` (SLAs & source schemas).
-- **Expensive / Slow Query**: Start at `/perf` (dry-run & execution timeline) -> `/code-simplify` -> `/test`.
+- **Plan First**: Never write BigQuery DDL or Dataform `.sqlx` models without `PLAN.md` documenting source schemas, ingestion latency SLAs, and schema contracts.
+- **Destructive Operation Ban**: Never execute `DROP TABLE`, `DROP SCHEMA`, or unpartitioned `DELETE FROM ... WHERE 1=1` without explicit user permission.
+- **Mandatory Partitioning & Clustering**: Every BigQuery table must specify:
+  1. Partitioning (ingestion time, timestamp column, or integer range).
+  2. Clustering (up to 4 high-cardinality filter/join columns).
 
-## 3. Data Engineering Constraints
+## 3. SCD & Dimension Modeling Standards
 
-- **Batch-First SLA**: Default to batch (daily/hourly). Introduce streaming (Pub/Sub/Dataflow) only when sub-hour latency is mandatory.
-- **Partitioning & Clustering**: Every BigQuery table must specify partitioning and clustering keys.
-- **No Unbounded Scans**: Never run `SELECT *` without partition filters on production datasets.
-- **Idempotency**: All merge operations and SCD Type 2 pipelines must be deterministic and replayable.
-- **Inspect via MCP**: Verify actual schemas via `bigquery` and `datastream` MCP tools before proposing mutations.
+- For historical dimension tracking, default to **SCD Type 2** (`valid_from`, `valid_to`, `is_current`).
+- Ensure primary key uniqueness and idempotency on all merge and upsert operations.

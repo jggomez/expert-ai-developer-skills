@@ -29,9 +29,26 @@ Package, verify, commit, and prepare production-ready changes for deployment wit
    - For Flutter: check native signing and `--dart-define-from-file` flavors.
    - For Backend: verify zero downtime deployment checklist and user consent.
 
-## 3. Delegation & Tools
-- **Antigravity Subagent**: Delegate to `flutter-release-engineer` (for Flutter) or `pull-request-expert` / `commit-expert`.
-- **Primary Skills**: `commit-expert`, `pull-request-expert`, `flutter-release-engineering`.
+## 3. Subagent Delegation & Role Boundaries
+- **Role Boundary**: Release packaging, final compliance audit, and PR formulation are delegated to specialized engineers before shipping.
+- **Subagent Delegation across Runners**:
+  * **Google Antigravity**:
+    ```python
+    invoke_subagent(
+        name="compliance-verifier",
+        prompt="Perform final release gate audit, verify test proof, and confirm zero policy violations for: <branch>"
+    )
+    ```
+    *(For Flutter release packaging, use `invoke_subagent(name="flutter-release-engineer", prompt="Build and package flavor build matrix...")`)*
+  * **Anthropic Claude Code**:
+    ```python
+    Agent(
+        agent="compliance-verifier",
+        prompt="Perform final release gate audit, verify test proof, and confirm zero policy violations for: <branch>"
+    )
+    ```
+    *(For Flutter release packaging, use `Agent(agent="flutter-release-engineer", prompt="Build and package flavor build matrix...")`)*
+- **Primary Skills**: `commit-expert`, `pull-request-expert`, `compliance-verifier`, `flutter-release-engineering`.
 
 ## 4. Quality Gate Checklist
 - [ ] Full test suite and lint checks pass cleanly.

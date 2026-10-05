@@ -1,62 +1,51 @@
-# Docs and Quality Plugin
+# Docs and Quality Plugin (Claude Code)
 
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
 [![Plugin](https://img.shields.io/badge/Plugin-docs--and--quality-green?style=flat-square)](file:///./)
 
-The `docs-and-quality` plugin packages the repository's stack-agnostic documentation and testing standards as a minimal plugin for **both Antigravity CLI and Claude Code**: no hooks, no MCP servers, no agents — just three skills that already exist in the root `/skills` catalog, with nothing added. Since it's skills-only, the same plugin folder installs unchanged on either host — there's no per-platform format to reconcile.
-
-> **Maintaining the bundled skills**: `skills/` below is a physical copy of the matching directories in the root `/skills` catalog. After editing any of these three skills under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo root to re-sync this copy. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills` fails CI if the two ever drift.
+The `docs-and-quality` plugin packages documentation standards, testing methodologies, and Andrej Karpathy behavioral guidelines for **Claude Code**. It includes deterministic lifecycle stop gates to enforce anti-lazy code policies (blocking placeholder stubs).
 
 ---
 
 ## 1. Directory Tree & Architecture
 
 ```
-plugins/docs-and-quality/
+plugins/claude/docs-and-quality/
 ├── README.md                       # This usage manual
-├── plugin.json                     # Required plugin metadata descriptor (Antigravity, plugin root)
 ├── .claude-plugin/
-│   └── plugin.json                 # Same metadata — Claude Code requires the manifest here, not at plugin root
+│   └── plugin.json                 # Claude Code plugin manifest
+├── hooks.json                      # Hook registrations
+├── hooks/
+│   └── anti-lazy-code-gate.js      # Stop hook blocking TODO stubs & placeholders
 └── skills/
     ├── documentation-expert/       # Diátaxis framework & Mermaid diagram standards
     ├── testing-expert/             # AAA pattern, hermetic tests, Gherkin/BDD syntax
     └── guidelines-karpathy/        # Behavioral checklist to avoid over-engineering & LLM pitfalls
 ```
 
-None of these three skills reference Python, a specific framework, or a specific host's tool names — they apply to any language and either Antigravity or Claude Code.
-
 ---
 
 ## 2. Bundled Skills (3 Packaged Modules)
 
-1. **`documentation-expert`**: Diátaxis documentation hierarchy, Mermaid.js diagram guides, and a `validate_docs.py` link/path checker.
-2. **`testing-expert`**: Arrange-Act-Assert pattern, hermetic test boundaries, Gherkin BDD syntax, and a `validate_gherkin.py` syntax checker.
-3. **`guidelines-karpathy`**: Behavioral checklist to keep changes surgical, avoid speculative abstractions, and prevent common LLM coding pitfalls.
+1. **`documentation-expert`**: Diátaxis documentation hierarchy, Mermaid.js diagram guides, and `validate_docs.py`.
+2. **`testing-expert`**: Arrange-Act-Assert pattern, hermetic test boundaries, Gherkin BDD syntax, and `validate_gherkin.py`.
+3. **`guidelines-karpathy`**: Behavioral checklist to keep changes surgical, avoid speculative abstractions, prevent common LLM coding pitfalls, and enforce anti-lazy code standards.
 
 ---
 
-## 3. Example Prompts
+## 3. Lifecycle Hooks & Deterministic Gates
 
-- "Write a README for this service following the Diátaxis framework, with a Mermaid diagram of the architecture." (`documentation-expert`)
-- "Check this documentation for broken relative links and absolute path leaks." (`documentation-expert`)
-- "Write Gherkin BDD scenarios for the password-reset flow, covering the happy path and expired-token case." (`testing-expert`)
-- "Review these tests for hermeticity — are any of them hitting a real network call?" (`testing-expert`)
-- "Before we add this abstraction, check it against the Karpathy guidelines — do we actually need it yet?" (`guidelines-karpathy`)
+| Hook Event | Script | Behavior |
+| :--- | :--- | :--- |
+| **`Stop`** | `hooks/anti-lazy-code-gate.js` | Inspects git diffs before session termination. Scans for lazy placeholders (`TODO: implement later`, `# ... rest of code`, `pass # placeholder`, `/* unimplemented */`). Blocks exit (exit code 2) if stubs are detected. |
 
 ---
 
 ## 4. Installation
 
-**Antigravity CLI** — global only, via the CLI:
+In Claude Code, install from marketplace or local path:
 ```bash
-agy plugin install ./plugins/docs-and-quality
-```
-
-**Claude Code** — global:
-```bash
-cp -r ./plugins/docs-and-quality ~/.claude/plugins/docs-and-quality
-```
-**Claude Code** — project-scoped, no install/copy:
-```bash
-claude --plugin-dir ./plugins/docs-and-quality
+/plugin install docs-and-quality
+# or local:
+claude plugin install plugins/claude/docs-and-quality
 ```

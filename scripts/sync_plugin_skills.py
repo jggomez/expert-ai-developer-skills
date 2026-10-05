@@ -2,19 +2,28 @@
 """Sync canonical skills from /skills into each plugin's bundled copy.
 
 Every plugin ships a physical copy of the /skills subset it needs so it
-stays self-contained when distributed on its own. Run this after editing any
-bundled skill so both copies stay identical (enforced by
-tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills).
+stays self-contained when distributed on its own.
+
+Synchronizes canonical /skills into BOTH:
+  - plugins/antigravity/<plugin>/skills/
+  - plugins/claude/<plugin>/skills/
+
+When copying to plugins/claude/, tool sanitization is applied to ensure no
+Antigravity tool names (run_command, write_to_file, replace_file_content,
+invoke_subagent, manage_subagents) are introduced into plugins/claude/.
 
 Usage: python3 scripts/sync_plugin_skills.py
 """
+import os
+import re
 import shutil
 import sys
 from pathlib import Path
 
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
 SOURCE_SKILLS_DIR = WORKSPACE_ROOT / "skills"
-PLUGINS_DIR = WORKSPACE_ROOT / "plugins" / "antigravity"
+ANTIGRAVITY_PLUGINS_DIR = WORKSPACE_ROOT / "plugins" / "antigravity"
+CLAUDE_PLUGINS_DIR = WORKSPACE_ROOT / "plugins" / "claude"
 
 # Must match each plugin's "Bundled Skills" list in its own README.md
 PLUGIN_BUNDLED_SKILLS = {
@@ -79,10 +88,78 @@ PLUGIN_BUNDLED_SKILLS = {
 
 IGNORE = shutil.ignore_patterns(".DS_Store", "__pycache__", "*.pyc")
 
+FORBIDDEN_CLAUDE_TOOLS = [
+    "run_command",
+    "write_to_file",
+    "replace_file_content",
+    "invoke_subagent",
+    "manage_subagents",
+]
 
-def sync_skill(plugin: str, name: str) -> bool:
+
+def sanitize_claude_content(text: str) -> str:
+    """Sanitizes Antigravity tool references into Claude Code native equivalents."""
+    # 1. invoke_subagent invocations
+    text = re.sub(
+        r'invoke_subagent\(name="([^"]+)",\s*prompt="([^"]+)"\)',
+        r'Agent(agent="\1", prompt="\2")',
+        text,
+    )
+    text = re.sub(
+        r'invoke_subagent\(name="([^"]+)"\)',
+        r'Agent(agent="\1")',
+        text,
+    )
+    text = re.sub(
+        r'invoke_subagent\(([^)]+)\)',
+        r'Agent(\1)',
+        text,
+    )
+
+    # 2. Bare tool name replacements
+    text = re.sub(r'\binvoke_subagent\b', 'Agent', text)
+    text = re.sub(r'\bmanage_subagents\b', 'Agent', text)
+    text = re.sub(r'\bwrite_to_file\b', 'Write', text)
+    text = re.sub(r'\breplace_file_content\b', 'Edit', text)
+    text = re.sub(r'\brun_command\b', 'Bash', text)
+
+    return text
+
+
+def sanitize_claude_skill_dir(target_dir: Path) -> None:
+    """Walks the copied skill directory and replaces Antigravity tool names in text files."""
+    for root, _, files in os.walk(target_dir):
+        for fname in files:
+            fpath = Path(root) / fname
+            # Only process text-like files
+            if fpath.suffix.lower() in {".md", ".py", ".sh", ".json", ".yaml", ".yml", ".txt", ".sql"}:
+                try:
+                    content = fpath.read_text(encoding="utf-8")
+                except UnicodeDecodeError:
+                    continue
+
+                sanitized = sanitize_claude_content(content)
+                if sanitized != content:
+                    fpath.write_text(sanitized, encoding="utf-8")
+
+                # Verify no forbidden Antigravity tools remain
+                for forbidden in FORBIDDEN_CLAUDE_TOOLS:
+                    if forbidden in sanitized:
+                        print(
+                            f"WARNING: Forbidden tool '{forbidden}' found in {fpath.relative_to(WORKSPACE_ROOT)}",
+                            file=sys.stderr,
+                        )
+
+
+def sync_skill(plugin: str, name: str, ecosystem: str) -> bool:
     source = SOURCE_SKILLS_DIR / name
-    target = PLUGINS_DIR / plugin / "skills" / name
+
+    if ecosystem == "antigravity":
+        target = ANTIGRAVITY_PLUGINS_DIR / plugin / "skills" / name
+    elif ecosystem == "claude":
+        target = CLAUDE_PLUGINS_DIR / plugin / "skills" / name
+    else:
+        raise ValueError(f"Unknown ecosystem: {ecosystem}")
 
     if not source.is_dir():
         print(f"ERROR: {name} not found under {SOURCE_SKILLS_DIR}", file=sys.stderr)
@@ -91,6 +168,10 @@ def sync_skill(plugin: str, name: str) -> bool:
     if target.is_dir():
         shutil.rmtree(target)
     shutil.copytree(source, target, ignore=IGNORE)
+
+    if ecosystem == "claude":
+        sanitize_claude_skill_dir(target)
+
     return True
 
 
@@ -98,8 +179,15 @@ def main() -> None:
     failed = False
     for plugin, skills in PLUGIN_BUNDLED_SKILLS.items():
         for name in skills:
-            if sync_skill(plugin, name):
-                print(f"[{plugin}] synced {name}")
+            # Sync to Antigravity
+            if sync_skill(plugin, name, "antigravity"):
+                print(f"[antigravity/{plugin}] synced {name}")
+            else:
+                failed = True
+
+            # Sync to Claude Code
+            if sync_skill(plugin, name, "claude"):
+                print(f"[claude/{plugin}] synced {name}")
             else:
                 failed = True
 

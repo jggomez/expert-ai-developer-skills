@@ -102,16 +102,15 @@ plugins/senior-dev-flutter/
 
 ## 5. The Agents & Execution Policies
 
-Five host-neutral subagents (`model: inherit`, explicit `subagent`/`mainAgent`,
-no `tools` key — load in both Claude Code and Antigravity):
+Five specialized subagents for Claude Code (`model: inherit`, explicit tools declaration):
 
-| Agent | Role | Execution Policy | Typical Action |
+| Agent | Role | Invocation | Typical Tools |
 | :--- | :--- | :--- | :--- |
-| **`flutter-feature-orchestrator`** (`mainAgent`) | Sizes a Flutter task and routes phases. Delegates every "how" to an official skill. | `off` | `invoke_subagent`, `send_message` |
-| **`flutter-architect`** | Chooses state management, draws module boundaries, records ADRs. | `auto` | `write_to_file`, `run_command` |
-| **`flutter-implementer`** | TDD implementation via official `flutter-*`/`dart-*` skills; drives perf fixes. | `auto` | `run_command`, `replace_file_content` |
-| **`flutter-reviewer`** | Runs tool baseline, walks `flutter-review-checklist`, checks ADR conformance. | `auto` | `run_command`, `replace_file_content` |
-| **`flutter-release-engineer`** | Config, signing, build matrix, versioning, OTA, and SDK/dependency upgrades. | `auto` | `run_command`, `replace_file_content` |
+| **`flutter-feature-orchestrator`** | Sizes a Flutter task and routes phases. Delegates every "how" to an official skill. | Main Agent | `Agent`, `Write`, `Edit`, `Read`, `Bash` |
+| **`flutter-architect`** | Chooses state management, draws module boundaries, records ADRs. | `Agent` | `Write`, `Edit`, `Read`, `Bash` |
+| **`flutter-implementer`** | TDD implementation via official `flutter-*`/`dart-*` skills; drives perf fixes. | `Agent` | `Write`, `Edit`, `Read`, `Bash` |
+| **`flutter-reviewer`** | Runs tool baseline, walks `flutter-review-checklist`, checks ADR conformance. | `Agent` | `Read`, `Bash`, `Glob`, `Grep` |
+| **`flutter-release-engineer`** | Config, signing, build matrix, versioning, OTA, and SDK/dependency upgrades. | `Agent` | `Write`, `Edit`, `Read`, `Bash` |
 
 ---
 
@@ -137,8 +136,8 @@ The Flutter subagents and orchestrator execute along the 9-stage engineering cyc
 
 | Event | Hook | Behavior |
 | :--- | :--- | :--- |
-| `PreToolUse` (`Bash` / `run_command`) | `flutter-pre-tool-gate.js` | On `main` / `master` / `develop`, **denies** `flutter build appbundle\|aab\|ipa` (store artifacts belong in CI) and `(flutter\|dart) pub upgrade --major-versions` (needs a branch + ADR). Silent on any other command, non-git, or non-Flutter repo. |
-| `Stop` | `flutter-stop-gate.js` | If the repo is a Flutter project and `dart` is on PATH, runs `dart analyze`; a failure blocks finishing (Claude Code: exit 2; Antigravity: `{"decision":"continue"}`) with the analyzer output and a reminder to run `flutter test`. No-op otherwise. |
+| `PreToolUse` (`Bash` / `Write` / `Edit`) | `flutter-pre-tool-gate.js` | On `main` / `master` / `develop`, **denies** `flutter build appbundle\|aab\|ipa` (store artifacts belong in CI) and `(flutter\|dart) pub upgrade --major-versions` (needs a branch + ADR). Enforces Plan-First on Dart edits. Silent on any other command, non-git, or non-Flutter repo. |
+| `Stop` | `flutter-stop-gate.js` | If the repo is a Flutter project and `dart` is on PATH, runs `dart analyze`; a failure blocks finishing (Claude Code: exit 2) with the analyzer output and a reminder to run `flutter test`. No-op otherwise. |
 
 Host is detected via `CLAUDE_PLUGIN_ROOT`; each hook emits the decision shape the
 host expects.

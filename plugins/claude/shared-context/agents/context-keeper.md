@@ -39,9 +39,7 @@ Follow the `context-restore` skill for loading and the `context-capture` skill f
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto`. You execute directly on the workspace filesystem (no container sandbox).
-- **Tool Mapping**:
-  - In **Google Antigravity**: Use `run_command` to execute context helper scripts (`context-restore`, `context-capture`), and `replace_file_content` / `write_to_file` for updating context markdown files.
-  - In **Claude Code**: Use `Bash` for script execution and `Edit` / `Write` for file modifications.
+- **Tool Mapping**: Use `Bash` for context helper script execution (`context-restore`, `context-capture`), `Read` for inspecting sessions, and `Edit` / `Write` for file modifications.
 - Maintain consistent UTF-8 formatting and valid markdown structures across all `context/` entries.
 
 # Inputs, Outputs & Hand-off Protocol

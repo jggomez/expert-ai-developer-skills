@@ -1,7 +1,7 @@
 # Workflow: Test Suite Execution & Coverage Verification
 
 **Identifier**: `test-execution-workflow`  
-**Purpose**: Step-by-step playbook to locate, configure, run, and audit unit, integration, and coverage tests in any project workspace to guarantee code correctness, leveraging Antigravity background tasks and MCP tools.
+**Purpose**: Step-by-step playbook to locate, configure, run, and audit unit, integration, and coverage tests in any project workspace to guarantee code correctness, leveraging subagent delegation and MCP tools.
 
 ---
 
@@ -12,7 +12,28 @@
 
 ---
 
-## 2. Step-by-Step Workflow
+## 2. Subagent Delegation & Role Boundaries
+- **Role Boundary**: The Lead Orchestrator delegates test execution and verification report authoring to `qa-tester` (or `flutter-implementer`).
+- **Subagent Delegation across Runners**:
+  * **Google Antigravity Runner**:
+    ```python
+    invoke_subagent(
+        name="qa-tester",
+        prompt="Execute targeted and full test suites with coverage report for: <scope>"
+    )
+    ```
+  * **Anthropic Claude Code Runner**:
+    ```python
+    Agent(
+        agent="qa-tester",
+        prompt="Execute targeted and full test suites with coverage report for: <scope>"
+    )
+    ```
+- **Primary Skills**: `test-driven-development`, `testing-expert`, `qa-tester`.
+
+---
+
+## 3. Step-by-Step Workflow
 
 ```mermaid
 graph TD
@@ -31,12 +52,13 @@ graph TD
 
 ### Step 1: Locate Test Directory
 * Find where tests are stored (usually `tests/`, `spec/`, or files ending in `*.test.js`, `test_*.py`).
-* Use the `@` mention menu to inspect the files. Verify that test files map to the implementation files modified (e.g., `tests/test_auth.py` matches `src/auth.py`).
+* Verify that test files map to the implementation files modified (e.g., `tests/test_auth.py` matches `src/auth.py`).
 
 ### Step 2: Identify Test Runner & Configuration
 * Look for runner configuration files in the root:
   * Python: `pytest.ini`, `setup.cfg`, `pyproject.toml`
   * JS/TS: `jest.config.js`, `vitest.config.ts`
+  * Dart: `pubspec.yaml`
   * Go: `go.mod`
 * Identify the exact test runner execution command.
 
@@ -48,21 +70,20 @@ graph TD
   # Node.js (Jest)
   npx jest tests/auth.test.js -t "should login user"
   ```
-* For UI components, if a browser-automation MCP server is configured, run the app locally and use its tools (e.g. screenshot capture, a Lighthouse audit) to verify visual correctness.
 
 ### Step 4: Debug Failing Tests
 If a test fails, follow this diagnosis sequence:
 1. **Examine Assertions**: Read the traceback output. Isolate whether it is a value assertion mismatch, a Type/Attribute error, or a timeout.
-2. **Review Mocks**: If the test hits an external API or database, ensure the request is properly mocked (e.g., using `pytest-mock`, `nock`, or the Firestore emulator for Firebase-backed code).
+2. **Review Mocks**: If the test hits an external API or database, ensure the request is properly mocked.
 3. **Isolate Code**: Run the failing test in verbose mode with stdout capturing enabled:
    ```bash
    pytest tests/test_auth.py -s -vv
    ```
 4. **Fix & Re-run**: Make targeted adjustments in the source code or mock files, and re-run the targeted test.
 
-### Step 5: Run the Full Test Suite via Background Task
+### Step 5: Run the Full Test Suite
 * Run the global project suite to verify no regressions were introduced elsewhere.
-* **Antigravity Best Practice**: Run the full test suite in the background and wait for its completion notification instead of polling the terminal in a loop.
+* Produce empirical evidence with `exit code 0`.
 
 ### Step 6: Verify Code Coverage
 * Execute coverage reporting to check that new statements, branches, and functions are covered:
@@ -73,10 +94,10 @@ If a test fails, follow this diagnosis sequence:
 
 ---
 
-## 3. Quality Gate & Verification
+## 4. Quality Gate & Verification
 
 The testing workflow is considered successful only when:
 - [ ] 100% of tests pass (0 failures, 0 errors, 0 pending regressions).
 - [ ] Code coverage threshold is met and verified.
-- [ ] Test execution logs are outputted and validated.
-- [ ] **Editor Stop Hook**: On session termination, the project's automatic `Stop` lifecycle hook runs `verify_tests.py`. If tests fail, the hook blocks task completion.
+- [ ] Test execution logs are outputted with empirical proof (`exit code 0`).
+- [ ] Stop lifecycle hook (`stop-gate.js` / `verify_tests.py`) passes cleanly.

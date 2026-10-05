@@ -1,20 +1,46 @@
 # Expert AI Agent Skills Catalog
 
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
-[![Skills Count](https://img.shields.io/badge/Skills-35%20Optimized-orange?style=flat-square)](file:///./)
+[![Skills Count](https://img.shields.io/badge/Skills-35%20Canonical%20Skills-orange?style=flat-square)](file:///./)
+[![Ecosystem](https://img.shields.io/badge/Distribution-Antigravity%20%26%20Claude-green?style=flat-square)](../plugins)
 
-This directory contains a premium catalog of **35 agent skills** designed to automate code quality checks, enforce programming best practices, detect code smells, validate commit history, and implement self-correcting development loops. Every `SKILL.md` here is platform-neutral (no Antigravity- or Claude-Code-specific tool names in its instructions), so the same catalog works whether you're on Google Antigravity (AGY) or Claude Code.
-
-Nine plugins in this repository bundle physical copies of a subset of these skills so they can be distributed standalone: [`python-backend`](../plugins/antigravity/python-backend) (11 backend skills), [`senior-dev`](../plugins/antigravity/senior-dev) (8 SDLC-orchestration skills), [`git-workflow`](../plugins/antigravity/git-workflow) (2), [`docs-and-quality`](../plugins/antigravity/docs-and-quality) (3), [`multi-agent-ops`](../plugins/antigravity/multi-agent-ops) (2), [`senior-data-engineer`](../plugins/antigravity/senior-data-engineer) (2, GCP-focused), [`sql-query-optimizer`](../plugins/antigravity/sql-query-optimizer) (2, BigQuery + generic SQL), [`shared-context`](../plugins/antigravity/shared-context) (2, cross-agent working memory), and [`senior-dev-flutter`](../plugins/antigravity/senior-dev-flutter) (7, the senior Flutter layer on top of the official Flutter/Dart skill packs). Edit skills here, then run `python3 scripts/sync_plugin_skills.py` to re-sync all of them.
+This directory contains a premium catalog of **35 canonical agent skills** designed to automate code quality checks, enforce programming best practices, detect code smells, validate commit history, and implement self-correcting development loops. Every `SKILL.md` in `/skills/` is platform-neutral, adhering to the open [Agent Skills Standard (`agentskills.io`)](https://agentskills.io).
 
 ---
 
-## 1. Quick Installation & Setup
+## 1. Dual-Plugin Distribution & Synchronization
+
+All 9 plugins across both runtime ecosystems bundle physical copies of the skills they need to stay completely self-contained when installed:
+
+* **Google Antigravity**: `plugins/antigravity/<plugin>/skills/` (receives exact physical copies of canonical skills).
+* **Anthropic Claude Code**: `plugins/claude/<plugin>/skills/` (receives physical copies with automated tool sanitization, mapping Antigravity tools to native Claude Code tools: `run_command` &rarr; `Bash`, `write_to_file` &rarr; `Write`, `replace_file_content` &rarr; `Edit`, `invoke_subagent` &rarr; `Agent`).
+
+### Bundled Skills per Plugin (9 Plugins)
+1. **`senior-dev`** (8 skills): `senior-dev-orchestrator`, `product-analyst`, `senior-architect-engineering`, `code-implementer`, `code-smells-expert`, `refactoring-code-expert`, `qa-tester`, `compliance-verifier`.
+2. **`senior-dev-flutter`** (7 skills): `flutter-senior-orchestration`, `flutter-architecture-decisions`, `flutter-review-checklist`, `flutter-test-strategy`, `flutter-performance-profiling`, `flutter-release-engineering`, `flutter-upgrade-migration`.
+3. **`python-backend`** (11 skills): `python-expert`, `test-driven-development`, `pull-request-expert`, `code-smells-expert`, `refactoring-code-expert`, `security-audit`, `performance-scalability`, `database-migration-expert`, `senior-architect-engineering`, `design-spec-expert`, `build-and-ci-gates`.
+4. **`senior-data-engineer`** (2 skills): `gcp-data-engineering`, `cdc-scd-patterns`.
+5. **`sql-query-optimizer`** (2 skills): `bigquery-query-optimization`, `sql-query-optimization`.
+6. **`shared-context`** (2 skills): `context-capture`, `context-restore`.
+7. **`git-workflow`** (2 skills): `commit-expert`, `pull-request-expert`.
+8. **`docs-and-quality`** (3 skills): `documentation-expert`, `testing-expert`, `guidelines-karpathy`.
+9. **`multi-agent-ops`** (2 skills): `loop-engineering`, `repo-research`.
+
+### Synchronization Command
+Canonical skills are authored and edited in `/skills/`. Run the synchronization script to propagate edits to all 18 plugin locations across both ecosystems:
+
+```bash
+python3 scripts/sync_plugin_skills.py
+```
+
+---
+
+## 2. Quick Installation & Setup via Skills CLI
 
 These skills fully comply with the [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, you can install any of these 35 skills out-of-the-box using Vercel's official, standard `skills` CLI.
 
 ### Option A: Standard Installation (Recommended)
-This is the recommended and simplest way to discover, add, and manage these skills. There's no need for local configuration or downloading extra packages. Simply run:
+This is the simplest way to discover, add, and manage these skills:
 
 ```bash
 # List all 35 skills available in our repository
@@ -23,16 +49,14 @@ npx skills add jggomez/expert-ai-developer-skills --list
 # Install a specific skill (e.g. python-expert) in the active project (.agents/skills)
 npx skills add jggomez/expert-ai-developer-skills --skill python-expert
 
-# Install a specific skill globally on your system (so all your workspaces can load it)
+# Install a specific skill globally on your system
 npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
 
 # Install ALL 35 skills in the active project
 npx skills add jggomez/expert-ai-developer-skills
 ```
 
-### Option B: Manual Copy (Fallback)
-If you prefer to copy the directories manually:
-
+### Option B: Manual Setup
 ```bash
 # Manual global installation
 mkdir -p ~/.gemini/config/skills
@@ -41,9 +65,7 @@ cp -r ./skills/* ~/.gemini/config/skills/
 
 ---
 
-## 2. In-Depth Skills Catalog Reference
-
-This table provides a comprehensive overview of every modular skill, its core purpose, included reference materials, and accompanying automated execution scripts:
+## 3. In-Depth Skills Catalog Reference (35 Skills)
 
 | Skill Directory | Core Purpose & Best Practices | Reference Guides | Key Automation Scripts & Usage |
 | :--- | :--- | :--- | :--- |
@@ -53,12 +75,12 @@ This table provides a comprehensive overview of every modular skill, its core pu
 | **`code-implementer`** | Writes production code utilizing strict TDD Red-Green-Refactor cycles. | `SKILL.md` | TDD implementation guides. |
 | **`compliance-verifier`** | Audits NFRs, security gates, and performs final release readiness checks. | `SKILL.md` | Compliance checklist workflows. |
 | **`python-expert`** | Enforces PEP 8 styling, static typing (`mypy`), generator stream tuning, and `__slots__` memory footprint reduction. | `references/python-patterns.md` | Guides AST-based memory checks and object tuning. |
-| **`test-driven-development`** | Establishes the Red-Green-Refactor testing lifecycle and Arrange-Act-Assert (AAA) pattern implementation. | `references/testing-patterns.md` | `verify_tests.py` (Runs test suite and prints coverage summaries). |
-| **`loop-engineering`** | Orchestrates manager-worker topologies, parallel execution in isolated workspaces, and automated code review crons. | `references/loop-architecture.md` | `run_parallel_agents.py` (Manager orchestrator)<br>`pr_cron_reviewer.py` (30-min review cron). |
+| **`test-driven-development`** | Establishes the Red-Green-Refactor testing lifecycle, AAA patterns, cross-language patterns (`pytest`, Flutter `testWidgets`, Dataform). | `references/testing-patterns.md` | `verify_tests.py` (Runs test suite and prints coverage summaries). |
+| **`loop-engineering`** | Orchestrates manager-worker topologies, parallel execution in isolated workspaces, self-correction protocol with 3-loop cap, and PR review crons. | `references/loop-architecture.md` | `run_parallel_agents.py` (Manager orchestrator)<br>`pr_cron_reviewer.py` (PR review cron). |
 | **`documentation-expert`** | Standardizes structural hierarchy and graphical representations using the Diátaxis framework and Mermaid.js. | `references/diataxis-framework.md`<br>`references/mermaid-guide.md` | `validate_docs.py` (Statically checks markdown layouts and verifies 0 absolute path leaks). |
 | **`testing-expert`** | BDD Gherkin specs and general testing best practices (AAA, hermeticity, mocking borders). | `references/testing-best-practices.md`<br>`references/gherkin-syntax.md` | `validate_gherkin.py` (Statically checks Gherkin `.feature` syntax consistency). |
 | **`pull-request-expert`** | Enforces atomic code integration, size limit constraints, and standard PR templates. | `references/pr-best-practices.md` | `validate_pr_content.py` (Audits branch naming conventions and conventional commits). |
-| **`commit-expert`** | Configures git history quality checkpoints and local commit-msg hooks. | `references/commit-guidelines.md`<br>`references/git-hooks-setup.md` | `validate_commit_msg.py` (Checks commit formats against Conventional Commits standards). |
+| **`commit-expert`** | Configures git history quality checkpoints, Conventional Commits regex, and local commit-msg hooks aligned with branch gates. | `references/commit-guidelines.md`<br>`references/git-hooks-setup.md` | `validate_commit_msg.py` (Checks commit formats against Conventional Commits standards). |
 | **`code-smells-expert`** | Identifies God classes, long methods, high conditional complexities, and coding anti-patterns. | `references/smells-catalog.md` | `detect_smells.py` (AST-based static analyzer for code smell scanning). |
 | **`refactoring-code-expert`** | Outlines safe structural improvements (extract function, introduce parameter object). | `references/refactoring-techniques.md` | `run_tests.py` (Detects and executes tests before/after refactoring). |
 | **`security-audit`** | Scans code against OWASP Top 10 vulnerabilities, injection flaws, and hardcoded API tokens. | `references/owasp-checklist.md` | `secret_scanner.py` (Regex scanner to audit code for leaked credentials). |
@@ -68,7 +90,7 @@ This table provides a comprehensive overview of every modular skill, its core pu
 | **`design-spec-expert`** | Scaffolds high-level Software Design Documents (SDDs) before starting coding tasks. | `references/design-standards.md` | `create_sdd.py` (Generates design templates). |
 | **`build-and-ci-gates`** | Enforces local check gates, multi-stage Docker builds, and Git pre-commit triggers. | `references/ci-templates.md` | `run_checks.py` (Black/Ruff linter gate wrapper)<br>`pre_commit_quality_gate.py` (Pre-commit hook). |
 | **`repo-research`** | Automatically maps workspace packages, dependency trees, and sitemaps. | `references/research-patterns.md` | `repo_analyzer.py` (Statically generates up-to-date repository indexes). |
-| **`guidelines-karpathy`** | Behavioral quality checklist to reduce common LLM coding pitfalls. | `references/karpathy-checklist.md` | Prevents over-engineering and keeps logic atomic. |
+| **`guidelines-karpathy`** | Behavioral quality checklist, Anti-Lazy Code policy (anti-lazy-code-gate.js), and Anti-Premature Abstraction rules. | `references/karpathy-checklist.md` | Prevents over-engineering and keeps logic atomic. |
 | **`gcp-data-engineering`** | Architecture decisions for GCP pipelines: lake/warehouse design, batch vs. streaming, orchestration tool choice, BigQuery cost/performance. | `references/gcp-data-stack.md` | Guides Datastream/Dataform/Pub-Sub/Airflow selection via a decision checklist. |
 | **`cdc-scd-patterns`** | Change Data Capture via Datastream and Slowly Changing Dimension (Type 0-6) modeling in BigQuery/Dataform. | `references/scd-type2-sql.md` | `scaffold_scd2_dataform.py` (Generates a parameterized SCD Type 2 `.sqlx` template). |
 | **`bigquery-query-optimization`** | Diagnoses BigQuery query plans (skew, shuffle) and rewrites queries: partition/cluster pruning, JOIN ordering, approximate functions, SQL vs. JS UDFs. | `references/bigquery-optimization-patterns.md` | `lint_sql_query.py` (Scans directories/code for SQL anti-patterns, no live connection needed). |
@@ -85,42 +107,42 @@ This table provides a comprehensive overview of every modular skill, its core pu
 
 ---
 
-## 3. Automation Scripts Reference Manual
+## 4. Automation Scripts Reference Manual
 
 Every script in the catalog is self-contained, executable, and designed to run from the command line:
 
-### 3.1 Gherkin Feature Validator
+### 4.1 Gherkin Feature Validator
 Checks Gherkin feature files for syntax errors:
 ```bash
 python3 ./skills/testing-expert/scripts/validate_gherkin.py
 ```
 
-### 3.2 PR and Commit Validator
+### 4.2 PR and Commit Validator
 Validates local git branches and recent commit histories:
 ```bash
 python3 ./skills/pull-request-expert/scripts/validate_pr_content.py
 ```
 
-### 3.3 Commit Message Hook Validator
+### 4.3 Commit Message Hook Validator
 Validates formatting of commit message files (used as a Git `commit-msg` hook):
 ```bash
 python3 ./skills/commit-expert/scripts/validate_commit_msg.py .git/COMMIT_EDITMSG
 ```
 
-### 3.4 Pre-Commit Quality Gate
+### 4.4 Pre-Commit Quality Gate
 Runs all linting, testing, and secret scanner checks on staged changes:
 ```bash
 python3 ./skills/build-and-ci-gates/scripts/pre_commit_quality_gate.py
 ```
 
-### 3.5 Documentation Link & Hierarchy Validator
+### 4.5 Documentation Link & Hierarchy Validator
 Checks markdown layout nesting and validates relative paths:
 ```bash
 python3 ./skills/documentation-expert/scripts/validate_docs.py
 ```
 
-### 3.6 Shared Context Store (cross-agent hand-off)
-Records/loads what a session did, decided, and how, so a different AI agent can resume it. Stdlib-only; `context/` defaults to the current repo.
+### 4.6 Shared Context Store (cross-agent hand-off)
+Records/loads what a session did, decided, and how, so a different AI agent can resume it. Stdlib-only; `context/` defaults to the current repo:
 ```bash
 python3 ./skills/context-capture/scripts/context_snapshot.py --task "<one line>" --agent "<model id>"
 python3 ./skills/context-capture/scripts/context_rollup.py     # decisions -> architecture.md + retention
@@ -128,52 +150,8 @@ python3 ./skills/context-capture/scripts/context_pack.py --auto # compress all b
 python3 ./skills/context-restore/scripts/context_list.py --json # what prior sessions exist (used by the hooks)
 ```
 
-### 3.7 Flutter Project Audit
-File-only audit of a Flutter/Dart project (no `flutter`/`dart` binary needed): SDK constraints, lint strictness, test & coverage setup, flavors, and `lib/` smells.
+### 4.7 Flutter Project Audit
+File-only audit of a Flutter/Dart project (no `flutter`/`dart` binary needed): SDK constraints, lint strictness, test & coverage setup, flavors, and `lib/` smells:
 ```bash
 python3 ./skills/flutter-review-checklist/scripts/flutter_project_audit.py [PROJECT_DIR] [--json] [--strict]
 ```
-
----
-
-## 4. Example Activation Prompts
-
-A skill activates when its `description` matches what you ask for — you don't need to name it explicitly, but doing so (as in these examples) guarantees the right one loads. Type any of these directly in a Claude Code or Antigravity chat:
-
-| Skill | Example Prompt |
-| :--- | :--- |
-| `product-analyst` | "Use the product-analyst skill to turn this feature request into a PRD with functional and non-functional requirements." |
-| `qa-tester` | "Write an E2E test suite for the checkout flow and map each test to its requirement." |
-| `senior-dev-orchestrator` | "Orchestrate the full SDLC for adding a password-reset feature — requirements, design, implementation, tests, and a final audit." |
-| `code-implementer` | "Implement the new /invoices endpoint using strict TDD — write the failing test first." |
-| `compliance-verifier` | "Audit this branch for release readiness: NFRs, security gates, and test coverage." |
-| `python-expert` | "Review this Python module for PEP 8 compliance, type hints, and memory efficiency." |
-| `test-driven-development` | "Add a new feature to the billing module following Red-Green-Refactor." |
-| `loop-engineering` | "Provision isolated worktrees for these 3 features so I can dispatch a subagent per branch." |
-| `documentation-expert` | "Write a README for this service following the Diátaxis framework, with a Mermaid architecture diagram." |
-| `testing-expert` | "Write Gherkin BDD scenarios for the user login flow." |
-| `pull-request-expert` | "Prepare this branch for a pull request — check size, commit style, and generate the PR description." |
-| `commit-expert` | "Write a Conventional Commits message for these staged changes." |
-| `code-smells-expert` | "Scan this module for code smells — God classes, long methods, high complexity." |
-| `refactoring-code-expert` | "Refactor this function to extract the validation logic, without changing its behavior." |
-| `security-audit` | "Run a security audit on this codebase for OWASP Top 10 issues and hardcoded secrets." |
-| `performance-scalability` | "Profile this endpoint for N+1 queries and suggest caching opportunities." |
-| `database-migration-expert` | "Write a zero-downtime Alembic migration to add a NOT NULL column to the users table." |
-| `senior-architect-engineering` | "Draft an ADR comparing event-driven vs. request-response for this integration." |
-| `design-spec-expert` | "Scaffold a Software Design Document for the new notifications service." |
-| `build-and-ci-gates` | "Set up a GitHub Actions workflow that runs lint, tests, and the pre-commit quality gate." |
-| `repo-research` | "Analyze this repository and generate a project context document." |
-| `guidelines-karpathy` | "Before implementing this, check it against the Karpathy guidelines — are we overcomplicating it?" |
-| `gcp-data-engineering` | "Design the architecture for a pipeline that lands daily CSV exports into BigQuery." |
-| `cdc-scd-patterns` | "Design a CDC pipeline from Cloud SQL into BigQuery and model the customer dimension as SCD Type 2." |
-| `bigquery-query-optimization` | "Scan this repo for slow BigQuery queries and optimize whatever you find." |
-| `sql-query-optimization` | "Run EXPLAIN ANALYZE on this query and tell me if it needs an index." |
-| `context-capture` | "Save the context for this session — what we did, the decisions, and the flow — so the next agent can pick it up." |
-| `context-restore` | "Check the shared context directory and tell me what previous sessions worked on before we start." |
-| `flutter-architecture-decisions` | "We're starting a Flutter app — help me choose between Riverpod and Bloc and record the decision as an ADR." |
-| `flutter-review-checklist` | "Review this Flutter PR for rebuild scope, leaks, context-after-await, and accessibility." |
-| `flutter-test-strategy` | "For this new checkout feature, tell me what to test at unit vs widget vs integration level and set a coverage gate." |
-| `flutter-performance-profiling` | "This list screen janks when I scroll on Android — profile it and fix the cause." |
-| `flutter-release-engineering` | "Set up dev/staging/prod flavors with --dart-define-from-file and a signed release build matrix for this Flutter app." |
-| `flutter-upgrade-migration` | "Upgrade this app to the latest Flutter stable and clear the deprecations without one giant PR." |
-| `flutter-senior-orchestration` | "Build this Flutter feature end to end — size it, then run architecture, implementation, tests, and review." |

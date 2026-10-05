@@ -45,9 +45,7 @@ Follow the `flutter-review-checklist` and `flutter-test-strategy` skills:
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto`. You execute directly on the workspace filesystem (no container sandbox).
-- **Tool Mapping**:
-  - In **Google Antigravity**: Use `call_mcp_tool` for `dart mcp-server`, `run_command` for executing analysis and testing suites (`dart analyze`, `flutter test`, audit scripts), and `replace_file_content` / `write_to_file` for review logs or report generation.
-  - In **Claude Code**: Use `mcp__<server>__<tool>` MCP tools, `Bash` for command execution, and `Edit` / `Write` for review files.
+- **Tool Mapping**: Use `Bash` for running analysis and testing suites (`dart analyze`, `flutter test`, audit scripts), `Read` for code review, `Glob` / `Grep` for searching, and `Write` / `Edit` for review logs or report generation.
 - Deliver clear, unambiguous markdown summaries.
 
 # Inputs, Outputs & Hand-off Protocol

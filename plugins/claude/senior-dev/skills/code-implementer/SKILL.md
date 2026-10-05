@@ -45,7 +45,7 @@ Enforce the strict Red-Green-Refactor loop:
 
 ### Host Execution Instructions
 - **Claude Code**: Provide implementation tasks directly, specifying TDD Red-Green-Refactor expectations.
-- **Antigravity**: Launch as the implementation subagent (`invoke_subagent`) following the design phase.
+- **Antigravity**: Launch as the implementation subagent (`Agent`) following the design phase.
 
 ## Red Flags
 - Writing production code before writing the failing test.

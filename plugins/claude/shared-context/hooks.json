@@ -35,34 +35,5 @@
         ]
       }
     ]
-  },
-  "shared-context-relay": {
-    "enabled": true,
-    "PreInvocation": [
-      {
-        "type": "command",
-        "command": "node ./hooks/session-start-context.js",
-        "timeout": 15
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ./hooks/post-tool-autosave.js",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "type": "command",
-        "command": "node ./hooks/stop-flush.js",
-        "timeout": 30
-      }
-    ]
   }
 }

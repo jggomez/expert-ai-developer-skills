@@ -1,0 +1,28 @@
+{
+  "description": "Senior Data Engineer quality and safety gates: destructive operation prevention, Plan-First enforcement, and Dataform/dbt compile checks.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/data-safety-gate.js\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/data-quality-gate.js\"",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

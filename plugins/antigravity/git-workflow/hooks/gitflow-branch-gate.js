@@ -1,4 +1,9 @@
 #!/usr/bin/env node
+/**
+ * Gitflow Branch & Commit Safety Gate (PreToolUse)
+ * 1. Blocks direct git add/commit/push/merge on protected branches (main, master, develop).
+ * 2. Enforces Conventional Commits format on git commit messages.
+ */
 const { execSync } = require('child_process');
 const fs = require('fs');
 
@@ -11,25 +16,6 @@ function allow() {
   process.exit(0);
 }
 
-// Read input payload from stdin
-let inputData = '';
-try {
-  inputData = fs.readFileSync(0, 'utf-8');
-} catch (e) {
-  allow();
-}
-
-if (!inputData.trim()) {
-  allow();
-}
-
-let payload;
-try {
-  payload = JSON.parse(inputData);
-} catch (e) {
-  allow();
-}
-
 function deny(reason) {
   if (isClaudeCode) {
     console.log(JSON.stringify({
@@ -40,34 +26,64 @@ function deny(reason) {
       },
     }));
   } else {
-    // Antigravity's PreToolUse contract (verified against
-    // antigravity.google/docs/hooks): a top-level {"decision": ...}.
     console.log(JSON.stringify({ decision: 'deny', reason }));
   }
   process.exit(0);
 }
 
-// Normalize across Claude Code (tool_name/tool_input/cwd) and Antigravity
-// (toolCall.name/toolCall.args) payload shapes.
-const toolName = payload.tool_name || payload.toolCall?.name || '';
-const toolInput = payload.tool_input || payload.toolCall?.args || {};
-const commandLine = toolInput.command || toolInput.CommandLine || '';
-const cwd = payload.cwd || toolInput.Cwd || payload.workspacePaths?.[0] || process.cwd();
+let inputData = '';
+try {
+  inputData = fs.readFileSync(0, 'utf-8');
+} catch (e) {
+  allow();
+}
+if (!inputData.trim()) allow();
 
-const isShellTool = toolName === 'Bash' || toolName === 'run_command';
+let payload;
+try {
+  payload = JSON.parse(inputData);
+} catch (e) {
+  allow();
+}
 
-// Gitflow Branch Safety Gate (never commit/push directly on main or develop)
+const toolCall = payload.toolCall || {};
+const toolName = toolCall.name || payload.tool_name || '';
+const toolInput = toolCall.args || payload.tool_input || {};
+const commandLine = toolInput.CommandLine || toolInput.command || '';
+const cwd = payload.workspacePaths?.[0] || payload.cwd || toolInput.Cwd || process.cwd();
+
+const isShellTool = toolName === 'run_command' || toolName === 'Bash';
+if (!isShellTool || !commandLine) allow();
+
+// 1. GATE: Gitflow Branch Safety Gate (never commit/push directly on main or develop)
 const gitWriteRegex = /\b(git\s+commit|git\s+push|git\s+add|git\s+merge)\b/i;
-if (isShellTool && gitWriteRegex.test(commandLine)) {
+if (gitWriteRegex.test(commandLine)) {
   try {
-    const activeBranch = execSync('git symbolic-ref --short HEAD', { cwd, encoding: 'utf8' }).trim();
-    if (activeBranch === 'main' || activeBranch === 'develop') {
-      deny(`Gitflow Safety Blocked: directly running git add/commit/push/merge on "${activeBranch}" is prohibited. Use a feature/ or bugfix/ branch and merge via Pull Request.`);
+    const activeBranch = execSync('git symbolic-ref --short HEAD', { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    if (activeBranch === 'main' || activeBranch === 'master' || activeBranch === 'develop') {
+      deny(
+        `Gitflow Safety Blocked: directly running git add/commit/push/merge on "${activeBranch}" is prohibited. Use a feature/ or bugfix/ branch and merge via Pull Request.`
+      );
     }
   } catch (e) {
-    // Not a git repository, or the command failed — let it proceed.
+    // Not a git repository
   }
 }
 
-// Default: allow tool execution
+// 2. GATE: Conventional Commits Validation
+const commitMsgMatch = commandLine.match(/\bgit\s+commit\b.*-m\s+["']([^"']+)["']/i);
+if (commitMsgMatch) {
+  const commitMsg = commitMsgMatch[1].trim();
+  const conventionalRegex = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9_\-\.\/]+\))?!?: .+/;
+
+  if (!conventionalRegex.test(commitMsg)) {
+    deny(
+      `[CONVENTIONAL COMMITS VIOLATION]: Commit message "${commitMsg}" does not follow Conventional Commits.\n` +
+      `Format must be '<type>(<scope>): <subject>'.\n` +
+      `Allowed types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert.\n` +
+      `Example: git commit -m "feat(auth): implement token refresh flow"`
+    );
+  }
+}
+
 allow();

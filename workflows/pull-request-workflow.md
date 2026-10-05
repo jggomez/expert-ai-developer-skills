@@ -1,7 +1,7 @@
 # Workflow: Pull Request Preparation & Submission
 
 **Identifier**: `pull-request-workflow`  
-**Purpose**: Guide developers and agents through creating, checking, documenting, and submitting Pull Requests (PRs) that meet high quality standards, using Antigravity context references and branch safety hooks.
+**Purpose**: Guide developers and agents through creating, checking, documenting, and submitting Pull Requests (PRs) that meet high quality standards, using subagent delegation and branch safety hooks.
 
 ---
 
@@ -12,7 +12,28 @@
 
 ---
 
-## 2. Step-by-Step Workflow
+## 2. Subagent Delegation & Role Boundaries
+- **Role Boundary**: The Lead Orchestrator delegates pre-PR audits and git diff evaluations to `compliance-verifier`.
+- **Subagent Delegation across Runners**:
+  * **Google Antigravity Runner**:
+    ```python
+    invoke_subagent(
+        name="compliance-verifier",
+        prompt="Audit git diff main...HEAD for readability, code smells, and security before PR submission."
+    )
+    ```
+  * **Anthropic Claude Code Runner**:
+    ```python
+    Agent(
+        agent="compliance-verifier",
+        prompt="Audit git diff main...HEAD for readability, code smells, and security before PR submission."
+    )
+    ```
+- **Primary Skills**: `pull-request-expert`, `compliance-verifier`, `commit-expert`.
+
+---
+
+## 3. Step-by-Step Workflow
 
 ```mermaid
 graph TD
@@ -27,7 +48,7 @@ graph TD
 
 ### Step 1: Perform Self-Audit (AI Review Helper)
 * Review the git diff of your changes (`git diff main...HEAD`).
-* **Antigravity Best Practice**: If the changes are large, spawn a reviewer subagent scoped to just "audit `git diff main...HEAD` for readability, styling issues, or over-engineering" so its review runs in a clean context.
+* Delegate diff auditing to `compliance-verifier` to ensure a clean evaluation.
 * Scan for leftovers: remove `print()`, `console.log()`, temporary helper files, or unused imports.
 * Ensure no hardcoded tokens, secret files, or local keys are staged.
 
@@ -38,7 +59,7 @@ graph TD
   ```
 
 ### Step 3: Run Test Suite
-* Verify that your changes did not introduce regressions by running the test suite locally.
+* Verify that your changes did not introduce regressions by running the test suite locally:
   ```bash
   pytest
   ```
@@ -52,14 +73,12 @@ graph TD
   git rebase main
   ```
 * Resolve conflicts immediately, re-run tests if conflicts were resolved.
-* **PreToolUse Hook Safety**: Note that the Antigravity workspace plugin contains hooks that actively block staging or committing changes to the `main` or `develop` branches directly.
+* **Branch Protection Hook Safety**: Hooks (`gitflow-branch-gate.js`) block direct commits or merges to `main` or `develop`.
 
 ### Step 5: Draft the Pull Request Description
 * Copy the PR template structure. Create a local draft or populate the PR creation prompt.
-* **Ref/Link Clickability**: Make sure to use the `@` mention menu or absolute file URLs to link any modified files, database schemas, or API docs in your description so they are clickable.
-  * **Title**: `feat(auth): add google login oauth integration`
-  * **Body**: Detail *Why* this change is needed, *What* changed, and *How* it was verified.
-  * **Related Issue**: Ensure it includes `Closes #123`.
+* Detail *Why* this change is needed, *What* changed, and *How* it was verified.
+* Ensure it links related issues (e.g. `Closes #123`).
 
 ### Step 6: Push & Submit the PR
 * Push your branch to the remote origin:
@@ -73,7 +92,7 @@ graph TD
 
 ---
 
-## 3. Quality Gate & Verification
+## 4. Quality Gate & Verification
 
 Before requesting review from team members, verify:
 - [ ] Linter returns 0 warnings/errors.

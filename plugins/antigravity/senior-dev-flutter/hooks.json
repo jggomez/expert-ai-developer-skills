@@ -1,9 +1,9 @@
 {
-  "description": "Senior Flutter gates: block store builds / major bumps on protected branches, and keep `dart analyze` clean before finishing.",
+  "description": "Senior Flutter gates: enforces Plan-First, blocks direct orchestrator Dart editing, guards protected branches, and verifies dart analyze on Stop.",
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash|run_command",
+        "matcher": "Bash|run_command|write_to_file|replace_file_content",
         "hooks": [
           {
             "type": "command",
@@ -29,7 +29,7 @@
     "enabled": true,
     "PreToolUse": [
       {
-        "matcher": "run_command",
+        "matcher": "run_command|write_to_file|replace_file_content",
         "hooks": [
           {
             "type": "command",

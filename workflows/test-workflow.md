@@ -22,12 +22,29 @@ Validate functional correctness, regression safety, and edge-case resilience thr
 4. **Produce Verification Evidence**:
    - Document the exact command and terminal output proving all tests pass.
 
-## 3. Delegation & Tools
-- **Antigravity Subagent**: Delegate to `qa-tester` (or `flutter-implementer`).
-- **Primary Skills**: `test-driven-development`, `testing-expert`, `flutter-test-strategy`.
+## 3. Subagent Delegation & Role Boundaries
+- **Role Boundary**: The Orchestrator requires empirical proof (`exit code 0`); test execution, verification suites, and coverage auditing are delegated to `qa-tester` (or `flutter-implementer`).
+- **Subagent Delegation across Runners**:
+  * **Google Antigravity**:
+    ```python
+    invoke_subagent(
+        name="qa-tester",
+        prompt="Execute comprehensive unit, integration, and regression suites for: <scope>. Return empirical test proof."
+    )
+    ```
+    *(For Flutter applications, use `name="flutter-implementer"`)*
+  * **Anthropic Claude Code**:
+    ```python
+    Agent(
+        agent="qa-tester",
+        prompt="Execute comprehensive unit, integration, and regression suites for: <scope>. Return empirical test proof."
+    )
+    ```
+    *(For Flutter applications, use `agent="flutter-implementer"`)*
+- **Primary Skills**: `test-driven-development`, `testing-expert`, `qa-tester`, `flutter-test-strategy`.
 
 ## 4. Quality Gate Checklist
-- [ ] 100% of relevant test cases passing cleanly.
+- [ ] 100% of relevant test cases passing cleanly (`exit code 0`).
 - [ ] Edge cases, error paths, and boundary conditions covered.
 - [ ] Zero skipped assertions or mock bypasses.
 - [ ] Empirical execution evidence verified.

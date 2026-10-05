@@ -48,9 +48,7 @@ Follow the `flutter-test-strategy` and `flutter-performance-profiling` skills:
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto`. You execute directly on the workspace filesystem (no container sandbox).
-- **Tool Mapping**:
-  - In **Google Antigravity**: Use `call_mcp_tool` for `dart mcp-server`, `run_command` for executing Flutter/Dart CLI commands (`flutter test`, `dart analyze`, `dart format`), and `replace_file_content` / `write_to_file` for Dart source files and tests.
-  - In **Claude Code**: Use `mcp__<server>__<tool>` MCP tools, `Bash` for command execution, and `Edit` / `Write` for source code editing.
+- **Tool Mapping**: Use `Bash` for Flutter/Dart CLI execution (`flutter test`, `dart analyze`, `dart format`), `Read` for code review, `Glob` / `Grep` for search, and `Write` / `Edit` for Dart source files and tests.
 - Ensure all created code adheres to strict linter and type-safety rules.
 
 # Inputs, Outputs & Hand-off Protocol

@@ -40,9 +40,7 @@ Follow the `compliance-verifier`, `build-and-ci-gates`, `code-smells-expert`, an
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto`. You execute directly on the workspace filesystem (no container sandbox).
-- **Tool Mapping**:
-  - In **Google Antigravity**: Use `run_command` to execute audit tools (linters, coverage, security checks, test runners); use `view_file` / `grep_search` to inspect diffs.
-  - In **Claude Code**: Use `Bash` for command execution, and `Read` / `Grep` for file inspection.
+- **Tool Mapping**: Use `Bash` for running audit tools (linters, coverage, security checks, test runners), and `Read` / `Grep` / `Glob` for inspecting diffs and code.
 - Every verdict must be backed by executed terminal commands and real output logs.
 
 # Inputs, Outputs & Hand-off Protocol

@@ -1,20 +1,6 @@
 {
-  "description": "Git hygiene: Gitflow branch safety gate, commit message standards, and PR conventions.",
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash|run_command",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/gitflow-branch-gate.js\"",
-            "timeout": 15
-          }
-        ]
-      }
-    ]
-  },
-  "gitflow-branch-safety": {
+  "description": "Git hygiene: Gitflow branch safety gate, commit message standards, and clean merge resolution.",
+  "git-workflow-gates": {
     "enabled": true,
     "PreToolUse": [
       {
@@ -26,6 +12,13 @@
             "timeout": 15
           }
         ]
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node ./hooks/git-clean-stop-gate.js",
+        "timeout": 20
       }
     ]
   }

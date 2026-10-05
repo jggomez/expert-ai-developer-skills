@@ -1,0 +1,17 @@
+{
+  "description": "Multi-agent ops quality gates: Context guard preventing large unpaginated file reads.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/context-guard-gate.js\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

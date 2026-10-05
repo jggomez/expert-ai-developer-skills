@@ -23,12 +23,30 @@ Conduct an exhaustive, machine-first code review on diffs and pull requests, cla
    - Categorize into **Blocking** (correctness, security, leak, ADR break) vs **Suggestions**.
    - Provide concrete code remediations for all blocking issues.
 
-## 3. Delegation & Tools
-- **Antigravity Subagent**: Delegate to `compliance-verifier` (or `flutter-reviewer`).
-- **Primary Skills**: `detect-code-smells`, `flutter-review-checklist`, `pull-request-expert`.
+## 3. Subagent Delegation & Role Boundaries
+- **Role Boundary**: The Lead Orchestrator delegates comprehensive code review and smell detection to the reviewer specialist; an explicit `APPROVED` verdict is required before merge.
+- **Subagent Delegation across Runners**:
+  * **Google Antigravity**:
+    ```python
+    invoke_subagent(
+        name="compliance-verifier",
+        prompt="Conduct comprehensive code review, smell detection, and security audit on: <diff-scope>"
+    )
+    ```
+    *(For Flutter applications, use `name="flutter-reviewer"`)*
+  * **Anthropic Claude Code**:
+    ```python
+    Agent(
+        agent="compliance-verifier",
+        prompt="Conduct comprehensive code review, smell detection, and security audit on: <diff-scope>"
+    )
+    ```
+    *(For Flutter applications, use `agent="flutter-reviewer"`)*
+- **Primary Skills**: `code-smells-expert`, `flutter-review-checklist`, `pull-request-expert`, `guidelines-karpathy`.
 
 ## 4. Quality Gate Checklist
 - [ ] Diff reviewed with file:line citations for all issues.
 - [ ] ADR conformance verified against `doc/adr/`.
 - [ ] Blocking vs non-blocking issues clearly differentiated.
 - [ ] Actionable remediations provided for all blocking findings.
+- [ ] Explicit `APPROVED` review verdict received.

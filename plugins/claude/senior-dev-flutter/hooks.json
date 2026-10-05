@@ -1,9 +1,19 @@
 {
-  "description": "Senior Flutter gates: block store builds / major bumps on protected branches, and keep `dart analyze` clean before finishing.",
+  "description": "Senior Flutter gates: block store builds / major bumps on protected branches, enforce PLAN.md before Dart edits, and keep `dart analyze` clean before finishing.",
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash|run_command",
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/flutter-pre-tool-gate.js\"",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
         "hooks": [
           {
             "type": "command",
@@ -22,28 +32,6 @@
             "timeout": 130
           }
         ]
-      }
-    ]
-  },
-  "senior-dev-flutter-gates": {
-    "enabled": true,
-    "PreToolUse": [
-      {
-        "matcher": "run_command",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ./hooks/flutter-pre-tool-gate.js",
-            "timeout": 15
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "type": "command",
-        "command": "node ./hooks/flutter-stop-gate.js",
-        "timeout": 130
       }
     ]
   }

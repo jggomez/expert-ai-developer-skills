@@ -1,22 +1,36 @@
 #!/usr/bin/env node
 /**
- * senior-dev-flutter PreToolUse gate. Blocks two things on a protected branch
- * (main / master / develop), where they should go through CI or a dedicated
- * branch + ADR instead:
- *   - building store artifacts:  flutter build appbundle | ipa | aab
- *   - major dependency bumps:    (flutter|dart) pub upgrade --major-versions
- * Everything else is allowed. Non-blocking on a non-git or non-Flutter repo.
+ * senior-dev-flutter PreToolUse gate.
+ * 1. Plan-First Gate: Requires PLAN.md before writing or editing Dart code.
+ * 2. Orchestrator Boundary: Prohibits the main orchestrator from writing .dart code directly.
+ * 3. Branch Safety: Blocks store builds / major dependency bumps on protected branches.
  */
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const isClaudeCode = Boolean(process.env.CLAUDE_PLUGIN_ROOT);
 const PROTECTED = new Set(['main', 'master', 'develop']);
+
+const isClaudeCode = Boolean(process.env.CLAUDE_PLUGIN_ROOT);
 
 function allow() {
   if (!isClaudeCode) {
     console.log(JSON.stringify({ decision: 'allow' }));
+  }
+  process.exit(0);
+}
+
+function deny(reason) {
+  if (isClaudeCode) {
+    console.log(JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: 'PreToolUse',
+        permissionDecision: 'deny',
+        permissionDecisionReason: reason,
+      },
+    }));
+  } else {
+    console.log(JSON.stringify({ decision: 'deny', reason }));
   }
   process.exit(0);
 }
@@ -36,59 +50,93 @@ try {
   allow();
 }
 
-// Normalize Claude Code (tool_name/tool_input/cwd) and Antigravity
-// (toolCall.name/toolCall.args) payload shapes.
-const toolName = payload.tool_name || (payload.toolCall && payload.toolCall.name) || '';
-const toolInput = payload.tool_input || (payload.toolCall && payload.toolCall.args) || {};
-const command = toolInput.command || toolInput.CommandLine || '';
+const toolCall = payload.toolCall || {};
+const toolName = toolCall.name || payload.tool_name || '';
+const toolArgs = toolCall.args || payload.tool_input || {};
+const command = toolArgs.CommandLine || toolArgs.command || '';
+const targetFile = toolArgs.TargetFile || toolArgs.file_path || toolArgs.path || '';
 const cwd =
+  payload.workspacePaths?.[0] ||
   payload.cwd ||
-  toolInput.Cwd ||
-  (payload.workspacePaths && payload.workspacePaths[0]) ||
+  toolArgs.Cwd ||
   process.cwd();
 
-const isShellTool = toolName === 'Bash' || toolName === 'run_command';
-if (!isShellTool || !command) allow();
-
-// Only care about Flutter/Dart repos.
+// Only care if workspace is a Flutter/Dart repo
 if (!fs.existsSync(path.join(cwd, 'pubspec.yaml'))) allow();
 
-let branch = '';
-try {
-  branch = execSync('git symbolic-ref --short HEAD', { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
-} catch (e) {
-  allow(); // not a git repo / detached
+// 1. GATE: File Modification (write_to_file / replace_file_content)
+const isFileModTool = /^(write_to_file|replace_file_content)$/i.test(toolName);
+if (isFileModTool && targetFile) {
+  const basename = path.basename(targetFile);
+  const ext = path.extname(targetFile).toLowerCase();
+
+  // Allow docs and plans
+  const isDoc =
+    /^PLAN(\.[\w-]+)?\.md$/i.test(basename) ||
+    targetFile.includes('/doc/adr/') ||
+    targetFile.includes('/docs/') ||
+    ext === '.md' ||
+    ext === '.txt';
+
+  if (!isDoc && ext === '.dart') {
+    // Check Plan First
+    const hasPlan =
+      fs.existsSync(path.join(cwd, 'PLAN.md')) ||
+      fs.existsSync(path.join(cwd, 'doc', 'PLAN.md'));
+
+    if (!hasPlan) {
+      deny(
+        `[FLUTTER GRAPH GATE - PLAN FIRST]: No "PLAN.md" found in "${cwd}".\n` +
+        `You MUST create a "PLAN.md" defining target platforms, state management, and tasks before modifying Dart code.`
+      );
+    }
+
+    // Check Orchestrator Boundary
+    const transcriptPath = payload.transcriptPath;
+    if (transcriptPath && fs.existsSync(transcriptPath)) {
+      try {
+        const firstLine = fs.readFileSync(transcriptPath, 'utf8').trim().split('\n')[0] || '';
+        if (firstLine.includes('<USER_REQUEST>')) {
+          deny(
+            `[FLUTTER GRAPH INVARIANT VIOLATION]: As the Flutter Feature Orchestrator, you are STRICTLY FORBIDDEN ` +
+            `from editing Dart files (${basename}) directly.\n` +
+            `You MUST delegate implementation to the 'flutter-implementer' subagent using invoke_subagent.`
+          );
+        }
+      } catch (err) {
+        // fail open if transcript unreadable
+      }
+    }
+  }
 }
-if (!PROTECTED.has(branch)) allow();
 
-const storeBuild = /\bflutter\s+build\s+(appbundle|aab|ipa)\b/i;
-const majorBump = /\b(flutter|dart)\s+pub\s+upgrade\b.*--major-versions\b/i;
+// 2. GATE: Shell Commands (run_command)
+const isShellTool = toolName === 'run_command' || toolName === 'Bash';
+if (isShellTool && command) {
+  let branch = '';
+  try {
+    branch = execSync('git symbolic-ref --short HEAD', { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+  } catch (e) {
+    allow(); // not a git repo / detached
+  }
 
-let reason = null;
-if (storeBuild.test(command)) {
-  reason =
-    `Blocked on "${branch}": store artifacts (flutter build appbundle/ipa) should be ` +
-    `built by CI from a release branch, not locally on a protected branch — see the ` +
-    `flutter-release-engineering skill. Use "flutter build apk/web" for local checks, ` +
-    `or switch to a release branch.`;
-} else if (majorBump.test(command)) {
-  reason =
-    `Blocked on "${branch}": a major dependency bump needs a dedicated branch and an ` +
-    `ADR (flutter-upgrade-migration skill: one axis at a time, pin pubspec.lock first). ` +
-    `Create a chore/ branch and run it there.`;
+  if (PROTECTED.has(branch)) {
+    const storeBuild = /\bflutter\s+build\s+(appbundle|aab|ipa)\b/i;
+    const majorBump = /\b(flutter|dart)\s+pub\s+upgrade\b.*--major-versions\b/i;
+
+    if (storeBuild.test(command)) {
+      deny(
+        `Blocked on "${branch}": store artifacts (flutter build appbundle/ipa) should be ` +
+        `built by CI from a release branch, not locally on a protected branch — see the ` +
+        `flutter-release-engineering skill.`
+      );
+    } else if (majorBump.test(command)) {
+      deny(
+        `Blocked on "${branch}": a major dependency bump needs a dedicated branch and an ` +
+        `ADR. Create a chore/ branch and run it there.`
+      );
+    }
+  }
 }
 
-if (!reason) allow();
-
-if (isClaudeCode) {
-  console.log(JSON.stringify({
-    hookSpecificOutput: {
-      hookEventName: 'PreToolUse',
-      permissionDecision: 'deny',
-      permissionDecisionReason: reason,
-    },
-  }));
-} else {
-  console.log(JSON.stringify({ decision: 'deny', reason }));
-}
-process.exit(0);
+allow();

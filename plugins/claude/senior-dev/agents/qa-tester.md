@@ -38,9 +38,7 @@ Follow the `qa-tester` and `testing-expert` skills:
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto`. You execute directly on the workspace filesystem (no container sandbox).
-- **Tool Mapping**:
-  - In **Google Antigravity**: Use `run_command` to execute test suites and capture live terminal logs; use `replace_file_content` / `write_to_file` to author test files.
-  - In **Claude Code**: Use `Bash` for test execution, and `Edit` / `Write` for test authoring.
+- **Tool Mapping**: Use `Bash` for test execution (`pytest`, `unittest`, `npm test`, `go test`, `cargo test`), `Read` for code inspection, and `Write` / `Edit` for test authoring.
 - Ground all verdicts in real terminal test logs, not assumptions.
 
 # Inputs, Outputs & Hand-off Protocol

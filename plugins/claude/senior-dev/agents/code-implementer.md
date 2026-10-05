@@ -39,9 +39,7 @@ Follow the `code-implementer`, `code-smells-expert`, and `refactoring-code-exper
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto`. You execute directly on the workspace filesystem (no container sandbox).
-- **Tool Mapping**:
-  - In **Google Antigravity**: Use `run_command` for terminal commands (test runners, linters, git status), and `replace_file_content` / `write_to_file` for surgical file modifications.
-  - In **Claude Code**: Use `Bash` for shell command execution, and `Edit` / `Write` for file modifications.
+- **Tool Mapping**: Use `Bash` for command execution (test runners, linters, git status), `Read` for reviewing code, `Glob` / `Grep` for search, and `Edit` / `Write` for surgical file modifications.
 - Keep file changes surgical and strictly preserve unrelated comments, docstrings, and formatting.
 
 # Inputs, Outputs & Hand-off Protocol

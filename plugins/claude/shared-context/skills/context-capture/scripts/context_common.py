@@ -2,7 +2,7 @@
 """Shared helpers for the shared-context plugin's capture/pack/rollup scripts.
 
 Stdlib only, host-neutral: the same code runs whether invoked by Claude Code
-(`Bash`) or Antigravity CLI (`run_command`). Every script keeps a session's
+(`Bash`) or Antigravity CLI (`Bash`). Every script keeps a session's
 `manifest.json`, `summary.md` and `decisions.md` loose (fast to browse and
 diff in a PR); the heavier detail is packed into `detail.tar.xz`.
 """

@@ -41,9 +41,7 @@ Follow the `flutter-architecture-decisions` skill for state management matrices,
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto`. You execute directly on the workspace filesystem (no container sandbox).
-- **Tool Mapping**:
-  - In **Google Antigravity**: Use `run_command` for environment inspection and `replace_file_content` / `write_to_file` for ADR authoring.
-  - In **Claude Code**: Use `Bash` for shell checks and `Edit` / `Write` for ADR documentation.
+- **Tool Mapping**: Use `Bash` for shell checks, `Read` for reviewing existing code, and `Write` / `Edit` for ADR documentation under `doc/adr/`.
 - Maintain clean repository documentation standards under `doc/adr/`.
 
 # Inputs, Outputs & Hand-off Protocol

@@ -1,0 +1,28 @@
+{
+  "description": "Senior Dev Quality Gates for Claude Code: Enforces Plan-First, blocks orchestrator from direct code implementation, and runs polyglot quality gates before stopping.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/orchestrator-role-gate.js\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/universal-quality-gate.js\"",
+            "timeout": 180
+          }
+        ]
+      }
+    ]
+  }
+}

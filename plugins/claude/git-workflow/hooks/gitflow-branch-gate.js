@@ -1,17 +1,27 @@
 #!/usr/bin/env node
+/**
+ * gitflow-branch-gate PreToolUse hook for Claude Code.
+ * 1. Gitflow Branch Safety: Denies running git add/commit/push/merge directly on main or develop.
+ * 2. Conventional Commits: Validates that git commit -m messages follow Conventional Commits format.
+ */
 const { execSync } = require('child_process');
 const fs = require('fs');
 
-const isClaudeCode = Boolean(process.env.CLAUDE_PLUGIN_ROOT);
-
 function allow() {
-  if (!isClaudeCode) {
-    console.log(JSON.stringify({ decision: 'allow' }));
-  }
   process.exit(0);
 }
 
-// Read input payload from stdin
+function deny(reason) {
+  console.log(JSON.stringify({
+    hookSpecificOutput: {
+      hookEventName: 'PreToolUse',
+      permissionDecision: 'deny',
+      permissionDecisionReason: reason,
+    },
+  }));
+  process.exit(0);
+}
+
 let inputData = '';
 try {
   inputData = fs.readFileSync(0, 'utf-8');
@@ -19,9 +29,7 @@ try {
   allow();
 }
 
-if (!inputData.trim()) {
-  allow();
-}
+if (!inputData.trim()) allow();
 
 let payload;
 try {
@@ -30,44 +38,62 @@ try {
   allow();
 }
 
-function deny(reason) {
-  if (isClaudeCode) {
-    console.log(JSON.stringify({
-      hookSpecificOutput: {
-        hookEventName: 'PreToolUse',
-        permissionDecision: 'deny',
-        permissionDecisionReason: reason,
-      },
-    }));
-  } else {
-    // Antigravity's PreToolUse contract (verified against
-    // antigravity.google/docs/hooks): a top-level {"decision": ...}.
-    console.log(JSON.stringify({ decision: 'deny', reason }));
-  }
-  process.exit(0);
+const toolName = payload.tool_name || '';
+const toolInput = payload.tool_input || {};
+const commandLine = toolInput.command || '';
+const cwd = payload.cwd || (payload.workspacePaths && payload.workspacePaths[0]) || process.cwd();
+
+if (toolName !== 'Bash' || !commandLine) {
+  allow();
 }
 
-// Normalize across Claude Code (tool_name/tool_input/cwd) and Antigravity
-// (toolCall.name/toolCall.args) payload shapes.
-const toolName = payload.tool_name || payload.toolCall?.name || '';
-const toolInput = payload.tool_input || payload.toolCall?.args || {};
-const commandLine = toolInput.command || toolInput.CommandLine || '';
-const cwd = payload.cwd || toolInput.Cwd || payload.workspacePaths?.[0] || process.cwd();
+// --- 1. Conventional Commits Validation ---
+const isCommitCommand = /\bgit\s+commit\b/i.test(commandLine);
+if (isCommitCommand) {
+  // Extract commit message
+  let commitMessage = null;
+  const quotedMatch = /(?:-m\s+|--message=|-m["']|--message\s+)["']([^"']+)["']/.exec(commandLine);
+  if (quotedMatch) {
+    commitMessage = quotedMatch[1];
+  } else {
+    const unquotedMatch = /(?:-m|--message)\s+([^-\s][^\s]*)/.exec(commandLine);
+    if (unquotedMatch) {
+      commitMessage = unquotedMatch[1];
+    }
+  }
 
-const isShellTool = toolName === 'Bash' || toolName === 'run_command';
+  if (commitMessage) {
+    const conventionalCommitRegex =
+      /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(?:\([a-zA-Z0-9_\-\./ ]+\))?!?: .+/;
 
-// Gitflow Branch Safety Gate (never commit/push directly on main or develop)
+    if (!conventionalCommitRegex.test(commitMessage.trim())) {
+      deny(
+        `[CONVENTIONAL COMMIT VIOLATION]: Commit message "${commitMessage}" does not follow Conventional Commits specification.\n` +
+        `Expected format: "<type>(<optional scope>): <description>"\n` +
+        `Allowed types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert.\n` +
+        `Examples:\n` +
+        `  - feat(auth): implement oauth2 token refresh\n` +
+        `  - fix(cart): prevent duplicate checkout submission\n` +
+        `  - test(user): add unit tests for password hashing`
+      );
+    }
+  }
+}
+
+// --- 2. Gitflow Branch Safety Gate ---
 const gitWriteRegex = /\b(git\s+commit|git\s+push|git\s+add|git\s+merge)\b/i;
-if (isShellTool && gitWriteRegex.test(commandLine)) {
+if (gitWriteRegex.test(commandLine)) {
   try {
-    const activeBranch = execSync('git symbolic-ref --short HEAD', { cwd, encoding: 'utf8' }).trim();
+    const activeBranch = execSync('git symbolic-ref --short HEAD', { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
     if (activeBranch === 'main' || activeBranch === 'develop') {
-      deny(`Gitflow Safety Blocked: directly running git add/commit/push/merge on "${activeBranch}" is prohibited. Use a feature/ or bugfix/ branch and merge via Pull Request.`);
+      deny(
+        `[GITFLOW SAFETY VIOLATION]: Directly executing git add/commit/push/merge on "${activeBranch}" is prohibited.\n` +
+        `Per Gitflow workflow rules, create a dedicated feature/ or bugfix/ branch and merge via Pull Request.`
+      );
     }
   } catch (e) {
-    // Not a git repository, or the command failed — let it proceed.
+    // Not a git repository or detached HEAD — proceed
   }
 }
 
-// Default: allow tool execution
 allow();

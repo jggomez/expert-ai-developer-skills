@@ -1,9 +1,15 @@
+---
+trigger: always_on
+description: Shared context working memory rules enforcing session restoration, periodic checkpointing, and secret redaction.
+---
+
 # Shared Context Rules
 
-Antigravity auto-loads this file (it has no `SessionStart` hook event). These
-rules make the shared-context behavior reliable regardless of the hooks.
+**Identifier**: `shared-context-rules`
 
-## At the start of every session
+These rules govern cross-agent persistent memory and architecture decision tracking.
+
+## 1. At the Start of Every Session
 
 1. Check whether a `context/` directory with prior sessions exists:
    `python3 ./skills/context-restore/scripts/context_list.py --json`
@@ -15,23 +21,19 @@ rules make the shared-context behavior reliable regardless of the hooks.
 4. After loading, state exactly which decisions and preferences you will follow
    and which TODOs you are resuming.
 
-## During the session
+## 2. During the Session
 
 - Roughly every 25 tool calls or 10 minutes (see `autosave` in
   `.contextrc.json`), if meaningful work has happened, checkpoint via the
   `context-capture` skill: update `summary.md` / `decisions.md` and re-run
   `context_snapshot.py --session <id>`.
 
-## Before ending the session
+## 3. Before Ending the Session
 
-- If real work happened, flush the record: `context_snapshot.py --session <id>
-  --status done`, then `context_rollup.py`, then `context_pack.py --auto`.
-- Keep `decisions.md` bullets self-contained — they are copied verbatim into
-  `context/architecture.md`.
+- If real work happened, flush the record: `context_snapshot.py --session <id> --status done`, then `context_rollup.py`, then `context_pack.py --auto`.
+- Keep `decisions.md` bullets self-contained — they are copied verbatim into `context/architecture.md`.
 
-## Always
+## 4. Security & Redaction Invariants
 
-- Never disable secret redaction (`--no-redact`) unless the content is certainly
-  clean. Never echo a credential-looking string into a record or into chat.
-- Never hand-edit `INDEX.md` or another session's files. `context/` is shared
-  via git and a record may have been written by a teammate's agent.
+- Never disable secret redaction (`--no-redact`) unless the content is certainly clean. Never echo credentials into records or chat.
+- Never hand-edit `INDEX.md` or another session's files.

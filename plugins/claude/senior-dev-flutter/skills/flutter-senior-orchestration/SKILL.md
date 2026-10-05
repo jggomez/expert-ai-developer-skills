@@ -83,7 +83,7 @@ Before delegating work, size the task shape to avoid unnecessary ceremony:
 
 ### Host Execution Instructions
 - **Claude Code**: Invoke via `/skill flutter-senior-orchestration` or request senior Flutter orchestration in the prompt.
-- **Google Antigravity**: Invoke subagents using `invoke_subagent` with the role `flutter-feature-orchestrator`, or execute direct CLI analysis:
+- **Google Antigravity**: Invoke subagents using `Agent` with the role `flutter-feature-orchestrator`, or execute direct CLI analysis:
 ```bash
 flutter analyze
 flutter test

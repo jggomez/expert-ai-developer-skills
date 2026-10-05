@@ -11,11 +11,32 @@ When a task requires architectural design choices or has underspecified requirem
 * **Research First**: Seek answers in the codebase and local documentation. Do not ask the user questions that can be answered by reading the files.
 * **One at a Time**: Ask design questions sequentially, one by one. Never present a long list of questions that causes developer fatigue.
 * **Recommend Solutions**: Never ask open-ended questions without guidance. Always propose a recommended approach with a clear rationale as the first option.
-* **Interactive Tooling**: Use standard multi-choice selection patterns (like the `ask_question` modal tool) where choices represent direct user responses.
+* **Interactive Tooling**: Use standard selection patterns where choices represent direct user responses.
 
 ---
 
-## 2. Step-by-Step Execution Sequence
+## 2. Subagent Delegation & Role Boundaries
+- **Role Boundary**: Interactive requirements gathering and design interviews are conducted by `product-analyst`.
+- **Subagent Delegation across Runners**:
+  * **Google Antigravity Runner**:
+    ```python
+    invoke_subagent(
+        name="product-analyst",
+        prompt="Execute interactive /grill-me alignment interview to resolve design dependencies for: <task-scope>"
+    )
+    ```
+  * **Anthropic Claude Code Runner**:
+    ```python
+    Agent(
+        agent="product-analyst",
+        prompt="Execute interactive /grill-me alignment interview to resolve design dependencies for: <task-scope>"
+    )
+    ```
+- **Primary Skills**: `product-analyst`, `design-spec-expert`.
+
+---
+
+## 3. Step-by-Step Execution Sequence
 
 ```mermaid
 graph TD
@@ -34,15 +55,14 @@ graph TD
 * Identify the constraints of the active environment (e.g. language version, framework limits, databases).
 
 ### Step 2: Map the Design Decision Tree
-Group the pending decisions into a logical tree. Resolve dependencies in order (e.g., decide the database structure *before* deciding the API payload schema):
+Group the pending decisions into a logical tree. Resolve dependencies in order:
 1. **Scope Boundaries**: What is in-scope vs. out-of-scope.
 2. **Data Persistence**: Table schemas, relations, migrations.
 3. **API Contracts**: Request/response types, validation schemas.
 4. **Security & Performance**: Permissions, caching, rate limiting.
 
 ### Step 3: Ask First Design Dependency (Sequential Interview)
-* Prepare a clean, formatted prompt or launch the `ask_question` tool.
-* Structure your prompt as follows:
+* Prepare a clean, formatted prompt:
   * **The Decision**: Name of the design point (e.g. database choice, library choice).
   * **Option A (Recommended)**: Propose the recommended choice based on codebase patterns, with a brief explanation.
   * **Option B, C**: Alternative valid approaches.
@@ -61,7 +81,7 @@ Group the pending decisions into a logical tree. Resolve dependencies in order (
 
 ---
 
-## 3. Quality Gate & Verification
+## 4. Quality Gate & Verification
 
 The requirements gathering workflow is successful when:
 - [ ] Every major design branching point has been explicitly resolved.

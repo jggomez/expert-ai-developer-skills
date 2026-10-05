@@ -1,0 +1,16 @@
+{
+  "description": "Docs and code quality gates: Anti-lazy code gate preventing placeholder stubs and incomplete implementations.",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/anti-lazy-code-gate.js\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
