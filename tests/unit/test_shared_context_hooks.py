@@ -136,3 +136,48 @@ def test_stop_is_non_blocking_for_antigravity(tmp_path):
     run_hook("post-tool-autosave.js", {"workspacePaths": [str(tmp_path)]})
     out = json.loads(run_hook("stop-flush.js", {"workspacePaths": [str(tmp_path)]}).stdout)
     assert out["decision"] == "allow"
+
+
+# --------------------------------------------------------------------------
+# Cross-AI LLM Wiki Mode (context/memory/MEMORY.md)
+# --------------------------------------------------------------------------
+
+def test_start_emits_silent_memory_wiki_instruction_when_memory_md_exists(tmp_path):
+    memory_dir = tmp_path / "context" / "memory"
+    memory_dir.mkdir(parents=True, exist_ok=True)
+    (memory_dir / "MEMORY.md").write_text("# Memory Index\n- Active branch: feat/test\n", encoding="utf-8")
+
+    r = run_hook("session-start-context.js", {"cwd": str(tmp_path)}, {"CLAUDE_PLUGIN_ROOT": "x"})
+    assert r.returncode == 0
+    ctx_text = json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert "context/memory/MEMORY.md" in ctx_text
+    assert "ASK the user" not in ctx_text
+
+
+def test_posttool_suppresses_nudge_when_memory_md_exists(tmp_path):
+    ctx_dir = tmp_path / "context"
+    memory_dir = ctx_dir / "memory"
+    memory_dir.mkdir(parents=True, exist_ok=True)
+    (memory_dir / "MEMORY.md").write_text("# Memory Index\n", encoding="utf-8")
+    (ctx_dir / ".contextrc.json").write_text(
+        json.dumps({"autosave": {"everyNToolCalls": 1, "everyMinutes": 1}}),
+        encoding="utf-8",
+    )
+
+    r = run_hook("post-tool-autosave.js", {"cwd": str(tmp_path)}, {"CLAUDE_PLUGIN_ROOT": "x"})
+    assert r.returncode == 0
+    assert r.stdout.strip() == "{}"
+    assert "checkpoint due" not in r.stdout
+
+
+def test_stop_reminds_memory_wiki_update_when_memory_md_exists(tmp_path):
+    memory_dir = tmp_path / "context" / "memory"
+    memory_dir.mkdir(parents=True, exist_ok=True)
+    (memory_dir / "MEMORY.md").write_text("# Memory Index\n", encoding="utf-8")
+
+    run_hook("post-tool-autosave.js", {"cwd": str(tmp_path)}, {"CLAUDE_PLUGIN_ROOT": "x"})
+    r = run_hook("stop-flush.js", {"cwd": str(tmp_path)}, {"CLAUDE_PLUGIN_ROOT": "x"})
+    assert r.returncode == 0
+    reminder = json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert "context/memory/MEMORY.md" in reminder
+

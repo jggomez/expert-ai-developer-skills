@@ -39,6 +39,9 @@ PLUGIN_BUNDLED_SKILLS = {
         "senior-architect-engineering",
         "design-spec-expert",
         "build-and-ci-gates",
+        "context-capture",
+        "context-restore",
+        "loop-engineering",
     ],
     "senior-dev": [
         "senior-dev-orchestrator",
@@ -49,6 +52,9 @@ PLUGIN_BUNDLED_SKILLS = {
         "refactoring-code-expert",
         "qa-tester",
         "compliance-verifier",
+        "context-capture",
+        "context-restore",
+        "loop-engineering",
     ],
     "git-workflow": [
         "commit-expert",
@@ -66,10 +72,14 @@ PLUGIN_BUNDLED_SKILLS = {
     "senior-data-engineer": [
         "gcp-data-engineering",
         "cdc-scd-patterns",
+        "context-capture",
+        "context-restore",
     ],
     "sql-query-optimizer": [
         "bigquery-query-optimization",
         "sql-query-optimization",
+        "context-capture",
+        "context-restore",
     ],
     "shared-context": [
         "context-capture",
@@ -83,6 +93,9 @@ PLUGIN_BUNDLED_SKILLS = {
         "flutter-performance-profiling",
         "flutter-release-engineering",
         "flutter-upgrade-migration",
+        "context-capture",
+        "context-restore",
+        "loop-engineering",
     ],
 }
 
@@ -119,8 +132,10 @@ def sanitize_claude_content(text: str) -> str:
     # 2. Bare tool name replacements
     text = re.sub(r'\binvoke_subagent\b', 'Agent', text)
     text = re.sub(r'\bmanage_subagents\b', 'Agent', text)
+    text = re.sub(r'\bsend_message\b', 'Agent', text)
     text = re.sub(r'\bwrite_to_file\b', 'Write', text)
     text = re.sub(r'\breplace_file_content\b', 'Edit', text)
+    text = re.sub(r'\bview_file\b', 'Read', text)
     text = re.sub(r'\brun_command\b', 'Bash', text)
 
     return text

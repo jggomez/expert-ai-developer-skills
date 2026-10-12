@@ -1,60 +1,82 @@
 ---
 trigger: always_on
-description: Python backend engineering rules enforcing Gitflow branch safety, Plan-First DAG, TDD guarantees, migration protocol, and deployment restrictions.
+description: Python backend engineering rules enforcing Gitflow branch safety, 6-State Plan-First DAG, API & Database Migration Triage Gate, Parallel Vertical Slices, Cross-AI LLM Wiki memory (context/memory/), TDD guarantees, and deployment restrictions.
 ---
 
 # Python Backend Engineering Rules & Graph Protocol
 
 **Identifier**: `python-backend-rules`
 
-These rules enforce development guidelines, branch safety, test-driven guarantees, deployment restrictions, and MCP integration best practices for all Python backend projects.
+These rules enforce development guidelines, Cross-AI LLM Wiki memory (`context/memory/`), upfront architecture/migration triage, parallel vertical slice execution, branch safety, test-driven guarantees, deployment restrictions, and MCP integration best practices for all Python backend projects.
 
 ---
 
-## 1. Graph Engineering DAG
+## 1. 6-State Graph Engineering DAG
 
 ```
-[PLAN FIRST GATE: PLAN.md] ──(API routes, Schemas, ERD)
+[STATE 0: MEMORY RESTORE & API / MIGRATION TRIAGE GATE]
+  ├─► 1. Silent LLM Wiki Restore: Read context/memory/MEMORY.md (~500 tokens); drill down on demand
+  └─► 2. Author/Update PLAN.md with API routes, Schemas, ERD, & ## API & Database Migration Triage Gate
           │
           ▼
-[DATABASE MIGRATIONS (Alembic / Django models)]
+[STATE 1: UPFRONT ARCHITECTURE, SPEC & MIGRATION DESIGN]
+  ├─► Apply senior-architect-engineering + design-spec-expert when >=2 routers/services or API contracts change
+  └─► Apply database-migration-expert when SQLAlchemy/Django models, indexes, or Alembic migrations change
           │
           ▼
-[TDD IMPLEMENTATION (Services, Repositories, Routers)]
+[STATE 2: TDD IMPLEMENTATION — PARALLEL BACKEND VERTICAL SLICES]
+  ├─► Mode A (Default): Disjoint Files (Workspace: 'inherit' across independent FastAPI/Django routers,
+  │     services, repositories, and unit tests with strict non-overlapping Owned Files)
+  └─► Mode B: Git Worktree Isolation (when parallel tracks generate Alembic/Django migrations or edit shared main.py/settings)
           │
           ▼
-[TEST EXECUTION (pytest -q, exit code 0)]
+[STATE 3: TEST EXECUTION & STATIC ANALYSIS]
+  └─► pytest -q (exit code 0), ruff check, bandit, security-audit, performance-scalability (N+1 check)
+          │
+          ├─── (Failures / Regressions? Loop back to State 2 — Max 3 iterations via loop-engineering)
+          ▼
+[STATE 4: CI & DEPLOYMENT GATE]
+  └─► build-and-ci-gates verification + Explicit user approval required for Cloud Run / Firebase deploys
           │
           ▼
-[STATIC ANALYSIS & SECURITY (ruff check, bandit, zero leaks)]
-          │
-          ▼
-[CI & DEPLOYMENT GATE (Explicit user approval required)]
+[STATE 5: SHIP & LLM WIKI MEMORY UPDATE]
+  └─► Update PLAN.md + Persist milestone into context/memory/ (MEMORY.md, architecture.md, conventions.md, log/YYYY-MM-DD.md)
 ```
 
 ---
 
-## 2. Development & Branch Safety (Gitflow)
+## 2. API & Database Migration Triage Gate & Parallel Vertical Slices
+- **Upfront Triage in `PLAN.md`**: Every `PLAN.md` must include an `## API & Database Migration Triage Gate` table evaluating when:
+  - `database-migration-expert` must be applied upfront (any SQLAlchemy/Django schema change, new column/index, or zero-downtime expand-contract migration).
+  - `senior-architect-engineering` and `design-spec-expert` must be applied upfront (new service boundaries, `>= 2` routers/endpoints, auth flows, or OpenAPI/Pydantic contract changes).
+- **Parallel Backend Vertical Slices**:
+  - **Mode A (`Disjoint Files`) [DEFAULT]**: Parallel implementation tracks operate on non-overlapping files (`app/routers/orders.py` + `tests/unit/test_orders.py` || `app/routers/payments.py` + `tests/unit/test_payments.py`) with zero merge overhead.
+  - **Mode B (`Git Worktree` Isolation)**: Mandatory whenever parallel tracks generate Alembic/Django migration revisions (to prevent revision head collisions) or modify shared `main.py`, DI containers, or `settings.py`.
+- **Cross-AI LLM Wiki (`context/memory/`)**: Silently read `context/memory/MEMORY.md` at `State 0` and update `context/memory/` (`MEMORY.md`, `architecture.md` for API/schema contracts, `conventions.md`, and `log/YYYY-MM-DD.md`) **only at `State 5`** (or on explicit user handoff). Never write checkpoints on intermediate turns.
+
+---
+
+## 3. Development & Branch Safety (Gitflow)
 - **Feature Isolation**: Never write or commit feature code directly to the `main` or `develop` branches.
 - **Branch Naming**: All work must be conducted on isolated branches prefixed with `feature/` or `bugfix/` (e.g. `feature/add-oauth-flow`).
 - **Production Branch**: The `main` branch represents the Production (prd) environment. Merging to `main` must only occur via PRs after full validation and code reviews.
 
 ---
 
-## 3. Testing & Quality Guarantees
+## 4. Testing & Quality Guarantees
 - **AI-Generated Code Guarantee**: For every piece of business logic or feature code generated by the AI, corresponding Unit and/or Integration tests **must** be created.
 - **Execution Hook**: Always run all project tests using `verify_tests.py` or `pytest` before ending a task or declaring a user request completed. Do not deliver changes if any test is failing.
 - **Lint & Format Verification**: Run `ruff check` or `run_checks.py` to verify formatting aligns with style rules before completing a task.
 
 ---
 
-## 4. Deployment Restrictions (No Unauthorised Deploys)
+## 5. Deployment Restrictions (No Unauthorised Deploys)
 - **Explicit Permission**: Never deploy code, docker containers, or cloud resources (e.g. Cloud Run, Kubernetes, Firebase) without explicit, manual permission and review from the user.
 - **Pre-deployment Verification**: Before proposing a deploy, verify that the current build is completely clean (all formatters pass, lint has 0 errors, and all tests pass).
 
 ---
 
-## 5. Python Backend Best Practices
+## 6. Python Backend Best Practices
 - **Eager Loading**: Prevent N+1 queries. Always prefetch/eager load relationships (`select_related`/`joinedload`).
 - **Dependency Inversion**: Decouple logic. Move complex operations into Services or Domain Models instead of overloading endpoints/controllers.
 - **Observability**: Implement structured logging with trace/correlation IDs on all routes. Never leak raw stack traces to responses.

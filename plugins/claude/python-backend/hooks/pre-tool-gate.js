@@ -57,9 +57,22 @@ const toolInput = payload.tool_input || {};
 const cwd = payload.cwd || (payload.workspacePaths && payload.workspacePaths[0]) || process.cwd();
 
 // --- 1. Plan-First Enforcement for Write | Edit on Python files ---
-if (toolName === 'Write' || toolName === 'Edit') {
-  const targetFile = toolInput.file_path || toolInput.path || '';
-  if (targetFile.endsWith('.py')) {
+const isFileModTool = /^(write_to_file|replace_file_content|Write|Edit)$/i.test(toolName);
+if (isFileModTool) {
+  const targetFile = toolInput.file_path || toolInput.path || toolInput.TargetFile || '';
+  const basename = path.basename(targetFile);
+  const ext = path.extname(targetFile).toLowerCase();
+
+  const isDoc =
+    /^PLAN(\.[\w-]+)?\.md$/i.test(basename) ||
+    targetFile.includes('/docs/') ||
+    targetFile.includes('/context/memory/') ||
+    targetFile.includes('/context/') ||
+    targetFile.includes('/.agents/') ||
+    ext === '.md' ||
+    ext === '.txt';
+
+  if (!isDoc && targetFile.endsWith('.py')) {
     const possiblePlanPaths = [
       path.join(cwd, 'PLAN.md'),
       path.join(cwd, 'docs', 'PLAN.md'),

@@ -62,3 +62,34 @@
 - [x] `pytest tests/structure/`: 36 passed (100%).
 - [x] `pytest tests/unit/`: 55 passed (100%).
 - [x] Total: 91 passed in full test suite (`exit code 0`).
+
+---
+
+## Track 9: Senior-Dev LLM Wiki Memory (`context/memory/`), Mandatory Discovery Triage & Parallel DAG Execution (COMPLETED)
+- [x] Phase 1: LLM Wiki Memory Architecture in `context-capture` & `context-restore`.
+- [x] Phase 2: Senior-Dev Orchestrator DAG Upgrade (Triage Gate + Parallel Fan-Out/Fan-In + Worktrees + Wiki Memory).
+- [x] Phase 3: Synchronization & Automated Tests (`99 passed`, `APPROVED`).
+
+---
+
+## Track 10: Ecosystem-Wide Plugin Upgrade (`senior-dev-flutter`, `python-backend`, `senior-data-engineer`, `sql-query-optimizer`, `shared-context`, `multi-agent-ops`) (COMPLETED)
+
+### Discovery & Architecture Triage
+| Specialist Node | Triage Verdict | Justification |
+| :--- | :--- | :--- |
+| **`product-analyst`** | `COMPLETED IN /plan` | User confirmed full scope across all 5 plugin groups and confirmed silent automatic `context/memory/MEMORY.md` loading without 25-tool-call mid-turn autosave nagging. |
+| **`architect-engineer`** | `COMPLETED IN /plan` | Designed Track 10A (`senior-dev-flutter` & `python-backend`) and Track 10B (`senior-data-engineer`, `sql-query-optimizer`, `shared-context`, `multi-agent-ops`) with Mode A Disjoint File Partitioning followed by Fan-In dual-ecosystem synchronization. |
+
+### Parallel Execution Tracks
+| Track | Subagent | Isolation Mode | Owned Files |
+| :--- | :--- | :--- | :--- |
+| **Track 10A** | `code-implementer` #1 | Mode A (`Disjoint Files`, `inherit`) | `skills/flutter-senior-orchestration/SKILL.md`, `plugins/antigravity/senior-dev-flutter/**`, `plugins/antigravity/python-backend/**` |
+| **Track 10B** | `code-implementer` #2 | Mode A (`Disjoint Files`, `inherit`) | `plugins/antigravity/senior-data-engineer/**`, `plugins/antigravity/sql-query-optimizer/**`, `plugins/antigravity/shared-context/hooks/*.js`, `plugins/antigravity/multi-agent-ops/rules/multi-agent-ops-rules.md` |
+| **Track 10C (Fan-In)** | `code-implementer` | Sequential Fan-In | `scripts/sync_plugin_skills.py`, `scripts/sync_agents.py`, `plugins/claude/**`, `tests/**` |
+
+### Phase Checklist
+- [x] **Phase 1 (Track 10A)**: Upgrade `senior-dev-flutter` (`flutter-feature-orchestrator.md`, `skills/flutter-senior-orchestration/SKILL.md`, `flutter-rules.md`, `flutter-pre-tool-gate.js`, `README.md`) and `python-backend` (`python-backend-rules.md`, `pre-tool-gate.js`, `README.md`) with `context/memory/` LLM Wiki, Mandatory Triage Gates, and Parallel Fan-Out/Fan-In (`Disjoint Files` vs `Git Worktree`).
+- [x] **Phase 2 (Track 10B)**: Upgrade `senior-data-engineer`, `sql-query-optimizer`, `shared-context/hooks/*.js` (silent `context/memory/MEMORY.md` support + zero 25-call mid-turn nagging when `MEMORY.md` is active), and `multi-agent-ops/rules/multi-agent-ops-rules.md`.
+- [x] **Phase 3 (Track 10C — Fan-In & Dual-Host Sync)**: Update `scripts/sync_plugin_skills.py` and `scripts/sync_agents.py`, synchronize all `plugins/antigravity/` and `plugins/claude/` plugins, and add automated unit & structural tests.
+- [x] **Phase 4 (State 3 & 4 Parallel Verification)**: Run `qa-tester` (`pytest -v tests/` -> `103 passed`, `exit code 0`; `node --check` -> `34/34 passed`) and `compliance-verifier` (`APPROVED` audit) in parallel.
+- [x] **Phase 5 (State 5 Ship, README Sync & Git Push)**: Update root `README.md`, `skills/README.md`, `shared-context/README.md`, and `multi-agent-ops/README.md`, update `context/memory/`, commit with Conventional Commits, and push to `origin feature/unified-agent-governance-and-plugins`.

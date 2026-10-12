@@ -482,12 +482,20 @@ def test_agents_execution_policy_and_tools(workspace_root, plugin_dirs):
 def test_claude_plugins_manifest_and_tools(workspace_root):
     """Verifies all Claude Code specialized plugins in plugins/claude/
     declare valid .claude-plugin/plugin.json manifests and pure Claude Code tools
-    (Bash, Read, Write, Edit, Glob, Grep, Agent) with zero Antigravity tool leakage."""
+    (Bash, Read, Write, Edit, Glob, Grep, Agent) with zero Antigravity tool leakage
+    across frontmatter, markdown bodies, and hooks.json."""
     claude_plugins_dir = os.path.join(workspace_root, "plugins", "claude")
     assert os.path.isdir(claude_plugins_dir), "plugins/claude directory does not exist"
 
     valid_claude_tools = {"Bash", "Read", "Write", "Edit", "Glob", "Grep", "Agent", "WebSearch", "WebFetch"}
-    antigravity_only_tools = {"run_command", "view_file", "write_to_file", "replace_file_content"}
+    antigravity_only_tools = {
+        "run_command",
+        "view_file",
+        "write_to_file",
+        "replace_file_content",
+        "invoke_subagent",
+        "manage_subagents",
+    }
     errors = []
 
     for plugin_name in os.listdir(claude_plugins_dir):
@@ -504,6 +512,19 @@ def test_claude_plugins_manifest_and_tools(workspace_root):
             data = json.load(f)
         if data.get("name") != plugin_name:
             errors.append(f"plugins/claude/{plugin_name}: manifest name '{data.get('name')}' != '{plugin_name}'")
+
+        hooks_json_path = os.path.join(plugin_path, "hooks.json")
+        if os.path.isfile(hooks_json_path):
+            with open(hooks_json_path, "r", encoding="utf-8") as f:
+                hooks_raw = f.read()
+            hooks_data = json.loads(hooks_raw)
+            if "hooks" not in hooks_data:
+                errors.append(f"plugins/claude/{plugin_name}/hooks.json: missing top-level 'hooks' key")
+            for forbidden in antigravity_only_tools:
+                if forbidden in hooks_raw:
+                    errors.append(
+                        f"plugins/claude/{plugin_name}/hooks.json: leaked Antigravity tool '{forbidden}'"
+                    )
 
         agents_dir = os.path.join(plugin_path, "agents")
         if os.path.isdir(agents_dir):
@@ -527,6 +548,11 @@ def test_claude_plugins_manifest_and_tools(workspace_root):
                 for key in ("subagent", "mainAgent", "commandExecutionPolicy"):
                     if key in fm:
                         errors.append(f"plugins/claude/{plugin_name}/agents/{fname}: leaked Antigravity key '{key}'")
+                for forbidden in antigravity_only_tools:
+                    if forbidden in content:
+                        errors.append(
+                            f"plugins/claude/{plugin_name}/agents/{fname}: leaked Antigravity tool '{forbidden}' in body"
+                        )
 
     assert not errors, "\n".join(errors)
 
@@ -557,6 +583,101 @@ def test_claude_marketplace_manifest(workspace_root):
             errors.append(f"Plugin '{p.get('name')}' source path does not exist: {source}")
 
     assert not errors, "\n".join(errors)
+
+
+def test_senior_dev_llm_wiki_triage_and_parallel_dag(workspace_root):
+    """Verifies that senior-dev bundles context-capture, context-restore, and
+    loop-engineering across both ecosystems, configures the Mandatory Discovery
+    Triage Gate and Parallel Fan-Out/Worktree DAG in senior-dev-orchestrator.md,
+    and allows context/memory/ writes in orchestrator-role-gate.js."""
+    required_new_skills = ("context-capture", "context-restore", "loop-engineering")
+
+    for ecosystem in ("antigravity", "claude"):
+        skills_dir = os.path.join(workspace_root, "plugins", ecosystem, "senior-dev", "skills")
+        for skill in required_new_skills:
+            skill_md = os.path.join(skills_dir, skill, "SKILL.md")
+            assert os.path.isfile(skill_md), (
+                f"plugins/{ecosystem}/senior-dev/skills/{skill}/SKILL.md is missing"
+            )
+
+    orchestrator_path = os.path.join(
+        workspace_root, "plugins", "antigravity", "senior-dev", "agents", "senior-dev-orchestrator.md"
+    )
+    with open(orchestrator_path, "r", encoding="utf-8") as f:
+        orch_content = f.read()
+
+    match = re.search(r"^---\s*\n(.*?)\n---\s*\n", orch_content, re.DOTALL)
+    assert match, "senior-dev-orchestrator.md missing YAML frontmatter"
+    fm = yaml.safe_load(match.group(1))
+    orch_skills = fm.get("skills", [])
+    for skill in required_new_skills:
+        assert skill in orch_skills, (
+            f"senior-dev-orchestrator.md frontmatter 'skills' missing '{skill}'"
+        )
+
+    for expected_phrase in (
+        "Discovery & Architecture Triage",
+        "product-analyst",
+        "architect-engineer",
+        "context/memory/MEMORY.md",
+        "Disjoint File",
+        "Worktree",
+    ):
+        assert expected_phrase in orch_content, (
+            f"senior-dev-orchestrator.md missing required DAG phrase: '{expected_phrase}'"
+        )
+
+    hook_path = os.path.join(
+        workspace_root, "plugins", "antigravity", "senior-dev", "hooks", "orchestrator-role-gate.js"
+    )
+    with open(hook_path, "r", encoding="utf-8") as f:
+        hook_content = f.read()
+    assert "/context/memory/" in hook_content, (
+        "orchestrator-role-gate.js must explicitly allow '/context/memory/' paths"
+    )
+
+
+def test_ecosystem_plugins_llm_wiki_and_parallel_upgrades(workspace_root):
+    """Verifies that senior-dev-flutter, python-backend, senior-data-engineer,
+    and sql-query-optimizer bundle context-capture and context-restore in both
+    ecosystems (plus loop-engineering in senior-dev-flutter and python-backend),
+    and that flutter-feature-orchestrator.md, senior-data-engineer.md, and
+    sql-query-optimizer.md reference context/memory/MEMORY.md in both ecosystems."""
+    expected_bundled = {
+        "senior-dev-flutter": ("context-capture", "context-restore", "loop-engineering"),
+        "python-backend": ("context-capture", "context-restore", "loop-engineering"),
+        "senior-data-engineer": ("context-capture", "context-restore"),
+        "sql-query-optimizer": ("context-capture", "context-restore"),
+    }
+
+    for ecosystem in ("antigravity", "claude"):
+        for plugin, skills in expected_bundled.items():
+            for skill in skills:
+                skill_md = os.path.join(
+                    workspace_root, "plugins", ecosystem, plugin, "skills", skill, "SKILL.md"
+                )
+                assert os.path.isfile(skill_md), (
+                    f"plugins/{ecosystem}/{plugin}/skills/{skill}/SKILL.md is missing"
+                )
+
+    expected_agents = (
+        ("senior-dev-flutter", "flutter-feature-orchestrator.md"),
+        ("senior-data-engineer", "senior-data-engineer.md"),
+        ("sql-query-optimizer", "sql-query-optimizer.md"),
+    )
+
+    for ecosystem in ("antigravity", "claude"):
+        for plugin, agent_fname in expected_agents:
+            agent_path = os.path.join(
+                workspace_root, "plugins", ecosystem, plugin, "agents", agent_fname
+            )
+            assert os.path.isfile(agent_path), f"Missing {agent_path}"
+            with open(agent_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            assert "context/memory/MEMORY.md" in content, (
+                f"plugins/{ecosystem}/{plugin}/agents/{agent_fname} missing 'context/memory/MEMORY.md'"
+            )
+
 
 
 

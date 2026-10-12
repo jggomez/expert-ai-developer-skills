@@ -24,56 +24,74 @@ plugins/python-backend/
 ├── hooks.json            # Lifecycle hook registrations for both hosts, in one file
 ├── hooks/                # Node.js hook event handlers (host-aware)
 │   ├── python-backend-activate.js  # Runs on SessionStart (Claude Code only — Antigravity has no SessionStart event; its rules/ dir auto-loads instead)
-│   ├── pre-tool-gate.js            # Runs on PreToolUse; intercepts git & cloud deployments
+│   ├── pre-tool-gate.js            # Runs on PreToolUse; enforces Plan-First, gitflow & cloud deployment guardrails
 │   └── stop-gate.js                # Runs on Stop; quality gate checking test suite
+├── agents/
+│   └── python-backend-orchestrator.md # Senior Python Backend Orchestrator (6-State DAG, Parallel Slices)
 ├── rules/                # Central system guidelines
-│   ├── python-backend-rules.md     # Quality checklists and coding patterns
+│   ├── python-backend-rules.md     # 6-State DAG, API/Migration Triage Gate, Parallel Slices & context/memory/
 │   └── git-hooks.md                # Blueprints for pre-commit & commit-msg hooks
-└── skills/               # Bundled developer skills loaded globally
+└── skills/               # Bundled developer skills loaded globally (14 modules)
     ├── python-expert/
     ├── test-driven-development/
     ├── pull-request-expert/
+    ├── code-smells-expert/
+    ├── refactoring-code-expert/
     ├── security-audit/
+    ├── performance-scalability/
+    ├── database-migration-expert/
     ├── senior-architect-engineering/
-    └── ... (and 6 other backend-compatible skills, totaling 11)
+    ├── design-spec-expert/
+    ├── build-and-ci-gates/
+    ├── context-capture/
+    ├── context-restore/
+    └── loop-engineering/
 ```
 
 ---
 
-## 2. Integrated Configuration Assets
+## 2. 6-State DAG, Triage Gate & Parallel Vertical Slices
 
-### 2.1 Model Context Protocol (`.mcp.json` / `mcp_config.json`)
+1. **`State 0` — Silent LLM Wiki Restore & API/Migration Triage Gate**: Silently reads `context/memory/MEMORY.md` (`~500 tokens`) and authors `PLAN.md` with an `## API & Database Migration Triage Gate` table evaluating when `database-migration-expert`, `senior-architect-engineering`, and `design-spec-expert` must be applied upfront.
+2. **Parallel Backend Vertical Slices**: Dispatches independent FastAPI/Django vertical slices in parallel under **Mode A (`Disjoint Files`)** across non-overlapping routers, services, repositories, and unit tests, or **Mode B (`Git Worktree` isolation)** when parallel tracks generate Alembic/Django migrations or edit shared `main.py`/settings.
+3. **`State 5` — Token-Conserving LLM Wiki Update**: Updates `context/memory/` (`MEMORY.md`, `architecture.md` for API/schema contracts, `conventions.md`, and `log/YYYY-MM-DD.md`) only upon milestone completion or explicit user handoff.
+
+---
+
+## 3. Integrated Configuration Assets
+
+### 3.1 Model Context Protocol (`.mcp.json` / `mcp_config.json`)
 Registers secure, lazy-loaded cloud management tools — for both Claude Code (`.mcp.json`) and Antigravity (`mcp_config.json`):
 - **`cloudrun`**: Enables listing services, fetching service details, viewing deployment logs, and running deployments.
 - **`firebase-mcp-server`**: Enables Cloud Firestore collection lookups, document mutations, and real-time database queries.
 
-### 2.2 Lifecycle Hook Mappings (`hooks.json`)
+### 3.2 Lifecycle Hook Mappings (`hooks.json`)
 One file, two hosts — Claude Code reads the top-level `"hooks"` key, Antigravity reads the separate `"python-backend-safety-gates"` named group (its own schema: `enabled` + event arrays):
 - **`SessionStart`** (Claude Code only — this event doesn't exist in Antigravity): runs `python-backend-activate.js` to load rules and check cloud credentials. On Antigravity, `rules/python-backend-rules.md` auto-loads via the plugin's `rules/` directory instead.
-- **`PreToolUse`**: runs `pre-tool-gate.js` before executing command line tools or calling MCP tools to inspect arguments.
+- **`PreToolUse`**: runs `pre-tool-gate.js` before executing file modifications, command line tools, or MCP tools.
 - **`Stop`**: runs `stop-gate.js` before finishing a request to verify the test suite state.
 
 ---
 
-## 3. Operations & Safety Gates Detail
+## 4. Operations & Safety Gates Detail
 
-### 3.1 Gitflow Branch Block (Intercepts commits/pushes)
-- **Goal**: Protect staging (`develop`) and production (`main`) branches.
-- **Mechanism**: The `PreToolUse` hook checks the active branch using git command lines. If the developer tries to commit or push directly to `main` or `develop`, it returns a `deny` decision, blocking the execution immediately.
+### 4.1 Plan-First & Gitflow Branch Block (Intercepts edits & commits/pushes)
+- **Goal**: Require `PLAN.md` before modifying `.py` files (while permitting `context/memory/` and `.agents/` updates) and protect staging (`develop`) and production (`main`) branches.
+- **Mechanism**: The `PreToolUse` hook verifies `PLAN.md` exists before Python edits and checks the active git branch before `git add/commit/push/merge`, returning `deny` on `main` or `develop`.
 
-### 3.2 Deployment Lock (Ask)
+### 4.2 Deployment Lock (Ask)
 - **Goal**: Avoid accidental modifications or deployments to cloud targets.
-- **Mechanism**: If a command contains deployment keywords (`deploy`, `kubectl apply`) or calls GCP/Firebase MCP modification APIs, the `PreToolUse` hook returns an `ask` permission decision. This pauses execution and displays a confirmation dialog asking the user for explicit approval.
+- **Mechanism**: If a command contains deployment keywords (`deploy`, `kubectl apply`) or calls GCP/Firebase MCP modification APIs, the `PreToolUse` hook returns an `ask` permission decision.
 
-### 3.3 Test Verification Gate (Request finalization blocker)
+### 4.3 Test Verification Gate (Request finalization blocker)
 - **Goal**: Ensure 0 regressions are delivered.
 - **Mechanism**: When the agent attempts to stop or complete a task, the `Stop` hook runs the project's test suite via `python3 ./skills/test-driven-development/scripts/verify_tests.py`. If tests fail, it halts termination, outputs the traceback, and forces the developer/agent loop to continue until resolved.
 
 ---
 
-## 4. Bundled Skills (11 Packaged Modules)
+## 5. Bundled Skills (14 Packaged Modules)
 
-On loading the plugin, the following 11 skills are automatically loaded into the agent's context:
+On loading the plugin, the following 14 skills are automatically loaded into the agent's context:
 
 1. **`python-expert`**: AST analysis and memory optimization check.
 2. **`test-driven-development`**: AAA execution patterns.
@@ -86,10 +104,13 @@ On loading the plugin, the following 11 skills are automatically loaded into the
 9. **`senior-architect-engineering`**: ADR templates.
 10. **`design-spec-expert`**: SDD schemas.
 11. **`build-and-ci-gates`**: Pre-commit quality hook gates.
+12. **`context-capture`**: Updates the Cross-AI LLM Wiki (`context/memory/MEMORY.md`, `architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) at `State 5` or explicit handoff.
+13. **`context-restore`**: Progressive disclosure reader (`context/memory/MEMORY.md` at `State 0`, drilling down on demand).
+14. **`loop-engineering`**: Bounded 3-strike fix loops for automated test and static-analysis verification.
 
 ---
 
-## 5. Example Prompts
+## 6. Example Prompts
 
 The Gitflow/deployment/test-verification gates apply automatically once the plugin is installed — no prompt needed. The skills below activate when you ask for what they cover:
 
@@ -107,7 +128,7 @@ The Gitflow/deployment/test-verification gates apply automatically once the plug
 
 ---
 
-## 6. Installation
+## 7. Installation
 
 **Antigravity CLI** — global only, via the CLI (don't hand-copy into `~/.gemini/...`):
 ```bash

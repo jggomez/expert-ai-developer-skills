@@ -2,11 +2,7 @@
 
 **Cross-agent working memory for Claude Code and Antigravity CLI.**
 
-The `shared-context` plugin lets different AI coding agents hand off to each
-other through a committed `context/` directory in the repo. When an agent
-finishes a task — or at a periodic checkpoint — it records *what was done, why,
-and how*; the next agent (on either host) is prompted at start-up to load that
-context, but only with the user's explicit OK.
+The `shared-context` plugin lets different AI coding agents (Claude Code and Google Antigravity) share a **2-tier Cross-AI LLM Wiki (`context/memory/`)** alongside an optional compressed session archive (`context/`). At session start (`State 0`), agents silently read the lightweight index `context/memory/MEMORY.md` (capped at $\le 120$ lines) and pull topic files (`architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) on demand; at task completion (`State 5`), agents update the LLM Wiki with new architectural decisions and conventions without mid-turn nagging.
 
 Its `agents/`, `skills/`, `hooks.json` (`"hooks"` key), `.mcp.json`, and
 `${CLAUDE_PLUGIN_ROOT}` layout follow the **Claude Code plugin format**; the
@@ -33,11 +29,11 @@ plugins/shared-context/
 ├── mcp_config.json              # Antigravity MCP config (same launcher)
 ├── hooks.json                   # "hooks" key (SessionStart, PostToolUse, Stop)
 ├── hooks/
-│   ├── session-start-context.js # start-of-session: prompt to load prior context (CC SessionStart, debounced)
-│   ├── post-tool-autosave.js    # PostToolUse: checkpoint nudge every N tool calls / T minutes (non-blocking)
-│   └── stop-flush.js            # Stop: remind to flush + roll up + compress (non-blocking)
+│   ├── session-start-context.js # State 0: detect context/memory/MEMORY.md (primary) or legacy sessions (debounced)
+│   ├── post-tool-autosave.js    # No-op pass-through (zero mid-turn nagging; updates happen at State 5)
+│   └── stop-flush.js            # State 5 Stop: remind to update context/memory/ LLM Wiki if code changed
 ├── rules/
-│   └── shared-context-rules.md  # Antigravity auto-loads (no SessionStart event there)
+│   └── shared-context-rules.md  # Antigravity auto-loads (2-tier LLM Wiki rules)
 ├── mcp/
 │   ├── run-server.sh           # launcher: `uv run --with 'mcp<2'` (zero manual install), falls back to a local mcp
 │   └── mcp_server.py           # stdio MCP: context_list/snapshot/read/write/pack/unpack/rollup/search
@@ -48,14 +44,20 @@ plugins/shared-context/
     └── context-restore/         # mirror of /skills/context-restore
 ```
 
-The `context/` directory itself is created in the target repo on first capture,
-not shipped here. Its layout:
+The `context/` directory is created in the target repo on first capture,
+not shipped here. It combines the **Primary 2-Tier Cross-AI LLM Wiki (`context/memory/`)** with the **Optional Legacy Session Archive**:
 
 ```
 context/
-├── INDEX.md                     # generated table of all sessions, newest first
-├── preferences.md               # long-lived, cross-session user preferences
-├── architecture.md              # append-only decision log (built by the rollup)
+├── memory/                      # PRIMARY: 2-Tier Cross-AI LLM Wiki (plain Markdown, Git-friendly)
+│   ├── MEMORY.md                # Tier-1 index (<= 120 lines): project summary, invariants, links to topic pages
+│   ├── architecture.md          # Tier-2 topic page: curated architectural decisions & system boundaries
+│   ├── conventions.md           # Tier-2 topic page: coding conventions, stack rules, recurring patterns
+│   └── log/
+│       └── YYYY-MM-DD.md        # Chronological task completion log entries (State 5 updates)
+├── INDEX.md                     # Legacy archive: generated table of archived sessions, newest first
+├── preferences.md               # Legacy archive: cross-session user preferences
+├── architecture.md              # Legacy archive: append-only decision log (built by context_rollup.py)
 ├── .contextrc.json             # autosave / compression / retention / redaction config
 ├── .gitattributes              # *.tar.xz marked binary
 └── <YYYY-MM-DD>/<HH-MM-SS-host-user>/
@@ -65,29 +67,19 @@ context/
     └── detail.tar.xz            # flows.md, topics.md, files-touched.json, git-context (packed)
 ```
 
-Each session keeps `manifest` + `summary` + `decisions` uncompressed so the
-store browses and diffs cleanly in a PR; the heavier detail is packed with
-`xz` (Python stdlib `tarfile`, no external binary). `context_rollup.py` applies
-retention: sessions past `maxSessions` / `maxAgeDays` are fully archived into
-`full.tar.xz`.
-
 ---
 
 ## 2. The Agent
 
 **`context-keeper`** — a host-neutral subagent (`model: inherit`, explicit
-`subagent`/`mainAgent`, no `tools` key). It does the restore/capture/rollup
-bookkeeping in its own context window so the main agent doesn't spend tokens on
-it. Invoke it directly ("use the context-keeper agent to save this session") or
-let the main agent delegate to it.
+`subagent`/`mainAgent`, no `tools` key). It maintains the `context/memory/` LLM Wiki (`MEMORY.md`, `architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) and handles legacy session archive snapshots/rollups in its own context window so the main agent doesn't spend tokens on bookkeeping.
 
 ---
 
 ## 3. Model Context Protocol (`.mcp.json` / `mcp_config.json`)
 
 Both configs run `sh mcp/run-server.sh`, which starts `mcp/mcp_server.py` — a
-stdio MCP server exposing the store with **identical tool names on both hosts**
-(no `Bash` vs `run_command` split):
+stdio MCP server exposing the store with **identical tool names on both hosts**:
 
 | Tool | Purpose |
 | :--- | :--- |
@@ -109,25 +101,24 @@ work standalone.
 
 | Skill | Role |
 | :--- | :--- |
-| **`context-capture`** | How to write a well-formed session record: the schema, the "would another agent be worse off not knowing this?" bar, secret redaction, `tar.xz` compression, and decision rollup. Scripts: `context_snapshot.py`, `context_pack.py`, `context_rollup.py`. |
-| **`context-restore`** | How to load prior context at session start: list, rank relevance, **ask the user** which set to load, then adopt decisions/preferences explicitly. Script: `context_list.py`. |
+| **`context-capture`** | How to update the 2-tier Cross-AI LLM Wiki (`context/memory/MEMORY.md`, `architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) at `State 5` task completion, plus secret redaction and optional `tar.xz` session archiving (`context_snapshot.py`, `context_pack.py`, `context_rollup.py`). |
+| **`context-restore`** | How to silently load `context/memory/MEMORY.md` at `State 0` session start, pull relevant topic pages on demand, and inspect legacy session archives via `context_list.py`. |
 
 ---
 
 ## 5. What This Plugin Is *Not*
 
-- Not automatic memory — nothing is loaded without the user's OK.
+- Not a mid-turn distraction — `post-tool-autosave.js` is a silent pass-through so agents never get interrupted every N tool calls; memory updates happen cleanly at `State 5`.
 - Not a secret store — records are redacted on write; still keep credentials out.
-- Not cross-repo — the store is per-repo `context/`, shared via git.
+- Not cross-repo — the store is per-repo `context/memory/`, shared via git.
 
 ---
 
 ## 6. Example Prompts
 
-- "Check the shared context and tell me what previous sessions did before we start."
-- "We're done — use the context-keeper agent to save this session and roll up the decisions."
-- "Checkpoint the shared context now, then keep going."
-- "Load only the architecture decisions and preferences, not the full history."
+- "Read `context/memory/MEMORY.md` and `architecture.md` before planning this feature."
+- "We're done — update `context/memory/` with our new architectural decisions and log entry."
+- "Use the context-keeper agent to archive a full session snapshot and roll up decisions."
 
 ---
 

@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 /**
  * shared-context: periodic checkpoint nudge. Counts tool calls and elapsed time
- * per repo (state in the OS temp dir, never committed). When the threshold from
- * context/.contextrc.json is crossed (default 25 tool calls or 10 minutes), it
- * asks the agent to checkpoint via the context-capture skill. Always
- * non-blocking — it never denies a tool call.
+ * per repo (state in the OS temp dir, never committed).
+ * - When the Cross-AI LLM Wiki (`context/memory/MEMORY.md`) is active, records
+ *   tool call activity for `stop-flush.js` but suppresses mid-session checkpoint
+ *   nudges so memory updates happen exclusively at State 5 (Ship & Finish).
+ * - When only the legacy `context/sessions/` store is used, nudges when the
+ *   threshold from `context/.contextrc.json` is crossed (default 25 tool calls
+ *   or 10 minutes). Always non-blocking.
  */
 const fs = require('fs');
 const os = require('os');
@@ -41,10 +44,9 @@ function main() {
     process.cwd();
   const contextDir = path.join(cwd, 'context');
 
-  // Only nudge once a context/ store exists — starting one is a deliberate act.
+  // Only track once a context/ store exists — starting one is a deliberate act.
   if (!fs.existsSync(contextDir)) return done();
 
-  const th = loadThresholds(contextDir);
   const key = crypto.createHash('sha1').update(path.resolve(cwd)).digest('hex').slice(0, 16);
   const stateFile = path.join(os.tmpdir(), `shared-context-state-${key}.json`);
 
@@ -56,6 +58,18 @@ function main() {
   }
   state.calls += 1;
 
+  // When the LLM Wiki (`context/memory/MEMORY.md`) is present, never emit
+  // mid-session checkpoint nudges (zero token waste on intermediate turns).
+  if (fs.existsSync(path.join(contextDir, 'memory', 'MEMORY.md'))) {
+    try {
+      fs.writeFileSync(stateFile, JSON.stringify(state));
+    } catch (e) {
+      /* best effort */
+    }
+    return done();
+  }
+
+  const th = loadThresholds(contextDir);
   const now = Date.now();
   const dueByCalls = state.calls >= th.everyNToolCalls;
   const dueByTime = now - state.lastCheckpoint >= th.everyMinutes * 60 * 1000;

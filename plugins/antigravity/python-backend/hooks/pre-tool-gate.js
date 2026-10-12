@@ -71,15 +71,18 @@ const commandLine = toolInput.command || toolInput.CommandLine || '';
 const cwd = payload.cwd || toolInput.Cwd || payload.workspacePaths?.[0] || process.cwd();
 
 // 1. GATE: Plan-First before creating/modifying Python code
-const isFileModTool = /^(write_to_file|replace_file_content)$/i.test(toolName);
+const isFileModTool = /^(write_to_file|replace_file_content|Write|Edit)$/i.test(toolName);
 if (isFileModTool) {
-  const targetFile = toolInput.TargetFile || toolInput.file_path || '';
+  const targetFile = toolInput.TargetFile || toolInput.file_path || toolInput.path || '';
   const basename = path.basename(targetFile);
   const ext = path.extname(targetFile).toLowerCase();
 
   const isDoc =
     /^PLAN(\.[\w-]+)?\.md$/i.test(basename) ||
     targetFile.includes('/docs/') ||
+    targetFile.includes('/context/memory/') ||
+    targetFile.includes('/context/') ||
+    targetFile.includes('/.agents/') ||
     ext === '.md' ||
     ext === '.txt';
 

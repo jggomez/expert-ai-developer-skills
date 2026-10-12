@@ -2,10 +2,10 @@
 """Unified Agent and Plugin Synchronizer for Google Antigravity & Claude Code.
 
 Everything is a Plugin:
-1. Canonical agent definitions live directly inside plugins/<plugin>/agents/*.md.
-2. Generates plugins/claude/<plugin>/ with pure Claude Code subagents, skills, hooks, and .claude-plugin/plugin.json.
-3. Links plugins/antigravity/<plugin>/ to canonical plugins/<plugin>/ for symmetrical CLI installation.
-4. Generates .claude-plugin/marketplace.json so Claude Code users can install via marketplace.
+1. Canonical agent definitions live directly inside plugins/antigravity/<plugin>/agents/*.md.
+2. Generates/updates plugins/claude/<plugin>/ with pure Claude Code subagents, skills, hooks, and .claude-plugin/plugin.json
+   while sanitizing Antigravity tool names into native Claude Code tools and preserving Claude-specific hooks.json and README.md.
+3. Generates .claude-plugin/marketplace.json so Claude Code users can install via marketplace.
 
 Usage:
     python3 scripts/sync_agents.py
@@ -78,6 +78,38 @@ def parse_frontmatter(content: str) -> tuple[dict, str]:
     return fm, body
 
 
+def sanitize_claude_body(text: str) -> str:
+    """Sanitizes Antigravity tool and policy references in markdown bodies into Claude Code equivalents."""
+    text = re.sub(
+        r'invoke_subagent\(name="([^"]+)",\s*prompt="([^"]+)"\)',
+        r'Agent(agent="\1", prompt="\2")',
+        text,
+    )
+    text = re.sub(
+        r'invoke_subagent\(name="([^"]+)"\)',
+        r'Agent(agent="\1")',
+        text,
+    )
+    text = re.sub(r"commandExecutionPolicy:\s*['\"]?auto['\"]?", "permissionMode: default", text)
+    text = re.sub(r"\bcommandExecutionPolicy\b", "permissionMode", text)
+    text = re.sub(r"\binvoke_subagent\b", "Agent", text)
+    text = re.sub(r"\bmanage_subagents\b", "Agent", text)
+    text = re.sub(r"\bsend_message\b", "Agent", text)
+    text = re.sub(r"\bwrite_to_file\b", "Write", text)
+    text = re.sub(r"\breplace_file_content\b", "Edit", text)
+    text = re.sub(r"\bview_file\b", "Read", text)
+    text = re.sub(r"\brun_command\b", "Bash", text)
+    text = re.sub(r"\blist_dir\b", "Glob", text)
+    text = re.sub(r"\bgrep_search\b", "Grep", text)
+    text = re.sub(r"\bfind_by_name\b", "Glob", text)
+    text = re.sub(
+        r"In \*\*Google Antigravity\*\*:\s*Use `Write` and `Edit`",
+        "In **Claude Code**: Use `Write` and `Edit`",
+        text,
+    )
+    return text
+
+
 def format_claude_agent(content: str, name: str) -> str:
     fm, body = parse_frontmatter(content)
     is_orch = name in ORCHESTRATORS
@@ -90,8 +122,27 @@ def format_claude_agent(content: str, name: str) -> str:
         "permissionMode": "default",
         "tools": tools,
     }
+    if fm.get("skills"):
+        claude_fm["skills"] = fm["skills"]
+
+    sanitized_body = sanitize_claude_body(body)
     dumped = yaml.dump(claude_fm, sort_keys=False, allow_unicode=True)
-    return f"---\n{dumped}---\n{body}"
+    return f"---\n{dumped}---\n{sanitized_body}"
+
+
+def sanitize_claude_skill_dir(target_dir: Path) -> None:
+    """Sanitizes Antigravity tool names in copied Claude skill files."""
+    for root, _, files in os.walk(target_dir):
+        for fname in files:
+            fpath = Path(root) / fname
+            if fpath.suffix.lower() in {".md", ".py", ".sh", ".json", ".yaml", ".yml", ".txt", ".sql"}:
+                try:
+                    content = fpath.read_text(encoding="utf-8")
+                except UnicodeDecodeError:
+                    continue
+                sanitized = sanitize_claude_body(content)
+                if sanitized != content:
+                    fpath.write_text(sanitized, encoding="utf-8")
 
 
 def sync_claude_plugins() -> None:
@@ -115,7 +166,7 @@ def sync_claude_plugins() -> None:
         }
         (claude_plugin_dir / "plugin.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
-        # 2. agents/ (with pure Claude tools if plugin has agents)
+        # 2. agents/ (with pure Claude tools and sanitized body if plugin has agents)
         if plugin_name in PLUGIN_AGENTS_MAP:
             agent_files = PLUGIN_AGENTS_MAP[plugin_name]
             agents_dir = dest_plugin / "agents"
@@ -126,25 +177,29 @@ def sync_claude_plugins() -> None:
                 claude_text = format_claude_agent(raw_content, src_af.stem)
                 (agents_dir / afname).write_text(claude_text, encoding="utf-8")
 
-        # 3. skills/
+        # 3. skills/ (copied and sanitized for Claude Code)
         src_skills = src_plugin / "skills"
         if src_skills.is_dir():
             dest_skills = dest_plugin / "skills"
             if dest_skills.exists():
                 shutil.rmtree(dest_skills)
             shutil.copytree(src_skills, dest_skills)
+            sanitize_claude_skill_dir(dest_skills)
 
-        # 4. hooks/ & hooks.json
+        # 4. hooks/ & hooks.json (do NOT overwrite existing Claude-native hooks or hooks.json)
         src_hooks_dir = src_plugin / "hooks"
         if src_hooks_dir.is_dir():
             dest_hooks_dir = dest_plugin / "hooks"
-            if dest_hooks_dir.exists():
-                shutil.rmtree(dest_hooks_dir)
-            shutil.copytree(src_hooks_dir, dest_hooks_dir)
+            dest_hooks_dir.mkdir(parents=True, exist_ok=True)
+            for hook_file in src_hooks_dir.iterdir():
+                dest_hook_file = dest_hooks_dir / hook_file.name
+                if hook_file.is_file() and not dest_hook_file.exists():
+                    shutil.copy2(hook_file, dest_hook_file)
 
         src_hooks_json = src_plugin / "hooks.json"
-        if src_hooks_json.is_file():
-            shutil.copy2(src_hooks_json, dest_plugin / "hooks.json")
+        dest_hooks_json = dest_plugin / "hooks.json"
+        if src_hooks_json.is_file() and not dest_hooks_json.exists():
+            shutil.copy2(src_hooks_json, dest_hooks_json)
 
         # 5. .mcp.json & mcp/
         src_mcp_json = src_plugin / ".mcp.json"
@@ -158,10 +213,11 @@ def sync_claude_plugins() -> None:
                 shutil.rmtree(dest_mcp_dir)
             shutil.copytree(src_mcp_dir, dest_mcp_dir)
 
-        # 6. README.md
+        # 6. README.md (do NOT overwrite existing Claude-specific README.md)
         src_readme = src_plugin / "README.md"
-        if src_readme.is_file():
-            shutil.copy2(src_readme, dest_plugin / "README.md")
+        dest_readme = dest_plugin / "README.md"
+        if src_readme.is_file() and not dest_readme.exists():
+            shutil.copy2(src_readme, dest_readme)
 
         print(f"✅ Generated Claude plugin: {dest_plugin}")
 

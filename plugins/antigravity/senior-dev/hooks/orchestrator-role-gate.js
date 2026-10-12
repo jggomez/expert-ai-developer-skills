@@ -68,13 +68,15 @@ if (!isFileModTool || !targetFile) {
 const basename = path.basename(targetFile);
 const ext = path.extname(targetFile).toLowerCase();
 
-// Allowed planning and documentation artifacts:
-// PLAN.md, ADR-*.md, *.md, docs/*, .agents/*, .gemini/*, *.txt
+// Allowed planning, documentation, and LLM Wiki memory artifacts:
+// PLAN.md, ADR-*.md, *.md, docs/*, .agents/*, context/memory/*, .gemini/*, *.txt
 const isDocOrPlan =
   /^PLAN(\.[\w-]+)?\.md$/i.test(basename) ||
   /^ADR-[\w-]+\.md$/i.test(basename) ||
   targetFile.includes('/docs/') ||
   targetFile.includes('/.agents/') ||
+  targetFile.includes('/context/memory/') ||
+  targetFile.includes('/context/') ||
   targetFile.includes('/.gemini/') ||
   ext === '.md' ||
   ext === '.txt';

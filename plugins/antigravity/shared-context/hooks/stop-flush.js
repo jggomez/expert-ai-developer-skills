@@ -1,9 +1,13 @@
 #!/usr/bin/env node
 /**
  * shared-context: on session stop, if a context/ store exists and this session
- * did work, remind the agent to flush a final record (summary + decisions),
- * roll decisions up, and compress old sessions. Non-blocking on both hosts —
- * it nudges, it never prevents the agent from stopping.
+ * did work:
+ * - If `context/memory/MEMORY.md` exists (and no legacy `context/sessions/`),
+ *   remind the agent to persist completed milestones to the Cross-AI LLM Wiki
+ *   (`context/memory/MEMORY.md`, `architecture.md`, `log/YYYY-MM-DD.md`).
+ * - If legacy `context/sessions/` exists, remind the agent to flush the shared
+ *   context via `context_snapshot.py`, `context_rollup.py`, and `context_pack.py --auto`.
+ * Non-blocking on both hosts.
  */
 const fs = require('fs');
 const os = require('os');
@@ -43,13 +47,21 @@ function main() {
   }
   if (!hadActivity) return allow();
 
-  const message =
-    'Session ending. If meaningful work happened, flush the shared context ' +
-    'before stopping (context-capture skill):\n' +
-    '  1. update summary.md + decisions.md for this session\n' +
-    '  2. python3 ./skills/context-capture/scripts/context_snapshot.py --session <id> --status done\n' +
-    '  3. python3 ./skills/context-capture/scripts/context_rollup.py\n' +
-    '  4. python3 ./skills/context-capture/scripts/context_pack.py --auto';
+  const hasMemoryWiki = fs.existsSync(path.join(contextDir, 'memory', 'MEMORY.md'));
+  const hasLegacySessions = fs.existsSync(path.join(contextDir, 'sessions'));
+
+  const message = (hasMemoryWiki && !hasLegacySessions)
+    ? 'Session ending. If a milestone was completed (State 5), update the Cross-AI LLM Wiki ' +
+      'before stopping (context-capture skill):\n' +
+      '  1. update context/memory/MEMORY.md in-place (<= 80-100 lines)\n' +
+      '  2. update context/memory/architecture.md or conventions.md in-place if applicable\n' +
+      '  3. append a 5-8 line milestone block to context/memory/log/YYYY-MM-DD.md'
+    : 'Session ending. If meaningful work happened, flush the shared context ' +
+      'before stopping (context-capture skill):\n' +
+      '  1. update summary.md + decisions.md for this session\n' +
+      '  2. python3 ./skills/context-capture/scripts/context_snapshot.py --session <id> --status done\n' +
+      '  3. python3 ./skills/context-capture/scripts/context_rollup.py\n' +
+      '  4. python3 ./skills/context-capture/scripts/context_pack.py --auto';
 
   // Clear activity so a follow-up stop doesn't nag again.
   try {

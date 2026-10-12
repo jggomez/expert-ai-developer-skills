@@ -65,7 +65,7 @@ To guarantee uniform discovery across development tools and AI runners, host-spe
    * No application code modifications may occur without an up-to-date `PLAN.md` file authored and saved to disk.
 2. **Orchestrator Role Boundaries**:
    * Lead Orchestrators (`senior-dev-orchestrator`, `flutter-feature-orchestrator`) are **strictly prohibited from directly writing application source code**.
-   * File editing tools (`write_to_file`, `replace_file_content`, `Write`, `Edit`) in orchestrator sessions are reserved exclusively for `PLAN.md`, ADRs, and documentation.
+   * File editing tools (`write_to_file`, `replace_file_content`, `Write`, `Edit`) in orchestrator sessions are reserved exclusively for `PLAN.md`, ADRs (`ADR-*.md`), documentation (`docs/`), `.agents/`, and persistent project memory (`context/memory/`).
    * All implementation code **MUST** be delegated to `code-implementer` or `flutter-implementer`.
 3. **Strict Test-Driven Development (TDD)**:
    * Red-Green-Refactor cycle: failing test first, minimal production code, refactor to clean code.
@@ -80,26 +80,24 @@ To guarantee uniform discovery across development tools and AI runners, host-spe
 
 ## 3. Graph Engineering State Machine (DAG)
 
-Multi-agent coordination follows a deterministic Directed Acyclic Graph (DAG) state machine:
+Multi-agent coordination follows a deterministic 6-State Directed Acyclic Graph (DAG) state machine with a **Mandatory Discovery Triage Gate** and **Parallel Fan-Out / Fan-In**:
 
 ```mermaid
 flowchart TD
-    GATE["[PLAN FIRST GATE]<br/>PLAN.md created/updated"] --> DISCOVERY["[DISCOVERY (Optional)]<br/>product-analyst | architect-engineer"]
-    DISCOVERY --> BUILD["[BUILD (Mandatory)]<br/>code-implementer | flutter-implementer"]
-    GATE --> BUILD
-    BUILD --> TEST["[TEST (Mandatory)]<br/>qa-tester (exit code 0 proof)"]
-    TEST -->|Fail: Red State (Loop <= 3)| BUILD
-    TEST -->|Pass: Green State| AUDIT["[AUDIT (Mandatory)]<br/>compliance-verifier (APPROVED verdict)"]
-    AUDIT -->|Reject: Gap Found (Loop <= 3)| BUILD
-    AUDIT -->|Pass: Approved| SHIP["[SHIP]<br/>git commit & finish"]
-    TEST -->|Loop > 3: Cap Exceeded| ESCALATE["[HALT & ESCALATE]<br/>Diagnostic report to user"]
-    AUDIT -->|Loop > 3: Cap Exceeded| ESCALATE
+    STATE0["[STATE 0: MEMORY RESTORE & TRIAGE GATE]<br/>Load context/memory/MEMORY.md + Author PLAN.md with Discovery Triage Table"]
+    STATE0 -->|New Feature / Ambiguous / Schema or Auth Change| STATE1["[STATE 1: UPFRONT DISCOVERY (Parallel)]<br/>product-analyst || architect-engineer"]
+    STATE0 -->|Pure Bugfix / Localized Refactor (Explicit Justification)| STATE2
+    STATE1 --> STATE2["[STATE 2: PARALLEL BUILD (Mandatory)]<br/>Mode A: Disjoint Files || Mode B: Git Worktrees<br/>code-implementer | flutter-implementer"]
+    STATE2 --> VERIFY["[STATE 3 & 4: PARALLEL VERIFY & AUDIT (Mandatory)]<br/>qa-tester (exit code 0) || compliance-verifier (APPROVED)"]
+    VERIFY -->|Fail / Reject (Loop <= 3)| STATE2
+    VERIFY -->|Both Pass: Green + Approved| STATE5["[STATE 5: SHIP & MEMORY CAPTURE]<br/>Update context/memory/ LLM Wiki + git commit"]
+    VERIFY -->|Loop > 3: Cap Exceeded| ESCALATE["[HALT & ESCALATE]<br/>Diagnostic report to user"]
 ```
 
 ### Multi-Agent Topologies Taxonomy
-1. **Manager-Worker Topology**: Orchestrator coordinates high-level objectives and delegates atomic tasks to isolated workers operating in dedicated branches or git worktrees.
-2. **Sequential Pipeline (DAG)**: Deterministic progression through Plan &rarr; Build &rarr; Test &rarr; Audit &rarr; Ship with bounded failure loops.
-3. **Review Committee**: Parallel specialist evaluations where multiple agents evaluate diffs concurrently across distinct concerns (Security, Quality, Performance, Architecture).
+1. **Manager-Worker Topology (Mode A & Mode B Parallelism)**: Orchestrator coordinates high-level objectives and delegates atomic tasks to concurrent workers using **Mode A: Disjoint File Partitioning** (`Workspace: "inherit"` on non-overlapping file sets) or **Mode B: Git Worktree Isolation** (dedicated branches/worktrees when tracks touch shared files).
+2. **Sequential Pipeline with Parallel Fan-Out/Fan-In (DAG)**: Deterministic progression through State 0 (Memory Restore + Triage Gate in `PLAN.md`) &rarr; State 1 (Upfront Discovery) &rarr; State 2 (Parallel Build) &rarr; State 3 & 4 (Concurrent QA & Compliance Audit) &rarr; State 5 (Memory Capture & Ship) with bounded failure loops.
+3. **Review Committee**: Parallel specialist evaluations where `qa-tester` and `compliance-verifier` (or domain specialists across Security, Quality, Performance, Architecture) evaluate diffs concurrently and fan-in before completion.
 
 ---
 
@@ -111,19 +109,21 @@ Plugins enforce safety and quality invariants via deterministic Node.js lifecycl
 plugins/
 ├── antigravity/<plugin>/hooks/
 │   ├── gitflow-branch-gate.js     # Blocks commits to main/develop, validates branch prefixes
+│   ├── orchestrator-role-gate.js  # Restricts orchestrator writes to PLAN.md, ADRs, docs/, context/memory/
 │   ├── anti-lazy-code-gate.js     # Scans diffs for TODOs, pass stubs, and incomplete placeholders
 │   ├── stop-gate.js               # Enforces test pass (exit code 0) before session completion
 │   ├── pre-tool-gate.js           # Enforces workspace path boundaries and safe command flags
-│   └── context-*.js               # Cross-agent memory capture and restoration
+│   └── context-*.js               # Cross-AI LLM Wiki (context/memory/) restore and stop-flush hooks
 └── claude/<plugin>/hooks/
     ├── (Identical deterministic gate scripts tailored for Claude Code hooks.json events)
 ```
 
 ### Active Hook Gates
 * **Gitflow Branch Protection Gate** (`gitflow-branch-gate.js`): Prevents destructive direct commits or pushes to protected branches (`main`, `master`, `develop`, `release/*`). Requires semantic branch naming (`feat/*`, `fix/*`, `chore/*`).
+* **Orchestrator Role Gate** (`orchestrator-role-gate.js`): Prevents orchestrators from editing production source code while whitelisting `PLAN.md`, `ADR-*.md`, `docs/`, `.agents/`, and `context/memory/`.
 * **Anti-Lazy Code Stop Gate** (`anti-lazy-code-gate.js`): Inspects git diffs before session termination. Exits with code 2 if placeholder comments (`TODO: implement later`, `# ... rest of code`) are detected.
 * **Test Verification Stop Gate** (`stop-gate.js` / `verify_tests.py`): Blocks session termination if automated test suites are failing.
-* **Shared Context Keeper** (`context_common.py`, `context_snapshot.py`, `context_list.py`): Preserves decisions, architectural choices, and hand-off state across sessions and between Antigravity and Claude Code.
+* **Cross-AI LLM Wiki & Shared Context Keeper** (`session-start-context.js`, `stop-flush.js`, `context_common.py`, `context_snapshot.py`, `context_list.py`): Maintains a persistent 2-tier Markdown Wiki in `context/memory/` (`MEMORY.md`, `architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) alongside archive snapshots in `context/sessions/`, preserving architectural decisions across sessions and between Antigravity and Claude Code.
 
 ---
 
@@ -137,11 +137,11 @@ Both plugin ecosystems bundle physical copies of the skills they require to rema
 
 | Plugin Name | Bundled Skills Count | Bundled Skills |
 | :--- | :---: | :--- |
-| **`senior-dev`** | 8 | `senior-dev-orchestrator`, `product-analyst`, `senior-architect-engineering`, `code-implementer`, `code-smells-expert`, `refactoring-code-expert`, `qa-tester`, `compliance-verifier` |
-| **`senior-dev-flutter`** | 7 | `flutter-senior-orchestration`, `flutter-architecture-decisions`, `flutter-review-checklist`, `flutter-test-strategy`, `flutter-performance-profiling`, `flutter-release-engineering`, `flutter-upgrade-migration` |
-| **`python-backend`** | 11 | `python-expert`, `test-driven-development`, `pull-request-expert`, `code-smells-expert`, `refactoring-code-expert`, `security-audit`, `performance-scalability`, `database-migration-expert`, `senior-architect-engineering`, `design-spec-expert`, `build-and-ci-gates` |
-| **`senior-data-engineer`** | 2 | `gcp-data-engineering`, `cdc-scd-patterns` |
-| **`sql-query-optimizer`** | 2 | `bigquery-query-optimization`, `sql-query-optimization` |
+| **`senior-dev`** | 11 | `senior-dev-orchestrator`, `product-analyst`, `senior-architect-engineering`, `code-implementer`, `code-smells-expert`, `refactoring-code-expert`, `qa-tester`, `compliance-verifier`, `context-capture`, `context-restore`, `loop-engineering` |
+| **`senior-dev-flutter`** | 10 | `flutter-senior-orchestration`, `flutter-architecture-decisions`, `flutter-review-checklist`, `flutter-test-strategy`, `flutter-performance-profiling`, `flutter-release-engineering`, `flutter-upgrade-migration`, `context-capture`, `context-restore`, `loop-engineering` |
+| **`python-backend`** | 14 | `python-expert`, `test-driven-development`, `pull-request-expert`, `code-smells-expert`, `refactoring-code-expert`, `security-audit`, `performance-scalability`, `database-migration-expert`, `senior-architect-engineering`, `design-spec-expert`, `build-and-ci-gates`, `context-capture`, `context-restore`, `loop-engineering` |
+| **`senior-data-engineer`** | 4 | `gcp-data-engineering`, `cdc-scd-patterns`, `context-capture`, `context-restore` |
+| **`sql-query-optimizer`** | 4 | `bigquery-query-optimization`, `sql-query-optimization`, `context-capture`, `context-restore` |
 | **`shared-context`** | 2 | `context-capture`, `context-restore` |
 | **`git-workflow`** | 2 | `commit-expert`, `pull-request-expert` |
 | **`docs-and-quality`** | 3 | `documentation-expert`, `testing-expert`, `guidelines-karpathy` |

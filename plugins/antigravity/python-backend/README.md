@@ -24,14 +24,14 @@ plugins/antigravity/python-backend/
 ├── hooks.json                      # Hook registrations
 ├── hooks/
 │   ├── python-backend-activate.js  # Environment and credentials initialization
-│   ├── pre-tool-gate.js            # PreToolUse: intercepts git & cloud deployments
+│   ├── pre-tool-gate.js            # PreToolUse: Plan-First gate, gitflow & cloud deployment guardrails
 │   └── stop-gate.js                # Stop: quality gate checking test suite
 ├── agents/
-│   └── python-backend-orchestrator.md # Senior Python Backend Orchestrator
+│   └── python-backend-orchestrator.md # Senior Python Backend Orchestrator (6-State DAG, Parallel Slices)
 ├── rules/
-│   ├── python-backend-rules.md     # Quality checklists and coding patterns
+│   ├── python-backend-rules.md     # 6-State DAG, API/Migration Triage Gate, Parallel Slices & context/memory/
 │   └── git-hooks.md                # Blueprints for pre-commit & commit-msg hooks
-└── skills/                         # Bundled developer skills
+└── skills/                         # Bundled developer skills (14 modules)
     ├── python-expert/
     ├── test-driven-development/
     ├── pull-request-expert/
@@ -42,21 +42,25 @@ plugins/antigravity/python-backend/
     ├── database-migration-expert/
     ├── senior-architect-engineering/
     ├── design-spec-expert/
-    └── build-and-ci-gates/
+    ├── build-and-ci-gates/
+    ├── context-capture/
+    ├── context-restore/
+    └── loop-engineering/
 ```
 
 ---
 
-## 2. The Orchestrator & Execution Policy
+## 2. The Orchestrator, Triage Gate & Parallel Vertical Slices
 
 | Agent | Role | Execution Policy | Typical Tools |
 | :--- | :--- | :--- | :--- |
 | **`python-backend-orchestrator`** | Senior Python Backend Orchestrator | `auto` | `run_command`, `write_to_file`, `replace_file_content`, `view_file`, `invoke_subagent`, `manage_subagents`, `send_message` |
 
-### Inviolable Orchestration Boundaries:
-1. **Plan First**: Author `PLAN.md` documenting API routes, Pydantic/dataclass schemas, and database entity relationships before writing code.
-2. **Branch Safety (Gitflow)**: Never commit directly to `main` or `develop`. Work on isolated `feature/` or `bugfix/` branches.
-3. **Strict TDD & Migration Protocol**: Schema changes must always include an Alembic/Django migration file and a corresponding unit/integration test suite.
+### 6-State DAG & Inviolable Orchestration Boundaries:
+1. **`State 0` — Silent LLM Wiki Restore & API/Migration Triage Gate**: Silently read `context/memory/MEMORY.md` (`~500 tokens`) and author `PLAN.md` with an `## API & Database Migration Triage Gate` table evaluating when `database-migration-expert`, `senior-architect-engineering`, and `design-spec-expert` must be applied upfront.
+2. **Parallel Backend Vertical Slices**: Execute independent FastAPI/Django vertical slices in parallel under **Mode A (`Disjoint Files`, `Workspace: 'inherit'`)** across non-overlapping routers, services, repositories, and unit tests, or **Mode B (`Git Worktree` isolation)** when parallel tracks generate Alembic/Django migrations or edit shared `main.py`/settings.
+3. **Branch Safety (Gitflow) & Strict TDD**: Never commit directly to `main` or `develop`. Schema changes must always include a zero-downtime migration file and unit/integration tests.
+4. **`State 5` — Token-Conserving LLM Wiki Update**: Persist milestone state to `context/memory/` (`MEMORY.md`, `architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) only upon task completion or explicit handoff.
 
 ---
 
@@ -72,14 +76,14 @@ Registers secure, lazy-loaded cloud management tools:
 
 | Hook Event | Script | Behavior |
 | :--- | :--- | :--- |
-| **`PreToolUse`** | `hooks/pre-tool-gate.js` | Checks active branch using git command line. Denies commits or pushes directly to `main` or `develop`. Returns `ask` confirmation for cloud deployments or GCP/Firebase mutations. |
+| **`PreToolUse`** | `hooks/pre-tool-gate.js` | Enforces Plan-First (`PLAN.md`) before Python edits (allowing `context/memory/` and `.agents/`), blocks commits/pushes directly to `main` or `develop`, and returns `ask` confirmation for cloud deployments or GCP/Firebase mutations. |
 | **`Stop`** | `hooks/stop-gate.js` | Runs the test suite via `python3 ./skills/test-driven-development/scripts/verify_tests.py`. If tests fail, it halts termination and forces the loop to continue until resolved. |
 
 ---
 
-## 5. Bundled Skills (11 Packaged Modules)
+## 5. Bundled Skills (14 Packaged Modules)
 
-On loading the plugin, the following 11 skills are automatically available:
+On loading the plugin, the following 14 skills are automatically available:
 
 1. **`python-expert`**: AST analysis, PEP 8 compliance, and memory optimization (`__slots__`).
 2. **`test-driven-development`**: AAA execution patterns, Red-Green-Refactor, and pytest parametrization.
@@ -92,6 +96,9 @@ On loading the plugin, the following 11 skills are automatically available:
 9. **`senior-architect-engineering`**: Architecture Decision Records (ADRs) and system boundary design.
 10. **`design-spec-expert`**: Software Design Documents (SDDs) and API contract schemas.
 11. **`build-and-ci-gates`**: Pre-commit hooks, linter enforcement, and automated quality gates.
+12. **`context-capture`**: Updates the Cross-AI LLM Wiki (`context/memory/MEMORY.md`, `architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) at `State 5` or explicit handoff.
+13. **`context-restore`**: Progressive disclosure reader (`context/memory/MEMORY.md` at `State 0`, drilling down on demand).
+14. **`loop-engineering`**: Bounded 3-strike fix loops for automated test and static-analysis verification.
 
 ---
 

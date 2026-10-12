@@ -1,97 +1,121 @@
 ---
 name: context-capture
-description: Use when finishing a task, at a periodic checkpoint, or when the user asks to "save context", "record decisions", or "hand off" — writes what was done, why, and how into a shared context/ directory that other AI agents (Claude Code, Antigravity CLI) can later load. Covers the session-record schema, secret redaction, tar.xz compression of old sessions, and rolling decisions up into an architecture log.
+description: Use when finishing a task at State 5 (Ship & Finish) or when the user explicitly asks to "save context", "guarda contexto", "record decisions", or "hand off" — writes ultra-compact persistent memory to the Cross-AI LLM Wiki (context/memory/) shared seamlessly between Claude Code and Google Antigravity, alongside optional scripted session archives.
 ---
 
 # Context Capture Skill
 
 ## Overview
-This skill preserves durable context, architectural decisions, execution flows, and long-term user preferences across AI sessions. It acts as a Cross-Agent Memory Coordinator, writing structured records to a shared `context/` directory so that subsequent agents—whether running on Claude Code or Antigravity CLI—can seamlessly resume ongoing work without context amnesia.
+This skill preserves durable context, architectural decisions, conventions, and active handoff state across AI sessions using the **Cross-AI LLM Wiki (`context/memory/`)** as the primary, ultra-compact persistent memory architecture shared seamlessly between **Claude Code** and **Google Antigravity**. By updating living topic wiki pages in-place and appending concise milestone blocks to a single daily log, subsequent sessions resume with zero context amnesia and minimal token overhead. It also supports an optional scripted session-archive mode (`context/sessions/`) for full session snapshotting, secret redaction, and `.tar.xz` compression.
 
 ## When to Use
-### Trigger Scenarios
-- **On session end or task completion**: Always record context if meaningful code edits or architectural choices were made.
-- **Periodic checkpoints**: When nudged by session hooks (e.g. every 25 tool calls) or before embarking on a high-risk refactoring step.
-- **On explicit user request**: *"save context"*, *"record this decision"*, *"prepare handoff"*.
+### Token Conservation & Trigger Timing Rules
+- **At `State 5 (Ship & Finish)` in `senior-dev`**: Save context **ONLY at `State 5 (Ship & Finish)`** after both `qa-tester` (`exit 0`) and `compliance-verifier` (`APPROVED`) succeed.
+- **On explicit user handoff request**: When the user explicitly asks to save state (*"save context"*, *"guarda contexto"*, *"record this decision"*, *"prepare handoff"*) before switching between **Claude Code** and **Antigravity**.
+- **Standalone `shared-context` checkpoints**: When explicitly requested or closing a standalone session with significant architectural decisions.
 
 ### When NOT to Use
-- **Pure question-answering**: Do not capture sessions that involved no repository modifications and zero architectural decisions.
-- **Temporary troubleshooting chatter**: Discard intermediate dead ends unless their failure provides a crucial rationale against repeating them.
+- **Intermediate turns or every few tool calls**: Never save on intermediate workflow states (`State 0` through `State 4`), routine file edits, or every few tool invocations.
+- **Trivial Q&A or exploration**: Do not capture sessions that involved pure question-answering, read-only exploration, or zero architectural/code changes.
+- **Temporary troubleshooting chatter**: Discard intermediate dead ends unless their failure establishes a durable constraint in `context/memory/architecture.md`.
 
 ## Process
-### Phase 1: Session Scaffolding
-Initialize or refresh the active session's record using the automated snapshot tool:
-```bash
-python3 ./skills/context-capture/scripts/context_snapshot.py \
-  --task "<one line task summary>" --agent "<model-id>" --status in-progress
-```
-The script auto-detects the host, records git diff stats, and applies an automated secret redaction sweep (`«REDACTED:...»`).
+### Mode A: Primary Cross-AI LLM Wiki (`context/memory/`)
+Maintain the 4-part self-compacting LLM Wiki under `context/memory/` so both **Claude Code** and **Google Antigravity** share a deterministic, low-token handoff store:
 
-### Phase 2: Relevant Artifact Authoring
-Populate the generated markdown files under `context/<date>/<session-id>/`:
+1. **`context/memory/MEMORY.md` (Master Wiki Home Index & Active Handoff State)**:
+   - Strictly capped at **`<= 80-100 lines`**, overwritten and compacted in-place so it never bloats.
+   - Must contain three structured blocks:
+     1. **Active Handoff State**: Last AI host (`Claude Code` or `Antigravity`), active branch/task, what was just completed, and immediate next steps.
+     2. **Key Architectural Decisions & Conventions Summary**: High-signal bullet points referencing the topic wiki pages: `` `[architecture.md]` (`./architecture.md`) `` and `` `[conventions.md]` (`./conventions.md`) ``.
+     3. **Recent Daily Logs Index**: Relative pointers to the last 5 daily log files: `` `[YYYY-MM-DD.md]` (`./log/YYYY-MM-DD.md`) ``.
+2. **`context/memory/architecture.md` (Living Architecture & ADR Digest)**:
+   - Updated in-place when architectural decisions, module boundaries, or trade-offs are established, avoiding duplicate per-session decision files.
+3. **`context/memory/conventions.md` (Durable Stack Conventions & Preferences)**:
+   - Updated in-place with durable coding conventions, tooling patterns, and explicit cross-session user preferences.
+4. **`context/memory/log/YYYY-MM-DD.md` (Single Daily Chronological Log)**:
+   - One file per calendar date. Each completed milestone (`State 5: Ship & Finish` in `senior-dev`) or explicit user handoff appends a concise 5-8 line block:
+     ```markdown
+     ## [HH:MM | Host: Claude Code | Antigravity] <Task Title>
+     - **Outcome**: <1-2 lines of what was built and verified>
+     - **Decisions**: <1-2 lines or link to ../architecture.md>
+     - **Next / Pending**: <Immediate next step for the next AI session>
+     ```
 
-| File | What to Include | What to Skip |
-| :--- | :--- | :--- |
-| **`summary.md`** | High-level outcome in plain language, current state, immediate next steps. | Detailed blow-by-blow narration. |
-| **`decisions.md`** | Architectural choices with real trade-offs that future agents must respect. | Trivial localized syntax choices. |
-| **`flows.md`** | The execution path taken, including dead ends and why they failed. | Obvious steps clear from the git diff. |
-| **`topics.md`** | Discussion topics, open questions, and pending TODOs. | Ephemeral conversational chatter. |
-| **`context/preferences.md`** | Explicit, durable, cross-session user preferences. | One-off prompt instructions. |
+### Mode B: Optional Scripted Session Archive (`context/sessions/`)
+When operating in standalone `shared-context` scripted archive mode, use the CLI utilities to scaffold, roll up, and compress per-session records:
 
-### Phase 3: Rollup, Retention & Compression
-When closing the session or completing the task:
-```bash
-# 1. Mark session as done
-python3 ./skills/context-capture/scripts/context_snapshot.py --session <id> --status done
+1. **Session Scaffolding**:
+   ```bash
+   python3 ./skills/context-capture/scripts/context_snapshot.py \
+     --task "<one line task summary>" --agent "<model-id>" --status in-progress
+   ```
+   The script auto-detects the host, records git diff stats, and applies an automated secret redaction sweep (`«REDACTED:...»`).
+2. **Relevant Artifact Authoring (`context/sessions/` or `context/<date>/<session-id>/`)**:
 
-# 2. Roll up decisions into architecture.md and apply retention policies
-python3 ./skills/context-capture/scripts/context_rollup.py
+   | File | What to Include | What to Skip |
+   | :--- | :--- | :--- |
+   | **`summary.md`** | High-level outcome in plain language, current state, immediate next steps. | Detailed blow-by-blow narration. |
+   | **`decisions.md`** | Architectural choices with real trade-offs that future agents must respect. | Trivial localized syntax choices. |
+   | **`flows.md`** | The execution path taken, including dead ends and why they failed. | Obvious steps clear from the git diff. |
+   | **`topics.md`** | Discussion topics, open questions, and pending TODOs. | Ephemeral conversational chatter. |
+   | **`context/preferences.md`** | Explicit, durable, cross-session user preferences. | One-off prompt instructions. |
 
-# 3. Compress older session details into detail.tar.xz (keeping newest loose)
-python3 ./skills/context-capture/scripts/context_pack.py --auto
-```
+3. **Rollup, Retention & Compression**:
+   ```bash
+   # 1. Mark session as done
+   python3 ./skills/context-capture/scripts/context_snapshot.py --session <id> --status done
+
+   # 2. Roll up decisions into architecture.md and apply retention policies
+   python3 ./skills/context-capture/scripts/context_rollup.py
+
+   # 3. Compress older session details into detail.tar.xz (keeping newest loose)
+   python3 ./skills/context-capture/scripts/context_pack.py --auto
+   ```
 
 ## Usage
-### Commands & Automation Scripts
+### LLM Wiki Handoff & Automated CLI Scripts
 ```bash
-# Start or update session record
-python3 ./skills/context-capture/scripts/context_snapshot.py --task "Implement OAuth2 flow" --agent "gemini-3.8-flash" --status in-progress
+# Primary LLM Wiki structure maintained at State 5 or explicit handoff:
+# context/memory/MEMORY.md          (<= 80-100 lines, overwritten in-place)
+# context/memory/architecture.md    (living ADR & architecture digest)
+# context/memory/conventions.md     (durable stack conventions & user preferences)
+# context/memory/log/YYYY-MM-DD.md  (5-8 line milestone block appended per task)
 
-# Finalize session and roll up decisions
+# Optional scripted session archive mode:
+python3 ./skills/context-capture/scripts/context_snapshot.py --task "Implement OAuth2 flow" --agent "gemini-3.8-flash" --status in-progress
 python3 ./skills/context-capture/scripts/context_snapshot.py --session <session-id> --status done
 python3 ./skills/context-capture/scripts/context_rollup.py
 python3 ./skills/context-capture/scripts/context_pack.py --auto
-
-# Unpack an archived historical session for inspection
 python3 ./skills/context-capture/scripts/context_pack.py --unpack <session-id>
 ```
 
 ### Example Prompts
-- *"Save the context of this session so the next agent can resume from where we left off."*
-- *"Record this decision to use JWT tokens with RSA-256 in the shared context architecture log."*
-- *"Capture our current progress as a checkpoint before we start refactoring the database layer."*
+- *"Save context (`guarda contexto`) in `context/memory/` so I can switch from Claude Code to Antigravity and resume immediately."*
+- *"Record this decision to use JWT tokens with RSA-256 in `context/memory/architecture.md` and update `MEMORY.md`."*
+- *"We finished State 5 verification—update `context/memory/MEMORY.md` and append the milestone entry to today's `context/memory/log/YYYY-MM-DD.md`."*
 
 ### Host Execution Instructions
-- **Claude Code**: Run the snapshot and rollup scripts directly in bash at session checkpoints.
-- **Antigravity**: Launch `context-keeper` subagent or execute capture scripts before ending complex runs.
+- **Claude Code**: Update `context/memory/MEMORY.md`, `architecture.md`, `conventions.md`, and `log/YYYY-MM-DD.md` at `State 5` or on explicit handoff (or run the snapshot/rollup scripts in scripted mode).
+- **Antigravity**: Update `context/memory/` at `State 5` or launch `context-keeper` subagent to persist the LLM Wiki handoff state and optional session archives.
 
 ## Red Flags
-- Disabling the automated secret redaction scanner (`--no-redact`) without verification.
-- Recording verbose narrative logs instead of crisp, actionable outcomes and decisions.
-- Overwriting `context/preferences.md` with temporary, task-specific instructions.
-- Storing unredacted passwords, JWT tokens, or cloud credentials in context files.
+- Saving context on intermediate turns, trivial Q&A, or every few tool calls instead of waiting for `State 5 (Ship & Finish)` or an explicit user handoff request.
+- Allowing `context/memory/MEMORY.md` to exceed 100 lines or appending endlessly without compacting in-place.
+- Creating duplicate per-task architecture files instead of updating `context/memory/architecture.md` and `context/memory/conventions.md` in-place.
+- Disabling the automated secret redaction scanner (`--no-redact`) or storing unredacted passwords, JWT tokens, or cloud credentials in `context/`.
+- Recording verbose narrative logs instead of crisp, actionable 5-8 line daily log entries.
 
 ## Verification
-- [ ] Session snapshot script executes without errors:
+- [ ] `context/memory/MEMORY.md` is updated in-place, strictly `<= 80-100 lines`, and records the active host (`Claude Code` or `Antigravity`), branch/task, completed work, next steps, wiki links, and last 5 daily logs.
+- [ ] `context/memory/architecture.md` and `context/memory/conventions.md` are updated in-place when architectural decisions or durable conventions changed.
+- [ ] `context/memory/log/YYYY-MM-DD.md` has a concise 5-8 line milestone block appended (`Outcome`, `Decisions`, `Next / Pending`).
+- [ ] If using optional scripted archive mode, snapshot, rollup, and compression scripts execute cleanly:
   ```bash
   python3 ./skills/context-capture/scripts/context_snapshot.py --status done
-  ```
-- [ ] `summary.md` and `decisions.md` populated with clear, concise content.
-- [ ] Decision rollup executed and appended to `context/architecture.md`:
-  ```bash
   python3 ./skills/context-capture/scripts/context_rollup.py
+  python3 ./skills/context-capture/scripts/context_pack.py --auto
   ```
-- [ ] Older session details compressed cleanly via `context_pack.py --auto`.
 
 ## References
 - [Session-record schema & field guide](references/record-schema.md)

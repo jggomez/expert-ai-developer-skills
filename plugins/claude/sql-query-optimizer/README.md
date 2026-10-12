@@ -3,7 +3,9 @@
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
 [![Plugin](https://img.shields.io/badge/Plugin-sql--query--optimizer-green?style=flat-square)](file:///./)
 
-The `sql-query-optimizer` plugin finds and rewrites slow SQL — standalone `.sql` files and queries embedded in application code — for **Claude Code**: one subagent, two skills (BigQuery-specific and generic SQL for traditional engines), and deterministic safety gates.
+The `sql-query-optimizer` plugin finds and rewrites slow SQL — standalone `.sql` files and queries embedded in application code — for **Claude Code**: one subagent, four bundled skills (BigQuery-specific optimization, generic SQL optimization for traditional engines, and cross-AI LLM Wiki memory restore/capture), and deterministic safety gates.
+
+- **LLM Wiki Memory (`context/memory/`)**: At the start of an audit, `sql-query-optimizer` silently reads `context/memory/MEMORY.md` (and `architecture.md` on demand) to leverage known table partitioning/clustering keys and indexes. Upon completing a codebase SQL audit, it records significant query optimization baselines and index/partition recommendations into `context/memory/`.
 
 ---
 
@@ -20,9 +22,11 @@ plugins/claude/sql-query-optimizer/
 │   └── sql-safety-gate.js          # PreToolUse gate blocking destructive DDL/DML
 ├── agents/
 │   └── sql-query-optimizer.md      # Specialized subagent for Claude Code
-└── skills/
+└── skills/                         # Physical copy of the 4 bundled skills (sanitized for Claude)
     ├── bigquery-query-optimization/  # Query plan diagnosis, JOIN/skew/partitioning rules, static SQL linter
-    └── sql-query-optimization/       # EXPLAIN ANALYZE, indexing, pagination for Postgres/MySQL/etc.
+    ├── sql-query-optimization/       # EXPLAIN ANALYZE, indexing, pagination for Postgres/MySQL/etc.
+    ├── context-capture/              # Persist SQL optimization baselines & index/partition recommendations
+    └── context-restore/              # Restore known table partitioning/clustering keys from context/memory/
 ```
 
 ---
@@ -31,7 +35,7 @@ plugins/claude/sql-query-optimizer/
 
 | Agent | Role | Invocation | Allowed Tools |
 | :--- | :--- | :--- | :--- |
-| **`sql-query-optimizer`** | Scans codebases, identifies dialects, diagnoses plans, and rewrites queries with structured Original / Optimized / Reasoning output. | `Agent` | `Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep` |
+| **`sql-query-optimizer`** | Restores known schema/partition keys from `context/memory/`, scans codebases, identifies dialects, diagnoses plans, rewrites queries in Original / Optimized / Reasoning format, and persists optimization baselines to `context/memory/`. | `Agent` | `Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep` |
 
 ---
 
@@ -43,10 +47,12 @@ plugins/claude/sql-query-optimizer/
 
 ---
 
-## 4. Bundled Skills (2 Packaged Modules)
+## 4. Bundled Skills (4 Packaged Modules)
 
 1. **`bigquery-query-optimization`**: Query plan diagnosis, partitioning/clustering filter pruning, broadcast join rules, and `lint_sql_query.py`.
 2. **`sql-query-optimization`**: EXPLAIN ANALYZE, indexing strategies, and pagination patterns for Postgres/MySQL.
+3. **`context-capture`**: Persists significant query optimization baselines and index/partition recommendations into `context/memory/` (`MEMORY.md`, `architecture.md`, `log/YYYY-MM-DD.md`).
+4. **`context-restore`**: Silently reads `context/memory/MEMORY.md` (and `architecture.md` on demand) at audit start to leverage known table partitioning and clustering keys.
 
 ---
 

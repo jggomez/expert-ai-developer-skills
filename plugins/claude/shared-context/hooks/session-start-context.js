@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 /**
- * shared-context: on session start, if a context/ directory with prior sessions
- * exists, tell the agent to ask the user whether to load it (via the
- * context-restore skill) before doing other work. Never loads anything itself.
+ * shared-context: on session start:
+ * 1. If the Cross-AI LLM Wiki (`context/memory/MEMORY.md`) exists, instruct the
+ *    agent to silently read `context/memory/MEMORY.md` (~500 tokens) at State 0
+ *    (and open `architecture.md`, `conventions.md`, or `log/YYYY-MM-DD.md` only
+ *    on demand) without interrupting the user with a confirmation menu.
+ * 2. Otherwise, if a legacy `context/sessions/` store exists, tell the agent to
+ *    ask the user whether to load it (via the `context-restore` skill).
  *
  * Claude Code: wired to SessionStart. Antigravity: wired to PreInvocation
  * (no SessionStart event there), debounced so it prompts about once per
@@ -26,12 +30,42 @@ function readPayload() {
   }
 }
 
+function checkAndTouchDebounce(cwd) {
+  const key = crypto.createHash('sha1').update(path.resolve(cwd)).digest('hex').slice(0, 16);
+  const marker = path.join(os.tmpdir(), `shared-context-start-${key}.json`);
+  try {
+    const prev = JSON.parse(fs.readFileSync(marker, 'utf-8'));
+    if (prev && Date.now() - prev.at < PROMPT_TTL_MS) return false;
+  } catch (e) {
+    /* no marker yet */
+  }
+  try {
+    fs.writeFileSync(marker, JSON.stringify({ at: Date.now() }));
+  } catch (e) {
+    /* best effort */
+  }
+  return true;
+}
+
 function main() {
   const payload = readPayload();
   const cwd =
     payload.cwd ||
     (payload.workspacePaths && payload.workspacePaths[0]) ||
     process.cwd();
+
+  const memoryIndex = path.join(cwd, 'context', 'memory', 'MEMORY.md');
+  if (fs.existsSync(memoryIndex)) {
+    if (!checkAndTouchDebounce(cwd)) return exitQuiet();
+    const wikiMessage =
+      `Cross-AI LLM Wiki memory is available at \`context/memory/MEMORY.md\`. ` +
+      `At State 0 (before planning or writing code), silently read \`context/memory/MEMORY.md\` ` +
+      `(~500 tokens) to restore active cross-AI handoff state (` +
+      `\`context-restore\` skill). Only read linked pages (\`context/memory/architecture.md\`, ` +
+      `\`context/memory/conventions.md\`, \`context/memory/log/YYYY-MM-DD.md\`) on demand ` +
+      `if directly relevant to the current task. Do not pause to ask a confirmation menu.`;
+    return emit(wikiMessage);
+  }
 
   const listScript = path.join(
     __dirname, '..', 'skills', 'context-restore', 'scripts', 'context_list.py'
@@ -51,20 +85,7 @@ function main() {
   }
   if (!info || !info.exists || !info.count) return exitQuiet();
 
-  // Debounce via a machine-local marker in the temp dir.
-  const key = crypto.createHash('sha1').update(path.resolve(cwd)).digest('hex').slice(0, 16);
-  const marker = path.join(os.tmpdir(), `shared-context-start-${key}.json`);
-  try {
-    const prev = JSON.parse(fs.readFileSync(marker, 'utf-8'));
-    if (prev && Date.now() - prev.at < PROMPT_TTL_MS) return exitQuiet();
-  } catch (e) {
-    /* no marker yet */
-  }
-  try {
-    fs.writeFileSync(marker, JSON.stringify({ at: Date.now() }));
-  } catch (e) {
-    /* best effort */
-  }
+  if (!checkAndTouchDebounce(cwd)) return exitQuiet();
 
   const latest = info.sessions[0] || {};
   const extras = [

@@ -16,31 +16,46 @@
 ### 1.2. Orchestrator Role Boundary
 * **Technical Director & Coordinator**: Orchestrator agents (e.g., `senior-dev-orchestrator`, `flutter-feature-orchestrator`) are coordinators and systems directors.
 * **Strict Non-Execution Constraint**: Orchestrators are **STRICTLY PROHIBITED** from directly editing application code, libraries, or tests (`src/`, `lib/`, `tests/`, etc.).
-* **Tool Permissions**: File editing and writing tools (`write_to_file`, `replace_file_content`, `Write`, `Edit`) in an orchestrator session are reserved **exclusively** for governance and design artifacts: `PLAN.md`, architectural decision records (`ADR-*.md`), `.agents/` rules, and markdown documentation in `docs/`.
-* **Mandatory Delegation**: All code generation, feature construction, bug fixes, refactoring, and test modifications **MUST** be delegated to specialized worker subagents (`code-implementer`, `flutter-implementer`, `qa-tester`).
+* **Tool Permissions**: File editing and writing tools (`write_to_file`, `replace_file_content`, `Write`, `Edit`) in an orchestrator session are reserved **exclusively** for governance, planning, design artifacts, and cross-AI LLM Wiki memory: `PLAN.md`, architectural decision records (`ADR-*.md`), `.agents/` rules, markdown documentation in `docs/`, and `context/memory/`.
+* **Mandatory Delegation**: All product requirements analysis, system architecture design, code generation, feature construction, bug fixes, refactoring, test execution, and compliance audits **MUST** be delegated to specialized worker subagents (`product-analyst`, `architect-engineer`, `code-implementer`, `flutter-implementer`, `qa-tester`, `compliance-verifier`).
 
 ### 1.3. Graph Engineering State Machine (DAG)
-All multi-agent execution flows follow a deterministic Directed Acyclic Graph (DAG) state machine:
+All multi-agent execution flows follow a deterministic 6-state Directed Acyclic Graph (DAG) state machine with parallel fan-out/fan-in and cross-AI LLM Wiki persistence:
 
 ```mermaid
 flowchart TD
-    GATE["[PLAN FIRST GATE]<br/>PLAN.md created/updated"] --> DISCOVERY["[DISCOVERY (Optional)]<br/>product-analyst | architect-engineer"]
-    DISCOVERY --> BUILD["[BUILD (Mandatory)]<br/>code-implementer | flutter-implementer"]
-    GATE --> BUILD
-    BUILD --> TEST["[TEST (Mandatory)]<br/>qa-tester (exit code 0 proof)"]
-    TEST -->|Fail: Red State| BUILD
-    TEST -->|Pass: Green State| AUDIT["[AUDIT (Mandatory)]<br/>compliance-verifier (APPROVED verdict)"]
-    AUDIT -->|Reject: Gap Found| BUILD
-    AUDIT -->|Pass: Approved| SHIP["[SHIP]<br/>git commit & finish"]
+    STATE0["[STATE 0: MEMORY RESTORE & TRIAGE GATE]<br/>1. Read context/memory/MEMORY.md<br/>2. Author PLAN.md + Discovery Triage Rubric"] --> STATE1["[STATE 1: UPFRONT DISCOVERY (Seq / Parallel)]<br/>product-analyst || architect-engineer"]
+    STATE1 --> STATE2["[STATE 2: BUILD — PARALLEL FAN-OUT]<br/>1..N code-implementer | flutter-implementer<br/>(Mode A: Disjoint Files | Mode B: Git Worktree)"]
+    STATE0 -->|Both Explicitly Justified SKIP| STATE2
+    STATE2 --> STATE3_4_QA["[STATE 3: QA VERIFICATION]<br/>qa-tester (exit code 0 proof)"]
+    STATE2 --> STATE3_4_AUDIT["[STATE 4: COMPLIANCE AUDIT]<br/>compliance-verifier (APPROVED verdict)"]
+    STATE3_4_QA -->|Fail: Max 3 Retries| STATE2
+    STATE3_4_AUDIT -->|REJECTED: Max 3 Retries| STATE2
+    STATE3_4_QA -->|Pass: Exit 0| FAN_IN["[VERIFICATION FAN-IN]<br/>Exit 0 + APPROVED"]
+    STATE3_4_AUDIT -->|Pass: APPROVED| FAN_IN
+    FAN_IN --> STATE5["[STATE 5: SHIP & MEMORY UPDATE]<br/>Update PLAN.md + context/memory/ & git commit"]
 ```
 
 #### State Transition Definitions:
-1. **PLAN FIRST GATE**: Assess goals, write/update `PLAN.md`, verify scope and dependencies.
-2. **DISCOVERY (Optional)**: Engage `product-analyst` for ambiguity or formal PRDs; engage `architect-engineer` for system architecture, ADRs, or database schemas.
-3. **BUILD (Mandatory)**: Execute code changes via `code-implementer` or `flutter-implementer`. No shortcuts.
-4. **TEST (Mandatory)**: Verify implementation via `qa-tester`. Test execution must yield verified exit code 0 (`pytest`, `flutter test`, `node --check`).
-5. **AUDIT (Mandatory)**: Subject changes to `compliance-verifier`. Requires explicit `APPROVED` verdict against all repository invariants.
-6. **SHIP**: Finalize git staging, commit using Conventional Commits, clean temporary artifacts.
+1. **STATE 0 — MEMORY RESTORE & DISCOVERY TRIAGE GATE (Mandatory)**:
+   - **LLM Wiki Memory Read (`context-restore`)**: Check if `context/memory/MEMORY.md` exists; if so, read it silently (~500 tokens) to restore cross-AI handoff state (left by Claude Code or Antigravity). Read linked topic pages (`context/memory/architecture.md`, `context/memory/conventions.md`, `context/memory/log/YYYY-MM-DD.md`) only on demand.
+   - **Mandatory Discovery & Architecture Triage (`PLAN.md`)**: Author/update `PLAN.md` including a `## Discovery & Architecture Triage` table evaluating both discovery specialists before writing implementation tasks:
+     * **`product-analyst`**: **MUST INVOKE** if the request is a new user-facing feature/workflow, has unstated edge cases/permissions/validation rules, or is an open-ended business prompt. *Only skip* for pure technical bugfixes with known root causes, internal refactors with zero behavior change, or when a complete PRD already exists.
+     * **`architect-engineer`**: **MUST INVOKE** if the task creates or modifies **>= 2 files/modules**, changes database schemas/migrations/API contracts, introduces a new design pattern or external dependency, or crosses architectural layers. *Only skip* for single-file localized fixes where the architecture is already established.
+2. **STATE 1 — UPFRONT DISCOVERY EXECUTION (Sequential or Parallel Fan-Out)**:
+   - When triggered by the Triage Gate, invoke `product-analyst` and/or `architect-engineer` **before** delegating to `code-implementer`.
+   - Supports **Parallel Discovery Fan-Out** (`product-analyst` || `architect-engineer`, or 2+ `architect-engineer` instances across distinct subsystems) when scopes are independent, or sequential execution (`product-analyst` -> `architect-engineer`) when architecture depends on product scope disambiguation. Update `PLAN.md` with specifications/ADRs and **Parallel Execution Tracks**.
+3. **STATE 2 — BUILD: PARALLEL FAN-OUT & WORKSPACE ISOLATION (Mandatory)**:
+   - Dispatch **1 to N `code-implementer` (or `flutter-implementer`) subagents in parallel**:
+     * **Mode A — Disjoint File Partitioning (`Workspace: 'inherit'`) [DEFAULT]**: Used when parallel tracks modify non-overlapping files/directories. Each subagent receives an explicit `Owned Files` list and is forbidden from editing outside its partition. Zero `git merge` overhead upon Fan-In.
+     * **Mode B — Git Worktree Isolation (`Workspace: 'share'` / `Workspace: 'branch'` in Antigravity, or `git worktree` via `loop-engineering` in Claude Code)**: Used when parallel instances must modify shared files (e.g., `package.json`, shared routers, DI containers) or execute conflicting build processes. Merged cleanly upon Fan-In before final QA.
+4. **STATE 3 & 4 — QA VERIFICATION & COMPLIANCE AUDIT: PARALLEL FAN-OUT (Mandatory)**:
+   - Dispatch `qa-tester` (`exit code 0` empirical test proof across `pytest`, `flutter test`, `node --check`) and `compliance-verifier` (read-only static analysis, OWASP security, and architectural invariant audit yielding `APPROVED` verdict) **in parallel** (including multiple `qa-tester` instances across disjoint test suites).
+   - If either `qa-tester` fails or `compliance-verifier` returns `REJECTED`, loop back to `code-implementer` (strictly capped at **max 3 self-correction iterations** before escalating to the user).
+5. **STATE 5 — SHIP & LLM WIKI MEMORY UPDATE (Mandatory)**:
+   - Mark all tasks completed in `PLAN.md`.
+   - Persist the completed milestone into `context/memory/` (via `context-capture`): (1) update `context/memory/MEMORY.md` in-place (<= 80-100 lines), (2) update `context/memory/architecture.md` or `conventions.md` in-place if architecture/conventions changed, and (3) append a concise 5-8 line milestone block (`## [HH:MM | Host: Claude Code / Antigravity] <Task>`) to `context/memory/log/YYYY-MM-DD.md`. Never write checkpoints on intermediate turns or simple Q&A prompts.
+   - Finalize git staging and commit using Conventional Commits.
 
 ### 1.4. Test-Driven Development (TDD)
 * **Red-Green-Refactor Cycle**:

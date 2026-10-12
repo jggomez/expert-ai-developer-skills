@@ -64,17 +64,20 @@ const cwd =
 // Only care if workspace is a Flutter/Dart repo
 if (!fs.existsSync(path.join(cwd, 'pubspec.yaml'))) allow();
 
-// 1. GATE: File Modification (write_to_file / replace_file_content)
-const isFileModTool = /^(write_to_file|replace_file_content)$/i.test(toolName);
+// 1. GATE: File Modification (write_to_file / replace_file_content / Write / Edit)
+const isFileModTool = /^(write_to_file|replace_file_content|Write|Edit)$/i.test(toolName);
 if (isFileModTool && targetFile) {
   const basename = path.basename(targetFile);
   const ext = path.extname(targetFile).toLowerCase();
 
-  // Allow docs and plans
+  // Allow docs, plans, and Cross-AI LLM Wiki memory
   const isDoc =
     /^PLAN(\.[\w-]+)?\.md$/i.test(basename) ||
     targetFile.includes('/doc/adr/') ||
     targetFile.includes('/docs/') ||
+    targetFile.includes('/context/memory/') ||
+    targetFile.includes('/context/') ||
+    targetFile.includes('/.agents/') ||
     ext === '.md' ||
     ext === '.txt';
 
