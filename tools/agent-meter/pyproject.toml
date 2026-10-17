@@ -1,0 +1,80 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-meter"
+version = "0.1.0"
+description = "Local-first token, API-equivalent cost and latency metrics for Claude Code and Antigravity, per project, task and agent."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [{ name = "jggomez" }]
+keywords = ["claude-code", "antigravity", "llm", "tokens", "cost", "metrics", "duckdb"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development",
+  "Topic :: Utilities",
+  "Typing :: Typed",
+]
+dependencies = ["duckdb>=1.1,<2", "PyYAML>=6.0", "pytz>=2023.3"]
+
+[project.optional-dependencies]
+bigquery = ["google-cloud-bigquery>=3.20"]
+dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.11", "types-PyYAML>=6.0", "types-pytz>=2023.3"]
+
+[project.scripts]
+agent-meter = "agent_meter.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/jggomez/expert-ai-developer-skills/tree/main/tools/agent-meter"
+Source = "https://github.com/jggomez/expert-ai-developer-skills"
+Issues = "https://github.com/jggomez/expert-ai-developer-skills/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent_meter"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/agent_meter", "tests", "README.md", "pyproject.toml"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+addopts = "-ra -m 'not bigquery and not e2e and not perf'"
+markers = [
+  "contract: host format contract tests (L2)",
+  "integration: end-to-end CLI flows over fake hosts in a temp HOME (L3)",
+  "bigquery: real BigQuery tests, opt-in (L4)",
+  "e2e: real-data reconciliation, opt-in (L5)",
+  "perf: performance budgets, opt-in (L7)",
+  "privacy: canary / privacy assertions (L7)",
+]
+
+[tool.ruff]
+target-version = "py311"
+src = ["src", "."]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+ignore = ["E501", "B905", "RUF001", "RUF002", "RUF003"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+mypy_path = ["src", "."]
+explicit_package_bases = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = ["duckdb.*", "google.*"]
+ignore_missing_imports = true
