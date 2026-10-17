@@ -1,0 +1,9 @@
+{
+  "name": "agent-metrics",
+  "version": "1.0.0",
+  "description": "Optional: token, cost and latency metrics per project, task and subagent via the standalone agent-meter CLI.",
+  "author": {
+    "name": "jggomez"
+  },
+  "hooks": "./hooks.json"
+}

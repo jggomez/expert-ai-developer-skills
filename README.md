@@ -146,6 +146,9 @@ Both plugin ecosystems bundle physical copies of the skills they require to rema
 | **`git-workflow`** | 2 | `commit-expert`, `pull-request-expert` |
 | **`docs-and-quality`** | 3 | `documentation-expert`, `testing-expert`, `guidelines-karpathy` |
 | **`multi-agent-ops`** | 2 | `loop-engineering`, `repo-research` |
+| **`agent-metrics`** *(optional add-on)* | 1 | `agent-metrics` |
+
+> **`agent-metrics`** is an opt-in add-on, not one of the 9 core plugins. It registers `SessionEnd`/`Stop` hooks for the standalone [`agent-meter`](tools/agent-meter/README.md) CLI, which records token, API-equivalent cost and latency metrics per project, task and subagent (local DuckDB, optional BigQuery + Looker Studio). The CLI also works without any plugin: `uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"`, then `agent-meter setup`. No other plugin depends on it. See [`docs/agent-metrics/README.md`](docs/agent-metrics/README.md).
 
 ---
 

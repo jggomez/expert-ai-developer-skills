@@ -1,0 +1,12 @@
+{
+  "agent-metrics": {
+    "enabled": true,
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node ./hooks/agent-meter-hook.js --host antigravity --event task-end",
+        "timeout": 10
+      }
+    ]
+  }
+}

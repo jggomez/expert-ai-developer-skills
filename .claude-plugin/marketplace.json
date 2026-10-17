@@ -8,6 +8,11 @@
   },
   "plugins": [
     {
+      "name": "agent-metrics",
+      "source": "./plugins/claude/agent-metrics",
+      "description": "Optional: token, cost and latency metrics per project, task and subagent via the standalone agent-meter CLI."
+    },
+    {
       "name": "docs-and-quality",
       "source": "./plugins/claude/docs-and-quality",
       "description": "Documentation standards, test-driven development, and Karpathy guidelines."

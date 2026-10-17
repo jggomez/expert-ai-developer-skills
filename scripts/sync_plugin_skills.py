@@ -97,6 +97,7 @@ PLUGIN_BUNDLED_SKILLS = {
         "context-restore",
         "loop-engineering",
     ],
+    "agent-metrics": ["agent-metrics"],
 }
 
 IGNORE = shutil.ignore_patterns(".DS_Store", "__pycache__", "*.pyc")

@@ -26,6 +26,9 @@ All 9 plugins across both runtime ecosystems bundle physical copies of the skill
 8. **`docs-and-quality`** (3 skills): `documentation-expert`, `testing-expert`, `guidelines-karpathy`.
 9. **`multi-agent-ops`** (2 skills): `loop-engineering`, `repo-research`.
 
+### Optional Add-on: `agent-metrics`
+**`agent-metrics`** guides the standalone `agent-meter` CLI ([`tools/agent-meter`](../tools/agent-meter/README.md)): `agent-meter setup` (local DuckDB or BigQuery + Looker Studio, billing vs sandbox), reading token / cost / latency metrics per project, task and subagent, `agent-meter pricing`, `agent-meter doctor`, and ad-hoc DuckDB / BigQuery queries. It is opt-in and bundled **only** into the optional `agent-metrics` plugin; no other plugin or skill references it. Docs: [`docs/agent-metrics/README.md`](../docs/agent-metrics/README.md).
+
 ### Synchronization Command
 Canonical skills are authored and edited in `/skills/`. Run the synchronization script to propagate edits to all 18 plugin locations across both ecosystems:
 

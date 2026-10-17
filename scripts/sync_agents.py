@@ -66,6 +66,7 @@ PLUGIN_DESCRIPTIONS = {
     "git-workflow": "Gitflow workflow branch safety and conventional pull request verification.",
     "docs-and-quality": "Documentation standards, test-driven development, and Karpathy guidelines.",
     "multi-agent-ops": "Self-correcting loop engineering and automated codebase research.",
+    "agent-metrics": "Optional: token, cost and latency metrics per project, task and subagent via the standalone agent-meter CLI.",
 }
 
 
@@ -145,6 +146,19 @@ def sanitize_claude_skill_dir(target_dir: Path) -> None:
                     fpath.write_text(sanitized, encoding="utf-8")
 
 
+def _extra_manifest_keys(manifest_path: Path, generated: dict) -> dict:
+    """Keys a hand-maintained Claude manifest adds on top of the generated ones (e.g. "hooks")."""
+    if not manifest_path.is_file():
+        return {}
+    try:
+        existing = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"invalid JSON in {manifest_path}: {exc}") from exc
+    if not isinstance(existing, dict):
+        raise ValueError(f"{manifest_path} must contain a JSON object")
+    return {key: value for key, value in existing.items() if key not in generated}
+
+
 def sync_claude_plugins() -> None:
     PLUGINS_CLAUDE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -164,6 +178,7 @@ def sync_claude_plugins() -> None:
                 "name": "jggomez"
             }
         }
+        manifest.update(_extra_manifest_keys(claude_plugin_dir / "plugin.json", manifest))
         (claude_plugin_dir / "plugin.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
         # 2. agents/ (with pure Claude tools and sanitized body if plugin has agents)
