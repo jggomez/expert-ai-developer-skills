@@ -272,6 +272,18 @@ def test_bigquery_api_disabled_fails_with_safe_enable_command() -> None:
     assert check.autofix_safe is True
 
 
+def test_project_owner_passes_when_api_returns_only_project_level_permissions() -> None:
+    # Arrange: the real testIamPermissions never echoes dataset-scoped table permissions,
+    # even for roles/owner (observed on devhack-3f0c2, 2026-10-18).
+    http = FakeHttp(granted=("bigquery.datasets.create", "bigquery.jobs.create"))
+
+    # Act
+    check = by_id(run_checks(PROJECT, runner=FakeGcloud(), http=http))["iam"]
+
+    # Assert
+    assert check.status == "OK"
+
+
 def test_missing_iam_permissions_fail_with_role_bindings_for_adc_account() -> None:
     # Arrange
     http = FakeHttp(granted=("bigquery.jobs.create",))
@@ -342,7 +354,8 @@ def test_budget_offer_returns_exact_create_command_and_no_cap_warning() -> None:
     assert check.fix_command == (
         "gcloud billing budgets create --billing-account=0123AB-4567CD-89EF01 "
         "--display-name=agent-meter --budget-amount=1USD "
-        "--threshold-rule=percent=0.5 --threshold-rule=percent=1.0"
+        "--threshold-rule=percent=0.5 --threshold-rule=percent=1.0 "
+        f"--billing-project={PROJECT}"
     )
     assert BUDGET_NOTE in check.message
     assert "does not cap" in BUDGET_NOTE

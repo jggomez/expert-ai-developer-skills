@@ -536,7 +536,14 @@ def test_cloud_yes_uses_explicit_project_offers_budget_and_provisions(
         "--budget-amount=1USD",
         "--threshold-rule=percent=0.5",
         "--threshold-rule=percent=1.0",
+        "--billing-project=devhack-3f0c2",
     ] in world.gcloud.calls
+    enable_budget_api = [
+        "gcloud", "services", "enable", "billingbudgets.googleapis.com", "--project", "devhack-3f0c2",
+    ]
+    assert enable_budget_api in world.gcloud.calls
+    create_index = next(i for i, c in enumerate(world.gcloud.calls) if c[:4] == ["gcloud", "billing", "budgets", "create"])
+    assert world.gcloud.calls.index(enable_budget_api) < create_index
     output = world.stdout.getvalue()
     assert "does not cap" in output
     assert f"always uses '{PROJECT}' explicitly" in output

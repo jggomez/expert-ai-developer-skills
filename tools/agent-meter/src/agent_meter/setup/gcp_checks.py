@@ -39,10 +39,11 @@ HttpPost = Callable[[str, dict[str, str], bytes], tuple[int, bytes]]
 Status = Literal["OK", "WARN", "FAIL"]
 
 INSTALL_URL: Final = "https://cloud.google.com/sdk/docs/install"
+# Only project-level permissions: Cloud Resource Manager `testIamPermissions` never returns
+# dataset-scoped ones such as `bigquery.tables.create`/`updateData`, even for project owners.
+# The account that creates the dataset becomes its owner, which covers table creation and loads.
 REQUIRED_PERMISSIONS: Final = (
     "bigquery.datasets.create",
-    "bigquery.tables.create",
-    "bigquery.tables.updateData",
     "bigquery.jobs.create",
 )
 BUDGET_NOTE: Final = "A budget alert only emails you at 50% and 100% of $1; it does not cap or stop spending."
@@ -346,12 +347,13 @@ def _billing_account(gcloud: _Gcloud, project: str) -> str | None:
     return account if result.returncode == 0 and account else None
 
 
-def _budget_exists(gcloud: _Gcloud, account: str) -> bool:
+def _budget_exists(gcloud: _Gcloud, account: str, project: str) -> bool:
     budgets = gcloud(
         "billing",
         "budgets",
         "list",
         f"--billing-account={account}",
+        f"--billing-project={project}",
         "--format=value(displayName)",
     )
     return budgets.returncode == 0 and "agent-meter" in budgets.stdout.split()
@@ -371,7 +373,7 @@ def budget_alert_offer(project: str, *, runner: Runner = default_runner) -> Chec
             None,
             False,
         )
-    if _budget_exists(gcloud, account):
+    if _budget_exists(gcloud, account, project):
         return _ok(
             "budget", f"Budget alert 'agent-meter' already exists. {BUDGET_NOTE}"
         )
@@ -379,7 +381,10 @@ def budget_alert_offer(project: str, *, runner: Runner = default_runner) -> Chec
         "budget",
         "WARN",
         f"No agent-meter budget alert on billing account {account}. {BUDGET_NOTE}",
+        # --billing-project: bill the Budget API call to the chosen project, never to
+        # gcloud's default project (which may belong to another account or organization).
         f"gcloud billing budgets create --billing-account={account} --display-name=agent-meter "
-        "--budget-amount=1USD --threshold-rule=percent=0.5 --threshold-rule=percent=1.0",
+        "--budget-amount=1USD --threshold-rule=percent=0.5 --threshold-rule=percent=1.0 "
+        f"--billing-project={project}",
         True,
     )

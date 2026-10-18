@@ -153,6 +153,13 @@ class CloudPrerequisites:
             return False
         if not self._say.confirm("Create the $1 budget alert now?", default=True):
             return False
+        # The Budget API is off by default in new projects; enabling it is free and idempotent.
+        enable = self._runner(
+            ["gcloud", "services", "enable", "billingbudgets.googleapis.com", "--project", project]
+        )
+        if enable.returncode != 0:
+            self._say.info(f"  budget alert not created: {_failure_detail(enable)}")
+            return False
         result = self._runner(shlex.split(offer.fix_command))
         if result.returncode != 0:
             self._say.info(f"  budget alert not created: {_failure_detail(result)}")
