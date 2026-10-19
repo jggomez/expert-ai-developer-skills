@@ -2,6 +2,10 @@
 
 `agent-meter` gives a developer visibility, per project, into what their AI coding agents cost and how they perform. It covers **Claude Code** and **Antigravity** (CLI, IDE and app), including when the same project moves between hosts from one day to the next. It is local-first, runs at **$0**, and is entirely **optional**.
 
+> **User guides:** step-by-step install and usage for both options (local and BigQuery + Looker Studio) live in
+> [`tools/agent-meter/README.md`](../../tools/agent-meter/README.md) (English) and
+> [`tools/agent-meter/README.es.md`](../../tools/agent-meter/README.es.md) (español). This page is the design overview.
+
 It reads the transcripts and databases that the hosts already write in real time, so nothing is lost on a crash or an unclean exit. It is an **idempotent, incremental collector**: running it twice never double-counts. The local store is the source of truth, and the cloud is only a replica.
 
 | Metric | Why it matters |

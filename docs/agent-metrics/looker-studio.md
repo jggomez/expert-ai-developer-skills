@@ -111,7 +111,13 @@ The project level is the report-wide `display_name` filter. No prompt text exist
 | Data quality: untracked history | `am_untracked` | `host`, `reason` | `conversations`, `observed_from`, `observed_to` |
 | Data quality: replica health | `am_health` | `host` | `last_ingested_at` (latest upload), `units`, `earliest_call_ts`. `unknown_formats` and `diagnostics_7d` are always NULL in the cloud: run `agent-meter doctor` locally |
 
-## 4. One-click copy (Linking API) — **to verify at L4**
+## 4. One-click copy (Linking API) — **not available yet**
+
+> **Verified 2026-10-18:** a creation URL with only `ds.ds0.*` parameters and **no** `c.reportId` template fails with
+> *"ds0 is not a valid data source alias for this report"*. A one-click copy therefore needs a published template report
+> (`bigquery.looker_template_id`), which does not exist yet. Use the manual steps (§2–§3, or the step-by-step table in
+> [`tools/agent-meter/README.md` §6.5](../../tools/agent-meter/README.md#65-build-the-looker-studio-dashboard)), which were
+> used to build the reference dashboard.
 
 `setup --cloud` prints a link that copies a public template report and binds it to your dataset (ADR §3.11). The intended form uses one data-source alias per view defined in the template (`ds0` … `ds12`):
 
