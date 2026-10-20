@@ -1,255 +1,221 @@
 # Expert AI Developer Skills
 
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=for-the-badge&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
-[![Plugins](https://img.shields.io/badge/Plugins-9%20Core%20%2B%201%20Add--on-orange?style=for-the-badge)](plugins)
+[![Plugins](https://img.shields.io/badge/Plugins-9%20Core%20%2B%201%20Add--on-orange?style=for-the-badge)](#2-plugins-catalog--installation)
 [![Skills Standard](https://img.shields.io/badge/AgentSkills.io-35%20Canonical%20Skills-green?style=for-the-badge)](skills/README.md)
 [![Constitution](https://img.shields.io/badge/Constitution-AGENTS.md%20Universal-purple?style=for-the-badge)](AGENTS.md)
 [![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey?style=for-the-badge)](LICENSE)
 
-Production-grade engineering customizations, autonomous subagents, deterministic lifecycle hooks, and modular skills for **Google Antigravity (AGY)** and **Anthropic Claude Code**.
-
-This repository organizes software engineering best practices into **dual-ecosystem installable plugins**, **35 canonical skills** (+ optional `agent-metrics`), **a universal agent constitution**, **deterministic lifecycle hooks**, **11 rule profiles**, **16 operational workflows**, and **token/cost/latency observability (`agent-meter`)**.
+Production-grade engineering plugins, autonomous subagents, deterministic lifecycle hooks, modular skills, and cost/latency observability for **Google Antigravity (AGY)** and **Anthropic Claude Code**.
 
 ---
 
-## 1. Dual Ecosystem Architecture
+## 1. Repository Overview
 
-The repository natively supports two premier AI coding ecosystems side-by-side with zero cross-environment contamination:
+At a high level, this repository is organized into 6 modular components—each with its own detailed documentation:
 
-```mermaid
-flowchart TD
-    ROOT["expert-ai-developer-skills (Root Repository)"]
-    ROOT --> CANONICAL["Canonical /skills (35 Core + 1 Optional Skill)"]
-    ROOT --> CONST["Universal Constitution (AGENTS.md)"]
-    ROOT --> METER["tools/agent-meter (Token, Cost & Latency CLI)"]
+* **[Plugins](#2-plugins-catalog--installation)** (`plugins/antigravity/` & `plugins/claude/`): **9 core self-contained plugins** (+ 1 optional `agent-metrics` add-on) bundling specialized subagents, lifecycle safety gates, MCP servers, and skills for both hosts with zero cross-environment tool contamination.
+* **[Skills](skills/README.md)** (`skills/`): **35 canonical skills** (+ optional `agent-metrics`) compliant with the open [Agent Skills Standard (`agentskills.io`)](https://agentskills.io) and backed by deterministic Python scripts.
+* **[`agent-meter` Observability](#3-token-cost--latency-observability-agent-meter)** (`tools/agent-meter/`): Local-first, **$0 CLI & dashboard** tracking token usage, API-equivalent USD cost, cache hit ratio, and latency across Claude Code and Antigravity per project, client, task, and subagent.
+* **[Rules](rules/README.md)** (`rules/`): **11 RFC 2119 rule profiles** enforcing SOLID/Clean Code, strict TDD, Gitflow branch protection, token budgets, and OWASP security.
+* **[Workflows](workflows/README.md)** (`workflows/`): **16 step-by-step operational playbooks** guiding complex engineering tasks, including the 9-stage `/spec` &rarr; `/ship` command framework.
+* **[Sidecars](sidecars/README.md)** (`sidecars/`): Background daemons and scheduled cron tasks for automated PR reviews and continuous workspace checks.
+* **[Universal Constitution (`AGENTS.md`)](AGENTS.md)**: The supreme governance contract (`CLAUDE.md` / `AGENT.md` symlinks) enforcing Plan-First (`PLAN.md`), Orchestrator Role Boundaries, Anti-Lazy Code, and the 6-State Graph Engineering DAG.
 
-    ROOT --> AGY["plugins/antigravity/ (9 Core + 1 Optional Plugin)"]
-    ROOT --> CLAUDE["plugins/claude/ (9 Core + 1 Optional Plugin)"]
+---
 
-    AGY --> AGY_TOOLS["Native Tools: run_command, write_to_file, replace_file_content, invoke_subagent, manage_subagents"]
-    AGY --> AGY_MANIFEST["Manifest: plugin.json at plugin root"]
-    AGY --> AGY_POLICY["Execution Policy: commandExecutionPolicy: auto"]
+## 2. Plugins Catalog & Installation
 
-    CLAUDE --> CLAUDE_TOOLS["Native Tools: Bash, Read, Write, Edit, Glob, Grep, Agent"]
-    CLAUDE --> CLAUDE_MANIFEST["Manifest: .claude-plugin/plugin.json & marketplace.json"]
-    CLAUDE --> CLAUDE_HOOKS["Claude Hooks: SessionStart, PreToolUse, PostToolUse, Stop, SessionEnd"]
-```
+Plugins are turnkey packages that wire subagents, native host tools, deterministic `PreToolUse`/`Stop` hooks, and MCP servers into your AI coding assistant.
 
-### Ecosystem Comparison & Tool Mapping
+### 2.1 Available Plugins Catalog
 
-| Dimension | Google Antigravity (`plugins/antigravity/`) | Anthropic Claude Code (`plugins/claude/`) |
+| Plugin | Capabilities & Core Purpose | Detailed Guides |
 | :--- | :--- | :--- |
-| **Plugin Manifest** | `plugin.json` (at plugin root) | `.claude-plugin/plugin.json` |
-| **Marketplace Manifest**| Local path installation via `agy plugin install` | `.claude-plugin/marketplace.json` |
-| **Command Execution** | `run_command` (`commandExecutionPolicy: auto`) | `Bash` |
-| **File Reading** | `view_file` | `Read` |
-| **File Creation** | `write_to_file` | `Write` |
-| **File Editing** | `replace_file_content` | `Edit` |
-| **File Search** | Grep / directory tools | `Glob`, `Grep` |
-| **Subagent Delegation**| `invoke_subagent(name="...", prompt="...")` | `Agent(agent="...", prompt="...")` |
-| **Agent Coordination**| `manage_subagents`, `send_message` | `Agent` session orchestration |
-| **Hook Schema** | Named hook groups: `{"PreToolUse": [...], "Stop": [...]}` | Host object: `{"hooks": {"PreToolUse": [...], "Stop": [...]}}` |
+| **`senior-dev`** | Full SDLC Graph Engineering topology: Lead Orchestrator, Product Analyst, Architect, TDD Implementer, QA Tester, and Compliance Verifier with `context/memory/` Wiki. | [Antigravity](plugins/antigravity/senior-dev/README.md) · [Claude Code](plugins/claude/senior-dev/README.md) |
+| **`senior-dev-flutter`** | Senior Flutter & Dart layer on top of the official Flutter/Dart packs: 6-State DAG, state-management ADRs (Riverpod/Bloc), DevTools jank profiling, release matrix, and Dart MCP. | [Antigravity](plugins/antigravity/senior-dev-flutter/README.md) · [Claude Code](plugins/claude/senior-dev-flutter/README.md) |
+| **`python-backend`** | Python backend engineering: FastAPI/Django vertical slices, strict TDD, zero-downtime Alembic migrations, CI/CD gates, and Cloud Run & Firebase MCP. | [Antigravity](plugins/antigravity/python-backend/README.md) · [Claude Code](plugins/claude/python-backend/README.md) |
+| **`senior-data-engineer`** | Google Cloud data engineering: Medallion Lakehouse architecture, Datastream CDC, BigQuery SCD Type 2 modeling, data safety gates, and GCP remote MCP. | [Antigravity](plugins/antigravity/senior-data-engineer/README.md) · [Claude Code](plugins/claude/senior-data-engineer/README.md) |
+| **`sql-query-optimizer`** | SQL execution plan diagnosis: BigQuery slot/shuffle/skew tuning, Postgres/MySQL/SQL Server indexing strategies, dry-run cost gates, and static SQL linting. | [Antigravity](plugins/antigravity/sql-query-optimizer/README.md) · [Claude Code](plugins/claude/sql-query-optimizer/README.md) |
+| **`shared-context`** | Cross-AI LLM Wiki working memory (`context/memory/MEMORY.md` + session archives): captures decisions and handoff state seamlessly between Antigravity and Claude Code. | [Antigravity](plugins/antigravity/shared-context/README.md) · [Claude Code](plugins/claude/shared-context/README.md) |
+| **`git-workflow`** | Git safety & hygiene: Gitflow branch protection gate (blocks direct commits/pushes to `main`/`develop`), Conventional Commits validation, and clean-tree stop gates. | [Antigravity](plugins/antigravity/git-workflow/README.md) · [Claude Code](plugins/claude/git-workflow/README.md) |
+| **`docs-and-quality`** | Documentation & QA standards: Diátaxis framework, Mermaid.js diagrams, Gherkin BDD testing, Karpathy guidelines, and Anti-Lazy Code stop gate. | [Antigravity](plugins/antigravity/docs-and-quality/README.md) · [Claude Code](plugins/claude/docs-and-quality/README.md) |
+| **`multi-agent-ops`** | Multi-agent operations: parallel worker execution (**Mode A: Disjoint Files** & **Mode B: Git Worktrees**), 3-loop self-correction cap, PR cron review, and codebase research. | [Antigravity](plugins/antigravity/multi-agent-ops/README.md) · [Claude Code](plugins/claude/multi-agent-ops/README.md) |
+| **`agent-metrics`** *(optional)* | Opt-in hook wrapper + skill for [`agent-meter`](#3-token-cost--latency-observability-agent-meter): automatic session/task token, cost, and latency summaries. | [Antigravity](plugins/antigravity/agent-metrics/README.md) · [Claude Code](plugins/claude/agent-metrics/README.md) |
 
----
+### 2.2 How Orchestrator Plugins Work (Graph Engineering DAG)
 
-## 2. Universal Constitution: `AGENTS.md`
+Domain orchestrator plugins (`senior-dev`, `senior-dev-flutter`, `python-backend`, `senior-data-engineer`) don't just run single prompts—they coordinate specialized subagents across a deterministic **6-State Directed Acyclic Graph (DAG)** with hard lifecycle gates:
 
-All agents in this repository operate under the supreme governance of the **Universal AI Coding Agent Constitution** located at [`AGENTS.md`](AGENTS.md).
+1. **State 0 — Memory Restore & Discovery Triage Gate**: Silently loads cross-AI memory (`context/memory/MEMORY.md`) and authors `PLAN.md` with a triage rubric before any code can be edited.
+2. **State 1 — Upfront Discovery**: Automatically dispatches `product-analyst` (PRDs, edge cases) and/or `architect-engineer` (ADRs, contracts) when triggered by the triage gate.
+3. **State 2 — Parallel Build Fan-Out**: Delegates TDD implementation to `1..N` `code-implementer` / `flutter-implementer` workers in parallel using **Mode A (Disjoint File Partitioning)** or **Mode B (Git Worktree Isolation)**. Orchestrators are blocked by `orchestrator-role-gate.js` from writing application code directly.
+4. **State 3 & 4 — Parallel QA & Compliance Audit**: Runs `qa-tester` (requiring empirical `exit code 0`) and `compliance-verifier` (requiring an `APPROVED` security/quality verdict) concurrently, with up to 3 self-correction loops.
+5. **State 5 — Ship & LLM Wiki Update**: Updates `context/memory/` for the next session (in either Claude Code or Antigravity) and commits using Conventional Commits.
 
-To guarantee uniform discovery across development tools and AI runners, host-specific configuration files are maintained as symlinks to `AGENTS.md`:
-* **`CLAUDE.md`** &rarr; symlink to `AGENTS.md` (read automatically by Anthropic Claude Code)
-* **`AGENT.md`** &rarr; symlink to `AGENTS.md` (read by Antigravity / Cursor / IDE assistants)
+> **Read the full DAG architecture, state machine diagram, and topologies where they are implemented**:
+> * [`senior-dev` Plugin Architecture & DAG](plugins/antigravity/senior-dev/README.md) ([Claude Code version](plugins/claude/senior-dev/README.md))
+> * [`multi-agent-ops` Parallel Fan-Out & Topologies](plugins/antigravity/multi-agent-ops/README.md) ([Claude Code version](plugins/claude/multi-agent-ops/README.md))
+> * [`AGENTS.md` Universal Constitution & Ecosystem Tool Mapping](AGENTS.md)
 
-### Inviolable Invariants
+### 2.3 Installing Plugins in Google Antigravity
 
-1. **Plan-First Mandatory Gate**:
-   * No application code modifications may occur without an up-to-date `PLAN.md` file authored and saved to disk.
-2. **Orchestrator Role Boundaries**:
-   * Lead Orchestrators (`senior-dev-orchestrator`, `flutter-feature-orchestrator`) are **strictly prohibited from directly writing application source code**.
-   * File editing tools (`write_to_file`, `replace_file_content`, `Write`, `Edit`) in orchestrator sessions are reserved exclusively for `PLAN.md`, ADRs (`ADR-*.md`), documentation (`docs/`), `.agents/`, and persistent project memory (`context/memory/`).
-   * All implementation code **MUST** be delegated to `code-implementer` or `flutter-implementer`.
-3. **Strict Test-Driven Development (TDD)**:
-   * Red-Green-Refactor cycle: failing test first, minimal production code, refactor to clean code.
-   * Tests are empirical proof: a task is complete only with verified terminal output showing `exit code 0`.
-4. **Anti-Lazy Code Policy**:
-   * Zero tolerance for placeholders (`TODO: implement later`, `# ... rest of code`, `pass # placeholder`, `/* unimplemented */`).
-   * Every edit must provide 100% complete, working code. Deterministically enforced by `anti-lazy-code-gate.js`.
-5. **Self-Correction Protocol (3-Loop Cap)**:
-   * Auto-remediation is strictly capped at a maximum of 3 cycles. If a defect persists after 3 cycles, agents must halt and escalate to the user with a diagnostic report.
+Antigravity installs plugins using the `agy` CLI:
 
----
-
-## 3. Graph Engineering State Machine (DAG)
-
-Multi-agent coordination follows a deterministic 6-State Directed Acyclic Graph (DAG) state machine with a **Mandatory Discovery Triage Gate** and **Parallel Fan-Out / Fan-In**:
-
-```mermaid
-flowchart TD
-    STATE0["STATE 0: MEMORY RESTORE & TRIAGE GATE<br/>Load context/memory/MEMORY.md + Author PLAN.md with Discovery Triage Table"]
-    STATE0 -->|"New Feature / Ambiguous / Schema or Auth Change"| STATE1["STATE 1: UPFRONT DISCOVERY (Parallel)<br/>product-analyst and architect-engineer"]
-    STATE0 -->|"Pure Bugfix / Localized Refactor (Explicit Justification)"| STATE2
-    STATE1 --> STATE2["STATE 2: PARALLEL BUILD (Mandatory)<br/>Mode A: Disjoint Files or Mode B: Git Worktrees<br/>code-implementer / flutter-implementer"]
-    STATE2 --> VERIFY["STATE 3 & 4: PARALLEL VERIFY & AUDIT (Mandatory)<br/>qa-tester (exit code 0) and compliance-verifier (APPROVED)"]
-    VERIFY -->|"Fail / Reject (Max 3 Loops)"| STATE2
-    VERIFY -->|"Both Pass: Green + Approved"| STATE5["STATE 5: SHIP & MEMORY CAPTURE<br/>Update context/memory/ LLM Wiki + git commit"]
-    VERIFY -->|"3-Loop Cap Exceeded"| ESCALATE["HALT & ESCALATE<br/>Diagnostic report to user"]
-```
-
-### Multi-Agent Topologies Taxonomy
-1. **Manager-Worker Topology (Mode A & Mode B Parallelism)**: Orchestrator coordinates high-level objectives and delegates atomic tasks to concurrent workers using **Mode A: Disjoint File Partitioning** (`Workspace: "inherit"` on non-overlapping file sets) or **Mode B: Git Worktree Isolation** (dedicated branches/worktrees when tracks touch shared files).
-2. **Sequential Pipeline with Parallel Fan-Out/Fan-In (DAG)**: Deterministic progression through State 0 (Memory Restore + Triage Gate in `PLAN.md`) &rarr; State 1 (Upfront Discovery) &rarr; State 2 (Parallel Build) &rarr; State 3 & 4 (Concurrent QA & Compliance Audit) &rarr; State 5 (Memory Capture & Ship) with bounded failure loops.
-3. **Review Committee**: Parallel specialist evaluations where `qa-tester` and `compliance-verifier` (or domain specialists across Security, Quality, Performance, Architecture) evaluate diffs concurrently and fan-in before completion.
-
----
-
-## 4. Deterministic Lifecycle Hooks
-
-Plugins enforce safety and quality invariants via deterministic Node.js lifecycle hooks executing on host tool events:
-
-```
-plugins/
-├── antigravity/<plugin>/hooks/
-│   ├── gitflow-branch-gate.js     # Blocks commits to main/develop, validates branch prefixes
-│   ├── orchestrator-role-gate.js  # Restricts orchestrator writes to PLAN.md, ADRs, docs/, context/memory/
-│   ├── anti-lazy-code-gate.js     # Scans diffs for TODOs, pass stubs, and incomplete placeholders
-│   ├── stop-gate.js               # Enforces test pass (exit code 0) before session completion
-│   ├── pre-tool-gate.js           # Enforces workspace path boundaries and safe command flags
-│   └── context-*.js               # Cross-AI LLM Wiki (context/memory/) restore and stop-flush hooks
-└── claude/<plugin>/hooks/
-    ├── (Identical deterministic gate scripts tailored for Claude Code hooks.json events)
-```
-
-### Active Hook Gates
-* **Gitflow Branch Protection Gate** (`gitflow-branch-gate.js`): Prevents destructive direct commits or pushes to protected branches (`main`, `master`, `develop`, `release/*`). Requires semantic branch naming (`feat/*`, `fix/*`, `chore/*`).
-* **Orchestrator Role Gate** (`orchestrator-role-gate.js`): Prevents orchestrators from editing production source code while whitelisting `PLAN.md`, `ADR-*.md`, `docs/`, `.agents/`, and `context/memory/`.
-* **Anti-Lazy Code Stop Gate** (`anti-lazy-code-gate.js`): Inspects git diffs before session termination. Exits with code 2 if placeholder comments (`TODO: implement later`, `# ... rest of code`) are detected.
-* **Test Verification Stop Gate** (`stop-gate.js` / `verify_tests.py`): Blocks session termination if automated test suites are failing.
-* **Cross-AI LLM Wiki & Shared Context Keeper** (`session-start-context.js`, `stop-flush.js`, `context_common.py`, `context_snapshot.py`, `context_list.py`): Maintains a persistent 2-tier Markdown Wiki in `context/memory/` (`MEMORY.md`, `architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) alongside archive snapshots in `context/sessions/`, preserving architectural decisions across sessions and between Antigravity and Claude Code.
-
----
-
-## 5. Plugins, Skills & `agent-meter` Observability
-
-The [`skills/`](skills/README.md) directory contains 35 core modular skills (plus the optional `agent-metrics` skill) compliant with the [Open Agent Skills Standard (`agentskills.io`)](https://agentskills.io). Each skill includes a platform-neutral `SKILL.md`, reference documentation, and deterministic Python automation scripts.
-
-### 5.1 Distributed Plugins & Bundled Skills
-
-Both plugin ecosystems bundle physical copies of the skills they require to remain fully self-contained:
-
-| Plugin Name | Skills | Bundled Skills | Guides |
-| :--- | :---: | :--- | :--- |
-| **`senior-dev`** | 11 | `senior-dev-orchestrator`, `product-analyst`, `senior-architect-engineering`, `code-implementer`, `code-smells-expert`, `refactoring-code-expert`, `qa-tester`, `compliance-verifier`, `context-capture`, `context-restore`, `loop-engineering` | [AGY](plugins/antigravity/senior-dev/README.md) · [Claude](plugins/claude/senior-dev/README.md) |
-| **`senior-dev-flutter`** | 10 | `flutter-senior-orchestration`, `flutter-architecture-decisions`, `flutter-review-checklist`, `flutter-test-strategy`, `flutter-performance-profiling`, `flutter-release-engineering`, `flutter-upgrade-migration`, `context-capture`, `context-restore`, `loop-engineering` | [AGY](plugins/antigravity/senior-dev-flutter/README.md) · [Claude](plugins/claude/senior-dev-flutter/README.md) |
-| **`python-backend`** | 14 | `python-expert`, `test-driven-development`, `pull-request-expert`, `code-smells-expert`, `refactoring-code-expert`, `security-audit`, `performance-scalability`, `database-migration-expert`, `senior-architect-engineering`, `design-spec-expert`, `build-and-ci-gates`, `context-capture`, `context-restore`, `loop-engineering` | [AGY](plugins/antigravity/python-backend/README.md) · [Claude](plugins/claude/python-backend/README.md) |
-| **`senior-data-engineer`** | 4 | `gcp-data-engineering`, `cdc-scd-patterns`, `context-capture`, `context-restore` | [AGY](plugins/antigravity/senior-data-engineer/README.md) · [Claude](plugins/claude/senior-data-engineer/README.md) |
-| **`sql-query-optimizer`** | 4 | `bigquery-query-optimization`, `sql-query-optimization`, `context-capture`, `context-restore` | [AGY](plugins/antigravity/sql-query-optimizer/README.md) · [Claude](plugins/claude/sql-query-optimizer/README.md) |
-| **`shared-context`** | 2 | `context-capture`, `context-restore` | [AGY](plugins/antigravity/shared-context/README.md) · [Claude](plugins/claude/shared-context/README.md) |
-| **`git-workflow`** | 2 | `commit-expert`, `pull-request-expert` | [AGY](plugins/antigravity/git-workflow/README.md) · [Claude](plugins/claude/git-workflow/README.md) |
-| **`docs-and-quality`** | 3 | `documentation-expert`, `testing-expert`, `guidelines-karpathy` | [AGY](plugins/antigravity/docs-and-quality/README.md) · [Claude](plugins/claude/docs-and-quality/README.md) |
-| **`multi-agent-ops`** | 2 | `loop-engineering`, `repo-research` | [AGY](plugins/antigravity/multi-agent-ops/README.md) · [Claude](plugins/claude/multi-agent-ops/README.md) |
-| **`agent-metrics`** *(optional add-on)* | 1 | `agent-metrics` | [AGY](plugins/antigravity/agent-metrics/README.md) · [Claude](plugins/claude/agent-metrics/README.md) |
-
-### 5.2 Optional Add-on: `agent-meter` (Token, Cost & Latency Metrics)
-
-**`agent-meter`** ([`tools/agent-meter/`](tools/agent-meter/README.md)) is a local-first, $0 observability CLI and optional `agent-metrics` plugin that tracks token usage, API-equivalent USD cost, cache efficiency, and latency across **Claude Code** and **Antigravity** (CLI, IDE, and app) per project, client, task, and subagent.
-
-* **User Guides**: [English Guide (`tools/agent-meter/README.md`)](tools/agent-meter/README.md) · [Guía en Español (`tools/agent-meter/README.es.md`)](tools/agent-meter/README.es.md) · [Design Overview (`docs/agent-metrics/README.md`)](docs/agent-metrics/README.md)
-* **Quick Start**:
-  ```bash
-  uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
-  agent-meter setup --local
-  agent-meter last            # Last session summary
-  agent-meter tasks --last 5  # Last 5 tasks with subagent breakdown
-  agent-meter report --open   # Offline interactive HTML report
-  ```
-* No other plugin depends on `agent-meter`; it works standalone or with the optional `agent-metrics` plugin.
-
-### 5.3 Installing Skills, Rules & Sidecars Directly
-* **Skills via `npx skills`**:
-  ```bash
-  npx skills add jggomez/expert-ai-developer-skills --list
-  npx skills add jggomez/expert-ai-developer-skills --skill python-expert
-  ```
-  See the full catalog in [`skills/README.md`](skills/README.md).
-* **Rules & Sidecars**: See [`rules/README.md`](rules/README.md) (11 RFC 2119 rule profiles) and [`sidecars/README.md`](sidecars/README.md) (background cron/daemon configurations).
-
----
-
-## 6. Operational Workflows (16 Playbooks)
-
-Operational playbooks in [`workflows/`](workflows/README.md) and [`.agents/workflows/`](.agents/workflows/) guide complex development sequences:
-
-### The 9 Core Slash Commands
-* **`/spec`** ([`spec-workflow.md`](workflows/spec-workflow.md)): Clarify user goals, define NFRs, draft PRD.
-* **`/plan`** ([`plan-workflow.md`](workflows/plan-workflow.md)): Author `PLAN.md`, decompose into atomic tasks, record ADRs.
-* **`/build`** ([`build-workflow.md`](workflows/build-workflow.md)): Incremental TDD implementation via `code-implementer`.
-* **`/test`** ([`test-workflow.md`](workflows/test-workflow.md)): Empirical testing and verification evidence (`exit code 0`).
-* **`/constraints`** ([`constraints-workflow.md`](workflows/constraints-workflow.md)): Set NFR budgets, linter rules, security gates.
-* **`/review`** ([`review-workflow.md`](workflows/review-workflow.md)): Machine-first code review and smell audit.
-* **`/perf`** ([`perf-workflow.md`](workflows/perf-workflow.md)): Performance benchmarking, flamegraphs, latency tuning.
-* **`/code-simplify`** ([`code-simplify-workflow.md`](workflows/code-simplify-workflow.md)): Clarity over cleverness, dead code pruning.
-* **`/ship`** ([`ship-workflow.md`](workflows/ship-workflow.md)): Conventional commit, release packaging, PR submission.
-
-### Specialized Engineering Playbooks
-* [`feature-development-workflow.md`](workflows/feature-development-workflow.md): Complete end-to-end SDLC lifecycle playbook.
-* [`test-execution-workflow.md`](workflows/test-execution-workflow.md): Test discovery, targeted execution, coverage auditing.
-* [`secure-code-review-workflow.md`](workflows/secure-code-review-workflow.md): OWASP top 10 auditing, SAST analysis, secret scanning.
-* [`pull-request-workflow.md`](workflows/pull-request-workflow.md): Pre-PR self-audit, diff inspection, PR description templating.
-* [`commit-workflow.md`](workflows/commit-workflow.md): Selective git staging, Conventional Commits formatting, hook safety.
-* [`code-smell-review-workflow.md`](workflows/code-smell-review-workflow.md): AST smell detection, cyclomatic complexity reduction.
-* [`grill-me-alignment-workflow.md`](workflows/grill-me-alignment-workflow.md): Google `/grill-me` interactive design interview playbook.
-
----
-
-## 7. Developer Runbooks
-
-### 7.1 Run Full Test Suite
-Verify repository structural integrity, schema compliance, hook contracts, and unit tests:
-```bash
-pytest tests/
-```
-
-### 7.2 Validate Lifecycle Hook Syntax
-Ensure all JavaScript lifecycle hook scripts pass Node.js syntax checks without errors:
-```bash
-for hook in plugins/antigravity/*/hooks/*.js plugins/claude/*/hooks/*.js; do
-  node --check "$hook" || exit 1
-done
-```
-
-### 7.3 Synchronize Canonical Skills & Agents into All Plugins
-After updating any canonical skill in `/skills/` or agent definition in `plugins/antigravity/`, synchronize across both ecosystems:
-```bash
-python3 scripts/sync_plugin_skills.py
-python3 scripts/sync_agents.py
-```
-
-### 7.4 Plugin Installation Commands
-
-#### In Google Antigravity:
 ```bash
 # Install a specific plugin
 agy plugin install ./plugins/antigravity/senior-dev
+agy plugin install ./plugins/antigravity/senior-dev-flutter
+agy plugin install ./plugins/antigravity/python-backend
+agy plugin install ./plugins/antigravity/senior-data-engineer
+agy plugin install ./plugins/antigravity/sql-query-optimizer
+agy plugin install ./plugins/antigravity/shared-context
+agy plugin install ./plugins/antigravity/git-workflow
+agy plugin install ./plugins/antigravity/docs-and-quality
+agy plugin install ./plugins/antigravity/multi-agent-ops
 
-# Install all plugins in one pass
-for p in ./plugins/antigravity/*; do agy plugin install "$p"; done
+# Install all 9 core plugins in one command
+for p in senior-dev senior-dev-flutter python-backend senior-data-engineer sql-query-optimizer shared-context git-workflow docs-and-quality multi-agent-ops; do
+  agy plugin install "./plugins/antigravity/$p"
+done
+
+# Useful management commands
+agy plugin list                    # List installed plugins
+agy plugin enable <name>           # Enable a plugin
+agy plugin disable <name>          # Temporarily disable a plugin
+agy plugin uninstall <name>        # Remove an installed plugin
 ```
 
-#### In Anthropic Claude Code:
+### 2.4 Installing Plugins in Anthropic Claude Code
+
+In Claude Code, install plugins via the repository marketplace or from a local checkout:
+
 ```bash
-# Add repository marketplace
+# 1. Add the repository marketplace
 /plugin marketplace add jggomez/expert-ai-developer-skills
 
-# Install plugins
+# 2. Install any plugin(s)
 /plugin install senior-dev
 /plugin install senior-dev-flutter
+/plugin install python-backend
+/plugin install senior-data-engineer
+/plugin install sql-query-optimizer
+/plugin install shared-context
+/plugin install git-workflow
+/plugin install docs-and-quality
+/plugin install multi-agent-ops
 
-# Or install from local directory:
+# Or install directly from a local clone:
 claude plugin install plugins/claude/senior-dev
 ```
 
 ---
 
-## 8. License
+## 3. Token, Cost & Latency Observability (`agent-meter`)
+
+How much do your AI agents cost per project, per client, per task, and per subagent—and how fast are they? **`agent-meter`** is a standalone, read-only, privacy-first CLI that reads the transcripts and databases **Claude Code** and **Antigravity** (CLI, IDE, and app) already write to disk:
+
+* **Option A — Local ($0, default, offline)**: Stores metrics in `~/.agent-meter/meter.duckdb`, prints session and per-task subagent rollups in your terminal, and generates a self-contained **offline HTML report** (`agent-meter report --open`).
+* **Option B — Cloud ($0 within BigQuery free tier, opt-in)**: Syncs via batch load jobs to your own **BigQuery** dataset (`agent_metrics`) to power a **Looker Studio** dashboard with drill-down from `Project -> Session -> Task -> Subagent -> LLM Call`.
+
+```bash
+# 1. Install the CLI (requires uv: https://docs.astral.sh/uv/)
+uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+
+# 2. Run the one-time setup wizard (detects hosts, imports history, configures hooks/scheduler)
+agent-meter setup --local
+
+# 3. Inspect your metrics
+agent-meter last            # Last session summary (+ today / month-to-date for that project)
+agent-meter tasks --last 5  # Last 5 tasks with per-subagent cost, calls, parallelism & retries
+agent-meter report --open   # Open the interactive offline HTML report in your browser
+```
+
+> **Complete Documentation & Guides**:
+> * 🇺🇸 **English User Guide (Local & BigQuery + Looker Studio)**: [`tools/agent-meter/README.md`](tools/agent-meter/README.md)
+> * 🇪🇸 **Guía Completa en Español (Local y BigQuery + Looker Studio)**: [`tools/agent-meter/README.es.md`](tools/agent-meter/README.es.md)
+> * 📐 **Architecture, Contracts & Looker Studio Spec**: [`docs/agent-metrics/README.md`](docs/agent-metrics/README.md) · [`looker-studio.md`](docs/agent-metrics/looker-studio.md)
+
+---
+
+## 4. Installing & Using Skills (35 Canonical Skills)
+
+**Skills** provide on-demand instructions, checklists, and deterministic Python scripts (progressive disclosure) that agents activate only when relevant to your task.
+
+### Option A: Install via Vercel Skills CLI (Recommended)
+
+```bash
+# List all available skills in this repository
+npx skills add jggomez/expert-ai-developer-skills --list
+
+# Install a specific skill in the active project (.agents/skills)
+npx skills add jggomez/expert-ai-developer-skills --skill python-expert
+
+# Install a specific skill globally on your machine
+npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
+
+# Install all skills in the active project
+npx skills add jggomez/expert-ai-developer-skills
+```
+
+### Option B: Manual Copy
+
+```bash
+# Project-level (.agents/skills/)
+mkdir -p .agents/skills/ && cp -r skills/<skill-name> .agents/skills/
+
+# Global machine-level (~/.gemini/config/skills/)
+mkdir -p ~/.gemini/config/skills/ && cp -r skills/<skill-name> ~/.gemini/config/skills/
+```
+
+> **Explore the full 35-skill catalog, plugin bundling matrix, and CLI script manual**: [`skills/README.md`](skills/README.md)
+
+---
+
+## 5. Using Rules, Workflows & Sidecars
+
+### 5.1 Rules (11 Constraint Profiles)
+**Rules** are passive RFC 2119 guardrails (`MUST`, `NEVER`, `ALWAYS`) loaded automatically from `.agents/rules/` (project scope) or `~/.gemini/config/rules/` (global scope).
+
+```bash
+mkdir -p .agents/rules/
+cp rules/*.md .agents/rules/
+```
+> **Browse all 11 rule profiles and trigger examples**: [`rules/README.md`](rules/README.md)
+
+### 5.2 Operational Workflows (16 Playbooks)
+**Workflows** are step-by-step operational playbooks invoked via `@workflows/<name>.md` or registered as slash commands in `.agents/workflows/`:
+
+* **The 9 Core Slash Commands**: [`/spec`](workflows/spec-workflow.md) &rarr; [`/plan`](workflows/plan-workflow.md) &rarr; [`/build`](workflows/build-workflow.md) &rarr; [`/test`](workflows/test-workflow.md) &rarr; [`/constraints`](workflows/constraints-workflow.md) &rarr; [`/review`](workflows/review-workflow.md) &rarr; [`/perf`](workflows/perf-workflow.md) &rarr; [`/code-simplify`](workflows/code-simplify-workflow.md) &rarr; [`/ship`](workflows/ship-workflow.md).
+* **7 Specialized Playbooks**: [`feature-development`](workflows/feature-development-workflow.md), [`test-execution`](workflows/test-execution-workflow.md), [`secure-code-review`](workflows/secure-code-review-workflow.md), [`pull-request`](workflows/pull-request-workflow.md), [`commit`](workflows/commit-workflow.md), [`code-smell-review`](workflows/code-smell-review-workflow.md), and [`grill-me-alignment`](workflows/grill-me-alignment-workflow.md).
+
+> **See how to register and run workflows**: [`workflows/README.md`](workflows/README.md)
+
+### 5.3 Sidecars (Background Daemons & Cron Jobs)
+**Sidecars** run recurring background tasks alongside Antigravity (`pr-reviewer-cron`, `incoming-reviews-alert`, `workspace-daemon`).
+
+> **See installation and schedule configuration**: [`sidecars/README.md`](sidecars/README.md)
+
+---
+
+## 6. Developer Runbooks (Contributing & Verification)
+
+```bash
+# 1. Run the repository test suite (unit, integration, and structural checks)
+pytest tests/
+
+# 2. Validate syntax of all Node.js lifecycle hooks across both ecosystems
+for hook in plugins/antigravity/*/hooks/*.js plugins/claude/*/hooks/*.js; do
+  node --check "$hook" || exit 1
+done
+
+# 3. Synchronize canonical /skills and agents across Antigravity and Claude Code plugins
+python3 scripts/sync_plugin_skills.py
+python3 scripts/sync_agents.py
+```
+
+---
+
+## 7. License
 
 This repository is open-sourced under the [Apache License, Version 2.0](LICENSE).

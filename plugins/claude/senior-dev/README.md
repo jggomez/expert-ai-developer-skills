@@ -62,7 +62,30 @@ plugins/claude/senior-dev/
 
 ---
 
-## 3. The 9-Stage Command Framework
+## 3. Graph Engineering State Machine (DAG) & Topologies
+
+Multi-agent coordination in `senior-dev` follows a deterministic **6-State Directed Acyclic Graph (DAG)** with a **Mandatory Discovery Triage Gate** and **Parallel Fan-Out / Fan-In**:
+
+```mermaid
+flowchart TD
+    STATE0["STATE 0: MEMORY RESTORE & TRIAGE GATE<br/>Load context/memory/MEMORY.md + Author PLAN.md with Discovery Triage Table"]
+    STATE0 -->|"New Feature / Ambiguous / Schema or Auth Change"| STATE1["STATE 1: UPFRONT DISCOVERY (Parallel)<br/>product-analyst and architect-engineer"]
+    STATE0 -->|"Pure Bugfix / Localized Refactor (Explicit Justification)"| STATE2
+    STATE1 --> STATE2["STATE 2: PARALLEL BUILD (Mandatory)<br/>Mode A: Disjoint Files or Mode B: Git Worktrees<br/>code-implementer (1..N)"]
+    STATE2 --> VERIFY["STATE 3 & 4: PARALLEL VERIFY & AUDIT (Mandatory)<br/>qa-tester (exit code 0) and compliance-verifier (APPROVED)"]
+    VERIFY -->|"Fail / Reject (Max 3 Loops)"| STATE2
+    VERIFY -->|"Both Pass: Green + Approved"| STATE5["STATE 5: SHIP & MEMORY CAPTURE<br/>Update context/memory/ LLM Wiki + git commit"]
+    VERIFY -->|"3-Loop Cap Exceeded"| ESCALATE["HALT & ESCALATE<br/>Diagnostic report to user"]
+```
+
+### Multi-Agent Topologies Taxonomy
+1. **Manager-Worker Topology (Mode A & Mode B Parallelism)**: `senior-dev-orchestrator` coordinates high-level objectives and delegates atomic tasks to concurrent workers via parallel `Agent` calls using **Mode A: Disjoint File Partitioning** (non-overlapping file sets) or **Mode B: Git Worktree Isolation** (dedicated branches/worktrees when tracks touch shared files).
+2. **Sequential Pipeline with Parallel Fan-Out/Fan-In (DAG)**: Deterministic progression through State 0 (Memory Restore + Triage Gate in `PLAN.md`) &rarr; State 1 (Upfront Discovery) &rarr; State 2 (Parallel Build) &rarr; State 3 & 4 (Concurrent QA & Compliance Audit) &rarr; State 5 (Memory Capture & Ship) with bounded failure loops (max 3 retries).
+3. **Review Committee**: Parallel specialist evaluations where `qa-tester` and `compliance-verifier` audit diffs concurrently and fan-in before completion.
+
+---
+
+## 4. The 9-Stage Command Framework
 
 The subagents and orchestrator execute along the standardized 9-stage engineering cycle:
 
@@ -80,7 +103,7 @@ The subagents and orchestrator execute along the standardized 9-stage engineerin
 
 ---
 
-## 4. Lifecycle Hooks & Deterministic Gates
+## 5. Lifecycle Hooks & Deterministic Gates
 
 | Hook Event | Script | Behavior |
 | :--- | :--- | :--- |
@@ -89,7 +112,7 @@ The subagents and orchestrator execute along the standardized 9-stage engineerin
 
 ---
 
-## 5. Bundled Skills (11 Packaged Modules)
+## 6. Bundled Skills (11 Packaged Modules)
 
 1. **`senior-dev-orchestrator`**: Phase breakdown, DAG state machine, Mandatory Discovery Triage Gate, Parallel Fan-Out/Fan-In orchestration, and LLM Wiki memory lifecycle.
 2. **`product-analyst`**: Requirement discovery workflow and PRD template.
@@ -105,7 +128,7 @@ The subagents and orchestrator execute along the standardized 9-stage engineerin
 
 ---
 
-## 6. Installation
+## 7. Installation
 
 **In Claude Code**:
 ```bash
