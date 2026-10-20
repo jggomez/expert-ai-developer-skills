@@ -54,6 +54,8 @@ def sha256_hex(data: bytes) -> str:
 
 
 def _fsync_directory(directory: Path) -> None:
+    if os.name == "nt":
+        return
     fd = os.open(directory, os.O_RDONLY)
     try:
         os.fsync(fd)

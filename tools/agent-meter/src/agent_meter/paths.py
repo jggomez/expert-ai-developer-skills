@@ -18,6 +18,7 @@ packages.
 
 from __future__ import annotations
 
+import errno
 import os
 import secrets
 import shutil
@@ -174,7 +175,11 @@ class AppHome:
         if chosen:
             root = Path(chosen).expanduser()
         else:
-            user_home = os.environ.get("HOME") or str(Path.home())
+            user_home = (
+                os.environ.get("HOME")
+                or os.environ.get("USERPROFILE")
+                or str(Path.home())
+            )
             root = Path(user_home) / ".agent-meter"
         home = cls(root=Path(os.path.abspath(root)))
         try:
@@ -224,7 +229,10 @@ def read_secret(home: AppHome) -> bytes | None:
     except FileNotFoundError:
         return None
     with os.fdopen(fd, "rb") as handle:
-        if stat.S_IMODE(os.fstat(handle.fileno()).st_mode) != _FILE_MODE:
+        if (
+            hasattr(os, "fchmod")
+            and stat.S_IMODE(os.fstat(handle.fileno()).st_mode) != _FILE_MODE
+        ):
             os.fchmod(handle.fileno(), _FILE_MODE)
         data = handle.read(SECRET_BYTES + 1)
     if len(data) != SECRET_BYTES:
@@ -262,6 +270,15 @@ def load_secret(home: AppHome) -> bytes:
             if winner is None:
                 raise
             return winner
+        except OSError as exc:
+            if (
+                os.name == "nt"
+                and exc.errno != errno.EEXIST
+                and not home.secret.exists()
+            ):
+                os.replace(tmp_path, home.secret)
+            else:
+                raise
         _fsync_dir(home.root)
         return data
     finally:
@@ -269,6 +286,8 @@ def load_secret(home: AppHome) -> bytes:
 
 
 def _fsync_dir(directory: Path) -> None:
+    if os.name == "nt":
+        return
     fd = os.open(directory, os.O_RDONLY)
     try:
         os.fsync(fd)
@@ -277,9 +296,15 @@ def _fsync_dir(directory: Path) -> None:
 
 
 def _user_home_candidates() -> set[str]:
-    """Every spelling of the user's home: ``$HOME``, ``~`` and the passwd entry (real paths)."""
-    spellings = [os.environ.get("HOME", ""), os.path.expanduser("~")]
+    """Every spelling of the user's home: ``$HOME``, ``$USERPROFILE``, ``~`` and the passwd entry (real paths)."""
+    spellings = [
+        os.environ.get("HOME", ""),
+        os.environ.get("USERPROFILE", ""),
+        os.path.expanduser("~"),
+    ]
     candidates = {os.path.realpath(value) for value in spellings if value and value != "~"}
+    if not hasattr(os, "getuid"):
+        return candidates
     try:
         import pwd
     except ImportError:

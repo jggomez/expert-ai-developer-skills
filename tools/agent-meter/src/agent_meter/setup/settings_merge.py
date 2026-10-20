@@ -25,6 +25,7 @@ import json
 import os
 import shlex
 import stat
+import subprocess
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -70,6 +71,7 @@ ANTIGRAVITY_HOOK_NAME: Final = "agent-meter"
 MANAGED_SETTINGS_PATHS: tuple[Path, ...] = (
     Path("/Library/Application Support/ClaudeCode/managed-settings.json"),
     Path("/etc/claude-code/managed-settings.json"),
+    Path("C:/ProgramData/ClaudeCode/managed-settings.json"),
 )
 _NEW_FILE_MODE: Final = 0o600
 _CLAUDE_EVENTS: Final = (("SessionEnd", "session-end"), ("Stop", "task-end"))
@@ -112,6 +114,8 @@ class _DuplicateKey(ValueError):
 
 def command_prefix(executable: Path) -> str:
     """Shell-safe absolute executable used at the start of every hook command."""
+    if os.name == "nt":
+        return subprocess.list2cmdline([str(executable)])
     return shlex.quote(str(executable))
 
 
@@ -150,7 +154,7 @@ def _read_target(path: Path) -> tuple[Path, bytes | None]:
         st = real.stat()
     except FileNotFoundError:
         return real, None
-    if st.st_uid != os.getuid():
+    if hasattr(os, "getuid") and st.st_uid != os.getuid():
         raise SettingsRefused("not_owner", real, "the file is owned by another user")
     return real, real.read_bytes()
 

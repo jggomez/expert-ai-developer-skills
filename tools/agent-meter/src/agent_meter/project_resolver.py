@@ -55,6 +55,7 @@ DEFAULT_TEMP_ROOTS: Final = (
 )
 _WORKTREE_SEGMENTS: Final = ("/.claude/worktrees/", "/.worktrees/", "/worktrees/")
 _SCP_REMOTE: Final = re.compile(r"^(?:[^@/\s]+@)?(?P<host>[^:/\s@]+):(?P<path>[^\s]+)$")
+_WIN_DRIVE_URI_PATH: Final = re.compile(r"^/([A-Za-z]:(?:/|$).*)")
 _TOP_KEYS: Final = frozenset({"version", "projects", "paths", "ignore", "merges"})
 _OVERRIDE_KEYS: Final = frozenset(
     {"display_name", "client", "billing", "rate", "fixed_price", "currency"}
@@ -146,8 +147,8 @@ def _short(value: str) -> str:
 
 
 def _is_under(path: str, root: str) -> bool:
-    root = root.rstrip("/") or "/"
-    return path == root or path.startswith(root + "/")
+    root = root.rstrip("/\\") or "/"
+    return path == root or path.startswith(root + "/") or path.startswith(root + "\\")
 
 
 def _kind_of(project_id: str) -> Literal["remote", "path", "unassigned"]:
@@ -178,7 +179,12 @@ class ProjectResolver:
         self._git_timeout_s = git_timeout_s
         self._home = {os.path.abspath(home), _real(str(home))}
         roots = (
-            [*DEFAULT_TEMP_ROOTS, os.environ.get("TMPDIR", "")]
+            [
+                *DEFAULT_TEMP_ROOTS,
+                os.environ.get("TMPDIR", ""),
+                os.environ.get("TEMP", ""),
+                os.environ.get("TMP", ""),
+            ]
             if temp_roots is None
             else list(temp_roots)
         )
@@ -222,6 +228,11 @@ class ProjectResolver:
             text = unquote(urlsplit(text).path)
             if not text:
                 return None
+            match = _WIN_DRIVE_URI_PATH.match(text)
+            if match is not None:
+                text = match.group(1)
+                if os.name != "nt":
+                    return os.path.normpath(text)
         return os.path.normpath(os.path.abspath(text))
 
     def _is_unassigned(self, directory: str) -> bool:
@@ -283,13 +294,13 @@ class ProjectResolver:
 
     @staticmethod
     def _worktree_prefix(directory: str) -> str | None:
-        candidate = directory + "/"
+        normalized = directory.replace("\\", "/") + "/"
         positions = [
-            candidate.find(seg) for seg in _WORKTREE_SEGMENTS if seg in candidate
+            normalized.find(seg) for seg in _WORKTREE_SEGMENTS if seg in normalized
         ]
         if not positions:
             return None
-        prefix = candidate[: min(positions)]
+        prefix = directory[: min(positions)]
         return prefix or None
 
     def _resolve_git(self, directory: str) -> ProjectRef | None:

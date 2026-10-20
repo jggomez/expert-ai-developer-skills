@@ -42,7 +42,7 @@ guarda prompts, código, entradas o salidas de herramientas ni rutas de archivos
 | | **Opción A — Local** (por defecto) | **Opción B — Nube** (opcional, encima de A) |
 | :--- | :--- | :--- |
 | Para quién | Cualquier desarrollador, sin cuenta en la nube | Quien tenga un proyecto de Google Cloud |
-| Dónde quedan los datos | `~/.agent-meter/meter.duckdb` en tu Mac/Linux | El mismo archivo local **más** un dataset en BigQuery |
+| Dónde quedan los datos | `~/.agent-meter/meter.duckdb` en tu Mac/Linux/Windows | El mismo archivo local **más** un dataset en BigQuery |
 | Dónde los ves | Resúmenes en la terminal + `agent-meter report` (HTML) | Todo lo de A **más** un tablero en Looker Studio |
 | Internet | Nunca | Solo para subir a BigQuery (cargas por lote) |
 | Costo | $0 | $0 dentro del nivel gratuito de BigQuery para este volumen (las cargas por lote son gratis); pon una alerta de presupuesto |
@@ -100,7 +100,7 @@ quieras números frescos.
 
 ## 4. Instalación
 
-**Requisitos:** macOS o Linux, Python ≥ 3.11 (`uv` lo instala por ti) y `uv` o `pipx`.
+**Requisitos:** macOS, Linux o Windows (PowerShell/CMD o WSL2), Python ≥ 3.11 (`uv` lo instala por ti) y `uv` o `pipx`.
 
 ### 4.1 Desde GitHub (recomendado)
 
@@ -178,7 +178,7 @@ Son 8 pasos. Todos se pueden repetir sin problema: si corres `setup` dos veces, 
 | Disparador | Qué hace | Qué modifica |
 | :--- | :--- | :--- |
 | `hooks` | Resumen apenas termina cada tarea (Claude Code `Stop`/`SessionEnd`, Antigravity `Stop`) | Agrega entradas a `~/.claude/settings.json` y `~/.gemini/config/hooks.json`: primero te muestra el JSON exacto, hace respaldo y **nunca toca tus hooks existentes** |
-| `scheduler` (timer) | Recoge cada 15 minutos, incluidas sesiones caídas o abiertas; en la opción B también sube a BigQuery | Agrega un agente de usuario de `launchd` (macOS) o un timer de systemd / cron (Linux) |
+| `scheduler` (timer) | Recoge cada 15 minutos, incluidas sesiones caídas o abiertas; en la opción B también sube a BigQuery | Agrega un agente de usuario de `launchd` (macOS), un timer de systemd / cron (Linux) o una tarea programada de Windows (`schtasks`) |
 | `none` | Nada automático; tú corres `agent-meter collect` | Nada |
 
 Variantes sin preguntas:
@@ -516,7 +516,7 @@ tokens), siempre sale con 0 y hace la importación en un proceso aparte en segun
 Gemini CLI) nunca se modifica.
 
 **Timer:** cada 15 minutos (agente de usuario de `launchd` con `RunAtLoad` en macOS; timer de usuario de systemd con
-`Persistent=true` o cron en Linux). Recoge sesiones que se cayeron o nunca se cerraron y, en la opción B, sincroniza con
+`Persistent=true` o cron en Linux; Programador de tareas de Windows `schtasks` con `com.agent-meter.collect` en Windows). Recoge sesiones que se cayeron o nunca se cerraron y, en la opción B, sincroniza con
 BigQuery.
 
 **Notificaciones**, solo cuando sirven:
@@ -576,7 +576,7 @@ sal, almacén e historial no medido, y te da el arreglo de cada problema.
 
 | Problema | Solución |
 | :--- | :--- |
-| `agent-meter: command not found` | Revisa que `~/.local/bin` esté en tu `PATH` (`uv tool update-shell`) o reinstala (§4) |
+| `agent-meter: command not found` | Revisa que `~/.local/bin` (`%USERPROFILE%\.local\bin` en Windows) esté en tu `PATH` (`uv tool update-shell`) o reinstala (§4) |
 | No hay datos o están viejos | `agent-meter collect` (o revisa hooks/timer con `doctor`) |
 | Un costo sale `≥ $0.00` | Ese modelo no tiene precio: `agent-meter pricing unpriced` te da el comando `pricing add`/`alias` exacto |
 | El mismo proyecto sale dos veces | `agent-meter projects merge <origen> <destino>` |

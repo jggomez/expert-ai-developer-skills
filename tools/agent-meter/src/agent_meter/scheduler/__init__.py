@@ -10,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Literal
 
-from agent_meter.scheduler import cron, launchd, systemd
+from agent_meter.scheduler import cron, launchd, schtasks, systemd
 from agent_meter.scheduler._base import (
     Kind,
     Runner,
@@ -45,7 +45,7 @@ _DESCRIPTION = "runs `agent-meter collect --scheduled --quiet` every 15 min"
 
 
 def detect_kind(env: SchedulerEnv) -> Kind | None:
-    """launchd on macOS; systemd user timer on Linux when available, else cron; else ``None``."""
+    """launchd on macOS; systemd user timer on Linux when available, else cron; schtasks on win32."""
     if env.platform == "darwin":
         return "launchd"
     if env.platform.startswith("linux"):
@@ -53,6 +53,8 @@ def detect_kind(env: SchedulerEnv) -> Kind | None:
             return "systemd"
         if cron.available(env):
             return "cron"
+    if env.platform == "win32" and schtasks.available(env):
+        return "schtasks"
     return None
 
 
@@ -61,6 +63,8 @@ def _location(kind: Kind, env: SchedulerEnv) -> str:
         return str(launchd.plist_path(env))
     if kind == "systemd":
         return str(systemd.unit_dir(env) / systemd.TIMER)
+    if kind == "schtasks":
+        return f"schtasks:{schtasks.TASK_NAME}"
     return "crontab"
 
 
@@ -71,6 +75,8 @@ def _install_backend(
         return launchd.install(home, executable, env)
     if kind == "systemd":
         return systemd.install(home, executable, env)
+    if kind == "schtasks":
+        return schtasks.install(home, executable, env)
     return cron.install(home, executable, env)
 
 
@@ -79,6 +85,8 @@ def _uninstall_backend(kind: Kind, env: SchedulerEnv) -> bool:
         return launchd.uninstall(env)
     if kind == "systemd":
         return systemd.uninstall(env)
+    if kind == "schtasks":
+        return schtasks.uninstall(env)
     return cron.uninstall(env)
 
 
@@ -87,13 +95,15 @@ def _is_loaded(kind: Kind, env: SchedulerEnv) -> bool:
         return launchd.is_loaded(env)
     if kind == "systemd":
         return systemd.is_loaded(env)
+    if kind == "schtasks":
+        return schtasks.is_loaded(env)
     return cron.is_loaded(env)
 
 
 def _unsupported(env: SchedulerEnv) -> SchedulerUnsupported:
     return SchedulerUnsupported(
-        f"no supported scheduler on platform {env.platform!r} (launchd, systemd user timer or "
-        "cron); run `agent-meter collect` manually or from your own scheduler"
+        f"no supported scheduler on platform {env.platform!r} (launchd, systemd user timer, "
+        "cron or schtasks); run `agent-meter collect` manually or from your own scheduler"
     )
 
 
@@ -119,7 +129,12 @@ def install(
     return f"{kind} scheduler installed at {location}: {_DESCRIPTION}"
 
 
-_KINDS: dict[str, Kind] = {"launchd": "launchd", "systemd": "systemd", "cron": "cron"}
+_KINDS: dict[str, Kind] = {
+    "launchd": "launchd",
+    "systemd": "systemd",
+    "cron": "cron",
+    "schtasks": "schtasks",
+}
 
 
 def _recorded_kind(manifest: dict[str, Any] | None) -> Kind | None:

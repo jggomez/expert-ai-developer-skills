@@ -214,7 +214,7 @@ def _resolve_project(store: Store, text: str, *, allow_unknown_id: bool = False)
 def _current_project(ctx: Ctx, store: Store) -> str:
     from agent_meter.project_resolver import ProjectResolver, load_projects_config
 
-    user_home = Path(os.environ.get("HOME") or Path.home())
+    user_home = Path(os.environ.get("HOME") or os.environ.get("USERPROFILE") or Path.home())
     resolver = ProjectResolver(store.path_cache(), load_projects_config(ctx.home.projects), home=user_home)
     return resolver.resolve(os.getcwd()).project_id
 

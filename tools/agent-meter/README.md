@@ -43,7 +43,7 @@ prompts, code, tool inputs/outputs or file paths.
 | | **Option A — Local** (default) | **Option B — Cloud** (opt-in, on top of A) |
 | :--- | :--- | :--- |
 | For | Any developer, no cloud account | Developers with a Google Cloud project |
-| Data lives in | `~/.agent-meter/meter.duckdb` on your Mac/Linux | The same local file **plus** a BigQuery dataset |
+| Data lives in | `~/.agent-meter/meter.duckdb` on your Mac/Linux/Windows | The same local file **plus** a BigQuery dataset |
 | You see it in | Terminal summaries + `agent-meter report` (HTML) | Everything in A **plus** a Looker Studio dashboard |
 | Network | Never | Only BigQuery uploads (batch load jobs) |
 | Cost | $0 | $0 within the BigQuery free tier for this data volume (load jobs are free); set a budget alert |
@@ -101,7 +101,7 @@ That's it. If you chose hooks or the scheduler during `setup`, new activity is r
 
 ## 4. Install
 
-**Requirements:** macOS or Linux, Python ≥ 3.11 (installed for you by `uv`), and `uv` or `pipx`.
+**Requirements:** macOS, Linux or Windows (PowerShell/CMD or WSL2), Python ≥ 3.11 (installed for you by `uv`), and `uv` or `pipx`.
 
 ### 4.1 From GitHub (recommended)
 
@@ -178,7 +178,7 @@ The wizard walks through 8 steps. Every step is safe to re-run; running `setup` 
 | Trigger | What it does | What it modifies |
 | :--- | :--- | :--- |
 | `hooks` | A summary right after each task (Claude Code `Stop`/`SessionEnd`, Antigravity `Stop`) | Adds entries to `~/.claude/settings.json` and `~/.gemini/config/hooks.json` — it shows you the exact JSON first, backs the files up, and **never touches your existing hooks** |
-| `scheduler` | Collects every 15 minutes, also catching crashed/open sessions; uploads to BigQuery in Option B | Adds a user `launchd` agent (macOS) or a systemd user timer / cron entry (Linux) |
+| `scheduler` | Collects every 15 minutes, also catching crashed/open sessions; uploads to BigQuery in Option B | Adds a user `launchd` agent (macOS), a systemd user timer / cron entry (Linux), or a Windows Task Scheduler task (`schtasks`) |
 | `none` | Nothing automatic; you run `agent-meter collect` yourself | Nothing |
 
 Non-interactive variants:
@@ -511,7 +511,7 @@ always exits 0, and does the actual import in a detached background process. `~/
 never modified.
 
 **Scheduler:** every 15 minutes (macOS `launchd` user agent with `RunAtLoad`; Linux systemd user timer with
-`Persistent=true`, or cron). It catches sessions that crashed or were never closed, and syncs to BigQuery in Option B.
+`Persistent=true`, or cron; Windows Task Scheduler `schtasks` task `com.agent-meter.collect`). It catches sessions that crashed or were never closed, and syncs to BigQuery in Option B.
 
 **Notifications** appear only when useful:
 
@@ -569,7 +569,7 @@ secret, store and untracked history and prints a fix for every problem.
 
 | Problem | Fix |
 | :--- | :--- |
-| `agent-meter: command not found` | Make sure `~/.local/bin` is on your `PATH` (`uv tool update-shell`), or reinstall (§4) |
+| `agent-meter: command not found` | Make sure `~/.local/bin` (`%USERPROFILE%\.local\bin` on Windows) is on your `PATH` (`uv tool update-shell`), or reinstall (§4) |
 | No data / old data | `agent-meter collect` (or check `doctor` for hooks/scheduler) |
 | A cost shows `≥ $0.00` | That model has no price: `agent-meter pricing unpriced` shows the exact `pricing add`/`alias` command |
 | The same project appears twice | `agent-meter projects merge <src> <dst>` |

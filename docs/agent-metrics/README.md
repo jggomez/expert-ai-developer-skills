@@ -36,12 +36,12 @@ The CLI is the product. Both plugins are optional ways to register its hooks.
 
 | Channel | For | How |
 | :--- | :--- | :--- |
-| **1. Standalone CLI** (primary) | Anyone, with or without this repo's plugins | `uv tool install` or `pipx install`, then `agent-meter setup`. With consent, it registers the hooks in `~/.claude/settings.json` and `~/.gemini/config/hooks.json` (backed up and merged, never overwritten) and/or a scheduler |
+| **1. Standalone CLI** (primary) | Anyone, with or without this repo's plugins | `uv tool install` or `pipx install`, then `agent-meter setup`. With consent, it registers the hooks in `~/.claude/settings.json` and `~/.gemini/config/hooks.json` (backed up and merged, never overwritten) and/or a scheduler (`launchd` on macOS, `systemd`/`cron` on Linux, Task Scheduler `schtasks` on Windows) |
 | **2. Optional `agent-metrics` plugin** | Marketplace users who prefer plugins | [Claude Code plugin](../../plugins/claude/agent-metrics/README.md) or [Antigravity plugin](../../plugins/antigravity/agent-metrics/README.md). It ships the hooks and a setup skill. The hooks do nothing (exit 0, one stderr hint) if the CLI is missing |
 | **3. No hooks at all** | Users who do not want any host hook | Scheduler only (every 15 min), or a manual `agent-meter collect`. Summaries come from `agent-meter last` / `agent-meter tasks --last` |
 
 ```bash
-# Python ≥ 3.11 (uv installs a managed interpreter for you)
+# macOS, Linux or Windows (PowerShell/CMD or WSL2, %USERPROFILE%\.local\bin) — Python ≥ 3.11 (uv installs a managed interpreter for you)
 uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 # or
 pipx install --python python3.12 "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"

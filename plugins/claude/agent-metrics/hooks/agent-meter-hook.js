@@ -65,7 +65,9 @@ function timeoutMs(raw) {
 function isExecutableFile(candidate) {
   try {
     if (!fs.statSync(candidate).isFile()) return false;
-    fs.accessSync(candidate, fs.constants.X_OK);
+    if (process.platform !== 'win32') {
+      fs.accessSync(candidate, fs.constants.X_OK);
+    }
     return true;
   } catch (error) {
     return false; // missing or not executable: try the next candidate
@@ -74,11 +76,19 @@ function isExecutableFile(candidate) {
 
 /** PATH first, then ~/.local/bin (default bin dir of `uv tool install` and `pipx`). */
 function findCli(env) {
-  const dirs = (env.PATH || '').split(path.delimiter).filter(Boolean);
+  const dirs = (env.PATH || env.Path || '').split(path.delimiter).filter(Boolean);
   dirs.push(path.join(os.homedir(), '.local', 'bin'));
+  if (process.platform === 'win32' && env.APPDATA) {
+    dirs.push(path.join(env.APPDATA, 'Python', 'Scripts'));
+  }
+  const names = process.platform === 'win32' || env.PATHEXT
+    ? ['agent-meter.exe', 'agent-meter.cmd', CLI_NAME]
+    : [CLI_NAME, 'agent-meter.exe', 'agent-meter.cmd'];
   for (const dir of dirs) {
-    const candidate = path.join(dir, CLI_NAME);
-    if (isExecutableFile(candidate)) return candidate;
+    for (const name of names) {
+      const candidate = path.join(dir, name);
+      if (isExecutableFile(candidate)) return candidate;
+    }
   }
   return null;
 }

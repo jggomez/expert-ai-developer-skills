@@ -24,7 +24,7 @@ __all__ = [
     "scheduled_argv",
 ]
 
-Kind = Literal["launchd", "systemd", "cron"]
+Kind = Literal["launchd", "systemd", "cron", "schtasks"]
 INTERVAL_S: Final = 900
 COLLECT_ARGS: Final = ("collect", "--scheduled", "--quiet")
 _RUN_TIMEOUT_S: Final = 30
@@ -81,7 +81,7 @@ class SchedulerEnv:
         return cls(
             platform=sys.platform,
             user_home=Path.home(),
-            uid=os.getuid(),
+            uid=os.getuid() if hasattr(os, "getuid") else 0,
             runner=default_runner,
             which=shutil.which,
         )
