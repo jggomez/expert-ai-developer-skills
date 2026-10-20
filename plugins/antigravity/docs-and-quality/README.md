@@ -1,7 +1,7 @@
 # Docs and Quality Plugin
 
-[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
-[![Plugin](https://img.shields.io/badge/Plugin-docs--and--quality-green?style=flat-square)](file:///./)
+[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
+[![Plugin](https://img.shields.io/badge/Plugin-docs--and--quality-green?style=flat-square)](.)
 
 The `docs-and-quality` plugin packages the repository's stack-agnostic documentation standards, testing methodologies, and Andrej Karpathy behavioral guidelines as a self-contained plugin for **Google Antigravity** and **Claude Code**. It includes deterministic lifecycle stop gates to enforce anti-lazy code policies (blocking placeholder stubs).
 

@@ -1,7 +1,7 @@
 # SQL Query Optimizer Plugin
 
-[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
-[![Plugin](https://img.shields.io/badge/Plugin-sql--query--optimizer-green?style=flat-square)](file:///./)
+[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
+[![Plugin](https://img.shields.io/badge/Plugin-sql--query--optimizer-green?style=flat-square)](.)
 
 The `sql-query-optimizer` plugin finds and rewrites slow SQL — standalone `.sql` files and queries embedded in application code — for **Google Antigravity**: one subagent, four bundled skills (BigQuery-specific optimization, generic SQL optimization for traditional engines, and cross-AI LLM Wiki memory restore/capture), direct MCP access to BigQuery and Cloud SQL for real query plans, and deterministic safety gates.
 

@@ -1,7 +1,7 @@
 # Senior Data Engineer Plugin
 
-[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
-[![Plugin](https://img.shields.io/badge/Plugin-senior--data--engineer-green?style=flat-square)](file:///./)
+[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
+[![Plugin](https://img.shields.io/badge/Plugin-senior--data--engineer-green?style=flat-square)](.)
 
 The `senior-data-engineer` plugin packages Google Cloud data engineering expertise for **Google Antigravity**: one specialized subagent, four bundled skills (GCP lakehouse architecture decisions, CDC/SCD patterns, and cross-AI LLM Wiki memory restore/capture), direct MCP access to GCP data services, parallel Silver/Gold mart & SQL audit execution, and deterministic lifecycle safety gates.
 

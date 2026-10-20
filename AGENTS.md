@@ -24,16 +24,16 @@ All multi-agent execution flows follow a deterministic 6-state Directed Acyclic 
 
 ```mermaid
 flowchart TD
-    STATE0["[STATE 0: MEMORY RESTORE & TRIAGE GATE]<br/>1. Read context/memory/MEMORY.md<br/>2. Author PLAN.md + Discovery Triage Rubric"] --> STATE1["[STATE 1: UPFRONT DISCOVERY (Seq / Parallel)]<br/>product-analyst || architect-engineer"]
-    STATE1 --> STATE2["[STATE 2: BUILD — PARALLEL FAN-OUT]<br/>1..N code-implementer | flutter-implementer<br/>(Mode A: Disjoint Files | Mode B: Git Worktree)"]
-    STATE0 -->|Both Explicitly Justified SKIP| STATE2
-    STATE2 --> STATE3_4_QA["[STATE 3: QA VERIFICATION]<br/>qa-tester (exit code 0 proof)"]
-    STATE2 --> STATE3_4_AUDIT["[STATE 4: COMPLIANCE AUDIT]<br/>compliance-verifier (APPROVED verdict)"]
-    STATE3_4_QA -->|Fail: Max 3 Retries| STATE2
-    STATE3_4_AUDIT -->|REJECTED: Max 3 Retries| STATE2
-    STATE3_4_QA -->|Pass: Exit 0| FAN_IN["[VERIFICATION FAN-IN]<br/>Exit 0 + APPROVED"]
-    STATE3_4_AUDIT -->|Pass: APPROVED| FAN_IN
-    FAN_IN --> STATE5["[STATE 5: SHIP & MEMORY UPDATE]<br/>Update PLAN.md + context/memory/ & git commit"]
+    STATE0["STATE 0: MEMORY RESTORE & TRIAGE GATE<br/>1. Read context/memory/MEMORY.md<br/>2. Author PLAN.md + Discovery Triage Rubric"] --> STATE1["STATE 1: UPFRONT DISCOVERY (Seq / Parallel)<br/>product-analyst and architect-engineer"]
+    STATE1 --> STATE2["STATE 2: BUILD — PARALLEL FAN-OUT<br/>1..N code-implementer / flutter-implementer<br/>(Mode A: Disjoint Files or Mode B: Git Worktree)"]
+    STATE0 -->|"Both Explicitly Justified SKIP"| STATE2
+    STATE2 --> STATE3_4_QA["STATE 3: QA VERIFICATION<br/>qa-tester (exit code 0 proof)"]
+    STATE2 --> STATE3_4_AUDIT["STATE 4: COMPLIANCE AUDIT<br/>compliance-verifier (APPROVED verdict)"]
+    STATE3_4_QA -->|"Fail: Max 3 Retries"| STATE2
+    STATE3_4_AUDIT -->|"REJECTED: Max 3 Retries"| STATE2
+    STATE3_4_QA -->|"Pass: Exit 0"| FAN_IN["VERIFICATION FAN-IN<br/>Exit 0 + APPROVED"]
+    STATE3_4_AUDIT -->|"Pass: APPROVED"| FAN_IN
+    FAN_IN --> STATE5["STATE 5: SHIP & MEMORY UPDATE<br/>Update PLAN.md + context/memory/ & git commit"]
 ```
 
 #### State Transition Definitions:

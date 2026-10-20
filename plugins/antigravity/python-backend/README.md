@@ -1,7 +1,7 @@
 # Python Backend Plugin
 
-[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
-[![Plugin](https://img.shields.io/badge/Plugin-python--backend-green?style=flat-square)](file:///./)
+[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
+[![Plugin](https://img.shields.io/badge/Plugin-python--backend-green?style=flat-square)](.)
 
 The `python-backend` plugin is a specialized customization package for **Google Antigravity** designed to automate quality gates, enforce branch safety constraints (Gitflow), validate test execution, govern Python backend applications through Graph Engineering, and link external GCP and Firebase resources through the Model Context Protocol (MCP).
 

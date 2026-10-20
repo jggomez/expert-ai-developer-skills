@@ -1,7 +1,7 @@
 # Git Workflow Plugin (Claude Code)
 
-[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
-[![Plugin](https://img.shields.io/badge/Plugin-git--workflow-green?style=flat-square)](file:///./)
+[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
+[![Plugin](https://img.shields.io/badge/Plugin-git--workflow-green?style=flat-square)](.)
 
 The `git-workflow` plugin packages git hygiene tooling — commit message standards, PR conventions, Gitflow branch safety gates, and clean-working-tree stop gates — for **Claude Code**.
 

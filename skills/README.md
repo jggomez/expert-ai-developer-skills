@@ -1,7 +1,7 @@
 # Expert AI Agent Skills Catalog
 
-[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](git@github.com:jggomez/expert-ai-developer-skills.git)
-[![Skills Count](https://img.shields.io/badge/Skills-35%20Canonical%20Skills-orange?style=flat-square)](file:///./)
+[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
+[![Skills Count](https://img.shields.io/badge/Skills-35%20Core%20%2B%201%20Add--on-orange?style=flat-square)](.)
 [![Ecosystem](https://img.shields.io/badge/Distribution-Antigravity%20%26%20Claude-green?style=flat-square)](../plugins)
 
 This directory contains a premium catalog of **35 canonical agent skills** designed to automate code quality checks, enforce programming best practices, detect code smells, validate commit history, and implement self-correcting development loops. Every `SKILL.md` in `/skills/` is platform-neutral, adhering to the open [Agent Skills Standard (`agentskills.io`)](https://agentskills.io).
@@ -107,6 +107,7 @@ cp -r ./skills/* ~/.gemini/config/skills/
 | **`flutter-release-engineering`** | Shipping a Flutter app: build flavors + `--dart-define-from-file`, signing, the `flutter build` matrix, version/build-number, store metadata, and the OTA (Shorebird) decision. | `references/flavors-and-config.md` | Build matrix + `AppConfig` pattern. |
 | **`flutter-upgrade-migration`** | Project-scale Flutter/Dart SDK upgrades, dependency major bumps, and deprecation sweeps — the ordered upgrade plan around `dart fix` / `dart-resolve-package-conflicts`. | `SKILL.md` | Ordered upgrade sweep + deprecation triage. |
 | **`flutter-senior-orchestration`** | The phase map for running a Flutter feature/fix end to end — sizes the task, sequences the official skills, routes phases to the Flutter subagents. | `SKILL.md` | Task-sizing table + phase breakdown. |
+| **`agent-metrics`** *(optional)* | Guides `agent-meter setup` (local DuckDB or BigQuery + Looker Studio), interprets token / cost / latency metrics per project, task and subagent, manages `agent-meter pricing`, and runs `agent-meter doctor`. | `SKILL.md` | `agent-meter` CLI setup, pricing, reconciliation, and DuckDB/BigQuery queries. |
 
 ---
 
