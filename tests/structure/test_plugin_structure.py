@@ -1,4 +1,5 @@
 import filecmp
+import glob
 import json
 import os
 import re
@@ -942,6 +943,228 @@ def test_track17_feature_artifacts_and_user_alignment_gate(workspace_root):
         assert "docs/<feature-name>/" in gov_text, f"{gov_path} missing docs/<feature-name>/"
         assert "Alignment Gate" in gov_text or "INTERACTIVE USER ALIGNMENT GATE" in gov_text, f"{gov_path} missing Alignment Gate"
         assert "Collision" in gov_text, f"{gov_path} missing Collision Analysis"
+
+
+def test_track18_track19_tiered_sdlc_and_qa_matrix(workspace_root):
+    """Verifies Track 18 & Track 19:
+    1. Asserts presence and definitions of Tier 1 (Fast-Track), Tier 2 (Standard),
+       and Tier 3 (Mission-Critical) in skills/loop-engineering/SKILL.md, AGENTS.md,
+       .agents/rules/loop-engineering-workflow.md, and orchestrators across both ecosystems.
+    2. Asserts presence of docs/<feature-name>/test-matrix.md in skills/qa-tester/SKILL.md
+       and qa-tester.md in both ecosystems."""
+    # 1. 3-Tier SDLC definitions in governance and loop-engineering skill
+    core_sdlc_files = [
+        os.path.join(workspace_root, "skills", "loop-engineering", "SKILL.md"),
+        os.path.join(workspace_root, "AGENTS.md"),
+        os.path.join(workspace_root, ".agents", "rules", "loop-engineering-workflow.md"),
+    ]
+    for file_path in core_sdlc_files:
+        assert os.path.isfile(file_path), f"Missing {file_path}"
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        assert "Tier 1" in content and "Fast-Track" in content, f"{file_path} missing Tier 1 (Fast-Track)"
+        assert "Tier 2" in content and "Standard" in content, f"{file_path} missing Tier 2 (Standard)"
+        assert "Tier 3" in content and "Mission-Critical" in content, f"{file_path} missing Tier 3 (Mission-Critical)"
+
+    # Orchestrators in both ecosystems
+    for ecosystem in ("antigravity", "claude"):
+        for plugin, orch_file in (("senior-dev", "senior-dev-orchestrator.md"), ("senior-dev-flutter", "flutter-feature-orchestrator.md")):
+            orch_path = os.path.join(workspace_root, "plugins", ecosystem, plugin, "agents", orch_file)
+            assert os.path.isfile(orch_path), f"Missing {orch_path}"
+            with open(orch_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            assert "Tier 1" in content and "Fast-Track" in content, f"{orch_path} missing Tier 1 (Fast-Track)"
+            assert "Tier 2" in content and "Standard" in content, f"{orch_path} missing Tier 2 (Standard)"
+            assert "Tier 3" in content and "Mission-Critical" in content, f"{orch_path} missing Tier 3 (Mission-Critical)"
+
+    # 2. QA Test Matrix artifact (docs/<feature-name>/test-matrix.md)
+    qa_files = [
+        os.path.join(workspace_root, "skills", "qa-tester", "SKILL.md"),
+        os.path.join(workspace_root, "plugins", "antigravity", "senior-dev", "agents", "qa-tester.md"),
+        os.path.join(workspace_root, "plugins", "claude", "senior-dev", "agents", "qa-tester.md"),
+    ]
+    for qa_file in qa_files:
+        assert os.path.isfile(qa_file), f"Missing {qa_file}"
+        with open(qa_file, "r", encoding="utf-8") as f:
+            qa_text = f.read()
+        assert "docs/<feature-name>/test-matrix.md" in qa_text, f"{qa_file} missing docs/<feature-name>/test-matrix.md"
+
+
+def test_track20_track22_adversarial_committee_and_sync_parity(workspace_root):
+    """Verifies Track 20 & Track 22:
+    1. Asserts presence and valid frontmatter of critic.md, challenger.md, e2e-blackbox-tester.md
+       in plugins/antigravity/senior-dev/agents/ and plugins/claude/senior-dev/agents/.
+    2. Asserts zero tool bleed in Claude agents (no run_command, invoke_subagent, write_to_file, etc.).
+    3. Asserts presence and frontmatter of canonical skills code-critic, adversarial-challenger,
+       blackbox-tester across root skills/ and both plugin copies.
+    4. Asserts output artifacts referenced: critic-review.md, adversarial-report.md, blackbox-report.md."""
+    adversarial_agents = [
+        ("critic.md", "critic", "code-critic"),
+        ("challenger.md", "challenger", "adversarial-challenger"),
+        ("e2e-blackbox-tester.md", "e2e-blackbox-tester", "blackbox-tester"),
+    ]
+    antigravity_only_tools = {
+        "run_command",
+        "view_file",
+        "write_to_file",
+        "replace_file_content",
+        "invoke_subagent",
+        "manage_subagents",
+    }
+    valid_claude_tools = {"Bash", "Read", "Write", "Edit", "Glob", "Grep", "Agent", "WebSearch", "WebFetch"}
+
+    # 1 & 2. Agent definitions and tool bleed check
+    for agent_file, agent_name, skill_name in adversarial_agents:
+        # Antigravity agent check
+        agy_path = os.path.join(workspace_root, "plugins", "antigravity", "senior-dev", "agents", agent_file)
+        assert os.path.isfile(agy_path), f"Missing Antigravity agent {agy_path}"
+        with open(agy_path, "r", encoding="utf-8") as f:
+            agy_content = f.read()
+        agy_match = re.search(r"^---\s*\n(.*?)\n---\s*\n", agy_content, re.DOTALL)
+        assert agy_match, f"{agy_path} missing frontmatter"
+        agy_fm = yaml.safe_load(agy_match.group(1))
+        assert agy_fm.get("name") == agent_name, f"{agy_path} name expected {agent_name}, got {agy_fm.get('name')}"
+        assert agy_fm.get("commandExecutionPolicy") == "auto"
+        assert agy_fm.get("model") == "inherit"
+        assert agy_fm.get("subagent") is True
+        assert agy_fm.get("mainAgent") is False
+        assert skill_name in agy_fm.get("skills", []), f"{agy_path} missing skill '{skill_name}'"
+
+        # Claude Code agent check and zero tool bleed
+        claude_path = os.path.join(workspace_root, "plugins", "claude", "senior-dev", "agents", agent_file)
+        assert os.path.isfile(claude_path), f"Missing Claude agent {claude_path}"
+        with open(claude_path, "r", encoding="utf-8") as f:
+            claude_content = f.read()
+        claude_match = re.search(r"^---\s*\n(.*?)\n---\s*\n", claude_content, re.DOTALL)
+        assert claude_match, f"{claude_path} missing frontmatter"
+        claude_fm = yaml.safe_load(claude_match.group(1))
+        assert claude_fm.get("name") == agent_name
+        assert claude_fm.get("model") == "inherit"
+        assert claude_fm.get("permissionMode") == "default"
+        assert "subagent" not in claude_fm
+        assert "commandExecutionPolicy" not in claude_fm
+        assert skill_name in claude_fm.get("skills", []), f"{claude_path} missing skill '{skill_name}'"
+
+        for tool in claude_fm.get("tools", []):
+            assert tool in valid_claude_tools, f"Invalid Claude tool '{tool}' in {claude_path}"
+            assert tool not in antigravity_only_tools, f"Antigravity tool '{tool}' leaked in {claude_path}"
+
+        for forbidden in antigravity_only_tools:
+            assert forbidden not in claude_content, f"Antigravity tool '{forbidden}' leaked in body of {claude_path}"
+
+    # 3 & 4. Canonical skills and deliverables across root and both plugins
+    adversarial_skills = [
+        ("code-critic", "critic-review.md"),
+        ("adversarial-challenger", "adversarial-report.md"),
+        ("blackbox-tester", "blackbox-report.md"),
+    ]
+    skill_locations = [
+        os.path.join(workspace_root, "skills"),
+        os.path.join(workspace_root, "plugins", "antigravity", "senior-dev", "skills"),
+        os.path.join(workspace_root, "plugins", "claude", "senior-dev", "skills"),
+    ]
+    for skill_name, artifact_name in adversarial_skills:
+        for loc in skill_locations:
+            skill_md = os.path.join(loc, skill_name, "SKILL.md")
+            assert os.path.isfile(skill_md), f"Missing {skill_md}"
+            with open(skill_md, "r", encoding="utf-8") as f:
+                content = f.read()
+            fm_match = re.search(r"^---\s*\n(.*?)\n---\s*\n", content, re.DOTALL)
+            assert fm_match, f"{skill_md} missing YAML frontmatter"
+            fm = yaml.safe_load(fm_match.group(1))
+            assert fm.get("name") == skill_name, f"{skill_md} expected name '{skill_name}', got '{fm.get('name')}'"
+            assert fm.get("description"), f"{skill_md} has empty description"
+            assert artifact_name in content, f"{skill_md} missing reference to artifact '{artifact_name}'"
+
+
+def test_track21_orchestrators_canonical_structure_and_adversarial_dispatch(workspace_root):
+    """Verifies Track 21:
+    Asserts that senior-dev-orchestrator.md and flutter-feature-orchestrator.md in both ecosystems
+    feature the 3-Tier Dynamic Routing Rubric, the Adversarial Committee dispatch for Tier 3,
+    and the canonical 7-section structure."""
+    canonical_sections = [
+        "# Role & Objective",
+        "# When to Use & Routing Triggers",
+        "# Operating Guidelines & Workflow",
+        "# Tooling & Environment Protocol",
+        "# Inputs, Outputs & Hand-off Protocol",
+        "# Quality Standards & Anti-Patterns (Red Flags)",
+        "# Verification & Completion Checklist",
+    ]
+    orchestrator_matrix = [
+        (
+            "senior-dev",
+            "senior-dev-orchestrator.md",
+            ["Adversarial Verification Committee", "critic", "challenger", "e2e-blackbox-tester", "compliance-verifier"],
+        ),
+        (
+            "senior-dev-flutter",
+            "flutter-feature-orchestrator.md",
+            ["Adversarial Review Committee", "flutter-reviewer", "flutter-release-engineer", "qa-tester"],
+        ),
+    ]
+
+    for plugin, orch_file, expected_adversarial_terms in orchestrator_matrix:
+        for ecosystem in ("antigravity", "claude"):
+            orch_path = os.path.join(workspace_root, "plugins", ecosystem, plugin, "agents", orch_file)
+            assert os.path.isfile(orch_path), f"Missing orchestrator {orch_path}"
+            with open(orch_path, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            # 1. 7 Canonical sections
+            for sec in canonical_sections:
+                assert sec in content, f"{orch_path} missing canonical section '{sec}'"
+
+            # 2. 3-Tier Dynamic Routing Rubric
+            assert "Tier 1" in content and "Fast-Track" in content, f"{orch_path} missing Tier 1 (Fast-Track)"
+            assert "Tier 2" in content and "Standard" in content, f"{orch_path} missing Tier 2 (Standard)"
+            assert "Tier 3" in content and "Mission-Critical" in content, f"{orch_path} missing Tier 3 (Mission-Critical)"
+
+            # 3. Adversarial Committee dispatch for Tier 3
+            for term in expected_adversarial_terms:
+                assert term in content, f"{orch_path} missing Adversarial Committee term '{term}'"
+
+
+def test_all_agents_have_exactly_one_frontmatter(workspace_root):
+    """Verifies that every agent markdown file in plugins/*/*/agents/*.md has
+    exactly one YAML frontmatter block with the '---' delimiter appearing
+    exactly twice (opening and closing) and no duplicate frontmatter blocks exist."""
+    pattern = os.path.join(workspace_root, "plugins", "*", "*", "agents", "*.md")
+    agent_files = sorted(glob.glob(pattern))
+    assert len(agent_files) > 0, f"No agent files found matching {pattern}"
+
+    errors = []
+    for agent_path in agent_files:
+        rel_path = os.path.relpath(agent_path, workspace_root)
+        with open(agent_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        lines = content.splitlines()
+        if not lines or lines[0].strip() != "---":
+            errors.append(f"{rel_path}: file must start with frontmatter delimiter '---'")
+            continue
+
+        delimiters = re.findall(r"^---\s*$", content, re.MULTILINE)
+        if len(delimiters) != 2:
+            errors.append(
+                f"{rel_path}: expected exactly 2 '---' delimiters (opening and closing), found {len(delimiters)}"
+            )
+            continue
+
+        fm_match = re.search(r"^---\s*\n(.*?)\n---\s*(?:\n|$)", content, re.DOTALL)
+        if not fm_match:
+            errors.append(f"{rel_path}: could not extract frontmatter block")
+            continue
+
+        try:
+            fm = yaml.safe_load(fm_match.group(1))
+            if not isinstance(fm, dict):
+                errors.append(f"{rel_path}: frontmatter must parse to a dictionary, got {type(fm)}")
+        except Exception as e:
+            errors.append(f"{rel_path}: failed to parse YAML frontmatter: {e}")
+
+    assert not errors, "\n".join(errors)
+
 
 
 

@@ -38,6 +38,9 @@ PLUGIN_AGENTS_MAP = {
         "code-implementer.md",
         "qa-tester.md",
         "compliance-verifier.md",
+        "critic.md",
+        "challenger.md",
+        "e2e-blackbox-tester.md",
     ],
     "senior-dev-flutter": [
         "flutter-feature-orchestrator.md",

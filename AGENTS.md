@@ -20,55 +20,84 @@
 * **Mandatory Delegation**: All product requirements analysis, system architecture design, code generation, feature construction, bug fixes, refactoring, test execution, and compliance audits **MUST** be delegated to specialized worker subagents (`product-analyst`, `ui-ux-designer`, `architect-engineer`, `code-implementer`, `flutter-implementer`, `qa-tester`, `compliance-verifier`).
 
 ### 1.3. Graph Engineering State Machine (DAG)
-All multi-agent execution flows follow a deterministic 6-state Directed Acyclic Graph (DAG) state machine with parallel fan-out/fan-in and cross-AI LLM Wiki persistence:
+All multi-agent execution flows follow a deterministic, adaptive Directed Acyclic Graph (DAG) state machine with parallel fan-out/fan-in, dynamic SDLC tier routing, and cross-AI LLM Wiki persistence:
 
 ```mermaid
 flowchart TD
-    STATE0["STATE 0: MEMORY RESTORE & TRIAGE GATE<br/>1. Read context/memory/MEMORY.md<br/>2. Derive slug & create docs/&lt;feature-name&gt;/<br/>3. Author PLAN.md + Discovery Triage Rubric"] --> STATE1["STATE 1: UPFRONT DISCOVERY (Seq / Parallel)<br/>product-analyst, ui-ux-designer, architect-engineer"]
-    STATE1 --> GATE["INTERACTIVE USER ALIGNMENT GATE<br/>Medium/Complex: ask_question approval<br/>Low/Simple: Auto-proceed"]
-    STATE0 -->|"All Explicitly Justified SKIP"| GATE
-    GATE --> STATE2["STATE 2: BUILD — PARALLEL FAN-OUT<br/>1..N code-implementer / flutter-implementer<br/>(Mode A: Disjoint Files or Mode B: Git Worktree)"]
-    STATE2 --> STATE3_4_QA["STATE 3: QA VERIFICATION<br/>qa-tester (exit code 0 proof)"]
-    STATE2 --> STATE3_4_AUDIT["STATE 4: COMPLIANCE AUDIT<br/>compliance-verifier (APPROVED verdict)"]
-    STATE3_4_QA -->|"Fail: Max 3 Retries"| STATE2
-    STATE3_4_AUDIT -->|"REJECTED: Max 3 Retries"| STATE2
-    STATE3_4_QA -->|"Pass: Exit 0"| FAN_IN["VERIFICATION FAN-IN<br/>Exit 0 + APPROVED"]
-    STATE3_4_AUDIT -->|"Pass: APPROVED"| FAN_IN
+    STATE0["STATE 0: MEMORY RESTORE & SDLC TRIAGE GATE<br/>1. Read context/memory/MEMORY.md<br/>2. Derive slug & create docs/&lt;feature-name&gt;/<br/>3. Author PLAN.md + 3-Tier SDLC Triage"] --> ROUTE{"SDLC Triage<br/>Tier Selection"}
+    ROUTE -->|"Tier 1 (Fast-Track)"| STATE2_T1["STATE 2: FAST-TRACK BUILD<br/>1 code-implementer (Disjoint Mode A)"]
+    ROUTE -->|"Tier 2 (Standard)"| STATE1_T2["STATE 1: SELECTIVE DISCOVERY<br/>product-analyst / architect-engineer"]
+    ROUTE -->|"Tier 3 (Mission-Critical)"| STATE1_T3["STATE 1: FULL DISCOVERY<br/>product-analyst + ui-ux-designer + architect-engineer"]
+    STATE1_T2 --> GATE["INTERACTIVE ALIGNMENT GATE<br/>ask_question modal approval"]
+    STATE1_T3 --> GATE
+    GATE --> STATE2["STATE 2: BUILD — PARALLEL FAN-OUT<br/>1..N code-implementer (Mode A / Mode B)"]
+    STATE2_T1 --> STATE3_QA_T1["STATE 3: SCOPED QA<br/>qa-tester (scoped test proof)"]
+    STATE2_T1 --> STATE4_AUDIT_T1["STATE 4: COMPLIANCE AUDIT<br/>compliance-verifier"]
+    STATE2 --> STATE3_QA["STATE 3: QA VERIFICATION<br/>qa-tester (test-matrix.md + exit code 0)"]
+    STATE2 --> STATE4_AUDIT["STATE 4: COMPLIANCE AUDIT<br/>compliance-verifier (APPROVED)"]
+    STATE2 -->|"Tier 3 Only"| STATE3_ADV["STATE 3/4: ADVERSARIAL COMMITTEE<br/>critic, challenger, e2e-blackbox-tester"]
+    STATE3_QA_T1 --> FAN_IN["VERIFICATION FAN-IN<br/>Exit 0 + APPROVED"]
+    STATE4_AUDIT_T1 --> FAN_IN
+    STATE3_QA --> FAN_IN
+    STATE4_AUDIT --> FAN_IN
+    STATE3_ADV --> FAN_IN
     FAN_IN --> STATE5["STATE 5: SHIP & MEMORY UPDATE<br/>Update PLAN.md + context/memory/ & git commit"]
 ```
 
+#### 1.3.1. Dynamic 3-Tier Adaptive SDLC State Machine
+Execution workflows scale dynamically according to task scope, surface area, and risk. In State 0, the orchestrator classifies every incoming prompt into one of three SDLC tiers:
+
+| Dimension / Phase | Tier 1: Fast-Track (Low Complexity) | Tier 2: Standard (Medium Complexity) | Tier 3: Mission-Critical (Complex) |
+| :--- | :--- | :--- | :--- |
+| **Scope & Triggers** | Single-file bugfixes, docs, chores, typos, localized refactoring without public contract changes | 2–4 files/modules, new API endpoints, single UI view/widget, database schema changes | Full end-to-end features, payment/auth flows, architectural refactoring, breaking public APIs, major releases |
+| **Discovery (State 1)** | **SKIPPED**: Zero discovery overhead; no PRD, design.md, or architecture.md authored | **SELECTIVE**: Targeted discovery via `product-analyst`, `ui-ux-designer`, or `architect-engineer` | **FULL**: Comprehensive discovery via `product-analyst` (`prd.md`), `ui-ux-designer` (`design.md`), and `architect-engineer` (`architecture.md` / ADRs) |
+| **Interactive Alignment (State 1.5)** | **SKIPPED**: Auto-proceeds to implementation | **MANDATORY**: Interactive modal (`ask_question`) presenting PRD/design/architecture summary for user approval | **MANDATORY**: Strict interactive modal (`ask_question`) requiring explicit user sign-off |
+| **Build Mode (State 2)** | 1 `code-implementer` in Mode A (Disjoint Files) | 1..N `code-implementer` in parallel under Mode A (Disjoint Files) | 1..N `code-implementer` in parallel under Mode A or Mode B (Git Worktree Isolation) |
+| **QA Verification (State 3)** | Scoped test execution (only affected test file run) | Full test suite execution + standardized QA Test Matrix (`docs/<feature-name>/test-matrix.md`) | Full test suite execution + standardized QA Test Matrix (`docs/<feature-name>/test-matrix.md`) across test pyramid |
+| **Verification & Committee (State 4)** | Scoped `qa-tester` test proof + `compliance-verifier` audit (bypasses adversarial committee) | Parallel `qa-tester` (`exit code 0`) and `compliance-verifier` (`APPROVED`) | **Adversarial Verification Committee**: `qa-tester`, `critic`, `challenger`, `e2e-blackbox-tester`, `compliance-verifier` |
+| **Token & Latency Impact** | **70–85% token & latency savings** | Balanced overhead with rigorous quality verification | Maximum depth, empirical verification, and zero regression tolerance |
+
 #### State Transition Definitions:
-1. **STATE 0 — MEMORY RESTORE & DISCOVERY TRIAGE GATE (Mandatory)**:
-   - **Feature Directory Creation**: Detect incoming feature requests and derive the `<feature-name>` slug (e.g. `user-auth`, `order-checkout`). Ensure `docs/<feature-name>/` directory is created (creating `docs/` if not present) where all discovery artifacts (`prd.md`, `design.md`, `architecture.md`, `adr-*.md`) will be stored. If the workspace already has `docs/specifications/` or legacy docs, instruct specialists to inspect and synchronize them.
+1. **STATE 0 — MEMORY RESTORE & SDLC TRIAGE GATE (Mandatory)**:
+   - **Feature Directory Creation**: Detect incoming feature requests and derive the `<feature-name>` slug (e.g. `user-auth`, `order-checkout`). Ensure `docs/<feature-name>/` directory is created (creating `docs/` if not present) where discovery artifacts (`prd.md`, `design.md`, `architecture.md`, `adr-*.md`, `test-matrix.md`) will be stored. If the workspace already has `docs/specifications/` or legacy docs, instruct specialists to inspect and synchronize them.
    - **LLM Wiki Memory Read (`context-restore`)**: Check if `context/memory/MEMORY.md` exists; if so, read it silently (~500 tokens) to restore cross-AI handoff state (left by Claude Code or Antigravity). Read linked topic pages (`context/memory/architecture.md`, `context/memory/conventions.md`, `context/memory/log/YYYY-MM-DD.md`) only on demand.
-   - **Mandatory Discovery & Architecture Triage (`PLAN.md`)**: Author/update `PLAN.md` including a `## Discovery & Architecture Triage` table evaluating discovery specialists before writing implementation tasks:
-     * **`product-analyst`**: **MUST INVOKE** if the request is a new user-facing feature/workflow, has unstated edge cases/permissions/validation rules, or is an open-ended business prompt. *Only skip* for pure technical bugfixes with known root causes, internal refactors with zero behavior change, or when a complete PRD already exists.
-     * **`ui-ux-designer`**: **MUST INVOKE** if the request is a new application from scratch with UI, adds/modifies frontend screens/views/widgets, alters styling/theming/layout/accessibility, or lacks `design.md`. Inspects/creates `design.md`. *Only skip* for pure backend services/APIs, data pipelines, CLI tools, infrastructure, or non-visual bugfixes.
-     * **`architect-engineer`**: **MUST INVOKE** if the task creates or modifies **>= 2 files/modules**, changes database schemas/migrations/API contracts, introduces a new design pattern or external dependency, or crosses architectural layers. *Only skip* for single-file localized fixes where the architecture is already established.
+   - **Mandatory 3-Tier SDLC Triage (`PLAN.md`)**: Author/update `PLAN.md` classifying the task into Tier 1 (Fast-Track), Tier 2 (Standard), or Tier 3 (Mission-Critical). Evaluate discovery specialists:
+     * **`product-analyst`**: **MUST INVOKE** in Tier 3 or in Tier 2 if the request is a new user-facing feature/workflow, has unstated edge cases/permissions/validation rules, or is an open-ended business prompt. *Only skip* for pure technical bugfixes with known root causes, internal refactors with zero behavior change, or when a complete PRD already exists.
+     * **`ui-ux-designer`**: **MUST INVOKE** in Tier 3 or in Tier 2 if the request is a new application from scratch with UI, adds/modifies frontend screens/views/widgets, alters styling/theming/layout/accessibility, or lacks `design.md`. Inspects/creates `design.md`. *Only skip* for pure backend services/APIs, data pipelines, CLI tools, infrastructure, or non-visual bugfixes.
+     * **`architect-engineer`**: **MUST INVOKE** in Tier 3 or in Tier 2 if the task creates or modifies **>= 2 files/modules**, changes database schemas/migrations/API contracts, introduces a new design pattern or external dependency, or crosses architectural layers. *Only skip* for single-file localized fixes where the architecture is already established.
 2. **STATE 1 — UPFRONT DISCOVERY EXECUTION (Sequential or Parallel Fan-Out)**:
-   - When triggered by the Triage Gate, invoke `product-analyst`, `ui-ux-designer`, and/or `architect-engineer` **before** delegating to `code-implementer`.
-   - Store all discovery outputs in `docs/<feature-name>/`: `prd.md`, `design.md`, and `architecture.md` / `adr-*.md`. Synchronize existing `docs/specifications/` if present.
+   - **Tier 1**: **SKIPPED**. Proceeds directly to State 2.
+   - **Tier 2**: Executes selective discovery based on triage (`product-analyst`, `ui-ux-designer`, and/or `architect-engineer`).
+   - **Tier 3**: Executes full comprehensive discovery. Stores outputs in `docs/<feature-name>/`: `prd.md`, `design.md`, and `architecture.md` / `adr-*.md`. Synchronizes existing `docs/specifications/` if present.
    - Supports **Parallel Discovery Fan-Out** when scopes are independent, or sequential execution (`product-analyst` -> `ui-ux-designer` -> `architect-engineer`) when architecture depends on product scope and UI system disambiguation. Update `PLAN.md` with specifications, `design.md`, ADRs and **Parallel Execution Tracks**.
 2.5. **INTERACTIVE USER ALIGNMENT GATE (State 1 -> State 2 Transition)**:
-   - When the Discovery phase completes, evaluate task complexity before delegating code implementation:
-     * **Medium or High/Complex Tasks**: The Orchestrator MUST PAUSE and query the user using `ask_question` (interactive GUI dialog modal) presenting a structured summary of:
-       - Product Scope (`docs/<feature-name>/prd.md`)
-       - UI/UX Design decisions & components (`docs/<feature-name>/design.md`)
-       - Architectural decisions & ADRs (`docs/<feature-name>/architecture.md`)
-       - Prompt Question: *"Do you approve the product scope, UI design, and architectural decisions before proceeding to code implementation?"*
-       - Wait for explicit user confirmation before delegating to `code-implementer` or `flutter-implementer`.
-     * **Low/Simple Tasks**: Pure technical bugfixes with known root causes or single-file localized refactors proceed directly to State 2 without interruption.
+   - **Tier 1 (Fast-Track / Low Complexity)**: **SKIPPED**. Auto-proceeds to State 2 without interruption.
+   - **Tier 2 (Standard) & Tier 3 (Mission-Critical)**: The Orchestrator MUST PAUSE and query the user using `ask_question` (interactive GUI dialog modal) presenting a structured summary of:
+     * Product Scope (`docs/<feature-name>/prd.md`)
+     * UI/UX Design decisions & components (`docs/<feature-name>/design.md`)
+     * Architectural decisions & ADRs (`docs/<feature-name>/architecture.md`)
+     * Prompt Question: *"Do you approve the product scope, UI design, and architectural decisions before proceeding to code implementation?"*
+     * Wait for explicit user confirmation before delegating to `code-implementer` or `flutter-implementer`.
 3. **STATE 2 — BUILD: PARALLEL FAN-OUT & WORKSPACE ISOLATION (Mandatory)**:
    - **Reinforced Parallel Collision Prevention Analysis**:
      * **Collision Analysis**: Orchestrator must analyze and verify that parallel tracks never share files under Mode A (`Owned Files` strictly non-overlapping).
      * **Mode B Trigger**: If two tracks must modify shared files (e.g., `package.json`, shared routers, DI containers, `settings.py`, `main.dart`), orchestrator must enforce Mode B (Git Worktree Isolation) or split them into sequential phases.
      * **Scoped Test Execution Isolation**: Each parallel implementer must only run its assigned test file (e.g. `pytest tests/unit/test_feature_a.py`), NOT the full test suite in tight loops, to avoid CPU contention, redundant testing, and major execution delays. Full test suite execution is reserved for State 3 Fan-In by `qa-tester`.
-   - Dispatch **1 to N `code-implementer` (or `flutter-implementer`) subagents in parallel**:
-     * **Mode A — Disjoint File Partitioning (`Workspace: 'inherit'`) [DEFAULT]**: Used when parallel tracks modify non-overlapping files/directories. Each subagent receives an explicit `Owned Files` list and is forbidden from editing outside its partition. Zero `git merge` overhead upon Fan-In.
-     * **Mode B — Git Worktree Isolation (`Workspace: 'share'` / `Workspace: 'branch'` in Antigravity, or `git worktree` via `loop-engineering` in Claude Code)**: Used when parallel instances must modify shared files (e.g., `package.json`, shared routers, DI containers) or execute conflicting build processes. Merged cleanly upon Fan-In before final QA.
-4. **STATE 3 & 4 — QA VERIFICATION & COMPLIANCE AUDIT: PARALLEL FAN-OUT (Mandatory)**:
-   - Dispatch `qa-tester` (`exit code 0` empirical test proof across `pytest`, `flutter test`, `node --check`) and `compliance-verifier` (read-only static analysis, OWASP security, and architectural invariant audit yielding `APPROVED` verdict) **in parallel** (including multiple `qa-tester` instances across disjoint test suites).
-   - If either `qa-tester` fails or `compliance-verifier` returns `REJECTED`, loop back to `code-implementer` (strictly capped at **max 3 self-correction iterations** before escalating to the user).
+   - Dispatch `code-implementer` (or `flutter-implementer`) subagents:
+     * **Tier 1**: Exactly 1 `code-implementer` dispatched under Mode A (Disjoint Files).
+     * **Tier 2 & 3**: 1 to N `code-implementer` subagents in parallel:
+       - **Mode A — Disjoint File Partitioning (`Workspace: 'inherit'`) [DEFAULT]**: Used when parallel tracks modify non-overlapping files/directories. Each subagent receives an explicit `Owned Files` list and is forbidden from editing outside its partition. Zero `git merge` overhead upon Fan-In.
+       - **Mode B — Git Worktree Isolation (`Workspace: 'share'` / `Workspace: 'branch'` in Antigravity, or `git worktree` via `loop-engineering` in Claude Code)**: Used when parallel instances must modify shared files or execute conflicting build processes. Merged cleanly upon Fan-In before final QA.
+4. **STATE 3 & 4 — QA VERIFICATION & COMPLIANCE AUDIT (Mandatory)**:
+   - **Tier 1**: Dispatch `qa-tester` to execute the scoped test runner verifying the fix, followed by `compliance-verifier` check. Adversarial committee is skipped.
+   - **Tier 2**: Dispatch `qa-tester` to execute the full test suite (`exit code 0` empirical proof) and generate `docs/<feature-name>/test-matrix.md`, while `compliance-verifier` audits static analysis and security yielding `APPROVED`.
+   - **Tier 3**: Full **Adversarial Verification Committee**:
+     * `qa-tester`: Comprehensive `docs/<feature-name>/test-matrix.md` covering unit, integration, and E2E pyramid tiers, with empirical terminal proof (`exit code 0`).
+     * `critic`: Deep code smell analysis, SOLID invariant review, and maintainability audit.
+     * `challenger`: Adversarial edge-case probe, boundary conditions, concurrency races, and negative test verification.
+     * `e2e-blackbox-tester`: End-to-end blackbox user journey and failure scenario testing.
+     * `compliance-verifier`: Static analysis, OWASP security audit, and architectural invariant audit yielding `APPROVED`.
+   - If either test fails or compliance returns `REJECTED`, loop back to `code-implementer` (strictly capped at **max 3 self-correction iterations** before escalating to the user).
 5. **STATE 5 — SHIP & LLM WIKI MEMORY UPDATE (Mandatory)**:
    - Mark all tasks completed in `PLAN.md`.
    - Persist the completed milestone into `context/memory/` (via `context-capture`): (1) update `context/memory/MEMORY.md` in-place (<= 80-100 lines), (2) update `context/memory/architecture.md` or `conventions.md` in-place if architecture/conventions changed, and (3) append a concise 5-8 line milestone block (`## [HH:MM | Host: Claude Code / Antigravity] <Task>`) to `context/memory/log/YYYY-MM-DD.md`. Never write checkpoints on intermediate turns or simple Q&A prompts.
@@ -169,7 +198,10 @@ Hook scripts in `hooks/*.js` are engineered to serve both hosts seamlessly:
 | `flutter-architect` | Discovery | Flutter state management, widget hierarchy, layer boundaries | Worker Tools |
 | `code-implementer` | Implementation | Production code authoring, bug fixes, refactoring in Python/Node/SQL | Full Worker Tools |
 | `flutter-implementer` | Implementation | Flutter widgets, BLoC/Riverpod, Dart models, platform channels | Full Worker Tools |
-| `qa-tester` | Verification | TDD execution, unit tests, integration tests, empirical proof | Full Worker Tools |
+| `qa-tester` | Verification | TDD execution, unit/integration/E2E tests, test-matrix.md proof | Full Worker Tools |
+| `critic` | Verification (Adversarial) | Code smell detection, SOLID invariant review, maintainability audit | Read-Only Audit Tools |
+| `challenger` | Verification (Adversarial) | Boundary probe, failure mode injection, edge-case challenge | Full Worker Tools |
+| `e2e-blackbox-tester` | Verification (Adversarial) | Blackbox user journeys, failure injection, resilience verification | Full Worker Tools |
 | `flutter-reviewer` | Verification | Flutter code quality, widget rebuild profiling, linting | Full Worker Tools |
 | `compliance-verifier` | Audit | Architectural invariant verification, safety audit, final signoff | Read-Only Audit Tools |
 | `senior-data-engineer` | Specialist | GCP Lakehouse, BigQuery, Datastream, CDC/SCD pipelines | Worker Tools + MCP |

@@ -1,10 +1,10 @@
 # Expert AI Agent Skills Catalog
 
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
-[![Skills Count](https://img.shields.io/badge/Skills-36%20Core%20%2B%201%20Add--on-orange?style=flat-square)](.)
+[![Skills Count](https://img.shields.io/badge/Skills-39%20Core%20%2B%201%20Add--on-orange?style=flat-square)](.)
 [![Ecosystem](https://img.shields.io/badge/Distribution-Antigravity%20%26%20Claude-green?style=flat-square)](../plugins)
 
-This directory contains a premium catalog of **36 canonical agent skills** designed to automate code quality checks, enforce programming best practices, detect code smells, validate commit history, and implement self-correcting development loops. Every `SKILL.md` in `/skills/` is platform-neutral, adhering to the open [Agent Skills Standard (`agentskills.io`)](https://agentskills.io).
+This directory contains a premium catalog of **39 canonical agent skills** designed to automate code quality checks, enforce programming best practices, detect code smells, validate commit history, and implement self-correcting development loops. Every `SKILL.md` in `/skills/` is platform-neutral, adhering to the open [Agent Skills Standard (`agentskills.io`)](https://agentskills.io).
 
 ---
 
@@ -16,7 +16,7 @@ All 9 plugins across both runtime ecosystems bundle physical copies of the skill
 * **Anthropic Claude Code**: `plugins/claude/<plugin>/skills/` (receives physical copies with automated tool sanitization, mapping Antigravity tools to native Claude Code tools: `run_command` &rarr; `Bash`, `write_to_file` &rarr; `Write`, `replace_file_content` &rarr; `Edit`, `invoke_subagent` &rarr; `Agent`).
 
 ### Bundled Skills per Plugin (9 Plugins)
-1. **`senior-dev`** (12 skills): `senior-dev-orchestrator`, `product-analyst`, `ui-ux-designer`, `senior-architect-engineering`, `code-implementer`, `code-smells-expert`, `refactoring-code-expert`, `qa-tester`, `compliance-verifier`, `context-capture`, `context-restore`, `loop-engineering`.
+1. **`senior-dev`** (15 skills): `senior-dev-orchestrator`, `product-analyst`, `ui-ux-designer`, `senior-architect-engineering`, `code-implementer`, `code-smells-expert`, `refactoring-code-expert`, `qa-tester`, `compliance-verifier`, `code-critic`, `adversarial-challenger`, `blackbox-tester`, `context-capture`, `context-restore`, `loop-engineering`.
 2. **`senior-dev-flutter`** (10 skills): `flutter-senior-orchestration`, `flutter-architecture-decisions`, `flutter-review-checklist`, `flutter-test-strategy`, `flutter-performance-profiling`, `flutter-release-engineering`, `flutter-upgrade-migration`, `context-capture`, `context-restore`, `loop-engineering`.
 3. **`python-backend`** (14 skills): `python-expert`, `test-driven-development`, `pull-request-expert`, `code-smells-expert`, `refactoring-code-expert`, `security-audit`, `performance-scalability`, `database-migration-expert`, `senior-architect-engineering`, `design-spec-expert`, `build-and-ci-gates`, `context-capture`, `context-restore`, `loop-engineering`.
 4. **`senior-data-engineer`** (4 skills): `gcp-data-engineering`, `cdc-scd-patterns`, `context-capture`, `context-restore`.
@@ -40,13 +40,13 @@ python3 scripts/sync_plugin_skills.py
 
 ## 2. Quick Installation & Setup via Skills CLI
 
-These skills fully comply with the [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, you can install any of these 36 skills out-of-the-box using Vercel's official, standard `skills` CLI.
+These skills fully comply with the [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, you can install any of these 39 skills out-of-the-box using Vercel's official, standard `skills` CLI.
 
 ### Option A: Standard Installation (Recommended)
 This is the simplest way to discover, add, and manage these skills:
 
 ```bash
-# List all 36 skills available in our repository
+# List all 39 skills available in our repository
 npx skills add jggomez/expert-ai-developer-skills --list
 
 # Install a specific skill (e.g. python-expert) in the active project (.agents/skills)
@@ -55,7 +55,7 @@ npx skills add jggomez/expert-ai-developer-skills --skill python-expert
 # Install a specific skill globally on your system
 npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
 
-# Install ALL 36 skills in the active project
+# Install ALL 39 skills in the active project
 npx skills add jggomez/expert-ai-developer-skills
 ```
 
@@ -68,7 +68,7 @@ cp -r ./skills/* ~/.gemini/config/skills/
 
 ---
 
-## 3. In-Depth Skills Catalog Reference (36 Skills)
+## 3. In-Depth Skills Catalog Reference (39 Skills)
 
 | Skill Directory | Core Purpose & Best Practices | Reference Guides | Key Automation Scripts & Usage |
 | :--- | :--- | :--- | :--- |
@@ -78,6 +78,9 @@ cp -r ./skills/* ~/.gemini/config/skills/
 | **`senior-dev-orchestrator`** | Orchestrates subagents across the 6-State SDLC DAG (Memory Restore & Triage Gate, Upfront Discovery, Parallel Build, Parallel QA & Audit, Ship). | `SKILL.md` | Agent manager workflows. |
 | **`code-implementer`** | Writes production code utilizing strict TDD Red-Green-Refactor cycles. | `SKILL.md` | TDD implementation guides. |
 | **`compliance-verifier`** | Audits NFRs, security gates, and performs final release readiness checks. | `SKILL.md` | Compliance checklist workflows. |
+| **`code-critic`** | Independent code review, cyclomatic complexity, DRY, SOLID, anti-patterns. Standard artifact: `docs/<feature-name>/critic-review.md`. | `SKILL.md`<br>`references/critic-review-template.md` | Formal code review deliverable & empirical quality score. |
+| **`adversarial-challenger`** | Adversarial stress testing, fuzzing, worst-case inputs, failure path probes, concurrency/memory stress. Standard artifact: `docs/<feature-name>/adversarial-report.md`. | `SKILL.md`<br>`references/adversarial-report-template.md` | Worst-case boundary probing & fault-injection. |
+| **`blackbox-tester`** | Browser-driven blackbox testing via chrome-devtools MCP or Playwright. Standard artifact: `docs/<feature-name>/blackbox-report.md`. | `SKILL.md`<br>`references/blackbox-report-template.md` | Live browser flow validation & console error auditing. |
 | **`python-expert`** | Enforces PEP 8 styling, static typing (`mypy`), generator stream tuning, and `__slots__` memory footprint reduction. | `references/python-patterns.md` | Guides AST-based memory checks and object tuning. |
 | **`test-driven-development`** | Establishes the Red-Green-Refactor testing lifecycle, AAA patterns, cross-language patterns (`pytest`, Flutter `testWidgets`, Dataform). | `references/testing-patterns.md` | `verify_tests.py` (Runs test suite and prints coverage summaries). |
 | **`loop-engineering`** | Orchestrates manager-worker topologies, parallel execution via Mode A (Disjoint File Partitioning) and Mode B (Git Worktree Isolation), self-correction protocol with 3-loop cap, and PR review crons. | `references/loop-architecture.md` | `run_parallel_agents.py` (Manager orchestrator)<br>`pr_cron_reviewer.py` (PR review cron). |

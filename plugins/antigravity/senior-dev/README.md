@@ -3,7 +3,7 @@
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
 [![Plugin](https://img.shields.io/badge/Plugin-senior--dev-green?style=flat-square)](.)
 
-The `senior-dev` plugin packages the repository's **Graph Engineering** subagent topology — a Senior Developer Orchestrator plus six specialized subagents (Product Analyst, UI/UX Designer, Architect, Code Implementer, QA Tester, Compliance Verifier) — as a self-contained plugin for **Google Antigravity**.
+The `senior-dev` plugin packages the repository's **Graph Engineering** subagent topology — a Senior Developer Orchestrator plus 9 specialized subagents (Product Analyst, UI/UX Designer, Architect, Code Implementer, QA Tester, Critic, Challenger, E2E Black-box Tester, Compliance Verifier) — as a self-contained plugin for **Google Antigravity**.
 
 Key architectural capabilities:
 - **LLM Wiki Memory (`context/memory/`)**: Cross-AI persistent memory shared seamlessly between Google Antigravity and Claude Code. At **State 0**, the orchestrator silently restores `context/memory/MEMORY.md` (~500 tokens) and reads linked topic pages (`architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) on demand. At **State 5**, completed milestones update `context/memory/` via `context-capture`.
@@ -30,17 +30,20 @@ plugins/antigravity/senior-dev/
 ├── hooks/
 │   ├── orchestrator-role-gate.js # PreToolUse gate preventing orchestrator from editing code
 │   └── universal-quality-gate.js # Stop hook executing test suites and linters
-├── agents/                 # 7 bundled subagents
+├── agents/                 # 10 bundled subagents
 │   ├── senior-dev-orchestrator.md  # Main orchestrator; governs DAG, Triage Gate & PLAN.md
 │   ├── product-analyst.md          # Requirements & PRDs
 │   ├── ui-ux-designer.md           # UI/UX design systems & design.md
 │   ├── architect-engineer.md       # Architecture & ADRs
 │   ├── code-implementer.md         # Strict TDD implementation (parallel fan-out capable)
 │   ├── qa-tester.md                # E2E / integration testing (parallel fan-out capable)
+│   ├── critic.md                   # Adversarial code review (cyclomatic complexity, DRY, SOLID)
+│   ├── challenger.md               # Adversarial stress testing, fuzzing, fault injection
+│   ├── e2e-blackbox-tester.md      # Black-box browser verification, DOM/GUI, Playwright/MCP
 │   └── compliance-verifier.md      # Final NFR / security audit (parallel with qa-tester)
 ├── rules/                  # Senior dev 9-stage cycle & tool execution rules
 │   └── senior-dev-rules.md
-└── skills/                 # Physical copy of the 12 skills these agents depend on
+└── skills/                 # Physical copy of the 15 skills these agents depend on
     ├── senior-dev-orchestrator/
     ├── product-analyst/
     ├── ui-ux-designer/
@@ -50,6 +53,9 @@ plugins/antigravity/senior-dev/
     ├── refactoring-code-expert/
     ├── qa-tester/
     ├── compliance-verifier/
+    ├── code-critic/
+    ├── adversarial-challenger/
+    ├── blackbox-tester/
     ├── context-capture/
     ├── context-restore/
     └── loop-engineering/
@@ -66,6 +72,9 @@ plugins/antigravity/senior-dev/
 | **`architect-engineer`** | System Designer | `auto` | **Mandatory via Triage Gate** when tasks touch >= 2 files/modules, alter schemas/contracts, or cross layers. Produces QADs, SEI tactics, ADRs, and interface contracts. |
 | **`code-implementer`** | TDD Implementer | `auto` | **MANDATORY worker (1..N parallel fan-out)**: Writes and refactors production code using strict Red-Green-Refactor within assigned `Disjoint Files` or `Git Worktree`. |
 | **`qa-tester`** | Test Engineer | `auto` | **MANDATORY worker (parallel with audit)**: Executes unit, integration, and regression suites; requires `exit code 0`. |
+| **`critic`** | Senior Code Critic | `auto` | **Adversarial Committee worker**: Independently reviews code for cyclomatic complexity, DRY, SOLID, and smells without writing fixes. Authors `docs/<feature-name>/critic-review.md`. |
+| **`challenger`** | Hostile Stress Tester | `auto` | **Adversarial Committee worker**: Fuzzes boundary inputs, injects network/timeout faults, and simulates concurrency/memory races. Authors `docs/<feature-name>/adversarial-report.md`. |
+| **`e2e-blackbox-tester`** | Black-Box Browser QA | `auto` | **Adversarial Committee worker**: Validates real user browser journeys, interactive GUI forms, responsive layouts, and console errors via Playwright/MCP. Authors `docs/<feature-name>/blackbox-report.md`. |
 | **`compliance-verifier`** | Release Auditor | `auto` | **MANDATORY worker (parallel with QA)**: Audits linters, OWASP, code smells, and architectural invariants; issues `APPROVED` verdict. |
 
 ---
@@ -120,9 +129,9 @@ The subagents and orchestrator execute along the standardized 9-stage engineerin
 
 ---
 
-## 6. Bundled Skills (12 Packaged Modules)
+## 6. Bundled Skills (15 Packaged Modules)
 
-On loading the plugin, the following 12 skills are automatically loaded as the agents' skill dependencies:
+On loading the plugin, the following 15 skills are automatically loaded as the agents' skill dependencies:
 
 1. **`senior-dev-orchestrator`**: Phase breakdown, DAG state machine, Mandatory Discovery Triage Gate, Parallel Fan-Out/Fan-In orchestration, and LLM Wiki memory lifecycle.
 2. **`product-analyst`**: Requirement discovery workflow and PRD template.
@@ -133,9 +142,12 @@ On loading the plugin, the following 12 skills are automatically loaded as the a
 7. **`refactoring-code-expert`**: Safe, test-guarded refactoring steps.
 8. **`qa-tester`**: E2E/integration test-plan construction and RTM template.
 9. **`compliance-verifier`**: Final NFR/security/coverage audit and verdict format.
-10. **`context-capture`**: Cross-AI LLM Wiki memory persistence (`context/memory/MEMORY.md`, `architecture.md`, `conventions.md`, and `log/YYYY-MM-DD.md`) at milestone completion (`State 5`).
-11. **`context-restore`**: Cross-AI LLM Wiki memory restoration (`context/memory/MEMORY.md` and on-demand topic pages) at task initialization (`State 0`).
-12. **`loop-engineering`**: Parallel Fan-Out/Fan-In execution, Disjoint File Partitioning vs. Git Worktree isolation, and autonomous verification loops.
+10. **`code-critic`**: Independent architectural code review, cyclomatic complexity, DRY, and SOLID auditing.
+11. **`adversarial-challenger`**: Adversarial stress testing, fuzzing, fault injection, and concurrency probing.
+12. **`blackbox-tester`**: Black-box browser verification, interactive GUI forms, responsive layouts, and console error auditing.
+13. **`context-capture`**: Cross-AI LLM Wiki memory persistence (`context/memory/MEMORY.md`, `architecture.md`, `conventions.md`, and `log/YYYY-MM-DD.md`) at milestone completion (`State 5`).
+14. **`context-restore`**: Cross-AI LLM Wiki memory restoration (`context/memory/MEMORY.md` and on-demand topic pages) at task initialization (`State 0`).
+15. **`loop-engineering`**: Parallel Fan-Out/Fan-In execution, Disjoint File Partitioning vs. Git Worktree isolation, and autonomous verification loops.
 
 ---
 
