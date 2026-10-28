@@ -10,6 +10,8 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+const PROTECTED_BRANCHES = new Set(['main', 'master', 'develop', 'dev']);
+
 const isClaudeCode = Boolean(process.env.CLAUDE_PLUGIN_ROOT);
 
 function allow() {
@@ -87,6 +89,20 @@ if (isFileModTool) {
     ext === '.txt';
 
   if (!isDoc && ext === '.py') {
+    try {
+      const branch = execSync('git symbolic-ref --short HEAD', { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+      if (PROTECTED_BRANCHES.has(branch)) {
+        deny(
+          `[GIT BRANCH GOVERNANCE]: Prohibited from modifying Python source code (${basename}) directly on protected branch "${branch}".\n` +
+          `You MUST create and switch to a dedicated feature branch first:\n` +
+          `  run_command: git checkout -b feat/<descriptive-slug>\n` +
+          `Always work on isolated branches with Conventional naming.`
+        );
+      }
+    } catch (e) {
+      // Not a git repository or detached HEAD
+    }
+
     const hasPlan =
       fs.existsSync(path.join(cwd, 'PLAN.md')) ||
       fs.existsSync(path.join(cwd, 'docs', 'PLAN.md'));
@@ -132,8 +148,8 @@ if (mcpServer === 'firebase-mcp-server' && firestoreWriteRegex.test(mcpTool)) {
 const gitWriteRegex = /\b(git\s+commit|git\s+push|git\s+add|git\s+merge)\b/i;
 if (isShellTool && gitWriteRegex.test(commandLine)) {
   try {
-    const activeBranch = execSync('git symbolic-ref --short HEAD', { cwd, encoding: 'utf8' }).trim();
-    if (activeBranch === 'main' || activeBranch === 'develop') {
+    const activeBranch = execSync('git symbolic-ref --short HEAD', { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    if (PROTECTED_BRANCHES.has(activeBranch)) {
       deny(`Gitflow Safety Blocked: directly running git add/commit/push/merge on "${activeBranch}" is prohibited. Use a feature/ or bugfix/ branch and merge via Pull Request.`);
     }
   } catch (e) {

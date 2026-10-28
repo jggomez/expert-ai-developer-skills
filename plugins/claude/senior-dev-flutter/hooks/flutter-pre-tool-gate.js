@@ -11,7 +11,7 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const PROTECTED = new Set(['main', 'master', 'develop']);
+const PROTECTED = new Set(['main', 'master', 'develop', 'dev']);
 
 function allow() {
   process.exit(0);
@@ -65,21 +65,40 @@ if (isFileModTool) {
   const isDartFile = targetFile.endsWith('.dart');
   const isLibOrTest = /(?:^|[\\/])(lib|test)[\\/].*\.dart$/i.test(targetFile) || isDartFile;
 
-  if (!isDoc && isDartFile && isLibOrTest) {
-    const possiblePlanPaths = [
-      path.join(cwd, 'PLAN.md'),
-      path.join(cwd, 'docs', 'PLAN.md'),
-      path.join(cwd, '.agents', 'PLAN.md'),
-      path.join(cwd, '.claude', 'PLAN.md')
-    ];
-    const hasPlan = possiblePlanPaths.some(p => fs.existsSync(p));
+  const isDartOrPubspec = ext === '.dart' || basename === 'pubspec.yaml';
+  if (!isDoc && isDartOrPubspec) {
+    let branch = '';
+    try {
+      branch = execSync('git symbolic-ref --short HEAD', { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    } catch (e) {
+      branch = '';
+    }
 
-    if (!hasPlan) {
+    if (PROTECTED.has(branch)) {
       deny(
-        `[PLAN-FIRST VIOLATION]: Cannot modify Dart code in "${targetFile}" without an active "PLAN.md".\n` +
-        `Per Senior Flutter Orchestration standards, you must create and structure a "PLAN.md" ` +
-        `defining architecture, state management strategy, and subagent assignments before writing or modifying code.`
+        `[GIT BRANCH GOVERNANCE]: Prohibited from modifying Flutter/Dart code (${basename}) directly on protected branch "${branch}".\n` +
+        `You MUST create and switch to a dedicated feature branch first:\n` +
+        `  Bash: git checkout -b feat/<descriptive-slug>\n` +
+        `Always work on isolated branches with Conventional naming.`
       );
+    }
+
+    if (isDartFile && isLibOrTest) {
+      const possiblePlanPaths = [
+        path.join(cwd, 'PLAN.md'),
+        path.join(cwd, 'docs', 'PLAN.md'),
+        path.join(cwd, '.agents', 'PLAN.md'),
+        path.join(cwd, '.claude', 'PLAN.md')
+      ];
+      const hasPlan = possiblePlanPaths.some(p => fs.existsSync(p));
+
+      if (!hasPlan) {
+        deny(
+          `[PLAN-FIRST VIOLATION]: Cannot modify Dart code in "${targetFile}" without an active "PLAN.md".\n` +
+          `Per Senior Flutter Orchestration standards, you must create and structure a "PLAN.md" ` +
+          `defining architecture, state management strategy, and subagent assignments before writing or modifying code.`
+        );
+      }
     }
   }
 }

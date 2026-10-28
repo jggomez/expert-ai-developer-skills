@@ -24,9 +24,9 @@ The **Flutter Senior Orchestration** skill directs the end-to-end delivery lifec
 
 ```mermaid
 flowchart TD
-    A["Incoming Flutter Request"] --> B["State 0: Silent context/memory/MEMORY.md Restore + PLAN.md Triage Gate"]
-    B --> C{"Architecture Triage Gate Triggered?"}
-    C -->|"Yes (>=2 screens/widgets/notifiers, state mgmt, GoRouter, or native plugins)"| D["State 1: Upfront flutter-architect (Sequential or Parallel Fan-Out)"]
+    A["Incoming Flutter Request"] --> B["State 0: Branch Check, Silent context/memory/ Restore + PLAN.md Triage Gate"]
+    B --> C{"Discovery & Architecture Triage Triggered?"}
+    C -->|"Yes (UI/screens or >=2 components/state/routing/plugins)"| D["State 1: Upfront Discovery & Architecture (ui-ux-designer / flutter-architect)"]
     C -->|"No (Single-widget localized UI tweak, state unchanged)"| E["State 2: Parallel flutter-implementer Fan-Out (Mode A Disjoint / Mode B Worktree)"]
     D --> E
     E --> F["State 3 & 4: Parallel Fan-Out — flutter-reviewer + flutter-release-engineer"]
@@ -35,12 +35,25 @@ flowchart TD
     G -->|"Yes"| H["State 5: Ship & Persist Milestone to context/memory/"]
 ```
 
-### 1. State 0: Memory Restore & Mandatory Flutter Architecture Triage Gate
-1. **Silent Cross-AI LLM Wiki Restore**:
+### 1. State 0: Memory Restore, Branch Governance & Mandatory Discovery Triage Gate
+1. **Automated Git Branch Governance & Scope Drift Protocol**:
+   - **Active Branch Inspection & Auto-Branching**: Check active branch via `git symbolic-ref --short HEAD`. If the active branch is a base or protected branch (`main`, `master`, `develop`, `dev`), the orchestrator MUST automatically create and switch to a dedicated feature branch using Conventional naming before modifying any files:
+     ```bash
+     git checkout -b feat/<descriptive-slug>
+     # or for bugfixes:
+     git checkout -b fix/<slug>
+     ```
+     Notify the user of the branch created.
+   - **Proactive Scope Drift Detection**: If already on an active feature branch, evaluate whether the incoming user request represents orthogonal or unrelated functionality. If scope drift is detected, proactively prompt the user via `ask_question` recommending a new isolated branch (`feat/<new-slug>`). If the user confirms, switch to a new branch; if the user declines, proceed on the current branch.
+2. **Silent Cross-AI LLM Wiki Restore**:
    - Check if `context/memory/MEMORY.md` exists. If it does, silently read **only `context/memory/MEMORY.md`** (`<= 80-100 lines`, ~500 tokens) to absorb the active handoff state (`Claude Code` or `Antigravity`).
    - Open `context/memory/architecture.md`, `context/memory/conventions.md`, or `context/memory/log/YYYY-MM-DD.md` **only on demand** if the task touches those domains.
-2. **Author / Update `PLAN.md` with Mandatory Triage Table**:
+3. **Author / Update `PLAN.md` with Mandatory Discovery & Architecture Triage Table**:
    - Every `PLAN.md` must include a `## Discovery & Architecture Triage` table and `## Parallel Execution Tracks`:
+   - **`ui-ux-designer` / `design.md` Mobile Triage**:
+     - **MUST INVOKE / EVALUATE** whenever creating or altering Flutter screens, views, or reusable widgets, modifying styling/theming/layout/accessibility, or when the project lacks a mobile `design.md`.
+     - Inspects/creates `design.md` detailing mobile design tokens, color systems, typography scale, responsive breakpoints, touch targets (minimum 48x48dp), and motion curves before architecting widget trees.
+     - *Only skip* for pure internal data/state fixes or non-visual utility changes.
    - **`flutter-architect` MUST BE INVOKED** whenever:
      - `>= 2` screens, widgets, or notifiers/blocs/controllers are created or modified.
      - State management (`Riverpod` / `Bloc` / `Signals`) contracts or providers change.
@@ -48,8 +61,10 @@ flowchart TD
      - Platform channels, FFI, or native plugins (`pubspec.yaml` dependencies) are added.
    - *Only skip `flutter-architect`* for single-widget localized UI tweaks where state management and routing are unchanged.
 
-### 2. State 1: Upfront Architecture Execution (Sequential or Parallel Fan-Out)
-- Invoke `flutter-architect` (or multiple instances in parallel across distinct features/layers) before `flutter-implementer`.
+### 2. State 1: Upfront Discovery & Architecture Execution (Sequential or Parallel Fan-Out)
+- When the triage gate triggers `ui-ux-designer` and/or `flutter-architect`, invoke them before dispatching `flutter-implementer`.
+- **Sequential Hand-off Flow (Default for UI features)**:
+  `ui-ux-designer` (`design.md` mobile tokens & UX specs) ➔ `flutter-architect` (ADR & widget/notifier contracts) ➔ `flutter-implementer` (TDD widgets & tests).
 - Select state management (`Riverpod`, `Bloc`, `Signals`, or ephemeral `setState`) using `flutter-architecture-decisions` and record ADRs in `doc/adr/`.
 - Update `PLAN.md` with finalized widget/repository contracts and classify work into `## Parallel Execution Tracks` with strict `Owned Files`.
 
@@ -93,6 +108,8 @@ flutter test
 ```
 
 ## Red Flags
+- Developing directly on protected branches (`main`, `master`, `develop`, `dev`) without auto-branching.
+- Skipping `ui-ux-designer` / `design.md` mobile triage when creating or altering Flutter screens/widgets.
 - Skipping `flutter-architect` when `>= 2` screens/widgets/notifiers, state management contracts, `GoRouter` routes, or native plugins are modified.
 - Dispatching parallel `flutter-implementer` subagents on overlapping files in `Workspace: 'inherit'` without disjoint `Owned Files` boundaries.
 - Saving context checkpoints on intermediate turns instead of only at `State 5` or on explicit user handoff.
@@ -100,8 +117,10 @@ flutter test
 - Allowing `BuildContext` usage across asynchronous gaps without checking `mounted` or omitting `.dispose()` on controllers.
 
 ## Verification
+- [ ] Active branch checked via `git symbolic-ref --short HEAD`; dedicated branch auto-created off protected branches (`main`/`master`/`develop`/`dev`); scope drift checked.
 - [ ] `context/memory/MEMORY.md` checked silently at `State 0` before authoring/updating `PLAN.md`.
 - [ ] `PLAN.md` contains `## Discovery & Architecture Triage` and `## Parallel Execution Tracks` with explicit `Owned Files`.
+- [ ] `ui-ux-designer` evaluated / `design.md` mobile design tokens generated/verified before widget implementation.
 - [ ] `flutter-architect` invoked and ADR recorded in `doc/adr/` whenever triage criteria are met.
 - [ ] Unit, widget, and golden tests pass with zero analyzer warnings (`dart analyze` and `flutter test` exit 0).
 - [ ] Parallel `flutter-reviewer` and `flutter-release-engineer` gates both pass with zero controller leaks and valid release config.

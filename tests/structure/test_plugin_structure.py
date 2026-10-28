@@ -848,6 +848,61 @@ def test_senior_dev_git_branch_governance_and_scope_drift(workspace_root):
         assert "PROTECTED BRANCH" in hook_text, f"{hook_path} missing PROTECTED BRANCH check"
 
 
+def test_ecosystem_wide_git_branch_governance_and_scope_drift(workspace_root):
+    """Verifies that senior-dev-flutter, python-backend, and senior-data-engineer enforce
+    automated Git Branch Governance (auto-creation of feat/<slug> from base branches)
+    and Scope Drift detection across both ecosystems, and senior-dev-flutter includes UI/UX."""
+    domain_plugins = [
+        ("senior-dev-flutter", "flutter-feature-orchestrator.md", "flutter-pre-tool-gate.js", "flutter-rules.md"),
+        ("python-backend", "python-backend-orchestrator.md", "pre-tool-gate.js", "python-backend-rules.md"),
+        ("senior-data-engineer", "senior-data-engineer.md", "data-safety-gate.js", "data-engineer-rules.md"),
+    ]
+
+    for plugin, orch_file, hook_file, rules_file in domain_plugins:
+        # 1. Orchestrators in both ecosystems
+        for ecosystem in ("antigravity", "claude"):
+            orch_path = os.path.join(workspace_root, "plugins", ecosystem, plugin, "agents", orch_file)
+            assert os.path.isfile(orch_path), f"Missing {orch_path}"
+            with open(orch_path, "r", encoding="utf-8") as f:
+                orch_text = f.read()
+            assert "Git Branch Governance" in orch_text, f"{orch_path} missing 'Git Branch Governance'"
+            assert "Scope Drift" in orch_text, f"{orch_path} missing 'Scope Drift'"
+            assert "feat/<" in orch_text or "feat/" in orch_text, f"{orch_path} missing Conventional branch prefix"
+
+            # Flutter-specific checks for UI/UX integration
+            if plugin == "senior-dev-flutter":
+                assert "ui-ux-designer" in orch_text, f"{orch_path} missing 'ui-ux-designer'"
+                assert "design.md" in orch_text, f"{orch_path} missing 'design.md'"
+
+        # 2. Rules in Antigravity
+        rules_path = os.path.join(workspace_root, "plugins", "antigravity", plugin, "rules", rules_file)
+        assert os.path.isfile(rules_path), f"Missing {rules_path}"
+        with open(rules_path, "r", encoding="utf-8") as f:
+            rules_text = f.read()
+        assert "Git Branch Governance" in rules_text, f"{rules_path} missing 'Git Branch Governance'"
+        assert "Scope Drift" in rules_text, f"{rules_path} missing 'Scope Drift'"
+
+        # 3. Hooks in both ecosystems
+        for ecosystem in ("antigravity", "claude"):
+            hook_path = os.path.join(workspace_root, "plugins", ecosystem, plugin, "hooks", hook_file)
+            assert os.path.isfile(hook_path), f"Missing {hook_path}"
+            with open(hook_path, "r", encoding="utf-8") as f:
+                hook_text = f.read()
+            assert "PROTECTED" in hook_text, f"{hook_path} missing PROTECTED branch check"
+            assert "BRANCH GOVERNANCE" in hook_text, f"{hook_path} missing BRANCH GOVERNANCE in denial reason"
+
+    # 4. Canonical Flutter skill
+    flutter_skill = os.path.join(workspace_root, "skills", "flutter-senior-orchestration", "SKILL.md")
+    assert os.path.isfile(flutter_skill), f"Missing {flutter_skill}"
+    with open(flutter_skill, "r", encoding="utf-8") as f:
+        skill_text = f.read()
+    assert "Git Branch Governance" in skill_text, f"{flutter_skill} missing 'Git Branch Governance'"
+    assert "Scope Drift" in skill_text, f"{flutter_skill} missing 'Scope Drift'"
+    assert "ui-ux-designer" in skill_text, f"{flutter_skill} missing 'ui-ux-designer'"
+    assert "design.md" in skill_text, f"{flutter_skill} missing 'design.md'"
+
+
+
 
 
 

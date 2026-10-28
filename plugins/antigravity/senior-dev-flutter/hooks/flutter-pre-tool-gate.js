@@ -9,9 +9,9 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const PROTECTED = new Set(['main', 'master', 'develop']);
+const PROTECTED = new Set(['main', 'master', 'develop', 'dev']);
 
-const isClaudeCode = Boolean(process.env.CLAUDE_PLUGIN_ROOT);
+let isClaudeCode = Boolean(process.env.CLAUDE_PLUGIN_ROOT);
 
 function allow() {
   if (!isClaudeCode) {
@@ -46,6 +46,9 @@ if (!raw.trim()) allow();
 let payload;
 try {
   payload = JSON.parse(raw);
+  if (payload && payload.tool_name && !payload.toolCall) {
+    isClaudeCode = true;
+  }
 } catch (e) {
   allow();
 }
@@ -54,11 +57,20 @@ const toolCall = payload.toolCall || {};
 const toolName = toolCall.name || payload.tool_name || '';
 const toolArgs = toolCall.args || payload.tool_input || {};
 const command = toolArgs.CommandLine || toolArgs.command || '';
-const targetFile = toolArgs.TargetFile || toolArgs.file_path || toolArgs.path || '';
+const targetFile =
+  toolArgs.TargetFile ||
+  toolArgs.targetFile ||
+  toolArgs.file_path ||
+  toolArgs.filePath ||
+  toolArgs.path ||
+  toolArgs.Path ||
+  toolArgs.target_file ||
+  '';
 const cwd =
   payload.workspacePaths?.[0] ||
   payload.cwd ||
   toolArgs.Cwd ||
+  toolArgs.cwd ||
   process.cwd();
 
 // Only care if workspace is a Flutter/Dart repo
@@ -81,33 +93,52 @@ if (isFileModTool && targetFile) {
     ext === '.md' ||
     ext === '.txt';
 
-  if (!isDoc && ext === '.dart') {
-    // Check Plan First
-    const hasPlan =
-      fs.existsSync(path.join(cwd, 'PLAN.md')) ||
-      fs.existsSync(path.join(cwd, 'doc', 'PLAN.md'));
+  const isDartOrPubspec = ext === '.dart' || basename === 'pubspec.yaml';
+  if (!isDoc && isDartOrPubspec) {
+    let branch = '';
+    try {
+      branch = execSync('git symbolic-ref --short HEAD', { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    } catch (e) {
+      // not a git repo / detached
+    }
 
-    if (!hasPlan) {
+    if (PROTECTED.has(branch)) {
       deny(
-        `[FLUTTER GRAPH GATE - PLAN FIRST]: No "PLAN.md" found in "${cwd}".\n` +
-        `You MUST create a "PLAN.md" defining target platforms, state management, and tasks before modifying Dart code.`
+        `[GIT BRANCH GOVERNANCE]: Prohibited from modifying Flutter/Dart code (${basename}) directly on protected branch "${branch}".\n` +
+        `You MUST create and switch to a dedicated feature branch first:\n` +
+        `  run_command: git checkout -b feat/<descriptive-slug>\n` +
+        `Always work on isolated branches with Conventional naming.`
       );
     }
 
-    // Check Orchestrator Boundary
-    const transcriptPath = payload.transcriptPath;
-    if (transcriptPath && fs.existsSync(transcriptPath)) {
-      try {
-        const firstLine = fs.readFileSync(transcriptPath, 'utf8').trim().split('\n')[0] || '';
-        if (firstLine.includes('<USER_REQUEST>')) {
-          deny(
-            `[FLUTTER GRAPH INVARIANT VIOLATION]: As the Flutter Feature Orchestrator, you are STRICTLY FORBIDDEN ` +
-            `from editing Dart files (${basename}) directly.\n` +
-            `You MUST delegate implementation to the 'flutter-implementer' subagent using invoke_subagent.`
-          );
+    if (ext === '.dart') {
+      // Check Plan First
+      const hasPlan =
+        fs.existsSync(path.join(cwd, 'PLAN.md')) ||
+        fs.existsSync(path.join(cwd, 'doc', 'PLAN.md'));
+
+      if (!hasPlan) {
+        deny(
+          `[FLUTTER GRAPH GATE - PLAN FIRST]: No "PLAN.md" found in "${cwd}".\n` +
+          `You MUST create a "PLAN.md" defining target platforms, state management, and tasks before modifying Dart code.`
+        );
+      }
+
+      // Check Orchestrator Boundary
+      const transcriptPath = payload.transcriptPath;
+      if (transcriptPath && fs.existsSync(transcriptPath)) {
+        try {
+          const firstLine = fs.readFileSync(transcriptPath, 'utf8').trim().split('\n')[0] || '';
+          if (firstLine.includes('<USER_REQUEST>')) {
+            deny(
+              `[FLUTTER GRAPH INVARIANT VIOLATION]: As the Flutter Feature Orchestrator, you are STRICTLY FORBIDDEN ` +
+              `from editing Dart files (${basename}) directly.\n` +
+              `You MUST delegate implementation to the 'flutter-implementer' subagent using invoke_subagent.`
+            );
+          }
+        } catch (err) {
+          // fail open if transcript unreadable
         }
-      } catch (err) {
-        // fail open if transcript unreadable
       }
     }
   }

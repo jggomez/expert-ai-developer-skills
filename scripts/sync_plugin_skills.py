@@ -94,6 +94,7 @@ PLUGIN_BUNDLED_SKILLS = {
         "flutter-performance-profiling",
         "flutter-release-engineering",
         "flutter-upgrade-migration",
+        "ui-ux-designer",
         "context-capture",
         "context-restore",
         "loop-engineering",

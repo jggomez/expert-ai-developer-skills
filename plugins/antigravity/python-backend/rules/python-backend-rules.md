@@ -14,9 +14,10 @@ These rules enforce development guidelines, Cross-AI LLM Wiki memory (`context/m
 ## 1. 6-State Graph Engineering DAG
 
 ```
-[STATE 0: MEMORY RESTORE & API / MIGRATION TRIAGE GATE]
-  ├─► 1. Silent LLM Wiki Restore: Read context/memory/MEMORY.md (~500 tokens); drill down on demand
-  └─► 2. Author/Update PLAN.md with API routes, Schemas, ERD, & ## API & Database Migration Triage Gate
+[STATE 0: MEMORY RESTORE, BRANCH GOVERNANCE & API / MIGRATION TRIAGE GATE]
+  ├─► 1. Check Git Branch: If base (main/master/develop/dev), auto-create 'feat/<slug>'; if Scope Drift, ask user
+  ├─► 2. Silent LLM Wiki Restore: Read context/memory/MEMORY.md (~500 tokens); drill down on demand
+  └─► 3. Author/Update PLAN.md with API routes, Schemas, ERD, & ## API & Database Migration Triage Gate
           │
           ▼
 [STATE 1: UPFRONT ARCHITECTURE, SPEC & MIGRATION DESIGN]
@@ -56,9 +57,10 @@ These rules enforce development guidelines, Cross-AI LLM Wiki memory (`context/m
 
 ---
 
-## 3. Development & Branch Safety (Gitflow)
-- **Feature Isolation**: Never write or commit feature code directly to the `main` or `develop` branches.
-- **Branch Naming**: All work must be conducted on isolated branches prefixed with `feature/` or `bugfix/` (e.g. `feature/add-oauth-flow`).
+## 3. Development & Branch Safety (Git Branch Governance)
+- **Git Branch Governance & Auto-Branching**: Never write Python code or commit directly to protected base branches (`main`, `master`, `develop`, `dev`). At State 0, before authoring tasks or modifying Python files, inspect the active branch via `git symbolic-ref --short HEAD`. If on a base branch, automatically provision and switch to a dedicated feature branch using Conventional naming (`git checkout -b feat/<descriptive-slug>` or `fix/<slug>`) and notify the user.
+- **Proactive Scope Drift Detection**: When already on an existing feature branch and the user requests orthogonal or unrelated functionality, detect the domain pivot and proactively prompt the user via `ask_question` recommending a dedicated branch (`feat/<new-slug>`). If the user confirms, switch branches; if declined, proceed on the current branch.
+- **Feature Isolation**: All work must be conducted on isolated branches prefixed with `feat/` or `fix/` (e.g. `feat/add-oauth-flow`).
 - **Production Branch**: The `main` branch represents the Production (prd) environment. Merging to `main` must only occur via PRs after full validation and code reviews.
 
 ---

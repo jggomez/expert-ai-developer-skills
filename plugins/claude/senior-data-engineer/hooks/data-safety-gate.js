@@ -6,8 +6,11 @@
  *    - Cloud CLI: bq rm -f, gcloud storage rm -r, gsutil rm -r
  * 2. Plan-First Gate: Requires PLAN.md before writing or editing .sql, .sqlx, or ETL scripts.
  */
+const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+
+const PROTECTED_BRANCHES = new Set(['main', 'master', 'develop', 'dev']);
 
 function allow() {
   process.exit(0);
@@ -101,6 +104,22 @@ if (toolName === 'Write' || toolName === 'Edit') {
     );
 
     if (isSql || isEtl) {
+      let branch = '';
+      try {
+        branch = execSync('git symbolic-ref --short HEAD', { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+      } catch (e) {
+        branch = '';
+      }
+
+      if (PROTECTED_BRANCHES.has(branch)) {
+        deny(
+          `[GIT BRANCH GOVERNANCE]: Prohibited from modifying data pipeline code (${basename}) directly on protected branch "${branch}".\n` +
+          `You MUST create and switch to a dedicated feature branch first:\n` +
+          `  Bash: git checkout -b feat/<descriptive-slug>\n` +
+          `Always work on isolated branches with Conventional naming.`
+        );
+      }
+
       const possiblePlanPaths = [
         path.join(cwd, 'PLAN.md'),
         path.join(cwd, 'docs', 'PLAN.md'),

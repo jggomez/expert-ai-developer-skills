@@ -12,7 +12,8 @@ description: Google Cloud data engineering rules enforcing Lakehouse Graph Engin
 Every analytical, CDC, or streaming pipeline must transition through this explicit 7-state DAG:
 
 ```
-[STATE 0: MEMORY RESTORE & LAKEHOUSE TRIAGE GATE (MANDATORY)]
+[STATE 0: MEMORY RESTORE, BRANCH GOVERNANCE & LAKEHOUSE TRIAGE GATE (MANDATORY)]
+  ├── Check Git Branch: If base (main/master/develop/dev), auto-create 'feat/<slug>'; if Scope Drift, ask user
   ├── Read `context/memory/MEMORY.md` silently (+ `architecture.md` on demand for BQ layouts/keys/SLAs)
   └── Author/Update `PLAN.md` (Sources, Target Contracts, Partition/Cluster Keys, SLAs)
           │
@@ -37,8 +38,10 @@ Every analytical, CDC, or streaming pipeline must transition through this explic
   └── Persist Bronze/Silver/Gold contracts, partition/cluster keys & SLAs to `context/memory/`
 ```
 
-## 2. Inviolable Role Boundaries, Memory & Parallel Execution
+## 2. Inviolable Role Boundaries, Git Branch Governance, Memory & Parallel Execution
 
+- **Git Branch Governance & Auto-Branching**: Never write data pipeline code or commit directly to protected base branches (`main`, `master`, `develop`, `dev`). At State 0, before authoring tasks or modifying pipeline code, inspect the active branch via `git symbolic-ref --short HEAD`. If on a base branch, automatically provision and switch to a dedicated feature branch using Conventional naming (`git checkout -b feat/<descriptive-slug>` or `fix/<slug>`) and notify the user.
+- **Proactive Scope Drift Detection**: When already on an existing feature branch and the user requests orthogonal or unrelated data engineering functionality, detect the domain pivot and proactively prompt the user via `ask_question` recommending a dedicated branch (`feat/<new-slug>`). If the user confirms, switch branches; if declined, proceed on the current branch.
 - **State 0 — Memory Restore & Plan First**:
   1. Silently read `context/memory/MEMORY.md` (and `context/memory/architecture.md` on demand) to reuse known BigQuery dataset layouts, partition/clustering keys, and SLAs without redundant schema scans.
   2. Never write BigQuery DDL or Dataform `.sqlx` models without `PLAN.md` documenting source schemas, ingestion latency SLAs, and schema contracts.

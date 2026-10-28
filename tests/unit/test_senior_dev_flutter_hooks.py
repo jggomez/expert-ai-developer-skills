@@ -84,6 +84,27 @@ def test_pre_denies_major_bump_antigravity_shape(tmp_path):
     assert "ADR" in out["reason"]
 
 
+def test_pre_denies_dart_edit_on_protected_branch(tmp_path):
+    git_init(tmp_path, "main")
+    # Claude Code shape (Write / Edit)
+    r = run_hook(PRE, {"tool_name": "Write",
+                       "tool_input": {"file_path": "lib/main.dart"},
+                       "cwd": str(tmp_path)}, {"CLAUDE_PLUGIN_ROOT": "x"})
+    out = json.loads(r.stdout)
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert "[GIT BRANCH GOVERNANCE]" in out["hookSpecificOutput"]["permissionDecisionReason"]
+    assert "main" in out["hookSpecificOutput"]["permissionDecisionReason"]
+
+    # Antigravity shape (write_to_file / replace_file_content)
+    r2 = run_hook(PRE, {"toolCall": {"name": "write_to_file",
+                                     "args": {"TargetFile": "lib/main.dart"}},
+                        "workspacePaths": [str(tmp_path)]})
+    out2 = json.loads(r2.stdout)
+    assert out2["decision"] == "deny"
+    assert "[GIT BRANCH GOVERNANCE]" in out2["reason"]
+    assert "main" in out2["reason"]
+
+
 def test_pre_allows_apk_build_and_feature_branch(tmp_path):
     git_init(tmp_path, "main")
     r = run_hook(PRE, {"tool_name": "Bash",

@@ -4,8 +4,11 @@
  * 1. Plan-First Gate: Requires PLAN.md before creating or editing pipeline models (.sqlx, .py, .sql).
  * 2. Destructive Command Guard: Blocks destructive BigQuery, Cloud Storage, or Dataform commands.
  */
+const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+
+const PROTECTED_BRANCHES = new Set(['main', 'master', 'develop', 'dev']);
 
 function allow() {
   console.log(JSON.stringify({ decision: 'allow' }));
@@ -82,6 +85,20 @@ if (isFileModTool && targetFile) {
     basename === 'workflow_settings.yaml';
 
   if (!isDoc && isPipelineCode) {
+    try {
+      const branch = execSync('git symbolic-ref --short HEAD', { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+      if (PROTECTED_BRANCHES.has(branch)) {
+        deny(
+          `[GIT BRANCH GOVERNANCE]: Prohibited from modifying data pipeline code (${basename}) directly on protected branch "${branch}".\n` +
+          `You MUST create and switch to a dedicated feature branch first:\n` +
+          `  run_command: git checkout -b feat/<descriptive-slug>\n` +
+          `Always work on isolated branches with Conventional naming.`
+        );
+      }
+    } catch (e) {
+      // Not a git repository or detached HEAD
+    }
+
     const hasPlan =
       fs.existsSync(path.join(cwd, 'PLAN.md')) ||
       fs.existsSync(path.join(cwd, 'docs', 'PLAN.md'));

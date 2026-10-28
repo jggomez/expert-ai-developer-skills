@@ -24,7 +24,7 @@ PLUGINS_CLAUDE_DIR = PLUGINS_DIR / "claude"
 PLUGINS_AGY_DIR = PLUGINS_DIR / "antigravity"
 MARKETPLACE_JSON = WORKSPACE_ROOT / ".claude-plugin" / "marketplace.json"
 
-ORCHESTRATORS = {"senior-dev-orchestrator", "flutter-feature-orchestrator"}
+ORCHESTRATORS = {"senior-dev-orchestrator", "flutter-feature-orchestrator", "python-backend-orchestrator"}
 
 CLAUDE_ORCHESTRATOR_TOOLS = ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "Agent"]
 CLAUDE_WORKER_TOOLS = ["Bash", "Read", "Write", "Edit", "Glob", "Grep"]
@@ -45,6 +45,9 @@ PLUGIN_AGENTS_MAP = {
         "flutter-implementer.md",
         "flutter-reviewer.md",
         "flutter-release-engineer.md",
+    ],
+    "python-backend": [
+        "python-backend-orchestrator.md",
     ],
     "senior-data-engineer": [
         "senior-data-engineer.md",
