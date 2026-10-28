@@ -46,6 +46,7 @@ PLUGIN_BUNDLED_SKILLS = {
     "senior-dev": [
         "senior-dev-orchestrator",
         "product-analyst",
+        "ui-ux-designer",
         "senior-architect-engineering",
         "code-implementer",
         "code-smells-expert",

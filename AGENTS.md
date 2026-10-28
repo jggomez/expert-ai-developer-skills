@@ -17,16 +17,16 @@
 * **Technical Director & Coordinator**: Orchestrator agents (e.g., `senior-dev-orchestrator`, `flutter-feature-orchestrator`) are coordinators and systems directors.
 * **Strict Non-Execution Constraint**: Orchestrators are **STRICTLY PROHIBITED** from directly editing application code, libraries, or tests (`src/`, `lib/`, `tests/`, etc.).
 * **Tool Permissions**: File editing and writing tools (`write_to_file`, `replace_file_content`, `Write`, `Edit`) in an orchestrator session are reserved **exclusively** for governance, planning, design artifacts, and cross-AI LLM Wiki memory: `PLAN.md`, architectural decision records (`ADR-*.md`), `.agents/` rules, markdown documentation in `docs/`, and `context/memory/`.
-* **Mandatory Delegation**: All product requirements analysis, system architecture design, code generation, feature construction, bug fixes, refactoring, test execution, and compliance audits **MUST** be delegated to specialized worker subagents (`product-analyst`, `architect-engineer`, `code-implementer`, `flutter-implementer`, `qa-tester`, `compliance-verifier`).
+* **Mandatory Delegation**: All product requirements analysis, system architecture design, code generation, feature construction, bug fixes, refactoring, test execution, and compliance audits **MUST** be delegated to specialized worker subagents (`product-analyst`, `ui-ux-designer`, `architect-engineer`, `code-implementer`, `flutter-implementer`, `qa-tester`, `compliance-verifier`).
 
 ### 1.3. Graph Engineering State Machine (DAG)
 All multi-agent execution flows follow a deterministic 6-state Directed Acyclic Graph (DAG) state machine with parallel fan-out/fan-in and cross-AI LLM Wiki persistence:
 
 ```mermaid
 flowchart TD
-    STATE0["STATE 0: MEMORY RESTORE & TRIAGE GATE<br/>1. Read context/memory/MEMORY.md<br/>2. Author PLAN.md + Discovery Triage Rubric"] --> STATE1["STATE 1: UPFRONT DISCOVERY (Seq / Parallel)<br/>product-analyst and architect-engineer"]
+    STATE0["STATE 0: MEMORY RESTORE & TRIAGE GATE<br/>1. Read context/memory/MEMORY.md<br/>2. Author PLAN.md + Discovery Triage Rubric"] --> STATE1["STATE 1: UPFRONT DISCOVERY (Seq / Parallel)<br/>product-analyst, ui-ux-designer, architect-engineer"]
     STATE1 --> STATE2["STATE 2: BUILD — PARALLEL FAN-OUT<br/>1..N code-implementer / flutter-implementer<br/>(Mode A: Disjoint Files or Mode B: Git Worktree)"]
-    STATE0 -->|"Both Explicitly Justified SKIP"| STATE2
+    STATE0 -->|"All Explicitly Justified SKIP"| STATE2
     STATE2 --> STATE3_4_QA["STATE 3: QA VERIFICATION<br/>qa-tester (exit code 0 proof)"]
     STATE2 --> STATE3_4_AUDIT["STATE 4: COMPLIANCE AUDIT<br/>compliance-verifier (APPROVED verdict)"]
     STATE3_4_QA -->|"Fail: Max 3 Retries"| STATE2
@@ -39,12 +39,13 @@ flowchart TD
 #### State Transition Definitions:
 1. **STATE 0 — MEMORY RESTORE & DISCOVERY TRIAGE GATE (Mandatory)**:
    - **LLM Wiki Memory Read (`context-restore`)**: Check if `context/memory/MEMORY.md` exists; if so, read it silently (~500 tokens) to restore cross-AI handoff state (left by Claude Code or Antigravity). Read linked topic pages (`context/memory/architecture.md`, `context/memory/conventions.md`, `context/memory/log/YYYY-MM-DD.md`) only on demand.
-   - **Mandatory Discovery & Architecture Triage (`PLAN.md`)**: Author/update `PLAN.md` including a `## Discovery & Architecture Triage` table evaluating both discovery specialists before writing implementation tasks:
+   - **Mandatory Discovery & Architecture Triage (`PLAN.md`)**: Author/update `PLAN.md` including a `## Discovery & Architecture Triage` table evaluating discovery specialists before writing implementation tasks:
      * **`product-analyst`**: **MUST INVOKE** if the request is a new user-facing feature/workflow, has unstated edge cases/permissions/validation rules, or is an open-ended business prompt. *Only skip* for pure technical bugfixes with known root causes, internal refactors with zero behavior change, or when a complete PRD already exists.
+     * **`ui-ux-designer`**: **MUST INVOKE** if the request is a new application from scratch with UI, adds/modifies frontend screens/views/widgets, alters styling/theming/layout/accessibility, or lacks `design.md`. Inspects/creates `design.md`. *Only skip* for pure backend services/APIs, data pipelines, CLI tools, infrastructure, or non-visual bugfixes.
      * **`architect-engineer`**: **MUST INVOKE** if the task creates or modifies **>= 2 files/modules**, changes database schemas/migrations/API contracts, introduces a new design pattern or external dependency, or crosses architectural layers. *Only skip* for single-file localized fixes where the architecture is already established.
 2. **STATE 1 — UPFRONT DISCOVERY EXECUTION (Sequential or Parallel Fan-Out)**:
-   - When triggered by the Triage Gate, invoke `product-analyst` and/or `architect-engineer` **before** delegating to `code-implementer`.
-   - Supports **Parallel Discovery Fan-Out** (`product-analyst` || `architect-engineer`, or 2+ `architect-engineer` instances across distinct subsystems) when scopes are independent, or sequential execution (`product-analyst` -> `architect-engineer`) when architecture depends on product scope disambiguation. Update `PLAN.md` with specifications/ADRs and **Parallel Execution Tracks**.
+   - When triggered by the Triage Gate, invoke `product-analyst`, `ui-ux-designer`, and/or `architect-engineer` **before** delegating to `code-implementer`.
+   - Supports **Parallel Discovery Fan-Out** when scopes are independent, or sequential execution (`product-analyst` -> `ui-ux-designer` -> `architect-engineer`) when architecture depends on product scope and UI system disambiguation. Update `PLAN.md` with specifications, `design.md`, ADRs and **Parallel Execution Tracks**.
 3. **STATE 2 — BUILD: PARALLEL FAN-OUT & WORKSPACE ISOLATION (Mandatory)**:
    - Dispatch **1 to N `code-implementer` (or `flutter-implementer`) subagents in parallel**:
      * **Mode A — Disjoint File Partitioning (`Workspace: 'inherit'`) [DEFAULT]**: Used when parallel tracks modify non-overlapping files/directories. Each subagent receives an explicit `Owned Files` list and is forbidden from editing outside its partition. Zero `git merge` overhead upon Fan-In.
@@ -146,6 +147,7 @@ Hook scripts in `hooks/*.js` are engineered to serve both hosts seamlessly:
 | `senior-dev-orchestrator` | Orchestrator | Technical direction, task decomposition, pipeline management | Orchestrator Tools (`PLAN.md`, docs only) |
 | `flutter-feature-orchestrator` | Orchestrator | Flutter mobile/web pipeline coordination, architecture reviews | Orchestrator Tools (`PLAN.md`, docs only) |
 | `product-analyst` | Discovery | Requirements gathering, edge-case identification, PRD drafting | Worker Tools |
+| `ui-ux-designer` | Discovery | UI/UX design systems, responsive wireframes, design.md authoring | Worker Tools |
 | `architect-engineer` | Discovery | High-level system design, database schemas, ADR authoring | Worker Tools |
 | `flutter-architect` | Discovery | Flutter state management, widget hierarchy, layer boundaries | Worker Tools |
 | `code-implementer` | Implementation | Production code authoring, bug fixes, refactoring in Python/Node/SQL | Full Worker Tools |

@@ -33,6 +33,7 @@ PLUGIN_AGENTS_MAP = {
     "senior-dev": [
         "senior-dev-orchestrator.md",
         "product-analyst.md",
+        "ui-ux-designer.md",
         "architect-engineer.md",
         "code-implementer.md",
         "qa-tester.md",

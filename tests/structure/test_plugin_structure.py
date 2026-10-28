@@ -679,6 +679,131 @@ def test_ecosystem_plugins_llm_wiki_and_parallel_upgrades(workspace_root):
             )
 
 
+def test_ui_ux_designer_agent_and_skill_parity(workspace_root):
+    """Verifies that ui-ux-designer skill and agent exist with complete parity across ecosystems:
+    1. skills/ui-ux-designer/SKILL.md exists and contains required sections.
+    2. skills/ui-ux-designer/references/design-md-template.md exists.
+    3. plugins/antigravity/senior-dev/agents/ui-ux-designer.md exists with frontmatter
+       name: ui-ux-designer, commandExecutionPolicy: auto, model: inherit,
+       Antigravity tools (run_command, view_file, write_to_file, replace_file_content,
+       list_dir, grep_search, find_by_name, ask_question), and references design.md.
+    4. plugins/claude/senior-dev/agents/ui-ux-designer.md exists with pure Claude tools
+       (Bash, Read, Write, Edit, Glob, Grep) and zero Antigravity tool bleed.
+    5. In both ecosystems (antigravity, claude),
+       plugins/<ecosystem>/senior-dev/skills/ui-ux-designer/SKILL.md exists.
+    6. senior-dev-orchestrator.md references ui-ux-designer and design.md.
+    """
+    # 1. Canonical skill and required sections
+    skill_path = os.path.join(workspace_root, "skills", "ui-ux-designer", "SKILL.md")
+    assert os.path.isfile(skill_path), f"Missing canonical skill {skill_path}"
+    with open(skill_path, "r", encoding="utf-8") as f:
+        skill_content = f.read()
+
+    required_sections = (
+        "## Overview",
+        "## When to Use",
+        "## Process: The Standard `design.md` Lifecycle",
+        "## Multi-Platform Guidelines",
+        "## Usage & Tooling Integration",
+        "## Hand-off Protocol",
+        "## Anti-Patterns & Red Flags",
+        "## Verification & Quality Gates",
+    )
+    for section in required_sections:
+        assert section in skill_content, f"skills/ui-ux-designer/SKILL.md missing section '{section}'"
+
+    # 2. Design template reference
+    template_path = os.path.join(
+        workspace_root, "skills", "ui-ux-designer", "references", "design-md-template.md"
+    )
+    assert os.path.isfile(template_path), f"Missing design template {template_path}"
+
+    # 3. Antigravity agent definition
+    agy_agent_path = os.path.join(
+        workspace_root, "plugins", "antigravity", "senior-dev", "agents", "ui-ux-designer.md"
+    )
+    assert os.path.isfile(agy_agent_path), f"Missing {agy_agent_path}"
+    with open(agy_agent_path, "r", encoding="utf-8") as f:
+        agy_content = f.read()
+
+    match_agy = re.search(r"^---\s*\n(.*?)\n---\s*\n", agy_content, re.DOTALL)
+    assert match_agy, f"{agy_agent_path} missing YAML frontmatter"
+    agy_fm = yaml.safe_load(match_agy.group(1))
+
+    assert agy_fm.get("name") == "ui-ux-designer", f"Expected name 'ui-ux-designer', got {agy_fm.get('name')}"
+    assert agy_fm.get("commandExecutionPolicy") == "auto", (
+        f"Expected commandExecutionPolicy 'auto', got {agy_fm.get('commandExecutionPolicy')}"
+    )
+    assert agy_fm.get("model") == "inherit", f"Expected model 'inherit', got {agy_fm.get('model')}"
+
+    expected_agy_tools = [
+        "run_command",
+        "view_file",
+        "write_to_file",
+        "replace_file_content",
+        "list_dir",
+        "grep_search",
+        "find_by_name",
+        "ask_question",
+    ]
+    agy_tools = agy_fm.get("tools", [])
+    for tool in expected_agy_tools:
+        assert tool in agy_tools, f"Antigravity agent ui-ux-designer missing tool '{tool}'"
+
+    assert "design.md" in agy_content, f"{agy_agent_path} must reference 'design.md'"
+
+    # 4. Claude Code agent definition and zero Antigravity tool bleed
+    claude_agent_path = os.path.join(
+        workspace_root, "plugins", "claude", "senior-dev", "agents", "ui-ux-designer.md"
+    )
+    assert os.path.isfile(claude_agent_path), f"Missing {claude_agent_path}"
+    with open(claude_agent_path, "r", encoding="utf-8") as f:
+        claude_content = f.read()
+
+    match_claude = re.search(r"^---\s*\n(.*?)\n---\s*\n", claude_content, re.DOTALL)
+    assert match_claude, f"{claude_agent_path} missing YAML frontmatter"
+    claude_fm = yaml.safe_load(match_claude.group(1))
+
+    valid_claude_tools = {"Bash", "Read", "Write", "Edit", "Glob", "Grep", "Agent", "WebSearch", "WebFetch"}
+    antigravity_only_tools = {
+        "run_command",
+        "view_file",
+        "write_to_file",
+        "replace_file_content",
+        "invoke_subagent",
+        "manage_subagents",
+    }
+    claude_tools = claude_fm.get("tools", [])
+    assert claude_tools, f"{claude_agent_path} must declare tools"
+    for tool in claude_tools:
+        assert tool in valid_claude_tools, f"Invalid Claude tool '{tool}' in {claude_agent_path}"
+        assert tool not in antigravity_only_tools, f"Leaked Antigravity tool '{tool}' in {claude_agent_path}"
+
+    for forbidden in antigravity_only_tools:
+        assert forbidden not in claude_content, (
+            f"{claude_agent_path} body leaked Antigravity tool '{forbidden}'"
+        )
+
+    # 5. Bundled skills in both ecosystems
+    for ecosystem in ("antigravity", "claude"):
+        bundled_skill_path = os.path.join(
+            workspace_root, "plugins", ecosystem, "senior-dev", "skills", "ui-ux-designer", "SKILL.md"
+        )
+        assert os.path.isfile(bundled_skill_path), f"Missing {bundled_skill_path}"
+
+    # 6. senior-dev-orchestrator.md references ui-ux-designer and design.md
+    for ecosystem in ("antigravity", "claude"):
+        orch_path = os.path.join(
+            workspace_root, "plugins", ecosystem, "senior-dev", "agents", "senior-dev-orchestrator.md"
+        )
+        assert os.path.isfile(orch_path), f"Missing {orch_path}"
+        with open(orch_path, "r", encoding="utf-8") as f:
+            orch_text = f.read()
+        assert "ui-ux-designer" in orch_text, f"{orch_path} missing reference to 'ui-ux-designer'"
+        assert "design.md" in orch_text, f"{orch_path} missing reference to 'design.md'"
+
+
+
 
 
 

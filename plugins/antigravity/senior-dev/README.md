@@ -3,12 +3,12 @@
 [![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
 [![Plugin](https://img.shields.io/badge/Plugin-senior--dev-green?style=flat-square)](.)
 
-The `senior-dev` plugin packages the repository's **Graph Engineering** subagent topology — a Senior Developer Orchestrator plus five specialized subagents (Product Analyst, Architect, Code Implementer, QA Tester, Compliance Verifier) — as a self-contained plugin for **Google Antigravity**.
+The `senior-dev` plugin packages the repository's **Graph Engineering** subagent topology — a Senior Developer Orchestrator plus six specialized subagents (Product Analyst, UI/UX Designer, Architect, Code Implementer, QA Tester, Compliance Verifier) — as a self-contained plugin for **Google Antigravity**.
 
 Key architectural capabilities:
 - **LLM Wiki Memory (`context/memory/`)**: Cross-AI persistent memory shared seamlessly between Google Antigravity and Claude Code. At **State 0**, the orchestrator silently restores `context/memory/MEMORY.md` (~500 tokens) and reads linked topic pages (`architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) on demand. At **State 5**, completed milestones update `context/memory/` via `context-capture`.
-- **Mandatory Discovery Triage Gate**: Before writing implementation tasks for `code-implementer`, the orchestrator evaluates a deterministic **Discovery Triage Rubric** in `PLAN.md` (`## Discovery & Architecture Triage`) to determine when `product-analyst` and/or `architect-engineer` **MUST** be invoked upfront.
-- **Parallel Fan-Out / Fan-In Execution & Workspace Isolation**: Supports concurrent subagent execution across discovery (`product-analyst` || `architect-engineer`), implementation (1 to N `code-implementer` instances using **Mode A: Disjoint File Partitioning** or **Mode B: Git Worktree Isolation**), and verification (`qa-tester` || `compliance-verifier`).
+- **Mandatory Discovery Triage Gate**: Before writing implementation tasks for `code-implementer`, the orchestrator evaluates a deterministic **Discovery Triage Rubric** in `PLAN.md` (`## Discovery & Architecture Triage`) to determine when `product-analyst`, `ui-ux-designer` (for greenfield UI, screens, or `design.md`), and/or `architect-engineer` **MUST** be invoked upfront.
+- **Parallel Fan-Out / Fan-In Execution & Workspace Isolation**: Supports concurrent subagent execution across discovery (`product-analyst` || `ui-ux-designer` || `architect-engineer`), implementation (1 to N `code-implementer` instances using **Mode A: Disjoint File Partitioning** or **Mode B: Git Worktree Isolation**), and verification (`qa-tester` || `compliance-verifier`).
 
 - **Google Antigravity**: Install via `agy plugin install ./plugins/antigravity/senior-dev`. Subagents in `agents/` declare native Antigravity tools (`run_command`, `write_to_file`, `replace_file_content`, `view_file`, `invoke_subagent`, `manage_subagents`, `send_message`) with `commandExecutionPolicy: auto`.
 
@@ -30,18 +30,20 @@ plugins/antigravity/senior-dev/
 ├── hooks/
 │   ├── orchestrator-role-gate.js # PreToolUse gate preventing orchestrator from editing code
 │   └── universal-quality-gate.js # Stop hook executing test suites and linters
-├── agents/                 # 6 bundled subagents
+├── agents/                 # 7 bundled subagents
 │   ├── senior-dev-orchestrator.md  # Main orchestrator; governs DAG, Triage Gate & PLAN.md
 │   ├── product-analyst.md          # Requirements & PRDs
+│   ├── ui-ux-designer.md           # UI/UX design systems & design.md
 │   ├── architect-engineer.md       # Architecture & ADRs
 │   ├── code-implementer.md         # Strict TDD implementation (parallel fan-out capable)
 │   ├── qa-tester.md                # E2E / integration testing (parallel fan-out capable)
 │   └── compliance-verifier.md      # Final NFR / security audit (parallel with qa-tester)
 ├── rules/                  # Senior dev 9-stage cycle & tool execution rules
 │   └── senior-dev-rules.md
-└── skills/                 # Physical copy of the 11 skills these agents depend on
+└── skills/                 # Physical copy of the 12 skills these agents depend on
     ├── senior-dev-orchestrator/
     ├── product-analyst/
+    ├── ui-ux-designer/
     ├── senior-architect-engineering/
     ├── code-implementer/
     ├── code-smells-expert/
@@ -118,21 +120,22 @@ The subagents and orchestrator execute along the standardized 9-stage engineerin
 
 ---
 
-## 6. Bundled Skills (11 Packaged Modules)
+## 6. Bundled Skills (12 Packaged Modules)
 
-On loading the plugin, the following 11 skills are automatically loaded as the agents' skill dependencies:
+On loading the plugin, the following 12 skills are automatically loaded as the agents' skill dependencies:
 
 1. **`senior-dev-orchestrator`**: Phase breakdown, DAG state machine, Mandatory Discovery Triage Gate, Parallel Fan-Out/Fan-In orchestration, and LLM Wiki memory lifecycle.
 2. **`product-analyst`**: Requirement discovery workflow and PRD template.
-3. **`senior-architect-engineering`**: SEI quality attribute scenarios, tactics, ATAM, ADR template.
-4. **`code-implementer`**: Red-Green-Refactor TDD workflow.
-5. **`code-smells-expert`**: AST-based code smell detection.
-6. **`refactoring-code-expert`**: Safe, test-guarded refactoring steps.
-7. **`qa-tester`**: E2E/integration test-plan construction and RTM template.
-8. **`compliance-verifier`**: Final NFR/security/coverage audit and verdict format.
-9. **`context-capture`**: Cross-AI LLM Wiki memory persistence (`context/memory/MEMORY.md`, `architecture.md`, `conventions.md`, and `log/YYYY-MM-DD.md`) at milestone completion (`State 5`).
-10. **`context-restore`**: Cross-AI LLM Wiki memory restoration (`context/memory/MEMORY.md` and on-demand topic pages) at task initialization (`State 0`).
-11. **`loop-engineering`**: Parallel Fan-Out/Fan-In execution, Disjoint File Partitioning vs. Git Worktree isolation, and autonomous verification loops.
+3. **`ui-ux-designer`**: Visual design systems, design tokens, component interaction states, responsive layouts, accessibility (WCAG AA/AAA), and standard `design.md` artifact generation.
+4. **`senior-architect-engineering`**: SEI quality attribute scenarios, tactics, ATAM, ADR template.
+5. **`code-implementer`**: Red-Green-Refactor TDD workflow.
+6. **`code-smells-expert`**: AST-based code smell detection.
+7. **`refactoring-code-expert`**: Safe, test-guarded refactoring steps.
+8. **`qa-tester`**: E2E/integration test-plan construction and RTM template.
+9. **`compliance-verifier`**: Final NFR/security/coverage audit and verdict format.
+10. **`context-capture`**: Cross-AI LLM Wiki memory persistence (`context/memory/MEMORY.md`, `architecture.md`, `conventions.md`, and `log/YYYY-MM-DD.md`) at milestone completion (`State 5`).
+11. **`context-restore`**: Cross-AI LLM Wiki memory restoration (`context/memory/MEMORY.md` and on-demand topic pages) at task initialization (`State 0`).
+12. **`loop-engineering`**: Parallel Fan-Out/Fan-In execution, Disjoint File Partitioning vs. Git Worktree isolation, and autonomous verification loops.
 
 ---
 

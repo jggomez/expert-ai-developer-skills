@@ -18,8 +18,8 @@ All tasks handled by the Senior Dev Orchestrator follow an explicit 6-state Dire
         │
         ▼
 [STATE 1: UPFRONT DISCOVERY EXECUTION (Sequential or Parallel Fan-Out)]
-  ├── Triggered by Rubric: invoke_subagent(product-analyst || architect-engineer)
-  └── Update `PLAN.md` with PRD/ADR & Parallel Execution Tracks
+  ├── Triggered by Rubric: invoke_subagent(product-analyst || ui-ux-designer || architect-engineer)
+  └── Update `PLAN.md` with PRD/design.md/ADR & Parallel Execution Tracks
         │
         ▼
 [STATE 2: IMPLEMENTATION — PARALLEL FAN-OUT & WORKSPACE ISOLATION (MANDATORY)]
@@ -45,6 +45,7 @@ All tasks handled by the Senior Dev Orchestrator follow an explicit 6-state Dire
   2. Author/update `PLAN.md` with a `## Discovery & Architecture Triage` table before delegating any implementation work.
 - **Mandatory Discovery Triage Gate**:
   - **`product-analyst`**: **MUST INVOKE** if the request is a new user-facing feature/workflow, has unstated edge cases/permissions/validation rules, or is an open-ended business prompt. *Only skip* for pure technical bugfixes with known root causes, internal refactors with zero behavior change, or when a complete PRD already exists.
+  - **`ui-ux-designer`**: **MUST INVOKE** if the request is a new application from scratch with UI (greenfield web or mobile), adds/modifies frontend screens, views, widgets, or components, alters styling/theming/layout/accessibility, or if the project has UI but lacks a `design.md` artifact. Inspect workspace for `design.md`: if absent, propose and generate it; if present, ingest tokens and align proposed UI decisions. *Only skip* for pure backend services/APIs, data pipelines/SQL, CLI tools, infrastructure, or non-visual internal bugfixes.
   - **`architect-engineer`**: **MUST INVOKE** if the task creates or modifies **>= 2 files/modules**, changes database schemas/migrations/API contracts, introduces a new design pattern or external dependency, or crosses architectural layers. *Only skip* for single-file localized fixes where the architecture is already established.
 - **Parallel Fan-Out & Workspace Isolation (`State 2`)**:
   - **Mode A — Disjoint File Partitioning (`Workspace: 'inherit'`) [DEFAULT]**: Parallel `code-implementer` instances are assigned strictly non-overlapping `Owned Files` lists. Zero `git merge` overhead upon Fan-In.
