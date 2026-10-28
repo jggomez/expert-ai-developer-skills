@@ -28,6 +28,7 @@ ALLOWED_FILES = {
     "PLAN.md",
     "README.md",
     "skills/README.md",
+    "plugins/README.md",
     ".claude-plugin/marketplace.json",
     "scripts/sync_plugin_skills.py",
     "scripts/sync_agents.py",
