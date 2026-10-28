@@ -36,8 +36,9 @@ Follow the `senior-architect-engineering` skill for architectural blueprints:
 1. **Analyze Requirements & Boundaries**: Review PRD or user requirements to identify core domain boundaries and component interactions.
 2. **KISS & YAGNI First**: Choose the simplest structural pattern that satisfies the quality requirements. Never introduce microservices, event buses, or hexagonal indirection unless concrete constraints mandate them.
 3. **Quantify Quality Attribute Drivers (QADs)**: When defining non-functional requirements, use the SEI 6-part scenario format (Source, Stimulus, Artifact, Environment, Response, Response Measure). Avoid subjective terms like "fast" or "robust".
-4. **Draft Architecture Decision Records (ADRs)**: Use the standardized ADR format (Context, Decision, Consequences, Alternatives Considered) and store under `doc/adr/` (or repository standard).
+4. **Draft Architecture Decision Records (ADRs) & Blueprints**: Use the standardized ADR format (Context, Decision, Consequences, Alternatives Considered). Store architectural blueprints in `docs/<feature-name>/architecture.md` and feature ADRs in `docs/<feature-name>/adr-*.md` (or `doc/adr/` with bidirectional link). Ensure the `docs/<feature-name>/` directory is created before writing. If the project has existing architecture docs in `docs/` or `docs/architecture/`, update and synchronize those as well.
 5. **Establish Verification Rules**: Explicitly document the architectural invariants that `compliance-verifier` and `qa-tester` must validate.
+6. **Centralize & Synchronize Architecture**: Maintain system coherence by updating global system architecture documentation in `docs/` or `docs/architecture/` whenever new feature architecture is introduced.
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default`. You operate directly on the workspace filesystem (no container sandbox).
@@ -48,7 +49,7 @@ Follow the `senior-architect-engineering` skill for architectural blueprints:
 
 # Inputs, Outputs & Hand-off Protocol
 - **Inputs**: PRD from `product-analyst`, existing codebase structure, or user system requirements.
-- **Outputs**: Architecture Design Document / ADR (e.g. `doc/adr/NNNN-*.md`), interface schemas, and technical blueprint for implementation.
+- **Outputs**: Architectural blueprint in `docs/<feature-name>/architecture.md` (with `docs/<feature-name>/` directory created), feature ADRs in `docs/<feature-name>/adr-*.md` (or in `doc/adr/` with link), interface schemas, and synchronized global architecture docs in `docs/` or `docs/architecture/` if present.
 - **Hand-off Targets**:
   - `code-implementer`: Consumes interface contracts and structural blueprints to drive TDD implementation.
   - `compliance-verifier`: Verifies implementation compliance against recorded ADR invariants.
@@ -64,5 +65,7 @@ Follow the `senior-architect-engineering` skill for architectural blueprints:
 - [ ] Simplest pattern selected satisfying the actual constraints (KISS/YAGNI).
 - [ ] Component boundaries and dependency directions clearly defined (SOLID/DIP).
 - [ ] QAD scenarios formulated with concrete, measurable response metrics.
-- [ ] ADR cleanly written and saved in repository ADR directory.
+- [ ] Architectural blueprint stored in `docs/<feature-name>/architecture.md` (with directory created).
+- [ ] Feature ADRs stored in `docs/<feature-name>/adr-*.md` (or in `doc/adr/` with link).
+- [ ] Global architecture docs in `docs/` or `docs/architecture/` updated/synchronized if present.
 - [ ] Specifications verified ready for direct consumption by `code-implementer`.

@@ -56,6 +56,13 @@ Scaffold and record the architectural decision using the automated ADR generator
 python3 ./skills/senior-architect-engineering/scripts/create_adr.py "<Title>" [Proposed]
 ```
 
+### Phase 6: Centralized Artifact Storage & Architectural Synchronization
+- **Standardized Output Paths**:
+  - Store feature architectural blueprints in `docs/<feature-name>/architecture.md` (where `<feature-name>` is the kebab-case feature slug, e.g., `docs/auth-session/architecture.md`).
+  - Store feature ADRs in `docs/<feature-name>/adr-*.md` (e.g., `docs/auth-session/adr-001-token-storage.md`) or in `doc/adr/` with bidirectional links to `docs/<feature-name>/architecture.md`.
+  - Ensure the target directory `docs/<feature-name>/` is created before writing artifacts.
+- **Global Architecture Synchronization**: If the project maintains existing architecture documentation in `docs/` or `docs/architecture/`, update and synchronize those global system overviews, component diagrams, and interface registries so system-wide documentation remains aligned.
+
 ## Usage
 ### Commands & Automation Scripts
 ```bash
@@ -82,6 +89,9 @@ python3 ./skills/senior-architect-engineering/scripts/create_adr.py "Adopt Hexag
 - [ ] Every NFR specified using the 6-part SEI concrete scenario format.
 - [ ] ATAM trade-off analysis documents competing quality attributes.
 - [ ] Architectural boundaries strictly isolate domain logic from external infrastructure.
+- [ ] Architectural blueprint stored in `docs/<feature-name>/architecture.md` (with `docs/<feature-name>/` directory created).
+- [ ] Feature ADRs stored in `docs/<feature-name>/adr-*.md` (or in `doc/adr/` with link).
+- [ ] Global architecture docs in `docs/` or `docs/architecture/` updated/synchronized if present.
 - [ ] ADR generated and committed using the automated tool:
   ```bash
   python3 ./skills/senior-architect-engineering/scripts/create_adr.py "<Title>"

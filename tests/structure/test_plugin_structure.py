@@ -902,6 +902,49 @@ def test_ecosystem_wide_git_branch_governance_and_scope_drift(workspace_root):
     assert "design.md" in skill_text, f"{flutter_skill} missing 'design.md'"
 
 
+def test_track17_feature_artifacts_and_user_alignment_gate(workspace_root):
+    """Verifies Track 17:
+    1. Feature artifacts centralization in docs/<feature-name>/ (prd.md, design.md, architecture.md).
+    2. Interactive User Alignment Gate (State 1 -> State 2 transition with ask_question).
+    3. Reinforced Parallel Collision Prevention Analysis & Scoped Test Isolation."""
+    # 1. Check Discovery agents in both ecosystems
+    for ecosystem in ("antigravity", "claude"):
+        pa_path = os.path.join(workspace_root, "plugins", ecosystem, "senior-dev", "agents", "product-analyst.md")
+        with open(pa_path, "r", encoding="utf-8") as f:
+            pa_text = f.read()
+        assert "docs/<feature-name>/prd.md" in pa_text, f"{pa_path} missing docs/<feature-name>/prd.md"
+
+        ui_path = os.path.join(workspace_root, "plugins", ecosystem, "senior-dev", "agents", "ui-ux-designer.md")
+        with open(ui_path, "r", encoding="utf-8") as f:
+            ui_text = f.read()
+        assert "docs/<feature-name>/design.md" in ui_text, f"{ui_path} missing docs/<feature-name>/design.md"
+
+        arch_path = os.path.join(workspace_root, "plugins", ecosystem, "senior-dev", "agents", "architect-engineer.md")
+        with open(arch_path, "r", encoding="utf-8") as f:
+            arch_text = f.read()
+        assert "docs/<feature-name>/architecture.md" in arch_text, f"{arch_path} missing docs/<feature-name>/architecture.md"
+
+    # 2. Check Orchestrators for User Alignment Gate and Collision Analysis
+    for ecosystem in ("antigravity", "claude"):
+        for orch_plugin, orch_name in (("senior-dev", "senior-dev-orchestrator.md"), ("senior-dev-flutter", "flutter-feature-orchestrator.md")):
+            orch_path = os.path.join(workspace_root, "plugins", ecosystem, orch_plugin, "agents", orch_name)
+            with open(orch_path, "r", encoding="utf-8") as f:
+                orch_text = f.read()
+            assert "Interactive User Alignment Gate" in orch_text or "Alignment Gate" in orch_text, f"{orch_path} missing Alignment Gate"
+            assert "Collision" in orch_text, f"{orch_path} missing Collision Analysis"
+            assert "docs/<feature-name>/" in orch_text, f"{orch_path} missing docs/<feature-name>/ convention"
+
+    # 3. Check AGENTS.md and loop-engineering-workflow.md
+    for governance_file in ("AGENTS.md", os.path.join(".agents", "rules", "loop-engineering-workflow.md")):
+        gov_path = os.path.join(workspace_root, governance_file)
+        with open(gov_path, "r", encoding="utf-8") as f:
+            gov_text = f.read()
+        assert "docs/<feature-name>/" in gov_text, f"{gov_path} missing docs/<feature-name>/"
+        assert "Alignment Gate" in gov_text or "INTERACTIVE USER ALIGNMENT GATE" in gov_text, f"{gov_path} missing Alignment Gate"
+        assert "Collision" in gov_text, f"{gov_path} missing Collision Analysis"
+
+
+
 
 
 

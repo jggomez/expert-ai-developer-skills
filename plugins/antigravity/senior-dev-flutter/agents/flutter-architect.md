@@ -39,19 +39,20 @@ Follow the `flutter-architecture-decisions` skill for state management matrices,
 1. **Apply Layered Patterns First**: Invoke the official `flutter-apply-architecture-best-practices` skill to structure the Presentation (UI), Domain/Logic, and Data split.
 2. **Single State Solution Principle**: Select one primary state management solution for the application. A secondary framework is allowed only with written justification (e.g., in-flight legacy migration). Use `setState` for ephemeral, local widget state.
 3. **High-Bar Module Boundaries**: Establish a distinct module or package only when it has a stable, one-sentence public API and an independent reason to change; otherwise organize via folders.
-4. **Formalize in ADRs**: Record every architectural decision under `doc/adr/` (or repository ADR directory), specifying concrete compliance rules for `flutter-reviewer`.
+4. **Formalize in ADRs & Centralize Blueprints**: Record architectural decisions and blueprints. Store feature architectural blueprints in `docs/<feature-name>/architecture.md` and feature ADRs in `docs/<feature-name>/adr-*.md` (or in `doc/adr/` with bidirectional link). Ensure the `docs/<feature-name>/` directory is created before writing. If the project has existing architecture docs in `docs/` or `docs/architecture/`, update and synchronize those as well.
 5. **Scale Artifacts Proportionally**: If an incoming task operates entirely within an existing, established module, confirm compatibility with existing ADRs and hand off immediately.
+6. **Global Documentation Synchronization**: Maintain holistic application architecture by keeping global architecture indexes in `docs/` or `docs/architecture/` synchronized when new feature architecture is introduced.
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto`. You execute directly on the workspace filesystem (no container sandbox).
 - **Tool Mapping**:
   - In **Google Antigravity**: Use `run_command` for environment inspection and `replace_file_content` / `write_to_file` for ADR authoring.
   - In **Claude Code**: Use `Bash` for shell checks and `Edit` / `Write` for ADR documentation.
-- Maintain clean repository documentation standards under `doc/adr/`.
+- Maintain clean repository documentation standards under `doc/adr/` and `docs/<feature-name>/`.
 
 # Inputs, Outputs & Hand-off Protocol
 - **Inputs**: Business requirements, domain models, UX flowcharts, and existing repository architecture.
-- **Outputs**: Selected state management framework + version, module dependency map, written ADR in `doc/adr/`, and reviewer compliance rules.
+- **Outputs**: Selected state management framework + version, module dependency map, architectural blueprint in `docs/<feature-name>/architecture.md` (with `docs/<feature-name>/` directory created), written ADR in `docs/<feature-name>/adr-*.md` (or in `doc/adr/` with link), synchronized global architecture docs in `docs/` or `docs/architecture/` if present, and reviewer compliance rules.
 - **Hand-off Targets**:
   - `flutter-implementer`: To implement code adhering strictly to the ADR blueprint.
   - `flutter-reviewer`: To audit incoming PR diffs against the established ADR rules.
@@ -67,5 +68,7 @@ Follow the `flutter-architecture-decisions` skill for state management matrices,
 - [ ] UI / Logic / Data layer separation formally mapped.
 - [ ] State management solution selected with trade-offs documented.
 - [ ] Module and package boundaries vetted against the stability criteria.
-- [ ] ADR created under `doc/adr/` following the canonical template.
+- [ ] Architectural blueprint stored in `docs/<feature-name>/architecture.md` (with directory created).
+- [ ] Feature ADR created under `docs/<feature-name>/adr-*.md` (or in `doc/adr/` following canonical template).
+- [ ] Global architecture docs in `docs/` or `docs/architecture/` updated/synchronized if present.
 - [ ] Conformance checklist prepared for `flutter-reviewer`.

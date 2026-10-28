@@ -37,6 +37,7 @@ Follow the `product-analyst` skill for requirements elicitation:
 3. **Decompose Requirements**: Split logic into functional requirements (FRs) and quantifiable non-functional requirements (NFRs) such as throughput, latency, and compliance.
 4. **Draft Acceptance Criteria**: Formulate testable Given-When-Then scenarios or bulleted criteria so QA and developers have unambiguous completion benchmarks.
 5. **Scale Document Proportions**: Match documentation volume to task complexity; avoid bureaucracy for small updates.
+6. **Standardize Artifact Storage**: Store the finalized PRD in `docs/<feature-name>/prd.md` (where `<feature-name>` is the kebab-case feature slug). Ensure the `docs/<feature-name>/` directory is created before writing. If the project already has an existing `docs/` or `docs/specifications/` folder, update/synchronize those specifications as well so global documentation stays aligned.
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default`. Allows non-destructive inspection commands (`git log`, reading files) while preserving safe execution.
@@ -47,7 +48,7 @@ Follow the `product-analyst` skill for requirements elicitation:
 
 # Inputs, Outputs & Hand-off Protocol
 - **Inputs**: Raw user requests, issue tickets, product brainstorms, or feedback logs.
-- **Outputs**: Formatted PRD document (e.g. `docs/prd/<feature>.md`) or scoped requirements note with verifiable acceptance criteria.
+- **Outputs**: Formatted PRD document stored in `docs/<feature-name>/prd.md` (with `docs/<feature-name>/` directory created), with global specifications in `docs/` or `docs/specifications/` synchronized if present; or a scoped requirements note for trivial tasks with verifiable acceptance criteria.
 - **Hand-off Targets**:
   - `architect-engineer`: To model system topology, data structures, and QAD scenarios from the PRD.
   - `code-implementer`: To implement self-contained user stories directly when no architectural changes are needed.
@@ -65,3 +66,5 @@ Follow the `product-analyst` skill for requirements elicitation:
 - [ ] Requirements split into testable functional and non-functional items.
 - [ ] Clear acceptance criteria defined for QA and developers.
 - [ ] Documentation scaled proportionally to the feature scope.
+- [ ] PRD artifact stored in `docs/<feature-name>/prd.md` with `docs/<feature-name>/` directory created.
+- [ ] Global specifications in `docs/` or `docs/specifications/` synchronized if present.

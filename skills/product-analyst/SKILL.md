@@ -36,8 +36,13 @@ If critical information is missing or ambiguous:
 - Formulate targeted, option-based clarifying questions with concrete trade-offs.
 - Avoid open-ended queries; present concrete technical options (e.g., *"Should authentication support OAuth2 only, or username/password as well?"*).
 
-### Phase 3: Deliverable Generation
+### Phase 3: Deliverable Generation & Centralized Artifact Storage
 Scale the deliverable to the request: a small change needs a concise requirements note (goals, scope, acceptance criteria); new features or system-level modules require a full PRD.
+
+#### Standardized Artifact Output Path
+- **Feature PRD Storage**: Store the finalized PRD in `docs/<feature-name>/prd.md` (where `<feature-name>` is the kebab-case feature slug, e.g., `docs/auth-session/prd.md`).
+- **Directory Creation**: Ensure the target directory `docs/<feature-name>/` is created before writing the artifact.
+- **Global Specification Synchronization**: If the project already has an existing `docs/` or `docs/specifications/` directory, update and synchronize those specification indexes or requirements documents to reference the new feature PRD so global documentation stays coherent and aligned.
 
 #### Product Requirements Document (PRD) Template
 ```markdown
@@ -95,3 +100,5 @@ Brief high-level description of the feature or product vision.
 - [ ] Functional Requirements assigned unique IDs (`FR-01`, `FR-02`) and priorities (`P0`, `P1`, `P2`).
 - [ ] Non-Functional Requirements (NFRs) specified with measurable metrics.
 - [ ] Acceptance criteria verifiable and ready for QA test mapping.
+- [ ] PRD stored in standardized location: `docs/<feature-name>/prd.md` (with `docs/<feature-name>/` directory created).
+- [ ] Global specifications in `docs/` or `docs/specifications/` synchronized if present.

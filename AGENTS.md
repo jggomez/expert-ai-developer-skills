@@ -24,9 +24,10 @@ All multi-agent execution flows follow a deterministic 6-state Directed Acyclic 
 
 ```mermaid
 flowchart TD
-    STATE0["STATE 0: MEMORY RESTORE & TRIAGE GATE<br/>1. Read context/memory/MEMORY.md<br/>2. Author PLAN.md + Discovery Triage Rubric"] --> STATE1["STATE 1: UPFRONT DISCOVERY (Seq / Parallel)<br/>product-analyst, ui-ux-designer, architect-engineer"]
-    STATE1 --> STATE2["STATE 2: BUILD — PARALLEL FAN-OUT<br/>1..N code-implementer / flutter-implementer<br/>(Mode A: Disjoint Files or Mode B: Git Worktree)"]
-    STATE0 -->|"All Explicitly Justified SKIP"| STATE2
+    STATE0["STATE 0: MEMORY RESTORE & TRIAGE GATE<br/>1. Read context/memory/MEMORY.md<br/>2. Derive slug & create docs/&lt;feature-name&gt;/<br/>3. Author PLAN.md + Discovery Triage Rubric"] --> STATE1["STATE 1: UPFRONT DISCOVERY (Seq / Parallel)<br/>product-analyst, ui-ux-designer, architect-engineer"]
+    STATE1 --> GATE["INTERACTIVE USER ALIGNMENT GATE<br/>Medium/Complex: ask_question approval<br/>Low/Simple: Auto-proceed"]
+    STATE0 -->|"All Explicitly Justified SKIP"| GATE
+    GATE --> STATE2["STATE 2: BUILD — PARALLEL FAN-OUT<br/>1..N code-implementer / flutter-implementer<br/>(Mode A: Disjoint Files or Mode B: Git Worktree)"]
     STATE2 --> STATE3_4_QA["STATE 3: QA VERIFICATION<br/>qa-tester (exit code 0 proof)"]
     STATE2 --> STATE3_4_AUDIT["STATE 4: COMPLIANCE AUDIT<br/>compliance-verifier (APPROVED verdict)"]
     STATE3_4_QA -->|"Fail: Max 3 Retries"| STATE2
@@ -38,6 +39,7 @@ flowchart TD
 
 #### State Transition Definitions:
 1. **STATE 0 — MEMORY RESTORE & DISCOVERY TRIAGE GATE (Mandatory)**:
+   - **Feature Directory Creation**: Detect incoming feature requests and derive the `<feature-name>` slug (e.g. `user-auth`, `order-checkout`). Ensure `docs/<feature-name>/` directory is created (creating `docs/` if not present) where all discovery artifacts (`prd.md`, `design.md`, `architecture.md`, `adr-*.md`) will be stored. If the workspace already has `docs/specifications/` or legacy docs, instruct specialists to inspect and synchronize them.
    - **LLM Wiki Memory Read (`context-restore`)**: Check if `context/memory/MEMORY.md` exists; if so, read it silently (~500 tokens) to restore cross-AI handoff state (left by Claude Code or Antigravity). Read linked topic pages (`context/memory/architecture.md`, `context/memory/conventions.md`, `context/memory/log/YYYY-MM-DD.md`) only on demand.
    - **Mandatory Discovery & Architecture Triage (`PLAN.md`)**: Author/update `PLAN.md` including a `## Discovery & Architecture Triage` table evaluating discovery specialists before writing implementation tasks:
      * **`product-analyst`**: **MUST INVOKE** if the request is a new user-facing feature/workflow, has unstated edge cases/permissions/validation rules, or is an open-ended business prompt. *Only skip* for pure technical bugfixes with known root causes, internal refactors with zero behavior change, or when a complete PRD already exists.
@@ -45,8 +47,22 @@ flowchart TD
      * **`architect-engineer`**: **MUST INVOKE** if the task creates or modifies **>= 2 files/modules**, changes database schemas/migrations/API contracts, introduces a new design pattern or external dependency, or crosses architectural layers. *Only skip* for single-file localized fixes where the architecture is already established.
 2. **STATE 1 — UPFRONT DISCOVERY EXECUTION (Sequential or Parallel Fan-Out)**:
    - When triggered by the Triage Gate, invoke `product-analyst`, `ui-ux-designer`, and/or `architect-engineer` **before** delegating to `code-implementer`.
+   - Store all discovery outputs in `docs/<feature-name>/`: `prd.md`, `design.md`, and `architecture.md` / `adr-*.md`. Synchronize existing `docs/specifications/` if present.
    - Supports **Parallel Discovery Fan-Out** when scopes are independent, or sequential execution (`product-analyst` -> `ui-ux-designer` -> `architect-engineer`) when architecture depends on product scope and UI system disambiguation. Update `PLAN.md` with specifications, `design.md`, ADRs and **Parallel Execution Tracks**.
+2.5. **INTERACTIVE USER ALIGNMENT GATE (State 1 -> State 2 Transition)**:
+   - When the Discovery phase completes, evaluate task complexity before delegating code implementation:
+     * **Medium or High/Complex Tasks**: The Orchestrator MUST PAUSE and query the user using `ask_question` (interactive GUI dialog modal) presenting a structured summary of:
+       - Product Scope (`docs/<feature-name>/prd.md`)
+       - UI/UX Design decisions & components (`docs/<feature-name>/design.md`)
+       - Architectural decisions & ADRs (`docs/<feature-name>/architecture.md`)
+       - Prompt Question: *"Do you approve the product scope, UI design, and architectural decisions before proceeding to code implementation?"*
+       - Wait for explicit user confirmation before delegating to `code-implementer` or `flutter-implementer`.
+     * **Low/Simple Tasks**: Pure technical bugfixes with known root causes or single-file localized refactors proceed directly to State 2 without interruption.
 3. **STATE 2 — BUILD: PARALLEL FAN-OUT & WORKSPACE ISOLATION (Mandatory)**:
+   - **Reinforced Parallel Collision Prevention Analysis**:
+     * **Collision Analysis**: Orchestrator must analyze and verify that parallel tracks never share files under Mode A (`Owned Files` strictly non-overlapping).
+     * **Mode B Trigger**: If two tracks must modify shared files (e.g., `package.json`, shared routers, DI containers, `settings.py`, `main.dart`), orchestrator must enforce Mode B (Git Worktree Isolation) or split them into sequential phases.
+     * **Scoped Test Execution Isolation**: Each parallel implementer must only run its assigned test file (e.g. `pytest tests/unit/test_feature_a.py`), NOT the full test suite in tight loops, to avoid CPU contention, redundant testing, and major execution delays. Full test suite execution is reserved for State 3 Fan-In by `qa-tester`.
    - Dispatch **1 to N `code-implementer` (or `flutter-implementer`) subagents in parallel**:
      * **Mode A — Disjoint File Partitioning (`Workspace: 'inherit'`) [DEFAULT]**: Used when parallel tracks modify non-overlapping files/directories. Each subagent receives an explicit `Owned Files` list and is forbidden from editing outside its partition. Zero `git merge` overhead upon Fan-In.
      * **Mode B — Git Worktree Isolation (`Workspace: 'share'` / `Workspace: 'branch'` in Antigravity, or `git worktree` via `loop-engineering` in Claude Code)**: Used when parallel instances must modify shared files (e.g., `package.json`, shared routers, DI containers) or execute conflicting build processes. Merged cleanly upon Fan-In before final QA.

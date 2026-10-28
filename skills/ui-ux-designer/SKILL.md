@@ -31,6 +31,11 @@ This skill guides the design, specification, and governance of user interfaces (
 
 The primary design artifact is **`design.md`** (or `DESIGN.md`), placed in the workspace root or `docs/design/`.
 
+### Centralized Artifact Output Path & Synchronization
+- **Feature Design Storage**: Store feature-specific design specifications, component wireframes, and tokens in `docs/<feature-name>/design.md` (where `<feature-name>` is the kebab-case feature slug, e.g., `docs/auth-session/design.md`).
+- **Directory Creation**: Ensure the target directory `docs/<feature-name>/` is created before writing the artifact.
+- **Global Design System Synchronization**: If the project maintains a global `design.md` (in repository root) or `docs/design/`, synchronize all newly introduced design tokens, typography scales, and component contracts back to the global specification to preserve design system coherence across features.
+
 ```mermaid
 flowchart TD
     START["User Request / PRD"] --> DETECT{"Inspect Workspace:<br/>Does design.md exist?"}
@@ -104,7 +109,7 @@ When working with Google Stitch or external design tools:
 ## Hand-off Protocol
 
 - **Input from `product-analyst`**: Consumes user stories, acceptance criteria, personas, and domain boundaries.
-- **Output Artifact**: Validated, formatted `design.md` + UI screen blueprints.
+- **Output Artifact**: Validated, formatted feature design artifact in `docs/<feature-name>/design.md` (with directory created), UI screen blueprints, and synchronized updates to global `design.md` or `docs/design/` if present.
 - **Handoff to `architect-engineer`**: Delivers component trees, visual token interfaces, state needs (modals, dropdowns, optimistic updates), and styling architecture.
 - **Handoff to `code-implementer`**: Delivers pixel-perfect specs, exact hex tokens, spacing classes, and accessibility requirements.
 
@@ -124,6 +129,8 @@ When working with Google Stitch or external design tools:
 
 - [ ] User personas, core user tasks, and target platforms (Web/Mobile) identified.
 - [ ] Workspace `design.md` inspected, updated, or created using the standard template.
+- [ ] Feature design specifications stored in `docs/<feature-name>/design.md` with `docs/<feature-name>/` directory created.
+- [ ] Global `design.md` or `docs/design/` synchronized with new tokens and component contracts if existing.
 - [ ] Design tokens (colors, typography, spacing, radii, elevation) defined without magic numbers.
 - [ ] Light and Dark theme palettes verified with WCAG 2.1 AA contrast compliance (>= 4.5:1).
 - [ ] Component interaction states (*default, hover, focus-visible, active, disabled, loading, error*) specified.

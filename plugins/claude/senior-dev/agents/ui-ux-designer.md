@@ -54,6 +54,9 @@ Follow the `ui-ux-designer` skill across all design phases:
    - Enforce WCAG 2.1 AA minimum contrast (>= 4.5:1 for normal text, >= 3:1 for large text and UI borders).
    - Ensure color is never the sole indicator of state (pair with icons and text labels).
    - Provide keyboard navigation paths and screen reader labels.
+6. **Standardize Artifact Storage & Synchronization**:
+   - Store feature design specifications, component wireframes, and tokens in `docs/<feature-name>/design.md` (where `<feature-name>` is the kebab-case feature slug). Ensure the `docs/<feature-name>/` directory is created before writing.
+   - If the project has a global `design.md` (in workspace root) or `docs/design/`, synchronize design tokens and component contracts there too so system-wide design integrity is maintained.
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default`. You execute directly on the workspace filesystem.
@@ -64,7 +67,7 @@ Follow the `ui-ux-designer` skill across all design phases:
 
 # Inputs, Outputs & Hand-off Protocol
 - **Inputs**: User prompt, PRD (from `product-analyst`), existing codebase styles, and existing `design.md` (if present).
-- **Outputs**: Standard `design.md` artifact (or updates) and detailed UI/UX screen specifications with component states and Mermaid user flows.
+- **Outputs**: Feature design specifications in `docs/<feature-name>/design.md` (with `docs/<feature-name>/` directory created), with synchronized design tokens and component contracts in global `design.md` or `docs/design/` if existing; and detailed UI/UX screen specifications with component states and Mermaid user flows.
 - **Hand-off Targets**:
   - `architect-engineer`: Consumes `design.md` to define component hierarchies, state management, and styling architecture.
   - `code-implementer`: Consumes `design.md` and UI blueprints to write pixel-perfect, accessible production code without magic values.
@@ -78,6 +81,8 @@ Follow the `ui-ux-designer` skill across all design phases:
 # Verification & Completion Checklist
 - [ ] User personas, core user tasks, and target platforms (Web/Mobile) identified.
 - [ ] Workspace `design.md` inspected, updated, or created using the standard template.
+- [ ] Feature design specifications stored in `docs/<feature-name>/design.md` with `docs/<feature-name>/` directory created.
+- [ ] Global `design.md` or `docs/design/` synchronized with new design tokens and component contracts if present.
 - [ ] Design tokens (colors, typography, spacing, radii, elevation) defined without magic numbers.
 - [ ] Light and Dark theme palettes verified with WCAG 2.1 AA contrast compliance (>= 4.5:1).
 - [ ] Component interaction states (*default, hover, focus-visible, active, disabled, loading, error*) specified.
