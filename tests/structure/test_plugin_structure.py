@@ -1131,7 +1131,7 @@ def test_all_agents_have_exactly_one_frontmatter(workspace_root):
     exactly twice (opening and closing) and no duplicate frontmatter blocks exist."""
     pattern = os.path.join(workspace_root, "plugins", "*", "*", "agents", "*.md")
     agent_files = sorted(glob.glob(pattern))
-    assert len(agent_files) > 0, f"No agent files found matching {pattern}"
+    assert len(agent_files) == 38, f"Expected exactly 38 agent files matching {pattern}, got {len(agent_files)}"
 
     errors = []
     for agent_path in agent_files:
@@ -1164,6 +1164,99 @@ def test_all_agents_have_exactly_one_frontmatter(workspace_root):
             errors.append(f"{rel_path}: failed to parse YAML frontmatter: {e}")
 
     assert not errors, "\n".join(errors)
+
+
+def test_track23_track26_universal_multi_plugin_standardization(workspace_root):
+    """Verifies Tracks 23 through 26:
+    1. Asserts all 3 orchestrators (senior-dev-orchestrator.md, flutter-feature-orchestrator.md,
+       python-backend-orchestrator.md) in both antigravity and claude:
+       - Contain the 3-Tier Dynamic SDLC / Routing Rubric (Tier 1, Tier 2, Tier 3).
+       - Contain the Interactive User Alignment Gate (ask_question).
+       - Reference feature artifacts centralization in docs/<feature-name>/.
+    2. Asserts specialist agents (senior-data-engineer.md, sql-query-optimizer.md, context-keeper.md)
+       in both ecosystems:
+       - Feature the canonical 7 sections.
+       - Reference docs/<feature-name>/ conventions.
+       - Feature 3-Tier SDLC / Triage for data pipelines and SQL tuning.
+    3. Asserts rules files (python-backend-rules.md, data-engineer-rules.md,
+       sql-optimization-rules.md, shared-context-rules.md, gitflow-rules.md,
+       docs-and-quality-rules.md, multi-agent-ops-rules.md):
+       - Reference docs/<feature-name>/ (or documentation conventions).
+       - Enforce branch governance or 3-Tier SDLC.
+    4. Confirms exactly 38 agent definition files exist across both ecosystems."""
+    # 1. Orchestrators in both ecosystems
+    orchestrators = [
+        ("senior-dev", "senior-dev-orchestrator.md"),
+        ("senior-dev-flutter", "flutter-feature-orchestrator.md"),
+        ("python-backend", "python-backend-orchestrator.md"),
+    ]
+    for eco in ("antigravity", "claude"):
+        for plugin, orch_file in orchestrators:
+            orch_path = os.path.join(workspace_root, "plugins", eco, plugin, "agents", orch_file)
+            assert os.path.isfile(orch_path), f"Missing orchestrator {orch_path}"
+            with open(orch_path, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            for tier in ("Tier 1", "Tier 2", "Tier 3"):
+                assert tier in content, f"{orch_path} missing '{tier}'"
+            assert "ask_question" in content, f"{orch_path} missing 'ask_question'"
+            assert "docs/<feature-name>/" in content, f"{orch_path} missing 'docs/<feature-name>/'"
+
+    # 2. Specialist agents in both ecosystems
+    specialists = [
+        ("senior-data-engineer", "senior-data-engineer.md"),
+        ("sql-query-optimizer", "sql-query-optimizer.md"),
+        ("shared-context", "context-keeper.md"),
+    ]
+    canonical_sections = [
+        "# Role & Objective",
+        "# When to Use & Routing Triggers",
+        "# Operating Guidelines & Workflow",
+        "# Tooling & Environment Protocol",
+        "# Inputs, Outputs & Hand-off Protocol",
+        "# Quality Standards & Anti-Patterns (Red Flags)",
+        "# Verification & Completion Checklist",
+    ]
+    for eco in ("antigravity", "claude"):
+        for plugin, agent_file in specialists:
+            agent_path = os.path.join(workspace_root, "plugins", eco, plugin, "agents", agent_file)
+            assert os.path.isfile(agent_path), f"Missing specialist agent {agent_path}"
+            with open(agent_path, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            for sec in canonical_sections:
+                assert sec in content, f"{agent_path} missing canonical section '{sec}'"
+            assert "docs/<feature-name>/" in content, f"{agent_path} missing 'docs/<feature-name>/'"
+            if agent_file in ("senior-data-engineer.md", "sql-query-optimizer.md"):
+                for tier in ("Tier 1", "Tier 2", "Tier 3"):
+                    assert tier in content, f"{agent_path} missing '{tier}'"
+
+    # 3. Rules files in antigravity
+    rules_map = {
+        "python-backend": "python-backend-rules.md",
+        "senior-data-engineer": "data-engineer-rules.md",
+        "sql-query-optimizer": "sql-optimization-rules.md",
+        "shared-context": "shared-context-rules.md",
+        "git-workflow": "gitflow-rules.md",
+        "docs-and-quality": "docs-and-quality-rules.md",
+        "multi-agent-ops": "multi-agent-ops-rules.md",
+    }
+    for plugin, rfile in rules_map.items():
+        rpath = os.path.join(workspace_root, "plugins", "antigravity", plugin, "rules", rfile)
+        assert os.path.isfile(rpath), f"Missing rule file {rpath}"
+        with open(rpath, "r", encoding="utf-8") as f:
+            rcontent = f.read()
+
+        assert "docs/<feature-name>/" in rcontent or "docs" in rcontent, f"{rpath} missing docs reference"
+        has_bg = any(k in rcontent for k in ("Branch Protection", "Branch Governance", "branch", "feat/"))
+        has_sdlc = any(k in rcontent for k in ("Tier 1", "3-Tier", "SDLC", "tiers"))
+        assert has_bg or has_sdlc, f"{rpath} missing branch governance or 3-Tier SDLC"
+
+    # 4. Total agent files count parity
+    pattern = os.path.join(workspace_root, "plugins", "*", "*", "agents", "*.md")
+    agent_files = sorted(glob.glob(pattern))
+    assert len(agent_files) == 38, f"Expected exactly 38 agents across both ecosystems, got {len(agent_files)}"
+
 
 
 

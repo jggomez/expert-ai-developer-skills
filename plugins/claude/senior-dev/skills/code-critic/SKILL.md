@@ -178,7 +178,7 @@ dart analyze --fatal-infos
 
 ### Host Execution Instructions
 - **Claude Code**: Invoke as `critic` subagent; inspect files using `Read` and `Grep`; generate `docs/<feature-name>/critic-review.md` using `Write`.
-- **Antigravity**: Launch as the `critic` subagent; inspect code using `Read` and `Grep`; calculate scores and write the report to disk.
+- **Antigravity**: Launch as the `critic` subagent; inspect code using `Read` and `grep_search`; calculate scores and write the report to disk.
 
 ---
 
