@@ -20,23 +20,26 @@ This skill provides an end-to-end software engineering orchestration framework p
 
 ## Core Invariants
 1. **The Orchestrator Never Implements**: The orchestrator is strictly forbidden from writing or modifying application source code or tests directly. Direct file-writing tools are reserved exclusively for `PLAN.md`, `ADR-*.md`, `.agents/`, `docs/`, and `context/memory/`. All production and test code edits MUST be delegated to `code-implementer`.
-2. **State 0 Memory Restore & Plan-First Triage Gate**: Before delegating any code changes, the orchestrator MUST silently check and read `context/memory/MEMORY.md` (if present) and author/update `PLAN.md` containing an explicit `## Discovery & Architecture Triage` table and a `## Parallel Execution Tracks` table.
-3. **Deterministic Upfront Discovery**: Whenever the Discovery Triage Rubric triggers `product-analyst` and/or `architect-engineer`, they MUST be invoked (sequentially or in parallel) **before** dispatching `code-implementer`.
-4. **Parallel Fan-Out & Workspace Isolation**: Parallel `code-implementer` subagents MUST operate either on strictly non-overlapping `Owned Files` partitions (**Mode A: Disjoint File Partitioning**) or inside isolated git branches/worktrees (**Mode B: Git Worktree Isolation**).
-5. **Mandatory Parallel Verification & Cap on Retries**: Every implementation must pass both `qa-tester` (`exit code 0`) and `compliance-verifier` (`APPROVED` verdict), which may be dispatched in parallel. Self-correction loops back to `code-implementer` are strictly capped at **maximum 3 iterations** before escalating to the user.
+2. **Automated Git Branch Governance**: The orchestrator must never develop directly on base or protected branches (`main`, `master`, `develop`, `dev`). At State 0, before authoring tasks or modifying files, the orchestrator inspects the active branch (`git symbolic-ref --short HEAD`). If on a base branch, it MUST automatically provision a dedicated branch using Conventional naming (`feat/<descriptive-slug>` for features, `fix/<slug>` for bug fixes) and switch to it via `git checkout -b <type>/<slug>`.
+3. **Proactive Scope Drift Detection**: When already on an active feature branch, if an incoming user request represents an orthogonal or unrelated functionality, the orchestrator MUST detect this Scope Drift and proactively ask the user (via `ask_question` in Antigravity or interactive question) recommending a new isolated branch (`feat/<new-slug>`). If the user confirms, it switches branches; if the user declines, it proceeds on the current branch.
+4. **State 0 Memory Restore & Plan-First Triage Gate**: Before delegating any code changes, the orchestrator MUST silently check and read `context/memory/MEMORY.md` (if present) and author/update `PLAN.md` containing an explicit `## Discovery & Architecture Triage` table and a `## Parallel Execution Tracks` table.
+5. **Deterministic Upfront Discovery**: Whenever the Discovery Triage Rubric triggers `product-analyst`, `ui-ux-designer`, and/or `architect-engineer`, they MUST be invoked (sequentially or in parallel) **before** dispatching `code-implementer`.
+6. **Parallel Fan-Out & Workspace Isolation**: Parallel `code-implementer` subagents MUST operate either on strictly non-overlapping `Owned Files` partitions (**Mode A: Disjoint File Partitioning**) or inside isolated git branches/worktrees (**Mode B: Git Worktree Isolation**).
+7. **Mandatory Parallel Verification & Cap on Retries**: Every implementation must pass both `qa-tester` (`exit code 0`) and `compliance-verifier` (`APPROVED` verdict), which may be dispatched in parallel. Self-correction loops back to `code-implementer` are strictly capped at **maximum 3 iterations** before escalating to the user.
 
 ## Graph Engineering Execution DAG
 
 ```
 [STATE 0: MEMORY RESTORE & DISCOVERY TRIAGE GATE (MANDATORY)]
-  ├── 1. Read `context/memory/MEMORY.md` silently (~500 tokens) + on-demand wiki pages
-  └── 2. Author/Update `PLAN.md` with `## Discovery & Architecture Triage` rubric
+  ├── 1. Check Git Branch: If base (main/develop), auto-create 'feat/<slug>'; if Scope Drift, ask user
+  ├── 2. Read `context/memory/MEMORY.md` silently (~500 tokens) + on-demand wiki pages
+  └── 3. Author/Update `PLAN.md` with `## Discovery & Architecture Triage` rubric
            │
            ▼
 [STATE 1: UPFRONT DISCOVERY EXECUTION (Sequential or Parallel Fan-Out)]
-  ├── (Triggered by Rubric) ──► Agent(product-analyst || architect-engineer)
-  ├── Update `PLAN.md` with PRD/ADR specs & Parallel Execution Tracks
-  └── (Skipped only when rubric explicitly justifies SKIP for both)
+  ├── (Triggered by Rubric) ──► Agent(product-analyst || ui-ux-designer || architect-engineer)
+  ├── Update `PLAN.md` with PRD/design.md/ADR specs & Parallel Execution Tracks
+  └── (Skipped only when rubric explicitly justifies SKIP for all)
            │
            ▼
 [STATE 2: IMPLEMENTATION — PARALLEL FAN-OUT & WORKSPACE ISOLATION (MANDATORY)]
@@ -79,12 +82,19 @@ Every `PLAN.md` MUST include a `## Discovery & Architecture Triage` section eval
 ## Process
 
 ### 1. State 0: Memory Restore & Discovery Triage Gate (MANDATORY)
+- **Git Branch Governance & Scope Drift Protocol**:
+  1. **Active Branch Inspection**: Run `git symbolic-ref --short HEAD`. If the active branch is a base or protected branch (`main`, `master`, `develop`, `dev`), the orchestrator MUST automatically create and switch to a dedicated feature branch using Conventional naming:
+     ```bash
+     git checkout -b feat/<descriptive-kebab-slug>
+     ```
+     Notify the user of the branch created.
+  2. **Scope Drift Detection**: If already on an active feature branch, assess whether the user's incoming request represents an orthogonal or unrelated functionality. If scope drift is detected, proactively prompt the user (using `ask_question` in Antigravity or interactive question) recommending a new isolated branch (`feat/<new-slug>`). If the user confirms, switch to a new branch; if the user declines, proceed on the current branch.
 - **LLM Wiki Memory Read (`context-restore`)**:
   - Check if `context/memory/MEMORY.md` exists in the workspace. If present, read it silently (~500 tokens) to restore cross-AI handoff state left by Claude Code or Antigravity.
   - Read linked wiki pages (`context/memory/architecture.md`, `context/memory/conventions.md`, `context/memory/log/YYYY-MM-DD.md`) **on demand only** if directly relevant to the current task.
 - **Mandatory Discovery & Architecture Triage (`PLAN.md`)**:
   - Author or update `PLAN.md` immediately using `Write`.
-  - Evaluate the **Discovery Triage Rubric** for `product-analyst` and `architect-engineer` and record the decision (`INVOKE` vs. `SKIP` + concrete justification) in a `## Discovery & Architecture Triage` table inside `PLAN.md`.
+  - Evaluate the **Discovery Triage Rubric** for `product-analyst`, `ui-ux-designer`, and `architect-engineer` and record the decision (`INVOKE` vs. `SKIP` + concrete justification) in a `## Discovery & Architecture Triage` table inside `PLAN.md`.
 
 ### 2. State 1: Upfront Discovery Execution (Sequential or Parallel Fan-Out)
 - When the Triage Gate triggers `product-analyst` and/or `architect-engineer`, invoke them **before** delegating to `code-implementer`.

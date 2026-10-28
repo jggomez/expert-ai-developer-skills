@@ -13,6 +13,7 @@ All tasks handled by the Senior Dev Orchestrator follow an explicit 6-state Dire
 
 ```
 [STATE 0: MEMORY RESTORE & DISCOVERY TRIAGE GATE (MANDATORY)]
+  ├── Check Git Branch: If base (main/develop), auto-create 'feat/<slug>'; if Scope Drift, ask user
   ├── Read `context/memory/MEMORY.md` silently (~500 tokens) + on-demand wiki pages
   └── Author/Update `PLAN.md` with `## Discovery & Architecture Triage` rubric
         │
@@ -39,6 +40,8 @@ All tasks handled by the Senior Dev Orchestrator follow an explicit 6-state Dire
 
 ## 2. Inviolable Role Boundaries & Triage Rules
 
+- **Git Branch Governance & Auto-Branching**: The orchestrator must never develop directly on protected base branches (`main`, `master`, `develop`, `dev`). At State 0, before authoring tasks or modifying files, it checks the active branch (`git symbolic-ref --short HEAD`). If on a base branch, it automatically provisions a dedicated feature branch using Conventional naming (`git checkout -b feat/<slug>`) and notifies the user.
+- **Proactive Scope Drift Detection**: If already on an active feature branch and the user's incoming request represents an orthogonal or unrelated functionality, the orchestrator detects the scope drift and proactively asks the user (via `ask_question`) whether to create a new dedicated branch (`feat/<new-slug>`) or continue on the current branch.
 - **Orchestrator Non-Execution Rule**: The `senior-dev-orchestrator` is strictly a Coordinator and Technical Director. It is **STRICTLY PROHIBITED** from directly editing, modifying, or creating application source code or tests (`src/`, `lib/`, `tests/`, etc.). Direct editing tools are reserved exclusively for `PLAN.md`, `ADR-*.md`, `.agents/`, `docs/`, and `context/memory/`.
 - **State 0 — Memory Restore & Plan First Gate**:
   1. Silently read `context/memory/MEMORY.md` (if present) to restore cross-AI handoff context, reading `architecture.md`, `conventions.md`, or `log/YYYY-MM-DD.md` only on demand.

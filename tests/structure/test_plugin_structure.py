@@ -803,6 +803,52 @@ def test_ui_ux_designer_agent_and_skill_parity(workspace_root):
         assert "design.md" in orch_text, f"{orch_path} missing reference to 'design.md'"
 
 
+def test_senior_dev_git_branch_governance_and_scope_drift(workspace_root):
+    """Verifies that senior-dev enforces automated Git Branch Governance (auto-creation of
+    feat/<slug> from base branches) and Scope Drift detection across both ecosystems."""
+    # 1. Check orchestrator markdown in both ecosystems
+    for ecosystem in ("antigravity", "claude"):
+        orch_path = os.path.join(
+            workspace_root, "plugins", ecosystem, "senior-dev", "agents", "senior-dev-orchestrator.md"
+        )
+        assert os.path.isfile(orch_path), f"Missing {orch_path}"
+        with open(orch_path, "r", encoding="utf-8") as f:
+            orch_text = f.read()
+        assert "Git Branch Governance" in orch_text, f"{orch_path} missing 'Git Branch Governance'"
+        assert "Scope Drift" in orch_text, f"{orch_path} missing 'Scope Drift'"
+        assert "feat/<" in orch_text or "feat/" in orch_text, f"{orch_path} missing Conventional branch prefix"
+
+    # 2. Check rules in senior-dev
+    for ecosystem in ("antigravity", "claude"):
+        rules_path = os.path.join(
+            workspace_root, "plugins", ecosystem, "senior-dev", "rules", "senior-dev-rules.md"
+        )
+        if os.path.isfile(rules_path):
+            with open(rules_path, "r", encoding="utf-8") as f:
+                rules_text = f.read()
+            assert "Git Branch Governance" in rules_text, f"{rules_path} missing 'Git Branch Governance'"
+            assert "Scope Drift" in rules_text, f"{rules_path} missing 'Scope Drift'"
+
+    # 3. Check canonical skill
+    skill_path = os.path.join(workspace_root, "skills", "senior-dev-orchestrator", "SKILL.md")
+    assert os.path.isfile(skill_path), f"Missing {skill_path}"
+    with open(skill_path, "r", encoding="utf-8") as f:
+        skill_text = f.read()
+    assert "Git Branch Governance" in skill_text, f"{skill_path} missing 'Git Branch Governance'"
+    assert "Scope Drift" in skill_text, f"{skill_path} missing 'Scope Drift'"
+
+    # 4. Check hook protected branch safety checks
+    for ecosystem in ("antigravity", "claude"):
+        hook_path = os.path.join(
+            workspace_root, "plugins", ecosystem, "senior-dev", "hooks", "orchestrator-role-gate.js"
+        )
+        assert os.path.isfile(hook_path), f"Missing {hook_path}"
+        with open(hook_path, "r", encoding="utf-8") as f:
+            hook_text = f.read()
+        assert "PROTECTED BRANCH" in hook_text, f"{hook_path} missing PROTECTED BRANCH check"
+
+
+
 
 
 

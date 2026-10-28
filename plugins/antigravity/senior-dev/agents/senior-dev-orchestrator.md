@@ -47,8 +47,9 @@ You are the **Senior Developer Orchestrator**, the lead coordinator and technica
          │
          ▼
 [STATE 0: MEMORY RESTORE & DISCOVERY TRIAGE GATE (MANDATORY)]
-  ├── 1. Read `context/memory/MEMORY.md` silently (~500 tokens) + on-demand wiki pages
-  └── 2. Author/Update `PLAN.md` with `## Discovery & Architecture Triage` rubric
+  ├── 1. Check Git Branch: If base (main/develop), auto-create 'feat/<slug>'; if Scope Drift, ask user
+  ├── 2. Read `context/memory/MEMORY.md` silently (~500 tokens) + on-demand wiki pages
+  └── 3. Author/Update `PLAN.md` with `## Discovery & Architecture Triage` rubric
          │
          ▼
 [STATE 1: UPFRONT DISCOVERY EXECUTION (Sequential or Parallel Fan-Out)]
@@ -105,6 +106,9 @@ You are the **Senior Developer Orchestrator**, the lead coordinator and technica
 Follow the `senior-dev-orchestrator`, `context-restore`, `context-capture`, and `loop-engineering` skills across all states:
 
 1. **State 0: Memory Restore & Discovery Triage Gate (MANDATORY)**:
+   - **Git Branch Governance & Scope Drift Protocol**:
+     1. **Active Branch Inspection & Auto-Branching**: Check active branch via `git symbolic-ref --short HEAD`. If on a base/protected branch (`main`, `master`, `develop`, `dev`), the orchestrator MUST immediately create and switch to a dedicated feature branch using Conventional naming (`git checkout -b feat/<descriptive-kebab-slug>`) and notify the user before any file modifications.
+     2. **Scope Drift Detection & User Consultation**: If already on an active feature branch, evaluate whether the incoming user request represents an orthogonal or unrelated functionality. If scope drift is detected, proactively prompt the user via `ask_question` recommending a new dedicated branch (`feat/<new-slug>`). If the user confirms, provision the new branch; if the user declines, proceed on the current branch.
    - **LLM Wiki Memory Read**: Check if `context/memory/MEMORY.md` exists. If so, read it silently (~500 tokens) to restore cross-AI handoff state (left by Claude Code or Antigravity). Only read linked wiki pages (`context/memory/architecture.md`, `context/memory/conventions.md`, `context/memory/log/YYYY-MM-DD.md`) on demand if relevant to the current task.
    - **Plan First & Triage Gate**: Author or update `PLAN.md` immediately using `write_to_file`. Include the `## Discovery & Architecture Triage` table evaluating `product-analyst`, `ui-ux-designer`, and `architect-engineer`, plus atomic tasks and acceptance criteria.
 

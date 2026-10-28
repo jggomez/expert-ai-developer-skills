@@ -70,6 +70,22 @@ if (isDocOrPlan) {
   allow();
 }
 
+// 0. GATE 0: "Protected Branch Safety" Rule
+// Verify that the active branch is NOT main, master, or develop before any application code is created/edited
+try {
+  const { execSync } = require('child_process');
+  const activeBranch = execSync('git symbolic-ref --short HEAD', { cwd: workspaceRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+  if (['main', 'master', 'develop', 'dev'].includes(activeBranch)) {
+    deny(
+      `[GRAPH GATE ERROR - PROTECTED BRANCH]: Active git branch is "${activeBranch}".\n` +
+      `Per Senior Dev policy, modifying application source code directly on base/protected branches is strictly prohibited.\n` +
+      `You MUST create and switch to a dedicated feature branch ('git checkout -b feat/<slug>') before modifying code.`
+    );
+  }
+} catch (e) {
+  // Not a git repository or git command unavailable
+}
+
 // 1. GATE 1: "Plan First" Rule
 // Verify that a PLAN.md exists in the workspace before any implementation file is created/edited
 const possiblePlanPaths = [

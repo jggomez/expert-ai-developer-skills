@@ -77,7 +77,8 @@ flowchart TD
 * **Keep Existing Intact**: Do not overwrite or delete existing working code, comments, or docstrings unless explicitly tasked with refactoring them.
 
 ### 1.6. Git Hygiene & Branch Safety
-* **Branch Protection**: **NEVER** commit or push directly to `main`, `master`, or `develop`. All development occurs in dedicated feature or bugfix branches (`feature/*`, `bugfix/*`).
+* **Branch Protection & Auto-Branching**: **NEVER** develop, commit, or push directly to `main`, `master`, or `develop`. When an orchestrator receives a task while on a protected base branch, it MUST automatically provision a dedicated feature branch using Conventional naming (`feat/<descriptive-slug>`, `fix/<slug>`) and switch to it (`git checkout -b <type>/<slug>`).
+* **Proactive Scope Drift Detection**: When already working on a feature branch, if the user requests an orthogonal or unrelated functionality, the orchestrator MUST detect this Scope Drift and proactively ask the user (using interactive GUI modals via `ask_question`) whether to create a new dedicated branch (`feat/<new-slug>`) or continue on the current branch.
 * **Conventional Commits**: Every commit message must strictly follow the Conventional Commits specification:
   - Format: `<type>(<optional-scope>): <description>`
   - Types: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`, `perf:`, `build:`, `ci:`.
