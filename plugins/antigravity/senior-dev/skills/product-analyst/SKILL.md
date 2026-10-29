@@ -1,104 +1,54 @@
 ---
 name: product-analyst
-description: Analyzes initial user inquiries, identifies business goals, asks clarifying questions, and constructs structured Product Requirements Documents (PRDs). Use when defining new features, breaking down complex user prompts, or establishing scope boundaries.
+description: Analyzes ambiguous feature requests, clarifies business rules, and authors ultra-concise Product Requirements Documents (docs/<feature-name>/prd.md <= 70 lines) with standard User Stories (US-XX) and testable Acceptance Criteria (AC-XX).
 ---
 
 # Product Analyst Skill
 
 ## Overview
-This skill guides the analysis of raw user requests into actionable product specifications. It acts as a Principal Product Analyst providing a structured framework for requirement discovery, scope boundary delineation, gap analysis, and specification authoring before any architectural or implementation code is written.
+This skill converts underspecified feature requests into crisp, directly testable product specifications stored in **`docs/<feature-name>/prd.md`** (strictly capped at **`<= 70 lines`**, zero filler prose). Every PRD follows a fixed 4-section standard (`Objective`, `Scope`, `User Stories`, `Acceptance Criteria & Edge Cases`) so engineering and QA have exact `US-XX` -> `AC-XX` traceability.
 
 ## When to Use
-### Trigger Scenarios
-- Initial phase of new feature development, user stories, or product workflows.
-- Analyzing ambiguous, underspecified, or multi-faceted user requests.
-- Defining functional requirements (FRs), non-functional requirements (NFRs), and explicit scope boundaries (In-Scope vs. Out-of-Scope).
-- Establishing acceptance criteria and edge cases before engineering handover.
-
-### When NOT to Use
-- **Architectural pattern selection**: Route to `senior-architect-engineering`.
-- **Direct coding or bug fixing**: Route to `code-implementer` or `test-driven-development`.
-- **Pure code smells audit**: Route to `code-smells-expert`.
-- **Trivial syntax/config edits**: Perform directly without a PRD.
+### Capability-Gated Trigger Rules
+- **INVOKE ONLY IF** business scope, user stories, or acceptance criteria are ambiguous or missing.
+- **SKIP** when the user prompt already defines clear scope/stories, or for bugfixes, refactors, chores, documentation updates, and purely technical CLIs.
+- **Delegate Elsewhere**: System schemas & ADRs -> `senior-architect-engineering`; UI tokens & screens -> `ui-ux-designer`; TDD coding -> `code-implementer`.
 
 ## Process
-### Phase 1: Context & Gap Analysis
-1. Inspect input prompts or problem statements to uncover the root business problem.
-2. Cross-reference existing codebase patterns, data models, or endpoints.
-3. Evaluate the request across four core vectors:
-   - **User Intent**: What is the primary user goal?
-   - **Scope Boundaries**: What is explicitly included or excluded?
-   - **Edge Cases**: What failure modes or alternative paths exist?
-   - **Constraints**: Are there hard technical, performance, or business constraints?
+### Phase 1: Context Check & Targeted Clarification
+1. Inspect existing routes, models, and `docs/` (`docs/specifications/` if present) to avoid asking questions already answered by the codebase.
+2. If business rules or boundaries remain genuinely ambiguous, ask concise option-based questions with clear trade-offs (never vague open-ended prompts).
 
-### Phase 2: Requirements Clarification
-If critical information is missing or ambiguous:
-- Formulate targeted, option-based clarifying questions with concrete trade-offs.
-- Avoid open-ended queries; present concrete technical options (e.g., *"Should authentication support OAuth2 only, or username/password as well?"*).
+### Phase 2: Author Concise Standard PRD (`docs/<feature-name>/prd.md`, `<= 70 lines`)
+Create `docs/<feature-name>/` and write `docs/<feature-name>/prd.md` (`<= 70 lines` hard cap) using the exact 4-section template in [references/prd-template.md](references/prd-template.md):
+1. **`## 1. Objective`**: 2–4 lines stating the concrete problem and measurable business outcome.
+2. **`## 2. Scope`**: Crisp `In-Scope` and `Out-of-Scope` bullets preventing scope creep.
+3. **`## 3. User Stories`**: Numbered `US-01`, `US-02` in strict standard format:
+   - **As a** `<role>`, **I want** `<action>`, **so that** `<outcome>` *(or *Como `<rol>`, quiero `<acción>`, para `<beneficio>`*)*.
+4. **`## 4. Acceptance Criteria & Edge Cases`**: Numbered `AC-01`, `AC-02` explicitly mapped to `US-XX` (`AC-01 (US-01)`), written as directly testable Given/When/Then or crisp bullets covering validation, permissions, and boundary/failure cases.
 
-### Phase 3: Deliverable Generation & Centralized Artifact Storage
-Scale the deliverable to the request: a small change needs a concise requirements note (goals, scope, acceptance criteria); new features or system-level modules require a full PRD.
-
-#### Standardized Artifact Output Path
-- **Feature PRD Storage**: Store the finalized PRD in `docs/<feature-name>/prd.md` (where `<feature-name>` is the kebab-case feature slug, e.g., `docs/auth-session/prd.md`).
-- **Directory Creation**: Ensure the target directory `docs/<feature-name>/` is created before writing the artifact.
-- **Global Specification Synchronization**: If the project already has an existing `docs/` or `docs/specifications/` directory, update and synchronize those specification indexes or requirements documents to reference the new feature PRD so global documentation stays coherent and aligned.
-
-#### Product Requirements Document (PRD) Template
-```markdown
-# Product Requirements Document (PRD)
-
-## 1. Executive Summary
-Brief high-level description of the feature or product vision.
-
-## 2. Business Goals & Objectives
-- Objective 1
-- Objective 2
-
-## 3. Scope
-### In-Scope
-- Feature / Capability 1
-- Feature / Capability 2
-### Out-of-Scope
-- Explicitly excluded items
-
-## 4. Functional Requirements (FRs)
-| ID | Title | Description | Priority (P0/P1/P2) |
-|---|---|---|---|
-| FR-01 | User Auth | Allow users to register using email and password. | P0 |
-| FR-02 | Profile View | Display user profile information upon login. | P1 |
-
-## 5. Non-Functional Requirements (NFRs)
-- **Performance**: Response times < 200ms for standard requests.
-- **Security**: Data at rest encrypted using AES-256.
-- **Scalability**: Support up to 10,000 concurrent active users.
-
-## 6. Acceptance Criteria
-- [ ] User can log in with valid credentials.
-- [ ] System returns explicit error messages for invalid attempts.
-```
+*Global Sync*: If the workspace maintains `docs/specifications/` or a global requirements index, update its links to keep documentation synchronized.
 
 ## Usage
 ### Example Prompts
-- *"Analyze this user request for a team workspace invitation flow and generate a PRD with FRs, NFRs, and acceptance criteria."*
-- *"We want to add export functionality for reports. Help me define the scope boundaries and identify edge cases."*
-- *"Break down this high-level epic into atomic user stories and functional requirements."*
+- *"Clarify scope boundaries for workspace invitations and write a concise `docs/workspace-invites/prd.md` (`<= 70 lines`)."*
+- *"Extract `US-XX` user stories and testable `AC-XX` acceptance criteria for CSV report exports."*
 
-### Host Execution Instructions
-- **Claude Code**: Invoke directly at the beginning of a feature prompt to generate the requirements artifact.
-- **Antigravity**: Launch as a specialized subagent or initial step before passing output to `senior-architect-engineering` and `code-implementer`.
+### Host Execution
+- **Claude Code**: Inspect context via `Read`/`Grep`, clarify genuine gaps, and write `docs/<feature-name>/prd.md`.
+- **Antigravity**: Use `view_file`/`grep_search`, align via `ask_question` when needed, and write `docs/<feature-name>/prd.md`.
 
 ## Red Flags
-- Commencing implementation or architectural design before core requirements and scope boundaries are established.
-- Asking open-ended, vague questions that place the cognitive burden back on the user without proposed alternatives.
-- Creating an excessively long, bureaucratic PRD for a minor bug fix or trivial change.
-- Omission of explicit Out-of-Scope boundaries, causing scope creep during implementation.
+- ❌ Writing bloated PRDs (`> 70 lines`), executive-summary fluff, or multi-page tables for straightforward features.
+- ❌ Invoking PRD authoring on bugfixes, refactors, chores, or prompts that already specify clear acceptance criteria.
+- ❌ Writing untestable criteria (*"must be fast and intuitive"*) or omitting `US-XX` / `AC-XX` identifiers and `Out-of-Scope` bullets.
+- ❌ Asking obvious questions answerable from repository code, or writing production source code directly.
 
 ## Verification
-- [ ] Core business objective and user intent clearly stated.
-- [ ] Explicit In-Scope and Out-of-Scope boundaries defined.
-- [ ] Functional Requirements assigned unique IDs (`FR-01`, `FR-02`) and priorities (`P0`, `P1`, `P2`).
-- [ ] Non-Functional Requirements (NFRs) specified with measurable metrics.
-- [ ] Acceptance criteria verifiable and ready for QA test mapping.
-- [ ] PRD stored in standardized location: `docs/<feature-name>/prd.md` (with `docs/<feature-name>/` directory created).
-- [ ] Global specifications in `docs/` or `docs/specifications/` synchronized if present.
+- [ ] `docs/<feature-name>/prd.md` exists, is strictly `<= 70 lines`, and contains zero filler prose.
+- [ ] Uses the exact 4 sections from [references/prd-template.md](references/prd-template.md): `1. Objective`, `2. Scope`, `3. User Stories`, `4. Acceptance Criteria & Edge Cases`.
+- [ ] Every story (`US-XX`) uses **As a / I want / so that** (*Como / quiero / para*) format, and every `AC-XX` maps to a `US-XX` with testable validation/permission/edge rules.
+- [ ] Existing `docs/specifications/` indexes synchronized if present.
+
+## References
+- Concise Standard PRD Template (`<= 45 lines`): [references/prd-template.md](references/prd-template.md)

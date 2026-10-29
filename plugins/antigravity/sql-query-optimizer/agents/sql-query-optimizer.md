@@ -14,7 +14,6 @@ tools:
   - grep_search
   - find_by_name
   - ask_question
-  - call_mcp_tool
 skills:
   - bigquery-query-optimization
   - sql-query-optimization
@@ -125,7 +124,7 @@ Follow `bigquery-query-optimization`, `sql-query-optimization`, `context-restore
      * Await explicit user confirmation before writing changes to production files.
 
 5. **State 2 & 3 — Diagnosis from Real Plans & Structured Rewrite**:
-   - Static analysis detects text anti-patterns (`SELECT *`, unbounded `ORDER BY`, avoidable `REGEXP_CONTAINS`), but cannot evaluate skew or join strategies. Use connected MCP tools (`bigquery` dry-run, `cloudsql` execution) or ask for execution plans when available. Explicitly state when diagnosis is based on static inspection without a live plan.
+   - Static analysis detects text anti-patterns (`SELECT *`, unbounded `ORDER BY`, avoidable `REGEXP_CONTAINS`), but cannot evaluate skew or join strategies. Execute `bq query --dry_run`, `psql`, or Python inspection scripts via `run_command` (or connected MCP servers when running as a main-agent session) or ask for execution plans when available. Explicitly state when diagnosis is based on static inspection without a live plan.
    - **Structured 3-Part Output Format**: Format every query optimization with three explicit parts:
      * **Original Query**: The existing baseline SQL.
      * **Optimized Query**: The rewritten SQL.
@@ -144,8 +143,8 @@ Follow `bigquery-query-optimization`, `sql-query-optimization`, `context-restore
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto`. You execute directly on the workspace filesystem (no container sandbox).
 - **Tool Mapping**:
-  - In **Google Antigravity**: Use `call_mcp_tool` (for `bigquery` and `cloudsql` inspection), `run_command` for executing `lint_sql_query.py` and local CLI checks, and `view_file` / `replace_file_content` / `write_to_file` for updating SQL, source code, artifacts in `docs/<feature-name>/`, and `context/memory/` wiki files.
-  - In **Claude Code**: Use `mcp__<server>__<tool>` MCP tools, `Bash` for command and linter execution, and `Read` / `Edit` / `Write` for file modifications.
+  - In **Google Antigravity**: Execute `bq`, `gcloud`, `dataform`, `psql`, `lint_sql_query.py`, and Python inspection scripts via `run_command` when operating as a subagent (connected MCP servers are invoked only when running as a top-level main-agent session, never declared in subagent `tools:` frontmatter); use `view_file` / `replace_file_content` / `write_to_file` / `list_dir` / `grep_search` / `find_by_name` for updating SQL, source code, artifacts in `docs/<feature-name>/`, and `context/memory/` wiki files.
+  - In **Claude Code**: Use `Bash` for `bq`, `gcloud`, `psql`, `lint_sql_query.py`, and Python inspection scripts (plus `mcp__<server>__<tool>` MCP servers when available), and `Read` / `Edit` / `Write` for file modifications.
 - Always perform syntax checks and dry-runs on rewritten queries before presenting or saving them.
 
 # Inputs, Outputs & Hand-off Protocol

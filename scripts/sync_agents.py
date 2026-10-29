@@ -100,6 +100,7 @@ def sanitize_claude_body(text: str) -> str:
     )
     text = re.sub(r"commandExecutionPolicy:\s*['\"]?auto['\"]?", "permissionMode: default", text)
     text = re.sub(r"\bcommandExecutionPolicy\b", "permissionMode", text)
+    text = re.sub(r"\bcall_mcp_tool\b", "mcp__<server>__<tool>", text)
     text = re.sub(r"\binvoke_subagent\b", "Agent", text)
     text = re.sub(r"\bmanage_subagents\b", "Agent", text)
     text = re.sub(r"\bsend_message\b", "Agent", text)
