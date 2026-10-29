@@ -1,46 +1,40 @@
 ---
 name: testing-expert
-description: Guidelines, best practices, and templates for automated and manual software testing across languages. Covers Arrange-Act-Assert (AAA), mocking boundaries, and writing human-readable specifications using Gherkin BDD syntax.
+description: Design and validate automated tests, concise IEEE/ISTQB TC-XX test cases, hermetic Arrange-Act-Assert (AAA) suites, Gherkin BDD scenarios, and Fail-Honest execution reporting across languages.
 ---
 
 # Testing Expert Skill
 
 ## Overview
-This skill guides the design, structuring, and validation of automated test suites and Behavior-Driven Development (BDD) specifications. It acts as a Lead QA Engineer and Test Automation Specialist, ensuring that tests are hermetic, isolated, self-documenting, structured using the Arrange-Act-Assert (AAA) pattern, and specified using valid Gherkin syntax.
+This skill guides the design, structuring, and validation of hermetic automated tests, Gherkin BDD specifications, and concise IEEE/ISTQB test cases (`TC-XX`). Acting as a Lead QA Architect, it enforces Arrange-Act-Assert (AAA) isolation, boundary mocking, concise `docs/<feature-name>/test-matrix.md` (`<= 80 lines`) traceability, and strict **Fail-Honest** execution reporting.
 
 ## When to Use
 ### Trigger Scenarios
-- Designing test suites across the testing pyramid (Unit, Component, Integration, System).
-- Authoring human-readable BDD specifications using Gherkin (`.feature` files).
-- Standardizing test structures using the Arrange-Act-Assert (AAA) convention.
-- Auditing and validating Gherkin scenario syntax and parameterization tables.
+- Designing unit, integration, component, and E2E test cases (`TC-XX`) with explicit `Objective`, `Steps`, and `Expected Result`.
+- Authoring and validating Gherkin BDD `.feature` files (`Given` / `When` / `Then` / `Examples`).
+- Structuring hermetic Arrange-Act-Assert (AAA) test suites with isolated boundary mocks.
+- Auditing test outcomes to enforce Fail-Honest `BLOCKED` / `SKIPPED` reporting when environments are unavailable.
 
 ### When NOT to Use
-- **Day-to-day TDD implementation cycle**: Route to `test-driven-development` or `code-implementer`.
-- **E2E user journey test execution and RTM reporting**: Route to `qa-tester`.
-- **CI/CD pipeline test runner setup**: Route to `build-and-ci-gates`.
-- **Static code smell scanning**: Route to `code-smells-expert`.
+- **Inner-loop TDD production code authoring**: Route to `test-driven-development` or `code-implementer`.
+- **Full State 3 QA execution & matrix sign-off**: Route to `qa-tester`.
+- **Live Playwright browser journey & viewport screenshot capture**: Route to `blackbox-tester` (`e2e-blackbox-tester`).
 
 ## Process
-### Phase 1: BDD Specification Design in Gherkin
-Draft human-readable feature specifications using standard Gherkin keywords:
-- **`Feature`**: High-level business capability being validated.
-- **`Background`**: Shared setup prerequisites across scenarios in the feature.
-- **`Scenario` / `Scenario Outline`**: Discrete behavioral specification.
-  - **`Given`**: Initial state or prerequisite setup.
-  - **`When`**: Specific action or event triggered by the user/system.
-  - **`Then`**: Observable outcome and expected assertion.
-  - **`Examples`**: Parameterization table mapping boundary values.
+### Phase 1: Concise IEEE/ISTQB `TC-XX` & Gherkin BDD Design
+1. Define each test case (`TC-01`, `TC-02`, ...) concisely for `docs/<feature-name>/test-matrix.md` (`<= 80 lines`):
+   - **Objective**: Single behavior, invariant, or boundary under verification.
+   - **Steps**: Deterministic precondition + action (`Given`/`When` or concise numbered steps).
+   - **Expected Result**: Observable output, state transition, or error contract (`Then`).
+   - **Automated Test & Status**: Linked test path/symbol and empirical status (`PASSED`, `FAILED`, `BLOCKED`, `SKIPPED`).
+2. When authoring `.feature` specs, use clean `Feature`, `Background`, `Scenario`, and `Scenario Outline` + `Examples` tables.
 
-### Phase 2: Hermetic AAA Test Layout
-Structure both unit and integration tests strictly according to the AAA pattern:
-1. **Arrange**: Set up inputs, mocks, test fixtures, and expected parameters.
-2. **Act**: Execute the single unit of behavior under test.
-3. **Assert**: Verify the expected outcome with specific, unambiguous assertions.
-*Hermeticity Rule: Every test must be completely isolated, with zero state carried over between test executions.*
+### Phase 2: Hermetic Arrange-Act-Assert (AAA) & Fail-Honest Execution
+1. Partition every test into **Arrange** (fixtures + boundary mocks), **Act** (single invocation), and **Assert** (exact behavioral check) with zero shared mutable state across tests.
+2. **Fail-Honest Rule**: If a test runner, database service, live web server, or Chromium/Playwright binary cannot run in the current environment, report `BLOCKED` or `SKIPPED` with the exact missing prerequisite — **never** stub assertions, relax thresholds, or fabricate `PASSED`.
 
-### Phase 3: Automated Gherkin Syntax Validation
-Execute the Gherkin validator script to detect structural defects (missing Examples tables, bad Background ordering, duplicate names, or step-less scenarios):
+### Phase 3: Automated Gherkin Validation
+Validate all `.feature` files for missing `Examples:`, step-less scenarios, or ordering errors:
 ```bash
 python3 ./skills/testing-expert/scripts/validate_gherkin.py
 ```
@@ -48,35 +42,28 @@ python3 ./skills/testing-expert/scripts/validate_gherkin.py
 ## Usage
 ### Commands & Automation Scripts
 ```bash
-# Validate all Gherkin .feature files in the repository
+# Validate Gherkin .feature syntax across the workspace
 python3 ./skills/testing-expert/scripts/validate_gherkin.py
 ```
 
-### Example Prompts
-- *"Write Gherkin BDD scenarios for the password reset workflow, covering happy paths and lockout boundaries."*
-- *"Structure this integration test suite using strict Arrange-Act-Assert partitions and hermetic mocks."*
-- *"Validate all .feature files in our tests directory for syntax errors."*
-
 ### Host Execution Instructions
-- **Claude Code**: Run `validate_gherkin.py` via bash to audit `.feature` files.
-- **Antigravity**: Verify BDD specifications before generating test step definitions.
+- **Claude Code**: Run `validate_gherkin.py` via Bash and execute targeted test runners with empirical exit-code checks.
+- **Antigravity**: Validate `.feature` syntax via `Bash` and record honest `PASSED`/`FAILED`/`BLOCKED`/`SKIPPED` statuses.
 
 ## Red Flags
-- Order-dependent tests that fail when run in isolation or random order.
-- `Scenario Outline` blocks missing the required `Examples:` data table.
-- Testing multiple unrelated behaviors inside a single test case.
-- Calling external live third-party network APIs in unit or integration test suites.
+- Claiming `PASSED` when the runner, server, or browser was unavailable instead of reporting `BLOCKED` or `SKIPPED`.
+- Bloated test matrices (`> 80 lines`) or vague `TC-XX` entries missing `Objective`, `Steps`, or `Expected Result`.
+- Order-dependent tests, live external network calls in unit tests, or `Scenario Outline` blocks missing `Examples:`.
 
 ## Verification
-- [ ] Automated Gherkin validator passes cleanly with zero syntax violations:
+- [ ] Every `TC-XX` specifies `Objective`, `Steps`, `Expected Result`, `Automated Test`, and honest `Status`.
+- [ ] Gherkin validator exits with code `0`:
   ```bash
   python3 ./skills/testing-expert/scripts/validate_gherkin.py
   ```
-- [ ] All tests follow Arrange-Act-Assert (AAA) separation.
-- [ ] External network and database dependencies mocked in unit test suites.
-- [ ] Scenarios test externally visible behavior rather than internal private state.
+- [ ] Unit and integration tests follow strict AAA isolation with external I/O mocked at boundaries.
+- [ ] Unavailable runners/browsers are transparently marked `BLOCKED` or `SKIPPED` (zero faked `PASSED`).
 
 ## References
 - [Software Testing Best Practices Reference](references/testing-best-practices.md)
 - [Behavior-Driven Development (BDD) & Gherkin Syntax](references/gherkin-syntax.md)
-

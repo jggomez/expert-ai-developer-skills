@@ -1,110 +1,50 @@
 ---
 trigger: always_on
-description: Multi-agent operations and loop engineering rules enforcing the Graph Engineering DAG, 3-Tier Dynamic Routing Rubric, Review Committee topologies, finite self-correction loops, Parallel Fan-Out/Fan-In workspace isolation, and token conservation.
+description: Multi-agent operations and loop engineering rules enforcing the 6-state Graph Engineering DAG, 3-Tier SDLC, State 0 per-subagent Invoke/SKIP capability gating, concise artifact caps, Google DESIGN.md, root AGENTS.md, and Fail-Honest E2E verification.
 ---
 
 # Multi-Agent Operations & Loop Engineering Rules
 
 **Identifier**: `multi-agent-ops-rules`
 
-## 1. Graph Engineering State Machine & 3-Tier Dynamic Routing Rubric
+## 1. Graph Engineering State Machine & 3-Tier Adaptive SDLC
 
-All multi-agent execution flows follow an explicit 6-state Directed Acyclic Graph (DAG) state machine with dynamic 3-tier routing:
+All multi-agent workflows execute a deterministic 6-state DAG dynamically scaled across three SDLC tiers:
+- **State 0 (Memory Restore & SDLC Triage)**: Enforce Git Branch Governance (`feat/<slug>` from protected branches; `ask_question` on Scope Drift), create `docs/<feature-name>/`, silently read `context/memory/MEMORY.md` (`<= 80-100 lines`, ~500 tokens), bootstrap/sync target-project root `AGENTS.md` (`<= 90 lines`), and author `PLAN.md` (`<= 50 lines`) with a per-subagent `Invoke / SKIP` triage table.
+- **State 1 & 1.5 (Discovery & Alignment Gate)**: Skipped in Tier 1; capability-gated in Tier 2 & Tier 3, followed by a mandatory `ask_question` approval modal before State 2 implementation.
+- **State 2 -> State 5 (Build, Verification & Ship)**: Isolated parallel implementation, empirical QA + compliance verification, and State 5 `PLAN.md` + `context/memory/` update.
 
-```
-[STATE 0: MEMORY RESTORE & 3-TIER SDLC TRIAGE GATE (MANDATORY)]
-  ├── Check Git Branch: If base (main/develop), auto-create 'feat/<slug>'; if Scope Drift, ask user
-  ├── Derive `<feature-name>` slug & ensure `docs/<feature-name>/` directory is created
-  ├── Read `context/memory/MEMORY.md` silently (~500 tokens) + on-demand wiki pages
-  └── Classify Task Tier in `PLAN.md` (Tier 1: Fast-Track | Tier 2: Standard | Tier 3: Mission-Critical)
-           │
-           ├──────────────────────────────┬──────────────────────────────┐
-           ▼                              ▼                              ▼
-  [Tier 1: Fast-Track]           [Tier 2: Standard]            [Tier 3: Mission-Critical]
-  (Skip State 1 Discovery)       (Selective Discovery)         (Full Discovery: PRD+Design+ADR)
-  (Skip Interactive Modal)                │                              │
-           │                              ▼                              ▼
-           │                     [INTERACTIVE ALIGNMENT GATE (STATE 1.5)]
-           │                     ├── Modal via `ask_question` presenting PRD/Design/Arch
-           │                     └── Mandatory explicit user sign-off before build
-           │                              │                              │
-           ▼                              ▼                              ▼
-[STATE 2: IMPLEMENTATION — PARALLEL FAN-OUT & WORKSPACE ISOLATION (MANDATORY)]
-  ├── Tier 1: 1 `code-implementer` in Mode A (Disjoint Files)
-  ├── Tier 2: 1..N `code-implementer` in parallel under Mode A (Disjoint Files)
-  ├── Tier 3: 1..N `code-implementer` in parallel under Mode A or Mode B (Git Worktree Isolation)
-  └── Scoped Test Isolation: Implementers run ONLY assigned test file during loops
-           │                              │                              │
-           ▼                              ▼                              ▼
-[STATE 3 & 4: QA VERIFICATION & COMPLIANCE AUDIT (MANDATORY)]
-  ├── Tier 1: Scoped test verification (`qa-tester`) + `compliance-verifier` (Skip Adversarial)
-  ├── Tier 2: Full test suite + `docs/<feature-name>/test-matrix.md` (`qa-tester`) + `compliance-verifier`
-  └── Tier 3: Adversarial Verification Committee:
-        ├── `qa-tester`: Standardized `test-matrix.md` across test pyramid + terminal exit 0 proof
-        ├── `critic`: Code smell detection, SOLID review, maintainability audit
-        ├── `challenger`: Boundary probe, failure mode injection, concurrency/edge stress
-        ├── `e2e-blackbox-tester`: Blackbox user journey and failure resilience verification
-        └── `compliance-verifier`: Static analysis, OWASP security audit, APPROVED verdict
-           │ (If Fail/REJECTED: loop back to State 2 `code-implementer`, max 3 iterations)
-           ▼
-[STATE 5: SHIP & LLM WIKI MEMORY UPDATE (MANDATORY)]
-  ├── Finalize `PLAN.md`
-  └── Update `context/memory/` (`MEMORY.md`, `architecture.md`/`conventions.md`, `log/YYYY-MM-DD.md`)
-```
-
-### 1.1. Dynamic 3-Tier Adaptive SDLC Specification
-
-| Dimension / Phase | Tier 1: Fast-Track (Low Complexity) | Tier 2: Standard (Medium Complexity) | Tier 3: Mission-Critical (Complex) |
+| Phase | Tier 1: Fast-Track | Tier 2: Standard | Tier 3: Mission-Critical |
 | :--- | :--- | :--- | :--- |
-| **Scope & Triggers** | Single-file bugfixes, docs, chores, typos, localized refactoring without public contract changes | 2–4 files/modules, new API endpoints, single UI view/widget, database schema changes | Full end-to-end features, payment/auth flows, architectural refactoring, breaking public APIs, major releases |
-| **Discovery (State 1)** | **SKIPPED**: Zero discovery overhead; no PRD, design.md, or architecture.md authored | **SELECTIVE**: Targeted discovery via `product-analyst`, `ui-ux-designer`, or `architect-engineer` | **FULL**: Comprehensive discovery via `product-analyst` (`prd.md`), `ui-ux-designer` (`design.md`), and `architect-engineer` (`architecture.md` / ADRs) |
-| **Interactive Alignment (State 1.5)** | **SKIPPED**: Auto-proceeds to implementation | **MANDATORY**: Interactive modal (`ask_question`) presenting PRD/design/architecture summary for user approval | **MANDATORY**: Strict interactive modal (`ask_question`) requiring explicit user sign-off |
-| **Build Mode (State 2)** | 1 `code-implementer` in Mode A (Disjoint Files) | 1..N `code-implementer` in parallel under Mode A (Disjoint Files) | 1..N `code-implementer` in parallel under Mode A or Mode B (Git Worktree Isolation) |
-| **QA Verification (State 3)** | Scoped test execution (only affected test file run) | Full test suite execution + standardized QA Test Matrix (`docs/<feature-name>/test-matrix.md`) | Full test suite execution + standardized QA Test Matrix (`docs/<feature-name>/test-matrix.md`) across test pyramid |
-| **Verification & Committee (State 4)** | Scoped `qa-tester` test proof + `compliance-verifier` audit (bypasses adversarial committee) | Parallel `qa-tester` (`exit code 0`) and `compliance-verifier` (`APPROVED`) | **Adversarial Verification Committee**: `qa-tester`, `critic`, `challenger`, `e2e-blackbox-tester`, `compliance-verifier` |
-| **Token & Latency Impact** | **70–85% token & latency savings** | Balanced overhead with rigorous quality verification | Maximum depth, empirical verification, and zero regression tolerance |
+| **Triggers** | Single-file bugfix, docs, chore, typo, local refactor | 2–4 modules, new endpoint, single UI view, DB migration | End-to-end feature, auth/payments, breaking API, major refactor |
+| **State 1 Discovery** | **SKIPPED** (zero discovery artifacts) | **Capability-Gated** (`Invoke / SKIP` per specialist) | **Capability-Gated** (`Invoke / SKIP` per specialist) |
+| **State 1.5 Alignment** | **SKIPPED** (auto-proceeds to State 2) | **MANDATORY** `ask_question` modal sign-off | **MANDATORY** `ask_question` modal sign-off |
+| **State 2 Build** | 1 `code-implementer` (Mode A) | 1..N `code-implementer` (Mode A Disjoint Files) | 1..N `code-implementer` (Mode A or Mode B Worktree) |
+| **State 3 & 4 Verify** | Scoped `qa-tester` + `compliance-verifier` | Full suite + `test-matrix.md` + `compliance-verifier` | Capability-gated Adversarial Committee + `compliance-verifier` |
 
-## 2. Review Committee Topologies & Delegation Architecture
+## 2. State 0 Per-Subagent `Invoke / SKIP` Capability Gating & Line Caps
 
-- **Manager-Worker Topology**:
-  - The Orchestrator (`senior-dev-orchestrator`, `flutter-feature-orchestrator`) acts purely as Technical Director and Coordinator.
-  - **Strict Non-Execution Constraint**: Orchestrators are **STRICTLY PROHIBITED** from directly editing, creating, or modifying application code or tests (`src/`, `lib/`, `tests/`).
-  - Direct file modification tools are reserved exclusively for planning, governance, and memory (`PLAN.md`, `ADR-*.md`, `.agents/`, `docs/`, `context/memory/`).
-  - All analysis, design, implementation, and test verification **MUST** be delegated to specialized worker subagents.
-- **Parallel Fan-Out / Fan-In Topology**:
-  - Used during State 2 Build to divide decoupled features into non-overlapping work tracks.
-  - Pre-dispatch Collision Analysis: Orchestrator verifies that parallel tracks have strictly disjoint `Owned Files` partitions under Mode A.
-  - Tracks merge cleanly at Fan-In before initiating verification.
-- **Adversarial Verification Committee Topology (Tier 3)**:
-  - Dispatched concurrently upon implementation Fan-In for mission-critical tasks:
-    1. `qa-tester`: Standardized `docs/<feature-name>/test-matrix.md` across test pyramid with terminal proof (`exit code 0`).
-    2. `critic`: Code smell detection, SOLID invariant review, and maintainability audit in `docs/<feature-name>/critic-review.md`.
-    3. `challenger`: Adversarial edge-case probe, boundary conditions, concurrency races, and negative test verification in `docs/<feature-name>/adversarial-report.md`.
-    4. `e2e-blackbox-tester`: End-to-end blackbox user journey and failure resilience testing in `docs/<feature-name>/blackbox-report.md`.
-    5. `compliance-verifier`: Static analysis, OWASP security audit, and architectural invariant audit yielding `APPROVED`.
+Never dispatch rigid subagent bundles blindly. Evaluate each specialist at State 0 and enforce strict Zero-Fluff line budgets:
+- **`product-analyst`**: **Invoke** ONLY if business scope, user stories, or acceptance criteria are ambiguous/missing (`docs/<feature-name>/prd.md <= 70 lines`). **SKIP** when prompt scope is explicit or for bugfixes, refactors, chores, docs, and CLIs.
+- **`ui-ux-designer`**: **Invoke** ONLY if UI screens/components change AND root `DESIGN.md` is missing or new visual patterns/tokens are introduced (official Google 2-layer root `DESIGN.md <= 110 lines` + optional `docs/<feature-name>/design.md <= 35 lines` delta). **SKIP** for backend, CLI, data pipelines, or minor UI tweaks covered by `DESIGN.md`.
+- **`architect-engineer`**: **Invoke** ONLY for structural decisions (new DB schema, cross-service contracts, core dependencies, pattern shifts; MADR `docs/<feature-name>/adr-NNN-*.md <= 55 lines`, optional `docs/<feature-name>/architecture.md <= 70 lines`). **SKIP** when following established repo patterns.
+- **`qa-tester`**: **Invoke** across all tiers — scoped test file in Tier 1; full test suite (`exit code 0`) + `docs/<feature-name>/test-matrix.md` (`<= 80 lines`) in Tier 2 & Tier 3.
+- **`critic`** *(Tier 3)*: **Invoke** ONLY if diff `>= 150 LOC` or multi-module structural refactor (`docs/<feature-name>/critic-review.md <= 50 lines`). Otherwise **SKIP**.
+- **`challenger`** *(Tier 3)*: **Invoke** ONLY for high-risk logic: auth, payments, concurrency, untrusted inputs, or destructive mutations (`docs/<feature-name>/adversarial-report.md <= 50 lines`). Otherwise **SKIP**.
+- **`e2e-blackbox-tester`** *(Tier 3)*: **Invoke** ONLY when a runnable web UI exists (`docs/<feature-name>/blackbox-report.md <= 50 lines` + Playwright `.png` screenshots at `375/768/1280/1920px` in `docs/<feature-name>/evidence/`). Otherwise **SKIP**.
+- **`compliance-verifier`**: **Invoke** across all tiers for static analysis, OWASP security audit, physical E2E `.png` evidence verification, and `APPROVED` sign-off.
+- **Root Governance Caps**: Target-project `AGENTS.md <= 90 lines` (commands, conventions, links to `DESIGN.md` & `context/memory/MEMORY.md`); `PLAN.md <= 50 lines`.
 
-## 3. Finite Self-Correction Protocol
+## 3. Fail-Honest E2E Verification & Finite Self-Correction
 
-- **Max 3 Retries**: When automated test suites, linter checks, or compliance audits fail, the agent is permitted a maximum of **3 self-correction iterations**.
-- **User Escalation**: If defects cannot be resolved within 3 iterations, the agent **MUST** pause and escalate to the user using `ask_question`, detailing the root cause, failing test traces, and attempted fixes.
-- **Infinite Loop Ban**: Never enter unbounded retry loops attempting blind permutations of failing code.
+- **Fail-Honest E2E Protocol**: `e2e-blackbox-tester` executes real Playwright browser checks via `run_command`. If no live web server or Chromium binary can run, it **MUST** report `BLOCKED` or `SKIPPED` — never fabricate or hallucinate `PASSED` — and the orchestrator **MUST** surface `BLOCKED`/`SKIPPED` statuses explicitly to the user.
+- **Finite Self-Correction (Max 3 Retries)**: On test or compliance failure (`REJECTED`), loop back to `code-implementer` up to **3 iterations**. If unresolved after 3 attempts, pause and escalate to the user via `ask_question` with root cause and failing traces.
 
-## 4. Workspace & Test Isolation Protocol
+## 4. Delegation Boundary, Workspace Isolation & Token Conservation
 
-- **Mode A — Disjoint File Partitioning (`Workspace: 'inherit'`) [DEFAULT]**:
-  - When concurrent subagents operate on strictly non-overlapping `Owned Files` sets, dispatch them in parallel with `Workspace: 'inherit'`.
-  - Each subagent prompt MUST list its `Exclusive Owned Files` and forbid edits outside that partition, achieving zero `git merge` or worktree overhead upon Fan-In.
-- **Mode B — Git Worktree Isolation (`Workspace: 'branch'` / `'share'` or `git worktree`)**:
-  - Used when concurrent subagents must touch shared files (`package.json`, `pubspec.yaml`, shared routers, DI containers) or run conflicting build processes.
-  - Each parallel worker executes in an isolated git branch/worktree and merges cleanly at Fan-In before final QA.
-- **Scoped Test Execution Isolation**:
-  - Each parallel implementer during State 2 must run ONLY its assigned test file (e.g. `pytest tests/unit/test_feature_a.py`), NOT the full test suite in tight loops, preventing CPU contention and execution delays.
-  - Full test suite execution is reserved for State 3 Fan-In by `qa-tester`.
-
-## 5. Token Conservation & Reactive Execution Invariants
-
-- **Reactive Wakeup**: Do NOT poll in a loop for task or subagent status. Trust the system's reactive message delivery and notifications.
-- **Token-Optimized Research**: Never dump multi-thousand-line files into the conversation context when locating a function or symbol. Use `grep_search` or slice notation (`StartLine` and `EndLine`) with `view_file`.
-- **Cross-AI LLM Wiki Continuity (`context/memory/`)**:
-  - At **State 0**, silently read `context/memory/MEMORY.md` (~500 tokens) and open linked wiki pages (`architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) only on demand.
-  - At **State 5 (Ship & Finish)**, update `context/memory/MEMORY.md` in-place (`<= 80-100 lines`), update `architecture.md` / `conventions.md` in-place when applicable, and append a 5-8 line milestone entry to `context/memory/log/YYYY-MM-DD.md`. Never write checkpoints on intermediate turns or simple Q&A prompts.
+- **Orchestrator Non-Execution Constraint**: Orchestrators (`senior-dev-orchestrator`, `flutter-feature-orchestrator`) are **STRICTLY PROHIBITED** from editing `src/`, `lib/`, or `tests/`. Direct writes are restricted to `PLAN.md`, `AGENTS.md`, `DESIGN.md`, `ADR-*.md`, `.agents/`, `docs/`, and `context/memory/`.
+- **Pre-Dispatch Collision Analysis**:
+  - **Mode A — Disjoint File Partitioning (`Workspace: 'inherit'`) [DEFAULT]**: Parallel workers receive non-overlapping `Exclusive Owned Files` lists with zero merge overhead.
+  - **Mode B — Git Worktree Isolation (`Workspace: 'branch'` / `'share'` or `git worktree`)**: Mandatory whenever parallel tracks touch shared files (`package.json`, `pubspec.yaml`, routers, DI) or run conflicting builds.
+- **Scoped Test Isolation**: Parallel implementers in State 2 run ONLY their assigned test file; full test suite execution is reserved for State 3 Fan-In by `qa-tester`.
+- **Reactive Wakeup & Cross-AI Memory**: Never poll subagents or tasks in loops; read files with `grep_search` or line slices; update `context/memory/MEMORY.md` (`<= 80-100 lines`), `architecture.md`/`conventions.md`, and a 5–8 line `context/memory/log/YYYY-MM-DD.md` block only at State 5.

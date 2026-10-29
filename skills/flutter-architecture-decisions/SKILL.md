@@ -1,93 +1,59 @@
 ---
 name: flutter-architecture-decisions
-description: Use when choosing state management for a Flutter app (Riverpod vs Bloc vs signals vs setState), drawing package/module boundaries, deciding what belongs in the UI/logic/data layers, or recording a Flutter architecture decision (ADR). Complements the official flutter-apply-architecture-best-practices skill, which teaches the layered pattern — this one helps you pick and record the choices it leaves open.
+description: Use when choosing state management for a Flutter app (Riverpod vs Bloc vs signals vs setState), drawing package/module boundaries, deciding what belongs in the UI/logic/data layers, or recording a concise MADR Flutter ADR (<= 55 lines). Complements the official flutter-apply-architecture-best-practices skill.
 ---
 
 # Flutter Architecture Decisions
 
 ## Overview
-The **Flutter Architecture Decisions** skill provides a rigorous framework for evaluating and selecting state management solutions (Riverpod, Bloc/Cubit, signals, or vanilla `setState`), establishing package/module boundaries, and recording Architecture Decision Records (ADRs). Working seamlessly across **Claude Code** and **Google Antigravity**, this skill complements `flutter-apply-architecture-best-practices` by making the explicit technical choices needed to prevent architecture thrashing and dependency rot.
+**Flutter Architecture Decisions** provides a pragmatic framework for selecting one primary state management solution (Riverpod, Bloc/Cubit, Signals, or `setState`), drawing high-bar package boundaries, and recording concise **MADR** records (`docs/<feature-name>/adr-NNN-*.md <= 55 lines`) and conditional blueprints (`docs/<feature-name>/architecture.md <= 70 lines`) across **Claude Code** and **Google Antigravity**.
 
 ## When to Use
-
 ### Trigger Scenarios
-- Starting a new Flutter project or creating a major feature area with non-trivial state interactions.
-- Choosing a state management paradigm (Riverpod vs. Bloc vs. signals) for a team or codebase.
-- Splitting monolithic code into modular packages or distinct domain boundaries.
-- Resolving architectural PR debates regarding state sharing, dependency injection, or persistence.
+- Scaffolding a Flutter app, choosing/migrating state management, or introducing `GoRouter`/FFI/platform-channel topology shifts.
+- Evaluating whether a domain boundary warrants a standalone Dart package vs. folder namespace.
+- Resolving PR disputes on dependency direction across UI, Domain, and Data layers.
 
 ### When NOT to Use
-- **One-widget fixes**: Local widget tweaks and styling adjustments should use standard `setState` without architecture debates.
-- **Existing ADR coverage**: Features staying strictly within established module boundaries should follow existing project ADRs.
-- **Backend or API design**: For backend services or non-Dart architecture, use `senior-architect-engineering`.
+- **Routine feature or single-widget work**: When changes fit established repository architecture, **skip** creating redundant ADRs or `architecture.md`.
+- **Backend / non-Dart services**: Use `senior-architect-engineering` or `design-spec-expert`.
 
 ## Process
-
 ```mermaid
-flowchart TD
-    A[Requirement / Proposal] --> B[Evaluate Complexity & Team Fit]
-    B --> C[State Management Decision Matrix]
-    C --> D[Module Boundary Assessment]
-    D --> E[Draft ADR Document]
-    E --> F[Review & Commit to doc/adr/]
-    F --> G[Hand-off to Implementer & Reviewer]
+flowchart LR
+    A["Inspect AGENTS.md & DESIGN.md"] --> B["State Matrix & Package Gate"]
+    B --> C["Draft Concise MADR (<=55 lines)"]
+    C --> D{"Multi-Layer / Package?"}
+    D -->|"Yes"| E["Author architecture.md (<=70 lines)"]
+    D -->|"No"| F["Skip Redundant Blueprint"]
 ```
 
-### 1. Apply the Layered Split
-Ensure the codebase adheres to clear architectural separation:
-- **UI Layer**: Widgets, presentation logic, theme styling.
-- **Domain / Logic Layer**: Use cases, entities, value objects, business rules.
-- **Data Layer**: Repositories, data sources, DTO mappers, network/local storage clients.
+### 1. Align Layered Split & Root Contracts
+Inspect root `AGENTS.md` (`<= 90 lines` wired to `context/memory/MEMORY.md`) and official Google root `DESIGN.md` (`<= 110 lines` 2-layer YAML + 8 sections) + optional `docs/<feature-name>/design.md` (`<= 35 lines` screen delta). Enforce clean **UI** (widgets/themes) -> **Domain** (use cases/entities) -> **Data** (repositories/DTOs/clients) separation.
 
-### 2. State Management Selection
-Evaluate the state complexity against [references/state-management-decision-matrix.md](references/state-management-decision-matrix.md):
-- Choose **one primary solution** per application.
-- A secondary solution is acceptable only with documented rationale (e.g., local `setState` for ephemeral animation controllers alongside app-wide Riverpod).
-- Avoid mixing three or more state libraries in the same codebase.
+### 2. State Management & High-Bar Package Gate
+Evaluate state complexity via [references/state-management-decision-matrix.md](references/state-management-decision-matrix.md): pick **one primary solution** per app (`setState` for local ephemeral state). Extract a separate package **only** if `>= 2` hold: reused across apps, decoupled release cadence, 1-sentence public API, and standalone test suite.
 
-### 3. Module Boundary Evaluation
-Apply the module boundary checklist. Only extract code into a standalone package if **two or more** conditions hold:
-- Code is consumed by multiple independent applications or plugins.
-- It changes for an isolated business reason or on a decoupled release cadence.
-- It exposes a narrow, well-defined public API that can be summarized in one sentence.
-- Its unit and integration test suites can execute without the host application.
-
-### 4. Record Architecture Decision Record (ADR)
-Document the decision using the template in [references/adr-template.md](references/adr-template.md):
-- Store files under `doc/adr/NNNN-decision-title.md`.
-- Capture context, considered options, positive consequences, tradeoffs, and compliance checks.
+### 3. Author Concise MADR & Conditional Blueprint
+- **Concise MADR (`docs/<feature-name>/adr-NNN-*.md <= 55 lines`)**: Follow [references/adr-template.md](references/adr-template.md)—**Status & Date**, `## 1. Context` (`<= 5 lines`), `## 2. Options Considered` (2–3 concrete options), `## 3. Decision & Justification`, and `## 4. Trade-offs & Reviewer Compliance` (`+` Pros / `-` Cons + 1-line lint/PR rule for `flutter-reviewer`). Sync `doc/adr/` if used by the repo.
+- **Blueprint (`docs/<feature-name>/architecture.md <= 70 lines`)**: Author **ONLY** when multiple layers or packages interact; skip when a single ADR suffices.
 
 ## Usage
-
-### Example Prompts
-```text
-"Evaluate state management options for our Flutter ecommerce cart module and draft an ADR comparing Riverpod and Bloc."
-```
-```text
-"Review whether the user authentication flow should be extracted into a separate Dart package."
-```
-
-### Host Execution Instructions
-- **Claude Code**: Invoke via `/skill flutter-architecture-decisions` or request Flutter ADR analysis in chat.
-- **Google Antigravity**: Invoke in architecture review mode or run automated module analysis:
-```bash
-dart analyze lib/
-```
+### Example Prompts & Host Execution
+- `"Compare Riverpod vs Bloc for our offline-first cart flow and write a <=55-line MADR ADR."`
+- **Claude Code / Google Antigravity**: Invoke `flutter-architecture-decisions` or run `dart analyze lib/` to inspect boundary imports before drafting.
 
 ## Red Flags
-- Selecting an overly complex state framework (e.g., enterprise Bloc) for simple static apps or leaf widgets.
-- Adopting multiple overlapping state solutions (e.g., mixing Riverpod, Provider, and Bloc) across feature folders.
-- Creating arbitrary "shared" or "core" packages without clear API boundaries or standalone test suites.
-- Implementing architectural changes without committing a corresponding ADR to `doc/adr/`.
-- Permitting UI widgets to directly call network or database clients without domain/repository abstraction.
+- Mixing 3+ state libraries or picking heavy enterprise Bloc for simple leaf screens.
+- Creating `shared`/`core` packages without a 1-sentence API or standalone tests.
+- Writing verbose ADRs (`> 55 lines`), bloated `architecture.md` (`> 70 lines`), or redundant docs when changes already follow established architecture.
+- Allowing UI widgets to import `dio`, SQLite, or platform channels directly.
 
 ## Verification
-- [ ] Primary state management solution chosen and verified against project requirements.
-- [ ] Module boundary checklist evaluated before extracting packages.
-- [ ] ADR drafted using [references/adr-template.md](references/adr-template.md) and saved in `doc/adr/`.
-- [ ] UI, domain, and data layer separation maintained with zero cyclic dependencies.
-- [ ] Architectural decisions communicated to `flutter-implementer` and `flutter-reviewer`.
+- [ ] One primary state solution selected against [references/state-management-decision-matrix.md](references/state-management-decision-matrix.md) and package gate checked.
+- [ ] `docs/<feature-name>/adr-NNN-*.md` (`<= 55 lines`) matches [references/adr-template.md](references/adr-template.md) including the 1-line `flutter-reviewer` rule.
+- [ ] `docs/<feature-name>/architecture.md` (`<= 70 lines`) created **only** for multi-layer/package interactions; zero cyclic dependencies.
 
 ## References
 - [State Management Decision Matrix](references/state-management-decision-matrix.md)
-- [Architecture Decision Record (ADR) Template](references/adr-template.md)
+- [Concise MADR Template (Flutter)](references/adr-template.md)

@@ -1,81 +1,68 @@
 ---
 name: documentation-expert
-description: Establishes guidelines, frameworks, and visual templates to create professional technical documentation, design records, and diagrams. Use this skill when asked to write user manuals, API docs, system overviews, or architectural diagrams.
+description: Author and validate Zero-Fluff technical documentation, root AGENTS.md, Google DESIGN.md alignment, Diátaxis guides, and Mermaid diagrams with strict conciseness caps and relative link verification.
 ---
 
 # Documentation Expert Skill
 
 ## Overview
-This skill guides the authoring, structuring, and validation of technical documentation and architectural diagrams. It acts as a Lead Technical Writer and Information Architect, applying the Diátaxis documentation framework (Tutorials, How-To Guides, Reference, Explanation) to match user intent, rendering visual diagrams with Mermaid.js, and strictly enforcing relative link integrity.
+This skill guides the authoring, structuring, and automated validation of Zero-Fluff technical documentation, root `AGENTS.md` guides, official Google `DESIGN.md` references, and Mermaid.js architectural diagrams. Applying the Diátaxis framework (Tutorials, How-To Guides, Reference, Explanation), it enforces strict line budgets, portable relative links, and zero-boilerplate clarity.
 
 ## When to Use
 ### Trigger Scenarios
-- Writing, refactoring, or reviewing project READMEs, user manuals, and API references.
-- Visualizing system architectures, sequence flows, or data models using Mermaid.js diagrams.
-- Structuring technical docs to eliminate confusion between reference specifications and how-to guides.
-- Auditing documentation for broken relative links, heading nesting violations, and absolute path leaks.
+- Authoring or auditing READMEs, runbooks, API references, and root `AGENTS.md` (`<= 90 lines`).
+- Ensuring documentation aligns with official Google 2-layer `DESIGN.md` (`<= 110 lines`) and `docs/<feature-name>/` line caps.
+- Modeling architectures, sequence flows, or schemas with syntax-safe Mermaid.js diagrams.
+- Validating markdown heading hierarchy, relative links, and path portability.
 
 ### When NOT to Use
-- **Scaffolding Software Design Documents for unbuilt features**: Route to `design-spec-expert`.
-- **Authoring Architectural Decision Records (ADRs)**: Route to `senior-architect-engineering`.
-- **Extracting repo-wide codebase maps into project-context.md**: Route to `repo-research`.
+- **Authoring MADR architectural decisions (`adr-NNN-*.md`)**: Route to `senior-architect-engineering`.
+- **Authoring UI token systems (`DESIGN.md`)**: Route to `ui-ux-designer`.
+- **Automated codebase cartography (`project-context.md`)**: Route to `repo-research`.
 
 ## Process
-### Phase 1: Diátaxis Pillar Alignment
-Categorize the document into one of the four distinct Diátaxis modes based on reader intent:
-1. **Tutorials (Learning-oriented)**: Hand-held, end-to-end beginner lessons with guaranteed successful outcomes.
-2. **How-To Guides (Problem-oriented)**: Step-by-step recipes solving specific real-world tasks.
-3. **Reference (Information-oriented)**: Accurate, dry, complete descriptions of classes, functions, flags, and APIs.
-4. **Explanation (Understanding-oriented)**: High-level architectural discussions, historical context, and design rationales.
-*Rule: Do NOT blend multiple pillars into a single document section.*
+### Phase 1: Diátaxis Pillar & Zero-Fluff Budget Alignment
+1. Select one Diátaxis mode per section — never mix tutorials, how-to steps, reference tables, and explanations together.
+2. Enforce strict **Zero-Fluff** conciseness caps across project and feature artifacts:
+   - Root `AGENTS.md <= 90 lines` (verified build/lint/test commands, conventions, links to `DESIGN.md` & `context/memory/MEMORY.md`).
+   - Root Google `DESIGN.md <= 110 lines` (YAML tokens + 8 sections) and feature delta `docs/<feature-name>/design.md <= 35 lines`.
+   - Feature specs in `docs/<feature-name>/`: `prd.md <= 70 lines`, `adr-NNN-*.md <= 55 lines`, `architecture.md <= 70 lines`, `test-matrix.md <= 80 lines`, verification reports `<= 50 lines`.
 
-### Phase 2: Visual Diagramming via Mermaid.js
-Insert Mermaid.js diagrams to visually illustrate complex interactions, data flows, or states:
-- Use **flowcharts** for component layouts and pipelines.
-- Use **sequence diagrams** for API exchanges and multi-agent loops.
-- Use **ER diagrams** for data entity relationships.
-*Always quote labels containing special characters to prevent rendering syntax errors.*
+### Phase 2: Syntax-Safe Mermaid.js Diagramming
+Use concise Mermaid blocks (`flowchart TD`, `flowchart LR`, `sequenceDiagram`, `stateDiagram-v2`, `erDiagram`) instead of prose walls. Always quote labels containing spaces, slashes, brackets, or parentheses (e.g., `api["Auth API (v2)"]`).
 
-### Phase 3: Link Portability & Automated Verification
-1. Enforce relative link paths (e.g., pointing to relative project files instead of hardcoded machine-specific absolute paths).
-2. Execute the documentation validator script to check markdown layout nesting, link validity, and absolute path leaks:
-   ```bash
-   python3 ./skills/documentation-expert/scripts/validate_docs.py
-   ```
+### Phase 3: Link Portability & Automated Validation
+Use portable repository-relative links (never machine-local paths) and run the validator script:
+```bash
+python3 ./skills/documentation-expert/scripts/validate_docs.py
+```
 
 ## Usage
 ### Commands & Automation Scripts
 ```bash
-# Validate markdown files, relative links, and heading hierarchies
+# Audit markdown heading hierarchy, relative links, and local path leaks
 python3 ./skills/documentation-expert/scripts/validate_docs.py
 ```
 
-### Example Prompts
-- *"Write a comprehensive README for our payments service following the Diátaxis framework, including an architecture diagram."*
-- *"Create a Mermaid sequence diagram illustrating the OAuth2 authorization code flow with PKCE."*
-- *"Audit the docs/ directory for broken relative links and heading hierarchy violations."*
-
 ### Host Execution Instructions
-- **Claude Code**: Run `validate_docs.py` via bash to audit markdown files after authoring documentation.
-- **Antigravity**: Ensure that diagrams use valid Mermaid blocks and verify links with `validate_docs.py`.
+- **Claude Code**: Run `validate_docs.py` via Bash after authoring or editing markdown docs.
+- **Antigravity**: Verify Mermaid quoting, line caps, and relative links via `validate_docs.py`.
 
 ## Red Flags
-- Mixing How-To steps with deep theoretical Explanations in the same section.
-- Hardcoding user machine absolute paths (such as user home directories) in markdown links or code snippets.
-- Creating broken relative markdown links pointing to non-existent files.
-- Describing multi-component distributed architectures in walls of text without a diagram.
+- Bloated prose walls exceeding artifact line budgets (`AGENTS.md > 90`, `DESIGN.md > 110`, reports `> 50` lines).
+- Blending How-To recipes with deep theoretical Explanations in the same section.
+- Leaking local machine paths or leaving broken relative `.md` links.
+- Unquoted parentheses or brackets in Mermaid node labels causing render failures.
 
 ## Verification
-- [ ] Document aligns cleanly to a Diátaxis pillar.
-- [ ] Automated documentation validator script passes with zero errors:
+- [ ] Document matches its target Diátaxis pillar and stays within its Zero-Fluff line cap.
+- [ ] Root `AGENTS.md` and `DESIGN.md` cross-links resolve cleanly when present.
+- [ ] Validator script exits with code `0`:
   ```bash
   python3 ./skills/documentation-expert/scripts/validate_docs.py
   ```
-- [ ] All relative file links point to existing files.
-- [ ] Zero absolute user paths leaked.
-- [ ] Mermaid diagrams render without syntax errors.
+- [ ] Zero broken relative links, skipped heading levels, or local path leaks.
 
 ## References
 - [Diátaxis Documentation Framework Reference](references/diataxis-framework.md)
 - [Mermaid.js Graphic Reference Guide](references/mermaid-guide.md)
-

@@ -1,82 +1,70 @@
 ---
 name: repo-research
-description: Analyze a repository's structure, technologies, and patterns to create or update a project context document. Use when asked to research, analyze, or understand a codebase.
+description: Analyze a repository's structure, stack, commands, and invariants to create a high-signal Codebase Map (.agents/rules/project-context.md <= 80 lines) and bootstrap/sync root AGENTS.md and context/memory/MEMORY.md.
 ---
 
 # Repository Research Skill
 
 ## Overview
-This skill analyzes repository structures, technologies, architectures, and runtime dependencies to produce or update a centralized project context document at `.agents/rules/project-context.md`. It acts as a Repository Intelligence Specialist and Systems Cartographer, minimizing LLM token consumption by prioritizing automated AST and configuration extraction over speculative file reading.
+This skill maps a repository's stack, directory boundaries, executable commands, and architectural invariants into a concise, high-signal **Codebase Map** at `.agents/rules/project-context.md` (`<= 80 lines`), while bootstrapping or synchronizing target-project root `AGENTS.md` (`<= 90 lines`) and `context/memory/MEMORY.md` (`<= 80-100 lines`). It prioritizes deterministic script extraction over speculative file reading to conserve tokens.
 
 ## When to Use
 ### Trigger Scenarios
-- Initial onboarding or orientation when starting work on a new repository.
-- Generating or updating `.agents/rules/project-context.md` with current codebase facts.
-- Mapping entry points, route handlers, data models, and local development runbooks.
-- Resolving inconsistencies between legacy documentation and actual source code.
+- Onboarding onto an unfamiliar repository or refreshing `.agents/rules/project-context.md`.
+- Bootstrapping or syncing a target repository's root `AGENTS.md` and `context/memory/MEMORY.md`.
+- Verifying build, lint, and test commands alongside entry points and layer invariants.
+- Reconciling contradictions between stale documentation and actual source code.
 
 ### When NOT to Use
-- **Speculative bulk reading of entire codebases**: Run Phase 1 automated extraction first.
-- **Deep code smell diagnosis**: Route to `code-smells-expert`.
-- **Software design specification for new features**: Route to `design-spec-expert`.
-- **Automated test suite execution**: Route to `test-driven-development`.
+- **Bulk-reading entire source trees without running `repo_analyzer.py` first**.
+- **Deep code smell or SOLID auditing**: Route to `code-smells-expert` or `code-critic`.
+- **Feature-level PRD, UI design, or MADR authoring**: Route to discovery skills (`docs/<feature-name>/`).
 
 ## Process
-### Phase 1: Automated Repository Analysis
-Execute the repository analyzer to map directory trees, detect language frameworks, package configurations, and bootstrap the context document:
+### Phase 1: Automated Repository Extraction
+Run the analyzer script to extract directory layout, languages, package managers, config files, and entry points into `.agents/rules/project-context.md`:
 ```bash
 python3 ./skills/repo-research/scripts/repo_analyzer.py
 ```
-Verify that `.agents/rules/project-context.md` was generated or refreshed.
 
-### Phase 2: Targeted Manual Refinement
-Using the generated project structure and config summary in `project-context.md`, read **only** the necessary files to fill in placeholders `[...]` or resolve unknown details:
-1. **Identify Entry Points**: Read top-level imports in entry files (e.g. `main.py`, `index.ts`, `app.dart`) to resolve *Architectural Patterns* and *Runtime Dependency Graph*.
-2. **Scan Route Definitions**: Read routing files (e.g. `routes.py`, `app.js`, controller directories) to map the *API Surface / Route Map*.
-3. **Analyze Database / Models**: Read schema files or `models/` directories to compile the *Data Model Overview*.
-4. **Compile Runbook**: Confirm actual local run commands in configs (`package.json`, `Makefile`, `pubspec.yaml`) to populate the *Local Dev Runbook*.
-5. **Resolve Glossary**: Add definitions for domain-specific terminology encountered during review.
+### Phase 2: High-Signal Codebase Map Refinement (`<= 80 lines`)
+Inspect **only** high-signal config and entry files (`pyproject.toml`, `package.json`, `Makefile`, `pubspec.yaml`, main entry points) to replace `[...]` placeholders across the 4 core sections — keeping `.agents/rules/project-context.md` strictly `<= 80 lines`:
+1. **Stack & Entry Points**: Verified runtime versions, frameworks, data stores, and entry modules.
+2. **Directory & Layer Map**: Concise tree plus domain, interface/UI, and test directory ownership.
+3. **Run, Build & Test Commands**: Exact, verified install, dev, lint/typecheck, scoped test, and full test commands.
+4. **Key Architectural & Env Invariants**: Layer boundaries, required env vars (names only, zero secrets), and runtime constraints.
 
-### Phase 3: Inconsistency Resolution & Reporting
-If source code contradicts existing documentation:
-- Report the contradiction clearly:
-  - **Documented**: What the legacy docs state.
-  - **Actual**: What the source code actually implements.
-  - **Recommendation**: How to reconcile the difference.
+### Phase 3: Target `AGENTS.md` & `context/memory/MEMORY.md` Bootstrap/Sync
+When researching a target repository:
+1. **Bootstrap/Sync Root `AGENTS.md` (`<= 90 lines`)**: If missing or stale, create/update root `AGENTS.md` with verified build/lint/test commands, core coding conventions, and explicit links to root `DESIGN.md` (if UI exists) and `context/memory/MEMORY.md`.
+2. **Bootstrap/Sync `context/memory/MEMORY.md` (`<= 80-100 lines`)**: Ensure cross-AI handoff state, active branch, and links to `architecture.md` and `conventions.md` are initialized or synchronized without duplicating full codebase trees.
+3. **Surface Contradictions**: Report any mismatch as **Documented** vs. **Actual** vs. **Action Taken**.
 
 ## Usage
 ### Commands & Automation Scripts
 ```bash
-# Analyze workspace and scaffold/update project-context.md
+# Generate or refresh .agents/rules/project-context.md from workspace configs
 python3 ./skills/repo-research/scripts/repo_analyzer.py
 ```
 
-### Example Prompts
-- *"Analyze this repository and generate an up-to-date project context document in .agents/rules/."*
-- *"Map the API route surface and database models for this service."*
-- *"Identify what frameworks, build tools, and entry points are used across this codebase."*
-
 ### Host Execution Instructions
-- **Claude Code**: Run `repo_analyzer.py` via bash, then selectively view only the high-value entry files.
-- **Antigravity**: Execute `repo_analyzer.py` as an orientation step before initiating feature development.
+- **Claude Code**: Run `repo_analyzer.py` via Bash, selectively read entry/config files, then refine `project-context.md` (`<= 80 lines`) and sync root `AGENTS.md` + `context/memory/MEMORY.md`.
+- **Antigravity**: Execute `repo_analyzer.py` via `Bash` during State 0 orientation, then finalize the Codebase Map and root governance links.
 
 ## Red Flags
-- Bulk-reading dozens of source files speculatively without using automated tooling (wasting context tokens).
-- Silently overwriting manually curated project context without merging additions.
-- Leaving unverified `[...]` placeholders in `project-context.md`.
-- Failing to verify commands listed in the Local Dev Runbook.
+- Producing bloated 10-section codebase dumps (`> 80 lines`) or speculative prose.
+- Reading dozens of source files before running `repo_analyzer.py`.
+- Leaving unresolved `[...]` placeholders or unverified run/test commands.
+- Failing to bootstrap or synchronize root `AGENTS.md` (`<= 90 lines`) and `context/memory/MEMORY.md` in target projects.
 
 ## Verification
-- [ ] Automated analyzer executed and generated valid output:
+- [ ] Analyzer executed cleanly:
   ```bash
   python3 ./skills/repo-research/scripts/repo_analyzer.py
   ```
-- [ ] `.agents/rules/project-context.md` exists and contains verified technology stack and entry points.
-- [ ] No speculative full-repository file dumps performed.
-- [ ] Inconsistencies between documentation and code highlighted and resolved.
+- [ ] `.agents/rules/project-context.md` is `<= 80 lines` with all 4 sections populated and zero `[...]` placeholders.
+- [ ] Target-project root `AGENTS.md` (`<= 90 lines`) and `context/memory/MEMORY.md` (`<= 80-100 lines`) are present and synchronized.
+- [ ] All build, lint, and test commands match actual project manifests.
 
 ## References
-For the standardized project context schema and layout:
 - [Project Context Template](references/project-context-template.md)
-
-

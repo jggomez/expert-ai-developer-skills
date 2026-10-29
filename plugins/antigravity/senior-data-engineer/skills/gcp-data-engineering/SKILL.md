@@ -6,79 +6,59 @@ description: Guides architecture decisions for data pipelines on Google Cloud �
 # GCP Data Engineering Skill
 
 ## Overview
-This skill guides architectural decisions for data pipelines, data lakehouses, and analytical storage on Google Cloud Platform (GCP). It acts as a Senior GCP Data Architect, balancing data volume, ingestion latency, operational complexity, and cloud costs. It prioritizes simple, warehouse-native ELT patterns (Dataform, BigQuery) over complex custom streaming pipelines (Dataflow/Beam) unless business SLAs strictly require sub-minute freshness.
+Guides architectural decisions for data pipelines, Medallion lakehouses, and analytical storage on Google Cloud Platform (GCP). Balances data volume, SLA freshness, operational simplicity, and cloud cost—prioritizing warehouse-native ELT (Dataform, BigQuery) over custom streaming (Dataflow/Beam) unless sub-minute SLAs apply, while enforcing capability-gated artifacts and fail-honest CLI verification.
 
 ## When to Use
 ### Trigger Scenarios
-- Designing enterprise data platforms on GCP (Cloud Storage, BigQuery, Pub/Sub, Dataflow, Composer).
-- Selecting ingestion patterns (Batch loading vs. Log-based CDC vs. Streaming event buffers).
-- Choosing orchestration engines (Dataform for warehouse-internal SQL vs. Cloud Composer for multi-service DAGs).
-- Designing BigQuery table partitioning, clustering, and Medallion architecture layers (`bronze` → `silver` → `gold`).
+- Designing GCP lakehouse platforms (Cloud Storage, BigQuery, Datastream, Pub/Sub, Dataform, Composer).
+- Selecting batch vs. log-based CDC vs. streaming ingestion and Dataform vs. Composer vs. Dataflow orchestration.
+- Designing BigQuery partitioning, clustering, and Medallion layers (`Bronze` → `Silver` → `Gold`).
 
 ### When NOT to Use
-- **Replicating operational databases via CDC and SCD Type 2 modeling**: Route to `cdc-scd-patterns`.
-- **Tuning slow or expensive BigQuery SQL query plans**: Route to `bigquery-query-optimization`.
-- **Traditional single-node RDBMS optimization**: Route to `sql-query-optimization`.
-- **General application backend development**: Route to `python-expert`.
+- **CDC & SCD Type 2 merge patterns**: Route to `cdc-scd-patterns`.
+- **Slow/expensive BigQuery SQL plan tuning**: Route to `bigquery-query-optimization`.
+- **Single-node RDBMS SQL tuning**: Route to `sql-query-optimization`.
+- **Application backend code**: Route to `python-expert`.
 
 ## Process
-### Phase 1: Storage Layer & Medallion Architecture
-1. **Data Lake (Cloud Storage)**: Use GCS as the immutable landing zone for raw external files (CSV, JSON, Parquet, Avro). Retain raw files to ensure re-derivability if downstream bugs occur.
-2. **Data Warehouse (BigQuery)**: Serverless, petabyte-scale analytical store.
-3. **Medallion Layers**:
-   - `Bronze`: Raw, ingested change-log or file dumps (append-only, immutable).
-   - `Silver`: Cleaned, deduplicated, schema-validated, and typed tables.
-   - `Gold`: High-value business aggregates, metrics marts, and reporting views.
+### Phase 1: Capability-Gated Planning & Target `AGENTS.md`
+1. Maintain root `AGENTS.md` (`<= 90 lines`) linking `dataform`/`bq` commands and `context/memory/MEMORY.md`.
+2. Author `PLAN.md` (`<= 50 lines`) gating artifacts individually:
+   - `docs/<feature-name>/data-contracts.md` (`<= 60 lines`): **ONLY IF** new/modified schemas or SLAs are introduced; **SKIP** if schemas exist.
+   - `docs/<feature-name>/pipeline-lineage.md` (`<= 45 lines`): **ONLY IF** multi-layer Bronze/Silver/Gold flows change; **SKIP** for single-mart edits.
+   - Delegate `sql-query-optimizer` **ONLY IF** large partitioned scans or multi-table JOIN/window shuffle risks exist; invoke Tier 3 `Data Challenger` **ONLY IF** CDC/SCD-2 merges, late-arriving dedup, or destructive/backfill logic changes.
 
-### Phase 2: Ingestion Pattern Selection
-Default to **batch** unless business requirements dictate sub-minute SLAs:
-- **Nightly / Scheduled Loads**: Batch load into BigQuery via Dataform, Cloud Storage transfer, or Cloud Composer.
-- **Operational Database Replication**: Use **Datastream** for log-based CDC into BigQuery.
-- **High-throughput Event Streaming**: Use **Pub/Sub** buffer with direct BigQuery subscription (or Dataflow if stream joins/windowing are required).
+### Phase 2: Medallion Storage, Ingestion & Orchestration
+1. **Storage Layers**: GCS immutable raw landing zone + BigQuery Medallion tables: `Bronze` (append-only raw/CDC), `Silver` (deduplicated, typed, SCD-2), `Gold` (BI star marts).
+2. **Ingestion (Default Batch)**: Scheduled loads (GCS/Dataform/Composer); **Datastream** for operational DB CDC; **Pub/Sub → BigQuery** (or **Dataflow** only when windowed stream joins/non-SQL code are required).
+3. **Orchestration**: **Dataform** for warehouse-native SQLX & assertions; **Cloud Composer** only for cross-service DAGs.
 
-### Phase 3: Orchestration & Transformation Engine Selection
-- **Dataform**: SQLX-native transformation inside BigQuery. Default choice for warehouse-native ELT, assertions, and table dependencies.
-- **Cloud Composer (Managed Airflow)**: Use when orchestrating across multiple GCP services (e.g. GCS → Dataflow → Vertex AI → BigQuery).
-- **Dataflow (Apache Beam)**: Use exclusively for complex streaming transforms, custom windowed joins, or heavy Python/Java non-SQL transformations.
-
-### Phase 4: BigQuery Cost & Performance Governance
-- **Partitioning**: Partition tables by date/timestamp or ingestion time; require partition filters in `WHERE` clauses.
-- **Clustering**: Cluster on up to 4 frequently filtered or joined columns, sorted from highest to lowest selectivity.
-- **Column Pruning**: Explicitly name required columns; never run `SELECT *` across large analytical tables.
-- **Dry-Run Validation**: Always validate query byte consumption before execution.
+### Phase 3: BigQuery Cost Governance & Fail-Honest Verification
+1. **Partition & Cluster**: Partition by date/timestamp or ingestion time (`require_partition_filter = true` on large tables); cluster up to 4 selective filter/join columns; prune columns (never `SELECT *`).
+2. **Fail-Honest CLI Gate**: Run `dataform compile` and `bq query --dry_run`. If CLI binaries or GCP ADC credentials fail/missing, **STOP** and report `BLOCKED: Not executed — <exact CLI error>`—never fabricate byte counts or compile success.
+3. **Standardized Test Matrix (`docs/<feature-name>/data-test-matrix.md <= 75 lines`)**: Record IEEE/ISTQB test cases (`TC-01`...) with `ID`, `Ref`, `Level`, `Objective`, `Steps`, `Expected Result`, `Assertion / Query`, and `Status`.
 
 ## Usage
-### CLI Invocations & Verification Commands
 ```bash
-# Check query byte scan estimation using bq dry-run
+# Estimate scanned bytes via BigQuery dry-run
 bq query --use_legacy_sql=false --dry_run "SELECT id, created_at FROM \`my_project.analytics.events\` WHERE event_date = '2026-09-01'"
 
-# Validate Dataform project compilation
+# Compile Dataform dependency graph (scoped or full)
+dataform compile --actions silver_orders
 dataform compile
 ```
-
-### Example Prompts
-- *"Design a cost-effective GCP pipeline to ingest 50M daily events from Cloud Storage into BigQuery."*
-- *"Should we use Dataform or Cloud Composer for our daily analytical reporting pipeline?"*
-- *"Design the Medallion architecture and clustering strategy for our customer analytics dataset."*
-
-### Host Execution Instructions
-- **Claude Code**: Provide architecture blueprints and run `bq` CLI dry-run checks in the workspace.
-- **Antigravity**: Formulate GCP architectural designs and integrate with GCP BigQuery tools.
+- **Host Execution**: Run `bq` and `dataform` via shell (`Bash` in Claude Code; `run_command` in Antigravity) and persist contracts/SLAs to `context/memory/MEMORY.md`.
 
 ## Red Flags
-- Reaching for complex streaming architectures (Dataflow/Kafka) when hourly batch loads satisfy business SLAs.
-- Running `SELECT *` queries on multi-terabyte BigQuery tables without partition filters.
-- Using Cloud Composer to run pure SQL transformations that Dataform handles natively with lower cost and complexity.
-- Querying raw CDC change-log tables directly from BI dashboards without a silver deduplication layer.
+- Fabricating `bq query --dry_run` byte counts or pretending `dataform compile` ran when CLI/ADC credentials fail instead of reporting `BLOCKED: Not executed — <exact CLI error>`.
+- Using Dataflow/Kafka when batch/Datastream meets SLAs, or Composer for SQL-only transforms Dataform handles natively.
+- Querying `SELECT *` or raw CDC tables without partition filters or a Silver deduplication layer.
 
 ## Verification
-- [ ] Table designs specify appropriate partitioning column and clustering keys.
-- [ ] Medallion layer boundaries (`bronze`, `silver`, `gold`) clearly delineated.
-- [ ] Ingestion tool chosen matches data velocity and freshness requirements.
-- [ ] BigQuery dry-run confirms scanned bytes comply with cost budgets.
+- [ ] Root `AGENTS.md` (`<= 90 lines`), `PLAN.md` (`<= 50 lines`), and capability-gated `docs/<feature-name>/` artifacts respect line caps.
+- [ ] Tables define explicit partitioning (`require_partition_filter = true`) and clustering keys across `Bronze`/`Silver`/`Gold`.
+- [ ] `dataform compile` and `bq query --dry_run` exit `0`, OR execution halts honestly with `BLOCKED: Not executed — <exact CLI error>`.
+- [ ] `docs/<feature-name>/data-test-matrix.md` (`<= 75 lines`) documents `TC-01`... with `ID`, `Ref`, `Level`, `Objective`, `Steps`, `Expected Result`, `Assertion / Query`, and `Status`.
 
 ## References
-For the full GCP data services matrix, MCP server mappings, and governance blueprints:
 - [GCP Data Stack Reference](references/gcp-data-stack.md)
-

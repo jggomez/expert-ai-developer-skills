@@ -1,81 +1,51 @@
 ---
 name: design-spec-expert
-description: Coordinates system specifications and drafts detailed Software Design Documents (SDD) before coding. Use this skill when asked to plan large architectural changes, write system design documents, or establish design specifications for a new service.
+description: Drafts concise Backend / API Design Specifications and Software Design Documents (docs/<feature-name>/api-spec.md or SDD <= 70 lines) before coding when introducing new endpoints, schemas, or services.
 ---
 
 # Design Spec Expert Skill
 
 ## Overview
-This skill guides the formalization of technical architectures and subsystem specifications into Software Design Documents (SDD). It acts as a Pragmatic Systems Designer, ensuring that system boundaries, component diagrams, database schemas, API contracts, and deployment strategies are completely specified and reviewed before implementation begins, preventing architectural drift and compounding technical debt.
+**Design Spec Expert** formalizes backend services, database schema deltas, and REST/GraphQL/gRPC contracts into a concise **Backend / API Design Spec** (`docs/<feature-name>/api-spec.md` or SDD **`<= 70 lines`**) before implementation—eliminating verbose boilerplate while preventing contract drift across **Claude Code** and **Google Antigravity**.
 
 ## When to Use
 ### Trigger Scenarios
-- Planning major features, new microservices, or complex subsystem redesigns.
-- Authoring comprehensive Software Design Documents (SDDs) for engineering review.
-- Specifying database schemas, ER diagrams, and REST/GraphQL/gRPC interface contracts.
-- Establishing test strategies, rollback plans, and deployment blueprints prior to coding.
+- Introducing new API endpoints, request/response contracts, or cross-service integrations.
+- Designing new database tables, migrations, indexes, or async worker pipelines.
 
 ### When NOT to Use
-- **Informal architectural decisions or single pattern choices**: Route to `senior-architect-engineering` for an ADR.
-- **Product discovery and user requirement gathering**: Route to `product-analyst` for a PRD.
-- **Immediate bug fixing or small utility code**: Route to `code-implementer`.
-- **Repository codebase indexing**: Route to `repo-research`.
+- **Changes following existing endpoints/models**: **SKIP** SDD/`api-spec.md` creation completely when changes fit established routes, schemas, or localized Tier 1 bugfixes/refactors.
+- **Single architectural pattern trade-off**: Use `senior-architect-engineering` for a concise MADR (`<= 55 lines`).
+- **Product user stories**: Use `product-analyst` (`docs/<feature-name>/prd.md <= 70 lines`).
 
 ## Process
-### Phase 1: Requirements Gathering & System Context
-1. Ingest product requirements (PRD) and business goals.
-2. Formulate explicit technical assumptions, operational constraints, and quality attributes.
-3. Identify external integrations, legacy dependencies, and cross-cutting security boundaries.
-
-### Phase 2: SDD Generation & Scaffolding
-1. Bootstrap the design document using the automated SDD generation script:
-   ```bash
-   python3 ./skills/design-spec-expert/scripts/create_sdd.py "<System Title>" [Draft/Review/Approved]
-   ```
-2. Open the generated markdown document and populate all core sections referencing the template:
-   - **Executive Summary & Scope**: Clear description of deliverables and explicit *out-of-scope* items.
-   - **Component Architecture**: Mermaid diagrams detailing component interactions and data flows.
-   - **Data Model & Schema**: Table schemas, indexes, foreign keys, and migration strategy.
-   - **API Contracts**: Detailed endpoint specs (methods, paths, request/response models, status codes).
-   - **Testing & Deployment Strategy**: Coverage goals, hermetic testing boundaries, canary/blue-green plans.
-
-### Phase 3: Engineering Review & Gate Sign-off
-1. Present the SDD to stakeholders or peer agents for technical critique.
-2. Resolve identified edge cases and update status from `Draft` to `Review` or `Approved`.
+1. **Check Capability Gate & Context**: Inspect root `AGENTS.md` (`<= 90 lines` wired to `context/memory/MEMORY.md`) and existing routers/models. If the task reuses existing endpoints and models, skip SDD authoring and proceed to TDD.
+2. **Scaffold & Author Concise Spec (`<= 70 lines`)**: Run `create_sdd.py` or write `docs/<feature-name>/api-spec.md` directly following [references/sdd-template.md](references/sdd-template.md) across **4 crisp sections**:
+   - `## 1. Objective & Scope`: Concrete problem/SLA + explicit `In Scope` / `Out of Scope` bullets.
+   - `## 2. Architecture & Data Model`: Compact Mermaid flow + exact table/column/index migration delta.
+   - `## 3. API Endpoints & Contracts`: Compact table (`Method & Path` | Request schema | Response schema | Status codes).
+   - `## 4. Security, Edge Cases & Trade-offs`: AuthN/AuthZ, rate/input validation, idempotency/retries, and `+` Pros / `-` Risks.
+3. **Gate Sign-off**: Align contracts with stakeholders (`ask_question` in Tier 2/3) and mark status `Approved` before delegating to `code-implementer`.
 
 ## Usage
-### Commands & Automation Scripts
+### Commands & Example Prompts
 ```bash
-# Generate a new Software Design Document
-python3 ./skills/design-spec-expert/scripts/create_sdd.py "User Notification Service" Draft
+python3 ./skills/design-spec-expert/scripts/create_sdd.py "Order Webhook API" Draft
 ```
+- *"Author a concise <=70-line `docs/order-webhooks/api-spec.md` covering idempotency, DB schema delta, and status codes."*
 
-### Example Prompts
-- *"Scaffold an SDD for our new payment gateway integration, covering API specs and database schemas."*
-- *"Draft a software design document for an asynchronous video transcoding worker system."*
-- *"Prepare a detailed technical specification for migrating user session storage to Redis."*
-
-### Host Execution Instructions
-- **Claude Code**: Execute `create_sdd.py` in the workspace shell, then edit the generated markdown file.
-- **Antigravity**: Launch as the design lead to produce the design specification artifact before delegating build tasks.
+### Host Execution
+- **Claude Code / Google Antigravity**: Scaffold with `create_sdd.py` or author `docs/<feature-name>/api-spec.md` (`<= 70 lines`) directly when new contracts/schemas are introduced.
 
 ## Red Flags
-- Commencing implementation before the SDD is approved or core contracts are finalized.
-- Omission of explicit *Out-of-Scope* boundaries, resulting in scope creep.
-- Hand-waving API contracts (e.g. omitting error schemas or status codes).
-- Drafting an excessively heavyweight SDD for a trivial localized bug fix.
+- Authoring an SDD/`api-spec.md` when changes merely follow existing endpoints/models or for Tier 1 fixes.
+- Exceeding **`70 lines`** or padding specs with generic prose instead of concrete schemas and status codes.
+- Omitting `Out of Scope` boundaries, error status codes (`400/401/403/404/409/422`), AuthZ rules, or index definitions.
 
 ## Verification
-- [ ] SDD file created using the automation script:
-  ```bash
-  python3 ./skills/design-spec-expert/scripts/create_sdd.py "<Title>"
-  ```
-- [ ] Architecture diagrams rendered with valid Mermaid syntax.
-- [ ] Database schemas and index strategies documented.
-- [ ] API endpoints defined with request/response payloads.
-- [ ] Testing and rollout rollback plan articulated.
+- [ ] Capability gate verified: spec created **only** because new endpoints, schemas, or service contracts are introduced.
+- [ ] Spec (`docs/<feature-name>/api-spec.md` or scaffold via `python3 ./skills/design-spec-expert/scripts/create_sdd.py "<Title>"`) is **`<= 70 lines`**.
+- [ ] Contains all 4 canonical sections (`Objective & Scope`, `Architecture & Data Model`, `API Endpoints & Contracts`, `Security, Edge Cases & Trade-offs`) with valid Mermaid syntax.
 
 ## References
-For the standardized document layout and section definitions:
-- [SDD Template Reference](references/sdd-template.md)
-
+- [Concise Backend / API Design Spec Template](references/sdd-template.md)
