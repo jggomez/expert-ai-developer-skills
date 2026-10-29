@@ -1437,3 +1437,125 @@ def test_track28_concise_templates_google_design_md_and_fail_honest_e2e(workspac
         assert "docs/<feature-name>/evidence/" in cv_content, (
             f"{cv_path} missing 'docs/<feature-name>/evidence/'"
         )
+
+
+def test_track29_ecosystem_wide_concise_standards_and_fail_honest_parity(workspace_root):
+    """Verifies Track 29 ecosystem-wide concise reference templates, subagent line budgets
+    and Fail-Honest / DESIGN.md / AGENTS.md contracts across both ecosystems, and
+    Antigravity plugin rules conciseness and contract tokens."""
+    errors = []
+
+    # Arrange: 1. Concise reference templates
+    template_specs = [
+        (
+            os.path.join("skills", "flutter-architecture-decisions", "references", "adr-template.md"),
+            40,
+            ("Context", "Options Considered", "Decision & Justification", "Trade-offs"),
+        ),
+        (
+            os.path.join("skills", "design-spec-expert", "references", "sdd-template.md"),
+            45,
+            ("Objective", "Acceptance Criteria"),
+        ),
+        (
+            os.path.join("skills", "repo-research", "references", "project-context-template.md"),
+            50,
+            ("Stack", "Commands"),
+        ),
+    ]
+
+    # Arrange: 2. Ecosystem-wide agents across both ("antigravity", "claude")
+    agent_specs = [
+        ("senior-data-engineer", "senior-data-engineer.md", 125, ("BLOCKED",)),
+        ("sql-query-optimizer", "sql-query-optimizer.md", 125, ("BLOCKED",)),
+        ("senior-dev-flutter", "flutter-architect.md", 100, ("DESIGN.md",)),
+        ("senior-dev-flutter", "flutter-implementer.md", 100, ("BLOCKED",)),
+        ("senior-dev-flutter", "flutter-reviewer.md", 100, ("BLOCKED",)),
+        ("senior-dev-flutter", "flutter-release-engineer.md", 100, ("BLOCKED",)),
+        ("shared-context", "context-keeper.md", 100, ("AGENTS.md", "DESIGN.md")),
+    ]
+
+    # Arrange: 3. Antigravity rules conciseness and contract tokens
+    rule_specs = [
+        (
+            os.path.join("plugins", "antigravity", "senior-data-engineer", "rules", "data-engineer-rules.md"),
+            75,
+            ("BLOCKED",),
+        ),
+        (
+            os.path.join("plugins", "antigravity", "sql-query-optimizer", "rules", "sql-optimization-rules.md"),
+            75,
+            ("BLOCKED",),
+        ),
+        (
+            os.path.join("plugins", "antigravity", "multi-agent-ops", "rules", "multi-agent-ops-rules.md"),
+            75,
+            ("BLOCKED", "AGENTS.md", "DESIGN.md"),
+        ),
+        (
+            os.path.join("plugins", "antigravity", "docs-and-quality", "rules", "docs-and-quality-rules.md"),
+            75,
+            ("BLOCKED", "AGENTS.md", "DESIGN.md"),
+        ),
+        (
+            os.path.join("plugins", "antigravity", "shared-context", "rules", "shared-context-rules.md"),
+            75,
+            ("AGENTS.md", "DESIGN.md"),
+        ),
+        (
+            os.path.join("plugins", "antigravity", "git-workflow", "rules", "gitflow-rules.md"),
+            75,
+            ("BLOCKED", "test-matrix.md"),
+        ),
+    ]
+
+    # Act: Validate reference templates
+    for rel_path, max_lines, required_tokens in template_specs:
+        full_path = os.path.join(workspace_root, rel_path)
+        if not os.path.isfile(full_path):
+            errors.append(f"Missing template: {rel_path}")
+            continue
+        with open(full_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        line_count = len(content.splitlines())
+        if line_count > max_lines:
+            errors.append(f"{rel_path}: exceeds {max_lines} lines ({line_count} lines)")
+        for token in required_tokens:
+            if token not in content:
+                errors.append(f"{rel_path}: missing required token '{token}'")
+
+    # Act: Validate agents across both ecosystems
+    for ecosystem in ("antigravity", "claude"):
+        for plugin, agent_fname, max_lines, required_tokens in agent_specs:
+            rel_path = os.path.join("plugins", ecosystem, plugin, "agents", agent_fname)
+            full_path = os.path.join(workspace_root, rel_path)
+            if not os.path.isfile(full_path):
+                errors.append(f"Missing agent: {rel_path}")
+                continue
+            with open(full_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            line_count = len(content.splitlines())
+            if line_count > max_lines:
+                errors.append(f"{rel_path}: exceeds {max_lines} lines ({line_count} lines)")
+            for token in required_tokens:
+                if token not in content:
+                    errors.append(f"{rel_path}: missing required token '{token}'")
+
+    # Act: Validate Antigravity rules
+    for rel_path, max_lines, required_tokens in rule_specs:
+        full_path = os.path.join(workspace_root, rel_path)
+        if not os.path.isfile(full_path):
+            errors.append(f"Missing rule file: {rel_path}")
+            continue
+        with open(full_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        line_count = len(content.splitlines())
+        if line_count > max_lines:
+            errors.append(f"{rel_path}: exceeds {max_lines} lines ({line_count} lines)")
+        for token in required_tokens:
+            if token not in content:
+                errors.append(f"{rel_path}: missing required token '{token}'")
+
+    # Assert
+    assert not errors, "\n".join(errors)
+

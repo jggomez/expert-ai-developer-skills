@@ -6,80 +6,54 @@ description: Diagnoses and rewrites slow BigQuery SQL using the query plan (stag
 # BigQuery Query Optimization Skill
 
 ## Overview
-This skill diagnoses and optimizes slow, expensive, or resource-constrained Google Cloud BigQuery SQL queries. It acts as a BigQuery Performance Specialist operating under the core principle: **less work → faster query**. It focuses on reducing I/O (bytes read), shuffle (data transfer across stages), sorting/grouping overhead, and slot CPU consumption by analyzing execution stages, worker distributions, and pruning mechanics rather than guessing from SQL text alone.
+Diagnoses and optimizes slow, expensive, or slot-constrained Google Cloud BigQuery SQL under the principle: **less work → faster query**. Reduces scanned bytes, stage shuffle, and slot CPU via partition/cluster pruning, broadcast JOIN ordering, and native SQL functions while enforcing concise artifact caps and fail-honest `--dry_run` reporting.
 
 ## When to Use
 ### Trigger Scenarios
-- BigQuery queries that run slowly, consume excessive slot time, or hit `Resources Exceeded` errors.
-- Diagnosing execution stage statistics, shuffle bottlenecks, and data skew across workers.
-- Optimizing table scans via partition pruning, clustering alignment, and column selection.
-- Statically scanning SQL files and embedded application queries for BigQuery anti-patterns.
+- BigQuery queries hitting high byte scans, excessive slot time, shuffle bottlenecks, worker skew, or `Resources Exceeded`.
+- Optimizing partition pruning, cluster filter alignment, and multi-table JOIN/window patterns.
+- Scanning repositories (`.sql`, `.py`, `.js`, `.ts`, `.java`, `.go`) for BigQuery SQL anti-patterns.
 
 ### When NOT to Use
-- **Traditional relational databases (PostgreSQL, MySQL, SQL Server)**: Route to `sql-query-optimization`.
-- **High-level GCP lakehouse and storage design**: Route to `gcp-data-engineering`.
-- **CDC and dimensional SCD Type 2 modeling**: Route to `cdc-scd-patterns`.
+- **Traditional OLTP databases (PostgreSQL, MySQL, SQL Server)**: Route to `sql-query-optimization`.
+- **Lakehouse architecture & service selection**: Route to `gcp-data-engineering`.
+- **Datastream CDC & SCD Type 2 merges**: Route to `cdc-scd-patterns`.
 
 ## Process
-### Phase 1: Diagnosing the Execution Plan
-Inspect stage-level execution statistics via BigQuery UI or `INFORMATION_SCHEMA.JOBS`:
-1. **Significant gap between average and max worker compute time**: Indicates data skew. Confirm skew with `APPROX_TOP_COUNT` on the suspect key and pre-filter or split queries.
-2. **High wait/read time in intermediate stages**: Indicates excessive data passing through stages. Push filters earlier to reduce shuffle volume.
-3. **High CPU time relative to I/O**: Check for expensive JavaScript UDFs, unneeded regex evaluation, or exact `COUNT(DISTINCT)` on massive cardinalities.
+### Phase 1: Static Linting & Fail-Honest Plan Diagnostics
+1. **Static Scan**: Run `python3 ./skills/bigquery-query-optimization/scripts/lint_sql_query.py [optional_path]` across target directories.
+2. **Stage & Dry-Run Inspection**: Check `bq query --use_legacy_sql=false --dry_run` and `INFORMATION_SCHEMA.JOBS` for max-vs-avg worker skew (`APPROX_TOP_COUNT`), intermediate shuffle volume, and CPU-heavy UDFs/distincts.
+3. **Fail-Honest Fallback (`STATIC_ANALYSIS_ONLY` / `BLOCKED`)**: If `bq query --dry_run` fails due to missing GCP ADC credentials or permissions, explicitly mark the report `STATIC_ANALYSIS_ONLY` / `BLOCKED: Live plan not executed — <exact error>` and **NEVER** invent byte-scan numbers or slot times.
 
-### Phase 2: Query Optimization Rules
-1. **Column Pruning**: Replace `SELECT *` with explicit columns or `SELECT * EXCEPT(...)`.
-2. **Partition & Cluster Pruning**: Filter on the partitioned date/timestamp and order `WHERE`/`JOIN` conditions to match clustered columns.
-3. **Nested & Repeated Fields**: Model one-to-many relationships as `ARRAY<STRUCT>` instead of flat tables requiring expensive `GROUP BY` operations.
-4. **JOIN Ordering (BigQuery-Specific)**: Place the **largest table first** in the `FROM` clause, followed by decreasing table sizes (allowing BigQuery to broadcast the smaller tables to worker slots).
-5. **Filter Before JOINs**: Push filters into explicit subqueries before joining; do not rely solely on optimizer pushdown.
-6. **ORDER BY with LIMIT**: Unbounded `ORDER BY` serializes data onto a single worker node and causes `Resources Exceeded`. Always supply a `LIMIT`.
-7. **Approximate Aggregations**: Use `APPROX_COUNT_DISTINCT(col)` instead of `COUNT(DISTINCT col)` when ~1% error margin is acceptable.
-8. **Native SQL UDFs**: Avoid JavaScript UDFs (which instantiate V8 subprocesses per call) in favor of native SQL UDFs.
+### Phase 2: BigQuery Optimization Rules
+1. **Column, Partition & Cluster Pruning**: Replace `SELECT *` with explicit columns; filter on partition columns and align `WHERE`/`JOIN` predicates with clustered keys.
+2. **Broadcast JOIN Ordering & Early Filtering**: Place the **largest table first** in `FROM` followed by decreasing sizes; push filters into CTEs/subqueries before joining; model 1:N structures with `ARRAY<STRUCT>` where appropriate.
+3. **Bounded Sorts, Approx Aggs & SQL UDFs**: Always pair `ORDER BY` with `LIMIT`; use `APPROX_COUNT_DISTINCT` when ~1% tolerance fits; replace JS UDFs with native SQL UDFs.
 
-### Phase 3: Automated Static Anti-Pattern Linting
-Scan project SQL files or embedded SQL strings in application code (`.py`, `.js`, `.ts`, `.java`, `.go`):
-```bash
-python3 ./skills/bigquery-query-optimization/scripts/lint_sql_query.py [optional_path]
-```
+### Phase 3: Concise Reporting & Repo Memory Sync
+- **Selective Artifacts**: Author `PLAN.md` (`<= 50 lines`); **skip** `docs/<feature-name>/execution-plan.md` (`<= 50 lines`) for inline single-query rewrites; cap `docs/<feature-name>/optimization-report.md` at `<= 55 lines` (Zero-Fluff before/after metrics table + **Original / Optimized / Engine-Grounded Reasoning**).
+- On repo audits, maintain root `AGENTS.md` (`<= 90 lines`) and persist partition/cluster baselines in `context/memory/MEMORY.md`.
 
 ## Usage
-### Commands & Automation Scripts
 ```bash
-# Scan whole repository or specific SQL directory for BigQuery anti-patterns
+# Scan repository or SQL directory for BigQuery anti-patterns
 python3 ./skills/bigquery-query-optimization/scripts/lint_sql_query.py .
 python3 ./skills/bigquery-query-optimization/scripts/lint_sql_query.py queries/
 
-# Dry run a rewritten query to verify byte reduction
+# Verify byte scan reduction via BigQuery dry-run
 bq query --use_legacy_sql=false --dry_run < optimized_query.sql
 ```
-
-### Example Prompts
-- *"This BigQuery query is throwing 'Resources Exceeded' during a large JOIN — diagnose the query plan and rewrite it."*
-- *"Scan our repository for SQL anti-patterns like SELECT * or ORDER BY without LIMIT."*
-- *"Rewrite this JavaScript UDF as a native BigQuery SQL function to reduce slot time."*
-
-### Host Execution Instructions
-- **Claude Code**: Run `lint_sql_query.py` in the workspace shell and execute dry-run estimations with `bq`.
-- **Antigravity**: Analyze queries using `lint_sql_query.py` and inspect query execution jobs via GCP tools.
+- **Host Execution**: Run `lint_sql_query.py` and `bq --dry_run` via shell (`Bash` in Claude Code; `run_command` in Antigravity), reporting `STATIC_ANALYSIS_ONLY` / `BLOCKED` if GCP ADC is unavailable.
 
 ## Red Flags
-- Putting small tables first in `FROM` clauses (violates BigQuery broadcast join optimization).
-- Executing unbounded `ORDER BY` queries on multi-million row datasets.
-- Querying partition-enabled tables without a filter on the partition column in `WHERE`.
-- Using `REGEXP_CONTAINS` when a simple `LIKE` wildcard search is sufficient.
-- Recomputing expensive, repetitive aggregations instead of leveraging Materialized Views.
+- Fabricating `bq query --dry_run` scanned bytes or slot metrics when GCP credentials fail instead of reporting `STATIC_ANALYSIS_ONLY` / `BLOCKED: Live plan not executed — <exact error>`.
+- Placing small tables first in `FROM` JOINs, running unbounded `ORDER BY` without `LIMIT`, omitting partition filters, or using `REGEXP_CONTAINS` where `LIKE` suffices.
 
 ## Verification
-- [ ] Automated SQL linter reports zero high-severity anti-patterns:
-  ```bash
-  python3 ./skills/bigquery-query-optimization/scripts/lint_sql_query.py .
-  ```
-- [ ] BigQuery dry-run demonstrates measurable byte reduction compared to original query.
-- [ ] No unbounded `ORDER BY` queries without `LIMIT`.
-- [ ] Largest table appears first in multi-table `JOIN` statements.
+- [ ] Static linter passes cleanly: `python3 ./skills/bigquery-query-optimization/scripts/lint_sql_query.py .`
+- [ ] `bq query --dry_run` confirms byte scan reduction, OR report explicitly states `STATIC_ANALYSIS_ONLY` / `BLOCKED: Live plan not executed — <exact error>`.
+- [ ] Largest table placed first in `JOIN`s, partition filters applied, and no unbounded `ORDER BY` remains.
+- [ ] `optimization-report.md` (`<= 55 lines`) presents before/after metrics + Original / Optimized / Engine-Grounded Reasoning.
 
 ## References
-For before/after SQL query pairs and execution plan blueprints:
 - [BigQuery Optimization Patterns Reference](references/bigquery-optimization-patterns.md)
-

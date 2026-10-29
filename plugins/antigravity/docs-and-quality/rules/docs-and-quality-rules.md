@@ -1,43 +1,31 @@
 ---
 trigger: always_on
-description: Code quality and documentation engineering rules enforcing feature directory conventions (docs/<feature-name>/), Karpathy guidelines, DRY/KISS, self-documenting code, zero lazy placeholders, and valid Mermaid diagram standards.
+description: Code quality and Zero-Fluff documentation rules enforcing official artifact line caps (AGENTS.md, Google DESIGN.md, docs/<feature-name>/), Fail-Honest reporting, Karpathy/DRY/KISS principles, Anti-Lazy code policy, and Mermaid diagram safety.
 ---
 
-# Code Quality & Documentation Standards
+# Code Quality & Zero-Fluff Documentation Standards
 
 **Identifier**: `docs-and-quality-rules`
 
-## 1. Feature Documentation & Artifact Directory Convention (`docs/<feature-name>/`)
-- **Feature Directory Isolation**: All technical documentation, discovery specifications, architecture decision records, and verification artifacts associated with a feature must be stored in a dedicated feature directory: `docs/<feature-name>/` (derived from the task slug, e.g., `docs/user-auth/`, `docs/order-checkout/`).
-- **Standard Discovery Artifacts**:
-  - `docs/<feature-name>/prd.md`: Product requirements, user personas, edge cases, acceptance criteria, and validation rules.
-  - `docs/<feature-name>/design.md`: UI/UX design specifications, component tree, design tokens, responsive layouts, accessibility criteria.
-  - `docs/<feature-name>/architecture.md`: Component boundaries, data flow diagrams, API schemas, sequence diagrams, and technology choices.
-  - `docs/<feature-name>/adr-*.md`: Architectural Decision Records detailing context, evaluated alternatives, decision, and consequences.
-- **Standard Verification Artifacts**:
-  - `docs/<feature-name>/test-matrix.md`: Standardized QA Test Matrix mapping requirements to tests across unit, integration, and E2E tiers with empirical terminal proof.
-  - `docs/<feature-name>/critic-review.md`: Code smell and SOLID invariant review findings.
-  - `docs/<feature-name>/adversarial-report.md`: Adversarial stress and fault-injection findings.
-  - `docs/<feature-name>/blackbox-report.md`: E2E user journey and resilience findings.
-- **Documentation Synchronization**: If legacy specifications exist in the workspace (e.g. `docs/specifications/`), agents must inspect and synchronize them with the canonical `docs/<feature-name>/` structure. Never leave orphaned or contradictory specifications.
+## 1. Official Artifact Standards & Hard Line Caps (`3-Tier SDLC`)
+All repository governance and `docs/<feature-name>/` deliverables must be Zero-Fluff, high-signal, and strictly within line caps:
+- **Root `AGENTS.md` (`<= 90 lines`)**: Verified build/lint/test commands, coding conventions, and links to `DESIGN.md` & `context/memory/MEMORY.md`.
+- **Root Google `DESIGN.md` (`<= 110 lines`)**: Official 2-layer spec (YAML design tokens + 8 sections: `Overview`, `Colors`, `Typography`, `Layout`, `Elevation & Depth`, `Shapes`, `Components`, `Do's and Don'ts`), plus optional `docs/<feature-name>/design.md` (`<= 35 lines`) feature delta.
+- **`docs/<feature-name>/prd.md` (`<= 70 lines`)**: `Objective`, `Scope`, `User Stories` (`US-XX`), and testable `Acceptance Criteria` (`AC-XX`).
+- **`docs/<feature-name>/adr-NNN-*.md` (`<= 55 lines`)**: MADR with `Context`, `Options`, `Decision & Justification`, and `Trade-offs` (optional `docs/<feature-name>/architecture.md <= 70 lines`).
+- **`docs/<feature-name>/test-matrix.md` (`<= 80 lines`)**: Per-case `TC-XX` across unit/integration/E2E tiers (`Objective`, `Steps`, `Expected Result`, `Automated Test`, `Status`) + terminal proof.
+- **Verification Reports (`<= 50 lines` each)**: `critic-review.md`, `adversarial-report.md`, and `blackbox-report.md` must be Zero-Fluff and **Fail-Honest** — explicitly reporting `BLOCKED` or `SKIPPED` when a runner, server, or browser is unavailable (never fabricating `PASSED`; E2E requires physical `.png` evidence in `docs/<feature-name>/evidence/`).
+- **Legacy Sync**: Inspect and synchronize legacy folders (`docs/specifications/`) with `docs/<feature-name>/` so zero contradictory specs remain.
 
 ## 2. Karpathy Engineering Guidelines, DRY & KISS
-- **Zero Speculative Engineering**: Build only what is immediately required by the current task specifications. Never introduce speculative abstractions, anticipatory base classes, premature generic interfaces, or factories for hypothetical future needs.
-- **Clarity over Cleverness**: Prioritize simple, readable, self-documenting code over clever metaprogramming, obscure one-liners, or complex inheritance hierarchies.
-- **DRY (Don't Repeat Yourself)**: Eliminate duplicate logic, queries, and configurations cleanly by extracting cohesive, single-purpose functions or modules.
-- **KISS (Keep It Simple, Stupid)**: Choose the simplest viable solution that satisfies requirements, passing tests, and performance constraints.
-- **English Standard**: All code identifiers (variables, functions, classes, interfaces), comments, commit messages, PR descriptions, and architectural diagrams must be written exclusively in English.
+- **Zero Speculative Engineering**: Implement only what current requirements demand; ban premature abstractions, unused factories, or speculative base classes.
+- **Clarity, DRY & KISS**: Prefer simple, self-documenting code over clever metaprogramming; extract cohesive single-purpose helpers to eliminate duplication.
+- **English Only**: Write all identifiers, comments, commits, PRs, docs, and diagrams exclusively in English.
 
 ## 3. Anti-Lazy Code Policy & Production Completeness
-- **Zero Tolerance for Placeholders**: Absolute prohibition against AI shortcuts, lazy stubs, partial implementations, or omitted logic:
-  - ❌ `// TODO: Implement later`
-  - ❌ `# ... rest of existing code ...`
-  - ❌ `pass  # placeholder`
-  - ❌ Empty catch/except blocks swallowing exceptions (`except Exception: pass`).
-- **Production Completeness**: Every file modified or created must contain full, production-ready code with exhaustive error handling, input validation, type annotations, and clean logging.
-- **Preserve Existing Intact**: Do not overwrite or delete existing working code, comments, or docstrings unless explicitly tasked with refactoring them.
+- **Zero Placeholders**: Strictly forbid AI shortcuts or partial stubs (`// TODO: Implement later`, `# ... rest of existing code ...`, `pass  # placeholder`, or silent `except Exception: pass`).
+- **Complete & Non-Destructive**: Deliver production-ready error handling, input validation, and static types while preserving unrelated existing code, comments, and docstrings intact.
 
-## 4. Technical Documentation & Diagram Invariants
-- **GitHub Flavored Markdown**: Maintain clean markdown syntax, valid tables, and consistent heading hierarchies (`#`, `##`, `###`).
-- **Mermaid Diagrams**: When modeling architecture, sequence flows, or state transitions, use standard Mermaid diagrams (`flowchart TD`, `flowchart LR`, `sequenceDiagram`, `stateDiagram-v2`).
-- **Diagram Syntax Safety**: Always quote node labels containing special characters, brackets, or parentheses (e.g., `id["Label (Extra Info)"]`) to prevent rendering syntax errors. Never use unsupported diagram formats.
+## 4. Markdown Portability & Mermaid Diagram Safety
+- **Clean GFM & Relative Links**: Enforce strict heading hierarchy (`#` -> `##` -> `###`), valid tables, and portable relative file links (zero hardcoded machine-local path leaks).
+- **Mermaid Syntax Safety**: Use supported Mermaid diagrams (`flowchart TD`, `flowchart LR`, `sequenceDiagram`, `stateDiagram-v2`, `erDiagram`) and always quote node labels containing parentheses or special characters (e.g., `id["Label (Detail)"]`).
