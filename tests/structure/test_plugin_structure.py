@@ -496,6 +496,7 @@ def test_claude_plugins_manifest_and_tools(workspace_root):
         "replace_file_content",
         "invoke_subagent",
         "manage_subagents",
+        "call_mcp_tool",
     }
     errors = []
 
@@ -773,6 +774,7 @@ def test_ui_ux_designer_agent_and_skill_parity(workspace_root):
         "replace_file_content",
         "invoke_subagent",
         "manage_subagents",
+        "call_mcp_tool",
     }
     claude_tools = claude_fm.get("tools", [])
     assert claude_tools, f"{claude_agent_path} must declare tools"
@@ -1010,6 +1012,7 @@ def test_track20_track22_adversarial_committee_and_sync_parity(workspace_root):
         "replace_file_content",
         "invoke_subagent",
         "manage_subagents",
+        "call_mcp_tool",
     }
     valid_claude_tools = {"Bash", "Read", "Write", "Edit", "Glob", "Grep", "Agent", "WebSearch", "WebFetch"}
 
@@ -1258,12 +1261,179 @@ def test_track23_track26_universal_multi_plugin_standardization(workspace_root):
     assert len(agent_files) == 38, f"Expected exactly 38 agents across both ecosystems, got {len(agent_files)}"
 
 
+def test_antigravity_subagents_strict_tool_registry_whitelist(workspace_root, plugin_dirs):
+    """Verifies every Antigravity subagent YAML frontmatter declares only valid
+    Antigravity static subagent registry tools and explicitly forbids 'call_mcp_tool'
+    (preventing 'unknown component: tool \"call_mcp_tool\" not found in registry')."""
+    valid_antigravity_subagent_tools = {
+        "run_command",
+        "view_file",
+        "write_to_file",
+        "replace_file_content",
+        "list_dir",
+        "grep_search",
+        "find_by_name",
+        "ask_question",
+        "invoke_subagent",
+        "manage_subagents",
+        "send_message",
+    }
+    errors = []
+
+    for plugin in plugin_dirs:
+        agents_dir = os.path.join(workspace_root, "plugins", "antigravity", plugin, "agents")
+        if not os.path.isdir(agents_dir):
+            continue
+
+        for fname in sorted(os.listdir(agents_dir)):
+            if not fname.endswith(".md"):
+                continue
+            agent_path = os.path.join(agents_dir, fname)
+            rel_path = os.path.relpath(agent_path, workspace_root)
+
+            with open(agent_path, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            match = re.search(r"^---\s*\n(.*?)\n---\s*\n", content, re.DOTALL)
+            if not match:
+                errors.append(f"{rel_path}: missing or invalid YAML frontmatter")
+                continue
+
+            fm = yaml.safe_load(match.group(1))
+            tools = fm.get("tools", [])
+            assert "call_mcp_tool" not in tools, (
+                f"{rel_path}: forbidden 'call_mcp_tool' found in static subagent tools"
+            )
+            for tool in tools:
+                if tool not in valid_antigravity_subagent_tools:
+                    errors.append(
+                        f"{rel_path}: tool '{tool}' is not in the Antigravity static subagent registry whitelist"
+                    )
+
+    assert not errors, "\n".join(errors)
 
 
+def test_track28_concise_templates_google_design_md_and_fail_honest_e2e(workspace_root):
+    """Verifies Track 28 concise artifact templates, official Google 2-layer DESIGN.md
+    template, target-project AGENTS.md template, and fail-honest Playwright E2E contracts."""
+    # 1. Google DESIGN.md template (<= 110 lines, YAML keys + 8 official sections)
+    design_tpl_path = os.path.join(
+        workspace_root, "skills", "ui-ux-designer", "references", "design-md-template.md"
+    )
+    assert os.path.isfile(design_tpl_path), f"Missing {design_tpl_path}"
+    with open(design_tpl_path, "r", encoding="utf-8") as f:
+        design_tpl = f.read()
+    design_lines = design_tpl.splitlines()
+    assert len(design_lines) <= 110, (
+        f"design-md-template.md exceeds 110 lines ({len(design_lines)} lines)"
+    )
+    assert design_tpl.startswith("---\n"), "design-md-template.md must start with YAML frontmatter"
+    fm_match = re.search(r"^---\s*\n(.*?)\n---\s*\n", design_tpl, re.DOTALL)
+    assert fm_match, "design-md-template.md has invalid YAML frontmatter"
+    design_fm = yaml.safe_load(fm_match.group(1))
+    assert isinstance(design_fm, dict), "design-md-template.md frontmatter must be a mapping"
+    for key in ("name", "version", "colors", "typography", "rounded", "spacing", "components"):
+        assert key in design_fm, f"design-md-template.md frontmatter missing key '{key}'"
+    for section in (
+        "## Overview",
+        "## Colors",
+        "## Typography",
+        "## Layout",
+        "## Elevation & Depth",
+        "## Shapes",
+        "## Components",
+        "## Do's and Don'ts",
+    ):
+        assert section in design_tpl, f"design-md-template.md missing official section '{section}'"
 
+    # 2. Concise PRD template (<= 50 lines)
+    prd_tpl_path = os.path.join(
+        workspace_root, "skills", "product-analyst", "references", "prd-template.md"
+    )
+    assert os.path.isfile(prd_tpl_path), f"Missing {prd_tpl_path}"
+    with open(prd_tpl_path, "r", encoding="utf-8") as f:
+        prd_tpl = f.read()
+    assert len(prd_tpl.splitlines()) <= 50, (
+        f"prd-template.md exceeds 50 lines ({len(prd_tpl.splitlines())} lines)"
+    )
+    for token in ("Objective", "Scope", "User Stories", "As a", "Acceptance Criteria"):
+        assert token in prd_tpl, f"prd-template.md missing '{token}'"
 
+    # 3. Concise ADR template (<= 45 lines)
+    adr_tpl_path = os.path.join(
+        workspace_root, "skills", "senior-architect-engineering", "references", "adr-template.md"
+    )
+    assert os.path.isfile(adr_tpl_path), f"Missing {adr_tpl_path}"
+    with open(adr_tpl_path, "r", encoding="utf-8") as f:
+        adr_tpl = f.read()
+    assert len(adr_tpl.splitlines()) <= 45, (
+        f"adr-template.md exceeds 45 lines ({len(adr_tpl.splitlines())} lines)"
+    )
+    for token in ("Context", "Options Considered", "Decision & Justification", "Trade-offs"):
+        assert token in adr_tpl, f"adr-template.md missing '{token}'"
 
+    # 4. Concise QA Test Matrix template (<= 55 lines)
+    qa_tpl_path = os.path.join(
+        workspace_root, "skills", "qa-tester", "references", "test-matrix-template.md"
+    )
+    assert os.path.isfile(qa_tpl_path), f"Missing {qa_tpl_path}"
+    with open(qa_tpl_path, "r", encoding="utf-8") as f:
+        qa_tpl = f.read()
+    assert len(qa_tpl.splitlines()) <= 55, (
+        f"test-matrix-template.md exceeds 55 lines ({len(qa_tpl.splitlines())} lines)"
+    )
+    for token in ("Objective", "Steps", "Expected Result"):
+        assert token in qa_tpl, f"test-matrix-template.md missing '{token}'"
 
+    # 5. Target-project AGENTS.md template (<= 70 lines)
+    agents_tpl_path = os.path.join(
+        workspace_root, "skills", "loop-engineering", "references", "project-agents-template.md"
+    )
+    assert os.path.isfile(agents_tpl_path), f"Missing {agents_tpl_path}"
+    with open(agents_tpl_path, "r", encoding="utf-8") as f:
+        agents_tpl = f.read()
+    assert len(agents_tpl.splitlines()) <= 70, (
+        f"project-agents-template.md exceeds 70 lines ({len(agents_tpl.splitlines())} lines)"
+    )
+    for token in ("DESIGN.md", "context/memory/MEMORY.md"):
+        assert token in agents_tpl, f"project-agents-template.md missing '{token}'"
 
+    # 6. Adversarial & black-box report templates (each <= 50 lines)
+    for rel_tpl in (
+        os.path.join("skills", "blackbox-tester", "references", "blackbox-report-template.md"),
+        os.path.join("skills", "code-critic", "references", "critic-review-template.md"),
+        os.path.join("skills", "adversarial-challenger", "references", "adversarial-report-template.md"),
+    ):
+        tpl_path = os.path.join(workspace_root, rel_tpl)
+        assert os.path.isfile(tpl_path), f"Missing {tpl_path}"
+        with open(tpl_path, "r", encoding="utf-8") as f:
+            tpl_content = f.read()
+        assert len(tpl_content.splitlines()) <= 50, (
+            f"{rel_tpl} exceeds 50 lines ({len(tpl_content.splitlines())} lines)"
+        )
 
+    # 7. Fail-honest Playwright E2E & physical evidence verification across both ecosystems
+    e2e_targets = [
+        os.path.join(workspace_root, "skills", "blackbox-tester", "SKILL.md"),
+        os.path.join(workspace_root, "plugins", "antigravity", "senior-dev", "agents", "e2e-blackbox-tester.md"),
+        os.path.join(workspace_root, "plugins", "claude", "senior-dev", "agents", "e2e-blackbox-tester.md"),
+    ]
+    for e2e_path in e2e_targets:
+        assert os.path.isfile(e2e_path), f"Missing {e2e_path}"
+        with open(e2e_path, "r", encoding="utf-8") as f:
+            e2e_content = f.read()
+        assert "playwright" in e2e_content.lower(), f"{e2e_path} missing 'playwright'"
+        for token in ("BLOCKED", "SKIPPED", "docs/<feature-name>/evidence/"):
+            assert token in e2e_content, f"{e2e_path} missing '{token}'"
+        assert "call_mcp_tool" not in e2e_content, f"{e2e_path} must not reference 'call_mcp_tool'"
 
+    for ecosystem in ("antigravity", "claude"):
+        cv_path = os.path.join(
+            workspace_root, "plugins", ecosystem, "senior-dev", "agents", "compliance-verifier.md"
+        )
+        assert os.path.isfile(cv_path), f"Missing {cv_path}"
+        with open(cv_path, "r", encoding="utf-8") as f:
+            cv_content = f.read()
+        assert "docs/<feature-name>/evidence/" in cv_content, (
+            f"{cv_path} missing 'docs/<feature-name>/evidence/'"
+        )

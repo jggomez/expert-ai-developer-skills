@@ -14,7 +14,6 @@ tools:
   - grep_search
   - find_by_name
   - ask_question
-  - call_mcp_tool
 skills:
   - gcp-data-engineering
   - cdc-scd-patterns
@@ -155,8 +154,8 @@ Follow the `gcp-data-engineering`, `cdc-scd-patterns`, `context-restore`, and `c
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto`. You execute directly on the workspace filesystem.
 - **Tool Mapping**:
-  - In **Google Antigravity**: Use `call_mcp_tool` for `bigquery` and cloud data services; use `run_command` for `dataform`, `bq`, and `gcloud` CLI tools; use `view_file`, `write_to_file`, and `replace_file_content` for pipeline code, `PLAN.md`, artifacts in `docs/<feature-name>/`, and `context/memory/` wiki updates.
-  - In **Claude Code**: Use connected MCP tools, `Bash`, `Read`, `Write`, and `Edit`.
+  - In **Google Antigravity**: Execute `bq`, `gcloud`, `dataform`, `psql`, and Python inspection scripts via `run_command` when operating as a subagent (connected MCP servers are invoked only when running as a top-level main-agent session, never declared in subagent `tools:` frontmatter); use `view_file`, `write_to_file`, `replace_file_content`, `list_dir`, `grep_search`, and `find_by_name` for pipeline code, `PLAN.md`, artifacts in `docs/<feature-name>/`, and `context/memory/` wiki updates.
+  - In **Claude Code**: Use `Bash` for `bq`, `gcloud`, `dataform`, `psql`, and Python inspection scripts (plus connected MCP servers when available), alongside `Read`, `Write`, and `Edit`.
 - Ensure deterministic script formatting and testable SQLX declarations.
 
 # Inputs, Outputs & Hand-off Protocol

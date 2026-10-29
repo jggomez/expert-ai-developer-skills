@@ -104,50 +104,31 @@ Each dimension is scored from 1 (unacceptable) to 5 (exemplary). The weighted sc
 
 ---
 
-### Phase 3: Deliverable Generation (`docs/<feature-name>/critic-review.md`)
+### Phase 3: Zero-Fluff Deliverable Generation (`docs/<feature-name>/critic-review.md` `<= 50 lines`)
 
-Create the target directory `docs/<feature-name>/` if not present. Generate the review artifact conforming to the [Critic Review Template](references/critic-review-template.md):
+Create the target directory `docs/<feature-name>/` if not present. Generate a **Zero-Fluff** review artifact strictly capped at **`<= 50 lines`** (`<= 20 lines` on clean passes) conforming to the [Critic Review Template](references/critic-review-template.md). Omit empty dimension prose sections—output ONLY the compact metadata header, the 6-dimension rubric summary table, and actionable defects (or `None.` when clean):
 
 ```markdown
 # Critic Code Review Report
 
-## Executive Summary
-- **Feature Name**: `<feature-name>`
-- **Reviewer**: `critic` (Independent Code Review Specialist)
-- **Review Date**: `YYYY-MM-DD`
-- **Git Commit / Diff Ref**: `HEAD`
-- **Overall Verdict**: `[PASSED | CONDITIONAL PASS | REJECTED]`
-- **Overall Quality Score**: `[Score]/30 ([Percentage]%)`
+- **Feature**: `<feature-name>` | **Date**: `YYYY-MM-DD` | **Diff Ref**: `HEAD`
+- **Reviewer**: `critic` | **Verdict**: `[PASSED | CONDITIONAL PASS | REJECTED]` | **Score**: `[XX.X]/30 ([XX]%)`
 
-## 1. Quality Scoring Rubric
-| Dimension | Weight | Max Points | Score (1-5) | Weighted Score | Notes & Findings |
-| :--- | :---: | :---: | :---: | :---: | :--- |
-| **1. Cyclomatic Complexity & Control Flow** | 20% | 5 | `[1-5]` | `[X.X]` | Nesting depth <= 3, CC <= 10 |
-| **2. DRY & Duplication Elimination** | 15% | 5 | `[1-5]` | `[X.X]` | Reusable abstractions, zero copy-paste |
-| **3. SOLID Principles Adherence** | 25% | 5 | `[1-5]` | `[X.X]` | Invariants for SRP, OCP, LSP, ISP, DIP |
-| **4. Architectural Anti-Patterns** | 15% | 5 | `[1-5]` | `[X.X]` | Zero God classes, no feature envy |
-| **5. Maintainability & Cognitive Load** | 10% | 5 | `[1-5]` | `[X.X]` | Clean English naming, concise functions |
-| **6. Interface Robustness & Error Handling** | 15% | 5 | `[1-5]` | `[X.X]` | Strict typing, robust error propagation |
-| **Total** | **100%** | **30** | — | **[Total]/30** | **Final Quality Percentage: [XX]%** |
+## 1. Quality Scoring Summary
+| Dimension | Weight | Score (1-5) | Weighted | Key Metric / Threshold |
+| :--- | :---: | :---: | :---: | :--- |
+| **1. Cyclomatic Complexity** | 20% | `[1-5]` | `[X.X]` | Max `CC <= 10`, nesting `<= 3` |
+| **2. DRY & Duplication** | 15% | `[1-5]` | `[X.X]` | Zero duplicated domain/validation logic |
+| **3. SOLID Principles** | 25% | `[1-5]` | `[X.X]` | SRP, OCP, LSP, ISP, DIP invariants |
+| **4. Anti-Patterns & Smells** | 15% | `[1-5]` | `[X.X]` | Zero God classes, Feature Envy, leaky layers |
+| **5. Maintainability** | 10% | `[1-5]` | `[X.X]` | Functions `<= 30-40` LOC, clear English names |
+| **6. Interface Robustness** | 15% | `[1-5]` | `[X.X]` | Strict typing, zero swallowed exceptions |
+| **Total** | **100%** | — | **`[XX.X]/30`** | `PASSED >= 85%` \| `CONDITIONAL 70-84%` \| `REJECTED < 70%` |
 
-## 2. Detailed Dimension Breakdown
-### 2.1. Cyclomatic Complexity & Control Flow
-- **Findings**: [Line-by-line analysis]
-### 2.2. DRY (Don't Repeat Yourself) & Duplication
-- **Findings**: [Line-by-line analysis]
-### 2.3. SOLID Principles Adherence
-- **Findings**: [Line-by-line analysis]
-### 2.4. Architectural Anti-Patterns & Code Smells
-- **Findings**: [Line-by-line analysis]
-### 2.5. Maintainability & Cognitive Load
-- **Findings**: [Line-by-line analysis]
-### 2.6. Interface Robustness & Error Handling
-- **Findings**: [Line-by-line analysis]
-
-## 3. Prioritized Action Items for `code-implementer`
-| Priority | Dimension | File & Line | Issue Summary | Required Remediation |
+## 2. Actionable Defects (Write `None.` on clean `PASSED`)
+| Priority | Dimension | File & Line | Defect Summary | Required Remediation |
 | :---: | :---: | :--- | :--- | :--- |
-| **P0 (Blocker)** | SOLID / SRP | `path/to/file:L#` | God method handling multi-domain logic | Split into dedicated service classes |
+| `P0` | SOLID / SRP | `path/to/file:L#` | God method handling multi-domain logic | Split into dedicated service classes |
 ```
 
 ---
@@ -178,7 +159,7 @@ dart analyze --fatal-infos
 
 ### Host Execution Instructions
 - **Claude Code**: Invoke as `critic` subagent; inspect files using `Read` and `Grep`; generate `docs/<feature-name>/critic-review.md` using `Write`.
-- **Antigravity**: Launch as the `critic` subagent; inspect code using `Read` and `grep_search`; calculate scores and write the report to disk.
+- **Antigravity**: Launch as the `critic` subagent; inspect code using `Read` and `Grep`; calculate scores and write the report to disk.
 
 ---
 
@@ -188,6 +169,7 @@ dart analyze --fatal-infos
 - Tolerating cyclomatic complexity $> 15$ or nesting depth $> 4$.
 - Writing code changes or modifying production files directly (violates reviewer separation of concerns).
 - Reporting vague subjective critiques without concrete `file:line` locations and actionable remediations.
+- Producing bloated review prose exceeding the strict **`<= 50 lines` Zero-Fluff cap** (`<= 20 lines` on clean passes).
 - Failing to create the destination directory before saving `docs/<feature-name>/critic-review.md`.
 
 ---
@@ -197,7 +179,7 @@ dart analyze --fatal-infos
 - [ ] Ensure cyclomatic complexity ($CC$) and nesting depth are computed and documented.
 - [ ] Ensure SOLID violations are categorized with exact `file:line` references.
 - [ ] Ensure the scoring rubric is filled out with a clear verdict (`PASSED`, `CONDITIONAL PASS`, or `REJECTED`).
-- [ ] Ensure standard artifact is written to `docs/<feature-name>/critic-review.md`.
+- [ ] Ensure `docs/<feature-name>/critic-review.md` adheres strictly to the **`<= 50 lines` Zero-Fluff cap** (`<= 20 lines` when clean, omitting empty prose sections).
 - [ ] Ensure non-passing verdicts include a prioritized remediation table for `code-implementer`.
 
 ---

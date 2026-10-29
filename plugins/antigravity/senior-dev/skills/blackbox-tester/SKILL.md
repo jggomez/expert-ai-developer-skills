@@ -1,29 +1,29 @@
 ---
 name: blackbox-tester
-description: Black-box browser verification validating real user flows, GUI forms, console errors, visual layouts, and responsive breakpoints using Playwright or chrome-devtools MCP.
+description: Black-box browser verification validating real user flows, GUI forms, console/network errors, visual layouts, and 4-viewport screenshot evidence using deterministic Playwright execution.
 ---
 
 # Black-Box Browser Verification & Visual Testing Skill
 
 ## Overview
-This skill provides automated black-box browser verification from the perspective of an actual user. Operating as a Senior Black-Box QA Engineer, it exercises real user journeys through live browsers, submits interactive GUI forms, validates responsive visual layouts across mobile/tablet/desktop breakpoints, and captures console errors and failed network requests.
+This skill provides deterministic, fail-honest black-box browser verification from the perspective of an actual end user. Operating as a Senior Black-Box QA Engineer, it executes real Chromium browser journeys via **Playwright** (`run_command` / `Bash`), exercises interactive GUI forms, attaches console and network error listeners, captures physical `.png` screenshots across 4 responsive viewports in `docs/<feature-name>/evidence/`, and publishes a concise Zero-Fluff report (`<= 50 lines`) to `docs/<feature-name>/blackbox-report.md`.
 
-It leverages modern browser automation tools, specifically **Playwright** via CLI/scripts and **`chrome-devtools` MCP** tools (`navigate_page`, `click`, `fill_form`, `type_text`, `take_screenshot`, `list_console_messages`, `list_network_requests`, `resize_page`), publishing its verification findings to `docs/<feature-name>/blackbox-report.md`.
+It enforces a strict **Fail-Honest Anti-Hallucination Protocol**: if no web UI exists in scope it immediately returns `SKIPPED`, and if the dev server or Chromium binary cannot run it immediately stops and returns `BLOCKED` with the exact terminal error—never substituting `curl`, `TestClient`, `jsdom`, or static code inspection for a real browser.
 
 ---
 
 ## When to Use
 
 ### Trigger Scenarios
-- Validating client-side web applications, SPAs, and frontend portals running in local dev servers or staging URLs.
-- Testing real end-to-end user flows (signup, login, navigation, checkout, wizard steps) through the browser DOM.
-- Auditing GUI form behavior (validation messages, disabled buttons, input masks, loading indicators, error boundaries).
-- Detecting silent JavaScript runtime crashes, unhandled promise rejections, and console errors (`console.error`).
-- Verifying responsive visual layouts across multiple breakpoints (Mobile 375px, Tablet 768px, Desktop 1280px) to spot clipping, overflows, or broken flex/grid containers.
-- Authoring the standard deliverable `docs/<feature-name>/blackbox-report.md` during State 3/4 verification.
+- Validating runnable web applications, SPAs, and frontend portals served over HTTP/HTTPS.
+- Testing real end-to-end user flows (signup, login, navigation, checkout, wizard steps) in a live Chromium DOM.
+- Auditing GUI form behavior (validation errors, disabled submit states, loading feedback, focus management).
+- Asserting `0` unhandled JavaScript runtime crashes (`pageerror` / `console.error`) and `0` unexpected HTTP `4xx/5xx` responses.
+- Capturing physical `.png` evidence across Mobile (`375x812`), Tablet (`768x1024`), Desktop (`1280x800`), and Widescreen (`1920x1080`) viewports in `docs/<feature-name>/evidence/`.
+- Authoring the standard deliverable `docs/<feature-name>/blackbox-report.md` (`<= 50 lines`) during State 3/4 verification.
 
 ### When NOT to Use
-- **Pure backend/API service testing without UI**: Route headless API testing to `qa-tester`.
+- **Pure backend/API/CLI/pipeline projects without a web UI**: Immediately return `SKIPPED: No web UI in scope`; route headless API tests to `qa-tester`.
 - **Unit test creation during coding**: Route to `test-driven-development` or `code-implementer`.
 - **Static code smell and complexity review**: Route to `code-critic`.
 - **Adversarial stress and concurrency fuzzing**: Route to `adversarial-challenger`.
@@ -33,78 +33,73 @@ It leverages modern browser automation tools, specifically **Playwright** via CL
 
 ## Process
 
-The black-box verification process operates across five distinct phases to validate frontend integrity:
+The black-box verification lifecycle enforces a mandatory 2-step Pre-Flight before executing real Chromium suites:
 
 ```mermaid
 flowchart TD
-    START["Identify Target URL & Flow"] --> P1["1. User Journey Execution"]
-    P1 --> P2["2. Interactive GUI Form Testing"]
-    P2 --> P3["3. Console & Network Log Auditing"]
-    P3 --> P4["4. Responsive Breakpoint & Layout Check"]
-    P4 --> P5["5. Tooling: Playwright / chrome-devtools MCP"]
-    P5 --> REPORT["Compile docs/<feature-name>/blackbox-report.md"]
-    REPORT --> VERDICT{"Any Console Errors or Layout Breaks?"}
-    VERDICT -->|"Errors Found"| REJECT["REJECTED: File defect table with repro steps"]
-    VERDICT -->|"Zero Errors & Clean Layout"| PASS["PASSED: Verification complete"]
+    START["Incoming Verification Request"] --> PF1{"Pre-Flight 1:<br/>Web UI Exists?"}
+    PF1 -->|"No Web UI"| SKIP["Return SKIPPED:<br/>No web UI in scope"]
+    PF1 -->|"Yes"| PF2{"Pre-Flight 2:<br/>URL 200 OK & Chromium Launches?"}
+    PF2 -->|"Server Down / Install Blocked"| BLOCK["STOP & Return BLOCKED:<br/>Exact command & terminal error"]
+    PF2 -->|"200 OK & Chromium Ready"| EXEC["Run Playwright Suite in tests/e2e/<br/>DOM Flows + Console/Net Listeners"]
+    EXEC --> SHOTS["Save 4-Viewport .png Evidence<br/>docs/<feature-name>/evidence/"]
+    SHOTS --> REPORT["Write Zero-Fluff Report (<= 50 lines)<br/>docs/<feature-name>/blackbox-report.md"]
 ```
 
-### Phase 1: User Journey Execution
-- **Happy Paths**: Execute complete end-to-end journeys from initial page landing to completion (e.g. login $\to$ browse $\to$ add to cart $\to$ checkout $\to$ confirmation).
-- **Navigation Invariants**: Verify URL updates match application state, back/forward browser button navigation functions without breaking state, and bookmarks/deep links load correctly.
-- **State Persistence**: Verify that sessions, local storage, and cookies persist across page reloads.
+### Phase 1: Mandatory 2-Step Pre-Flight & Fail-Honest Gate
+1. **Step 1 — Web UI Scope & HTTP `200 OK` Check**:
+   - Confirm a web UI exists in scope. If the task has no web UI, immediately return `SKIPPED: No web UI in scope` without creating fake E2E tests.
+   - Probe the running dev/staging URL to verify it responds with `200 OK`.
+2. **Step 2 — Auto-Bootstrap by Stack & Chromium Launch Check**:
+   - If Playwright is not yet installed, auto-bootstrap via `run_command` / `Bash`:
+     * **Python (`pyproject.toml` / `uv`)**:
+       ```bash
+       uv add --dev playwright pytest-playwright && uv run playwright install chromium
+       # Fallback when uv is unavailable:
+       .venv/bin/pip install playwright pytest-playwright && .venv/bin/playwright install chromium
+       ```
+     * **Node / Frontend (`package.json`)**:
+       ```bash
+       npm install -D @playwright/test && npx playwright install chromium
+       # Respect lockfiles: pnpm add -D @playwright/test && pnpm exec playwright install chromium
+       #                    yarn add -D @playwright/test && yarn playwright install chromium
+       ```
+   - Verify `playwright` + `chromium` launches cleanly.
+   - **Strict Fail-Honest Stop**: If the dev server fails to start, the port is unreachable, network policies block Chromium download, or OS shared libraries are missing, **STOP IMMEDIATELY** and write/return:
+     `BLOCKED: Not executed — <exact command & terminal error>`
 
-### Phase 2: Interactive GUI Forms & Input Validation
-- **Boundary Inputs**: Test empty inputs, boundary strings, invalid email/phone formats, and special characters in input fields.
-- **Visual Feedback**: Verify clear inline error labels, focus highlights, and disabled submit buttons during in-flight network requests.
-- **Form Submission**: Confirm that valid submissions trigger appropriate success notifications, redirect smoothly, or update the view without whole-page flickering.
+### Phase 2: Real Browser Execution (`tests/e2e/`)
+Write and execute real Playwright E2E tests in `tests/e2e/` running Chromium (headless by default for speed, or `--headed` when live visual observation is requested):
+- **DOM Journeys & GUI Forms**: Exercise real navigation, form input filling (empty, invalid, boundary, and valid payloads), button clicks, disabled in-flight submit states, and deterministic locator assertions.
+- **Console & Network Listeners**: Attach `page.on("console")`, `page.on("pageerror")`, and `page.on("response")` listeners asserting **`0` unhandled JS errors** and **`0` unexpected HTTP `4xx/5xx` responses**.
 
-### Phase 3: Browser Console & Network Log Auditing
-- **Zero Console Errors Policy**: Inspect browser console logs (`list_console_messages` or Playwright `page.on('console')`). Reject any build that emits unhandled JavaScript errors, syntax warnings, or uncaught promise rejections.
-- **Network Failures**: Inspect network requests (`list_network_requests` or Playwright request logs) to ensure no unexpected HTTP 4xx/5xx status codes occur during happy-path user flows.
-- **Resource Integrity**: Ensure zero missing images (broken `<img>` tags), missing fonts, or 404 static assets.
+### Phase 3: Mandatory 4-Viewport Screenshot Evidence (`docs/<feature-name>/evidence/`)
+Capture real, non-empty `.png` screenshots saved to `docs/<feature-name>/evidence/` across all 4 viewports and assert zero horizontal overflow (`document.documentElement.scrollWidth <= window.innerWidth`):
+1. **Mobile (`375x812`)**: Fluid single-column layout, drawer navigation, touch targets $\ge 44 \times 44$ px (`mobile-375x812.png`).
+2. **Tablet (`768x1024`)**: Adaptive grid spacing (`tablet-768x1024.png`).
+3. **Desktop (`1280x800`)**: Full navigation bar, modals, and hover/focus states (`desktop-1280x800.png`).
+4. **Widescreen (`1920x1080`)**: Max-width container alignment (`widescreen-1920x1080.png`).
 
-### Phase 4: Responsive Breakpoint & Visual Layout Analysis
-Test views across standard viewport dimensions:
-1. **Mobile (`375 x 812` px - iPhone profile)**:
-   - Verify single-column fluid layout, burger menu/drawer toggles, and touch target minimums ($\ge 44 \times 44$ px).
-   - Ensure zero horizontal scrolling (`overflow-x: hidden`).
-2. **Tablet (`768 x 1024` px - iPad profile)**:
-   - Verify adaptive multi-column grids and balanced spacing.
-3. **Desktop (`1280 x 800` px - Laptop profile)**:
-   - Verify full navigation menus, modals centered, sidebars, and hover states.
-4. **Widescreen (`1920 x 1080` px - FHD profile)**:
-   - Verify maximum container bounds (`max-w-7xl` or similar) preventing excessive stretching.
-
-### Phase 5: Deliverable Generation (`docs/<feature-name>/blackbox-report.md`)
-Create the target directory `docs/<feature-name>/` if not present. Generate the report following the [Black-Box Report Template](references/blackbox-report-template.md):
+### Phase 4: Zero-Fluff Deliverable Generation (`<= 50 lines`)
+Verify that Playwright exited `0` **AND** non-empty `.png` files physically exist in `docs/<feature-name>/evidence/`, then write `docs/<feature-name>/blackbox-report.md` (`<= 50 lines` max, `<= 20 lines` on clean pass) using [references/blackbox-report-template.md](references/blackbox-report-template.md):
 
 ```markdown
-# Black-Box Browser Verification & Visual Test Report
+# Black-Box Browser Verification Report
 
-## Executive Summary
-- **Feature Name**: `<feature-name>`
-- **Tester**: `e2e-blackbox-tester`
-- **Execution Date**: `YYYY-MM-DD`
-- **Application URL / Environment**: `http://localhost:3000`
-- **Tooling Used**: `[Playwright | chrome-devtools MCP]`
-- **Overall Verification Verdict**: `[PASSED | BLOCKED | REJECTED]`
-- **User Journeys Tested**: `[Count]`
-- **Console Errors Detected**: `[Count]`
+- **Feature**: `<feature-name>` | **Date**: `YYYY-MM-DD` | **Target URL**: `http://localhost:3000`
+- **Runner**: `Playwright Chromium` | **Verdict**: `[PASSED | REJECTED | BLOCKED | SKIPPED]`
+- **Journeys**: `[X/Y Passed]` | **Unhandled JS Errors**: `0` | **Unexpected HTTP 4xx/5xx**: `0`
 
-## 1. User Journey Verification Matrix
-[Journey ID, Description, Viewport, Steps Run, Form Submissions, Console Errors, Status]
+## 1. Viewport & Journey Metrics
+| Viewport | Dimensions | Evidence (`docs/<feature-name>/evidence/`) | Overflow-X | Forms & Flows | JS / HTTP Errors | Status |
+| :--- | :---: | :--- | :---: | :---: | :---: | :---: |
+| **Mobile** | `375x812` | `mobile-375x812.png` | `0px` | `PASS` | `0 / 0` | `PASS` |
+| **Tablet** | `768x1024` | `tablet-768x1024.png` | `0px` | `PASS` | `0 / 0` | `PASS` |
+| **Desktop** | `1280x800` | `desktop-1280x800.png` | `0px` | `PASS` | `0 / 0` | `PASS` |
+| **Widescreen** | `1920x1080` | `widescreen-1920x1080.png` | `0px` | `PASS` | `0 / 0` | `PASS` |
 
-## 2. Interactive GUI Form & Input Validation
-[Form ID, Field Tested, Input Value, Expected Validation, Observed Feedback, Status]
-
-## 3. Browser Console & Network Log Audit
-[Console message logs, Unhandled errors count, Failed 4xx/5xx requests]
-
-## 4. Visual Layout & Responsive Breakpoint Analysis
-[Mobile 375px, Tablet 768px, Desktop 1280px checks, Overflow, Touch targets]
-
-## 5. Identified Defects & UX Anomalies
-[Defect ID, Severity, Category, Observed Bug, Reproduction Steps, Remediation Required]
+## 2. Actionable Defects
+None.
 ```
 
 ---
@@ -113,56 +108,50 @@ Create the target directory `docs/<feature-name>/` if not present. Generate the 
 
 ### Invocations & Commands
 
-#### 1. Playwright CLI Execution
+#### Node / Frontend Playwright Suite
 ```bash
-# Run all browser E2E tests headlessly
-npx playwright test
+# Headless Chromium execution (default)
+npx playwright test tests/e2e/
 
-# Run tests targeting specific browser or device emulation
-npx playwright test --project="Mobile Chrome"
-npx playwright test --project="Desktop Chrome"
-
-# Run with trace and video recording enabled for debugging
-npx playwright test --trace on
+# Live visual observation when requested
+npx playwright test tests/e2e/ --headed
 ```
 
-#### 2. Chrome DevTools MCP Tool Invocations
-When interacting with live web apps via MCP tools:
-- Navigate: `navigate_page(url="http://localhost:3000")`
-- Resize Viewport: `resize_page(width=375, height=812)` (Mobile) or `resize_page(width=1280, height=800)` (Desktop)
-- Inspect Elements: `take_snapshot()`
-- Interact: `type_text(selector="input[name='email']", text="user@example.com")`, `click(selector="button#submit")`
-- Audit Logs: `list_console_messages()`, `list_network_requests()`
-- Capture Proof: `take_screenshot(name="checkout-mobile.png")`
+#### Python Playwright Suite
+```bash
+# Headless Chromium execution (default)
+uv run pytest tests/e2e/ --browser chromium
+
+# Live visual observation when requested
+uv run pytest tests/e2e/ --browser chromium --headed
+```
 
 ### Example Prompts
-- *"Execute black-box browser testing on our newly implemented checkout flow at `http://localhost:3000/checkout` across mobile and desktop breakpoints."*
-- *"Verify the sign-up form with invalid email inputs, inspect console error logs, and generate `docs/auth-signup/blackbox-report.md`."*
-- *"Check our landing page for horizontal overflow on 375px mobile viewports using chrome-devtools MCP."*
+- *"Execute Playwright black-box browser verification on `http://localhost:3000/checkout` across all 4 viewports and capture `.png` evidence."*
+- *"Verify sign-up form validation and console/network cleanliness in Chromium, saving `docs/auth-signup/blackbox-report.md`."*
 
 ### Host Execution Instructions
-- **Claude Code**: Run Playwright test runner via `Bash`, or interact with browser via Playwright CLI; author test files with `Write`.
-- **Antigravity**: Launch as the `e2e-blackbox-tester` subagent; call `chrome-devtools` MCP tools via `call_mcp_tool` or run Playwright suites using `run_command`; write report to `docs/<feature-name>/blackbox-report.md`.
+- **Claude Code**: Bootstrap and run Playwright in `tests/e2e/` via `Bash`; author tests and `docs/<feature-name>/blackbox-report.md` via `Write`/`Edit`; verify `.png` evidence via `Glob`.
+- **Antigravity**: Launch as `e2e-blackbox-tester`; bootstrap and execute Playwright suites via `run_command`; verify physical `.png` files in `docs/<feature-name>/evidence/` via `list_dir`; write concise `docs/<feature-name>/blackbox-report.md` via `write_to_file`.
 
 ---
 
 ## Red Flags
-- Reporting visual verification passing without actually rendering or inspecting the UI in a browser engine.
-- Ignoring console errors or treating JavaScript runtime exceptions as "normal".
-- Testing exclusively on desktop viewports while ignoring mobile form factors and touch targets.
-- Using fragile arbitrary sleeps (`sleep(5000)`) instead of event/DOM-driven condition waiters.
-- Failing to verify error messaging when invalid form data is submitted.
-- Marking a task verified when horizontal scrollbar appears on mobile viewports.
+- Using `curl`, `httpx`, `requests`, FastAPI `TestClient`, `jsdom`, or static HTML/JSX code reading as a substitute for a real Chromium browser.
+- Claiming `PASSED` without Playwright exit code `0` **AND** non-empty `.png` screenshots on disk in `docs/<feature-name>/evidence/`.
+- Fabricating test results instead of returning `SKIPPED` (no web UI) or `BLOCKED` (unreachable server / blocked Chromium binary).
+- Ignoring `console.error`, `pageerror`, or unexpected HTTP `4xx/5xx` responses.
+- Using arbitrary `sleep()` calls instead of Playwright auto-waiting locators.
+- Emitting verbose reports exceeding `50` lines (`<= 20` lines expected on clean passes).
 
 ---
 
 ## Verification
-- [ ] Real user journeys executed against a running web application.
-- [ ] Interactive form validation verified for both valid and invalid input sets.
-- [ ] Browser console logs audited with zero unhandled JavaScript errors.
-- [ ] Responsive layouts verified across Mobile (`375px`), Tablet (`768px`), and Desktop (`1280px`).
-- [ ] Formal deliverable saved to `docs/<feature-name>/blackbox-report.md`.
-- [ ] Any visual or functional bug recorded with exact reproduction steps.
+- [ ] Mandatory 2-step Pre-Flight passed (`200 OK` + Chromium launch), or honest `SKIPPED` / `BLOCKED` returned immediately.
+- [ ] Real Playwright E2E suite in `tests/e2e/` exited with code `0`.
+- [ ] Console (`console` / `pageerror`) and HTTP response listeners verified `0` unhandled errors.
+- [ ] Non-empty `.png` screenshots saved in `docs/<feature-name>/evidence/` for `375x812`, `768x1024`, `1280x800`, and `1920x1080`.
+- [ ] Concise report (`<= 50 lines`, `<= 20 lines` if clean) written to `docs/<feature-name>/blackbox-report.md`.
 
 ---
 

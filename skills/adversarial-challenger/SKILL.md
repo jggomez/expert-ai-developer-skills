@@ -84,37 +84,30 @@ flowchart TD
 
 ---
 
-### Phase 3: Deliverable Generation (`docs/<feature-name>/adversarial-report.md`)
+### Phase 3: Zero-Fluff Deliverable Generation (`docs/<feature-name>/adversarial-report.md` `<= 50 lines`)
 
-Create the target directory `docs/<feature-name>/` if not present. Generate the report following the [Adversarial Report Template](references/adversarial-report-template.md):
+Create the target directory `docs/<feature-name>/` if not present. Generate a **Zero-Fluff** report strictly capped at **`<= 50 lines`** (`<= 20 lines` on clean passes) following the [Adversarial Report Template](references/adversarial-report-template.md). Omit empty per-probe prose sections—output ONLY the compact metadata header, the 5-vector summary table, and actionable defects (or `None.` when `RESILIENT`):
 
 ```markdown
-# Adversarial Stress Testing & Resiliency Report
+# Adversarial Stress & Resiliency Report
 
-## Executive Summary
-- **Feature Name**: `<feature-name>`
-- **Tester**: `challenger` (Adversarial Testing Specialist)
-- **Execution Date**: `YYYY-MM-DD`
-- **Overall Resiliency Status**: `[RESILIENT | AT RISK | VULNERABLE]`
-- **Total Probes Executed**: `[Count]`
-- **Critical Failures / Crashes**: `[Count]`
+- **Feature**: `<feature-name>` | **Date**: `YYYY-MM-DD` | **Targets**: `[Modules / Endpoints]`
+- **Tester**: `challenger` | **Verdict**: `[RESILIENT | AT RISK | VULNERABLE]` | **Probes**: `[Passed/Total]` (`0` Crashes)
 
-## 1. Adversarial Attack & Fault Vector Summary
-| Vector Category | Probes Run | Passed | Failed | Severity Max | Status |
+## 1. Adversarial Vector Summary
+| Vector Category | Probes | Passed | Failed | Max Severity | Status |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **1. Boundary & Malformed Input Fuzzing** | `[Count]` | `[Count]` | `[Count]` | `[CRIT/HIGH/MED/LOW]` | `[PASS/FAIL]` |
-| **2. Failure-Path & Fault Injection** | `[Count]` | `[Count]` | `[Count]` | `[CRIT/HIGH/MED/LOW]` | `[PASS/FAIL]` |
-| **3. Timeout & Network Chaos** | `[Count]` | `[Count]` | `[Count]` | `[CRIT/HIGH/MED/LOW]` | `[PASS/FAIL]` |
-| **4. Concurrency & Race Conditions** | `[Count]` | `[Count]` | `[Count]` | `[CRIT/HIGH/MED/LOW]` | `[PASS/FAIL]` |
-| **5. Resource Exhaustion & Memory Stress** | `[Count]` | `[Count]` | `[Count]` | `[CRIT/HIGH/MED/LOW]` | `[PASS/FAIL]` |
+| **1. Boundary & Input Fuzzing** | `[N]` | `[N]` | `0` | `NONE` | `PASS` |
+| **2. Failure-Path & Fault Injection** | `[N]` | `[N]` | `0` | `NONE` | `PASS` |
+| **3. Timeout & Network Chaos** | `[N]` | `[N]` | `0` | `NONE` | `PASS` |
+| **4. Concurrency & Race Conditions** | `[N]` | `[N]` | `0` | `NONE` | `PASS` |
+| **5. Resource & Memory Stress** | `[N]` | `[N]` | `0` | `NONE` | `PASS` |
+| **Total** | **`[N]`** | **`[N]`** | **`0`** | **`NONE`** | **`RESILIENT`** |
 
-## 2. Detailed Probe Findings
-[Probe observations, inputs, expected vs observed behaviors]
-
-## 3. Discovered Vulnerabilities & Defects
-| Defect ID | Severity | Vector | Location | Impact | Reproduction Steps | Recommended Fix |
+## 2. Actionable Defects (Write `None.` if `RESILIENT`)
+| ID | Severity | Vector | Location | Impact | Reproduction Probe | Required Fix |
 | :---: | :---: | :---: | :--- | :--- | :--- | :--- |
-| **ADV-01** | `CRIT` | Concurrency | `path/to/file:L#` | Negative state under race | Concurrent threads | Atomic DB transaction |
+| `ADV-01` | `CRIT` | Concurrency | `path/to/file:L#` | Negative state under race | 20 concurrent threads | Atomic DB transaction |
 ```
 
 ---
@@ -155,6 +148,7 @@ npx artillery run tests/stress/load-config.yaml
 - Ignoring concurrency testing because "it works in the single-threaded unit test".
 - Swallowing exceptions inside tests to artificially produce green outputs.
 - Failing to clean up test processes, background sockets, or test database rows after fault injection.
+- Emitting bloated per-probe prose exceeding the strict **`<= 50 lines` Zero-Fluff cap** (`<= 20 lines` on clean passes).
 - Leaving `CRIT` or `HIGH` vulnerabilities unresolved before declaring a release ready.
 
 ---
@@ -164,7 +158,7 @@ npx artillery run tests/stress/load-config.yaml
 - [ ] Worst-case inputs (nulls, boundary numbers, 100k strings, malformed JSON) probed.
 - [ ] Network timeout and connection drop recovery tested.
 - [ ] Concurrent execution probed for race conditions and data corruption.
-- [ ] Formal deliverable saved to `docs/<feature-name>/adversarial-report.md`.
+- [ ] Formal deliverable saved to `docs/<feature-name>/adversarial-report.md` within the strict **`<= 50 lines` Zero-Fluff cap** (`<= 20 lines` when clean, omitting empty prose sections).
 - [ ] Any `CRIT` or `HIGH` defect accompanied by reproduction steps and remediation guidance.
 
 ---

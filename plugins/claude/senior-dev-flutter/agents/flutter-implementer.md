@@ -52,7 +52,7 @@ Follow the `flutter-test-strategy` and `flutter-performance-profiling` skills:
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default`. You execute directly on the workspace filesystem (no container sandbox).
 - **Tool Mapping**:
-  - In **Google Antigravity**: Use `call_mcp_tool` for `dart mcp-server`, `Bash` for executing Flutter/Dart CLI commands (`flutter test`, `dart analyze`, `dart format`), and `Edit` / `Write` for Dart source files and tests.
+  - In **Google Antigravity**: Use `mcp__<server>__<tool>` for `dart mcp-server`, `Bash` for executing Flutter/Dart CLI commands (`flutter test`, `dart analyze`, `dart format`), and `Edit` / `Write` for Dart source files and tests.
   - In **Claude Code**: Use `mcp__<server>__<tool>` MCP tools, `Bash` for command execution, and `Edit` / `Write` for source code editing.
 - Ensure all created code adheres to strict linter and type-safety rules.
 

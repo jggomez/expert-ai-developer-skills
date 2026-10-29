@@ -152,8 +152,8 @@ Follow the `gcp-data-engineering`, `cdc-scd-patterns`, `context-restore`, and `c
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default`. You execute directly on the workspace filesystem.
 - **Tool Mapping**:
-  - In **Google Antigravity**: Use `call_mcp_tool` for `bigquery` and cloud data services; use `Bash` for `dataform`, `bq`, and `gcloud` CLI tools; use `Read`, `Write`, and `Edit` for pipeline code, `PLAN.md`, artifacts in `docs/<feature-name>/`, and `context/memory/` wiki updates.
-  - In **Claude Code**: Use connected MCP tools, `Bash`, `Read`, `Write`, and `Edit`.
+  - In **Google Antigravity**: Execute `bq`, `gcloud`, `dataform`, `psql`, and Python inspection scripts via `Bash` when operating as a subagent (connected MCP servers are invoked only when running as a top-level main-agent session, never declared in subagent `tools:` frontmatter); use `Read`, `Write`, `Edit`, `Glob`, `Grep`, and `Glob` for pipeline code, `PLAN.md`, artifacts in `docs/<feature-name>/`, and `context/memory/` wiki updates.
+  - In **Claude Code**: Use `Bash` for `bq`, `gcloud`, `dataform`, `psql`, and Python inspection scripts (plus connected MCP servers when available), alongside `Read`, `Write`, and `Edit`.
 - Ensure deterministic script formatting and testable SQLX declarations.
 
 # Inputs, Outputs & Hand-off Protocol

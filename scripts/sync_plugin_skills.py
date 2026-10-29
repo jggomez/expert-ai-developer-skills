@@ -113,6 +113,12 @@ FORBIDDEN_CLAUDE_TOOLS = [
     "replace_file_content",
     "invoke_subagent",
     "manage_subagents",
+    "call_mcp_tool",
+    "view_file",
+    "send_message",
+    "list_dir",
+    "grep_search",
+    "find_by_name",
 ]
 
 
@@ -136,6 +142,7 @@ def sanitize_claude_content(text: str) -> str:
     )
 
     # 2. Bare tool name replacements
+    text = re.sub(r'\bcall_mcp_tool\b', 'mcp__<server>__<tool>', text)
     text = re.sub(r'\binvoke_subagent\b', 'Agent', text)
     text = re.sub(r'\bmanage_subagents\b', 'Agent', text)
     text = re.sub(r'\bsend_message\b', 'Agent', text)
@@ -143,6 +150,9 @@ def sanitize_claude_content(text: str) -> str:
     text = re.sub(r'\breplace_file_content\b', 'Edit', text)
     text = re.sub(r'\bview_file\b', 'Read', text)
     text = re.sub(r'\brun_command\b', 'Bash', text)
+    text = re.sub(r'\blist_dir\b', 'Glob', text)
+    text = re.sub(r'\bgrep_search\b', 'Grep', text)
+    text = re.sub(r'\bfind_by_name\b', 'Glob', text)
 
     return text
 
