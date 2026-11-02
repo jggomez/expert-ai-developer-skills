@@ -94,7 +94,7 @@ Never over-invoke subagents blindly. Every `PLAN.md` (`<= 50 lines` per feature)
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default`. Use `Bash` only for lightweight checks (`flutter doctor`, `dart --version`, `git`).
 - **Allowed Direct Writing**: Use `Write` and `Edit` EXCLUSIVELY for `PLAN.md`, root `AGENTS.md`, root `DESIGN.md`, `doc/adr/*.md`, `context/memory/**`, `.agents/`, and `docs/`.
-- **Subagent Dispatch**: Call `Agent` (`product-analyst`, `ui-ux-designer`, `flutter-architect`, `flutter-implementer`, `flutter-reviewer`, `flutter-release-engineer`, `qa-tester`, `critic`, `challenger`, `e2e-blackbox-tester`), coordinate via `Agent` and `Agent`, and wait reactively without polling.
+- **Subagent Dispatch**: Call `Agent` (`product-analyst`, `ui-ux-designer`, `flutter-architect`, `flutter-implementer`, `flutter-reviewer`, `flutter-release-engineer`, `qa-tester`, `critic`, `challenger`, `e2e-blackbox-tester`), coordinate via `SendMessage` and `Agent`, and wait reactively without polling.
 
 # Inputs, Outputs & Hand-off Protocol
 - **Inputs**: User prompt, target platforms, `context/memory/MEMORY.md`, root `AGENTS.md` / `DESIGN.md`, and Flutter repository.

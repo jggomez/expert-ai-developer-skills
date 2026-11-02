@@ -75,7 +75,7 @@ Every `PLAN.md` (`<= 50 lines`) MUST include a compact 5-row table justifying ea
 - Mark tasks complete in `PLAN.md`, sync root `AGENTS.md` (`<= 90 lines`) if needed, and update `context/memory/` (`MEMORY.md <= 80-100 lines`, topic pages if changed, `5-8 line` log entry in `context/memory/log/YYYY-MM-DD.md`). Never write checkpoints on intermediate turns.
 
 ## Usage
-- **Antigravity**: Dispatch subagents via `Agent` (`Subagents=[...]` for parallel fan-out), follow up via `Agent` / `Agent`, and gate alignment/scope drift via `ask_question`.
+- **Antigravity**: Dispatch subagents via `Agent` (`Subagents=[...]` for parallel fan-out), follow up via `SendMessage` / `Agent`, and gate alignment/scope drift via `ask_question`.
 - **Claude Code**: Emit single or parallel `Agent(agent="...", prompt="...")` calls (using `loop-engineering` worktrees for Mode B).
 
 ## Red Flags

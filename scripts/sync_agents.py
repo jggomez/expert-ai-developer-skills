@@ -63,6 +63,40 @@ PLUGIN_AGENTS_MAP = {
     ],
 }
 
+# Specialist agents an orchestrator dispatches but whose canonical definition lives
+# in another plugin. They are copied into the consuming plugin (both ecosystems) so
+# every plugin stays self-contained when installed on its own.
+BUNDLED_AGENTS = {
+    "senior-dev-flutter": (
+        "senior-dev",
+        [
+            "product-analyst.md",
+            "ui-ux-designer.md",
+            "qa-tester.md",
+            "critic.md",
+            "challenger.md",
+            "e2e-blackbox-tester.md",
+        ],
+    ),
+    "python-backend": (
+        "senior-dev",
+        [
+            "product-analyst.md",
+            "ui-ux-designer.md",
+            "architect-engineer.md",
+            "code-implementer.md",
+            "qa-tester.md",
+            "compliance-verifier.md",
+            "critic.md",
+            "challenger.md",
+            "e2e-blackbox-tester.md",
+        ],
+    ),
+}
+
+for _plugin, (_source, _files) in BUNDLED_AGENTS.items():
+    PLUGIN_AGENTS_MAP[_plugin] = PLUGIN_AGENTS_MAP[_plugin] + [f for f in _files if f not in PLUGIN_AGENTS_MAP[_plugin]]
+
 PLUGIN_DESCRIPTIONS = {
     "senior-dev": "Senior Developer Orchestrator and specialized subagents for SDLC execution using TDD, clean code, and automated verification.",
     "senior-dev-flutter": "Senior Flutter orchestrator, architecture decisions, profiling, and release engineering.",
@@ -103,7 +137,7 @@ def sanitize_claude_body(text: str) -> str:
     text = re.sub(r"\bcall_mcp_tool\b", "mcp__<server>__<tool>", text)
     text = re.sub(r"\binvoke_subagent\b", "Agent", text)
     text = re.sub(r"\bmanage_subagents\b", "Agent", text)
-    text = re.sub(r"\bsend_message\b", "Agent", text)
+    text = re.sub(r"\bsend_message\b", "SendMessage", text)
     text = re.sub(r"\bwrite_to_file\b", "Write", text)
     text = re.sub(r"\breplace_file_content\b", "Edit", text)
     text = re.sub(r"\bview_file\b", "Read", text)
@@ -165,6 +199,20 @@ def _extra_manifest_keys(manifest_path: Path, generated: dict) -> dict:
     if not isinstance(existing, dict):
         raise ValueError(f"{manifest_path} must contain a JSON object")
     return {key: value for key, value in existing.items() if key not in generated}
+
+
+def sync_bundled_antigravity_agents() -> None:
+    """Copies canonical specialist agents into the Antigravity plugins that dispatch them."""
+    for plugin_name, (source_plugin, agent_files) in BUNDLED_AGENTS.items():
+        src_dir = PLUGINS_AGY_DIR / source_plugin / "agents"
+        dest_dir = PLUGINS_AGY_DIR / plugin_name / "agents"
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        for afname in agent_files:
+            src_af = src_dir / afname
+            if not src_af.is_file():
+                raise FileNotFoundError(f"bundled agent source missing: {src_af}")
+            shutil.copy2(src_af, dest_dir / afname)
+        print(f"✅ Bundled {len(agent_files)} {source_plugin} agents into Antigravity plugin: {plugin_name}")
 
 
 def sync_claude_plugins() -> None:
@@ -273,6 +321,7 @@ def generate_marketplace_json() -> None:
 
 def main() -> None:
     print("🚀 Synchronizing plugins (Everything is a Plugin)...")
+    sync_bundled_antigravity_agents()
     sync_claude_plugins()
     generate_marketplace_json()
     print("🎉 All plugin targets synchronized successfully!")

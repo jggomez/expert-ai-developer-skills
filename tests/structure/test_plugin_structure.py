@@ -1134,7 +1134,8 @@ def test_all_agents_have_exactly_one_frontmatter(workspace_root):
     exactly twice (opening and closing) and no duplicate frontmatter blocks exist."""
     pattern = os.path.join(workspace_root, "plugins", "*", "*", "agents", "*.md")
     agent_files = sorted(glob.glob(pattern))
-    assert len(agent_files) == 38, f"Expected exactly 38 agent files matching {pattern}, got {len(agent_files)}"
+    # 38 own agents + 15 bundled senior-dev specialists (6 flutter, 9 python-backend) x 2 ecosystems
+    assert len(agent_files) == 68, f"Expected exactly 68 agent files matching {pattern}, got {len(agent_files)}"
 
     errors = []
     for agent_path in agent_files:
@@ -1258,7 +1259,7 @@ def test_track23_track26_universal_multi_plugin_standardization(workspace_root):
     # 4. Total agent files count parity
     pattern = os.path.join(workspace_root, "plugins", "*", "*", "agents", "*.md")
     agent_files = sorted(glob.glob(pattern))
-    assert len(agent_files) == 38, f"Expected exactly 38 agents across both ecosystems, got {len(agent_files)}"
+    assert len(agent_files) == 68, f"Expected exactly 68 agents across both ecosystems, got {len(agent_files)}"
 
 
 def test_antigravity_subagents_strict_tool_registry_whitelist(workspace_root, plugin_dirs):
@@ -1559,3 +1560,61 @@ def test_track29_ecosystem_wide_concise_standards_and_fail_honest_parity(workspa
     # Assert
     assert not errors, "\n".join(errors)
 
+
+
+ORCHESTRATOR_DISPATCH_RE = re.compile(r"\*\*Subagent Dispatch\*\*:(.*)")
+
+
+@pytest.mark.parametrize("ecosystem", ["antigravity", "claude"])
+def test_orchestrator_dispatched_agents_are_bundled(workspace_root, ecosystem):
+    """Every subagent an orchestrator dispatches must ship inside the SAME plugin,
+    so a plugin installed on its own never routes to a non-existent agent."""
+    # Arrange
+    plugins_root = os.path.join(workspace_root, "plugins", ecosystem)
+    orchestrators = glob.glob(os.path.join(plugins_root, "*", "agents", "*-orchestrator.md"))
+    assert orchestrators, f"no orchestrator agents found under {plugins_root}"
+    errors = []
+
+    # Act
+    for orch_path in orchestrators:
+        agents_dir = os.path.dirname(orch_path)
+        plugin = os.path.basename(os.path.dirname(agents_dir))
+        bundled = {os.path.splitext(f)[0] for f in os.listdir(agents_dir) if f.endswith(".md")}
+        with open(orch_path, encoding="utf-8") as f:
+            match = ORCHESTRATOR_DISPATCH_RE.search(f.read())
+        if not match:
+            errors.append(f"{ecosystem}/{plugin}: orchestrator has no '**Subagent Dispatch**:' line")
+            continue
+        dispatched = set(re.findall(r"`([a-z0-9]+(?:-[a-z0-9]+)*)`", match.group(1)))
+        for name in sorted(dispatched - bundled):
+            errors.append(f"{ecosystem}/{plugin}: orchestrator dispatches '{name}' but agents/{name}.md is not bundled")
+
+    # Assert
+    assert not errors, "\n".join(errors)
+
+
+def test_bundled_specialist_agents_match_canonical(workspace_root):
+    """Bundled specialist copies must be byte-identical to the canonical senior-dev
+    agents (Antigravity) so edits only ever happen in one place."""
+    # Arrange
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "sync_agents", os.path.join(workspace_root, "scripts", "sync_agents.py")
+    )
+    sync_agents = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(sync_agents)
+    agy_root = os.path.join(workspace_root, "plugins", "antigravity")
+    errors = []
+
+    # Act
+    for plugin, (source, files) in sync_agents.BUNDLED_AGENTS.items():
+        for fname in files:
+            canonical = os.path.join(agy_root, source, "agents", fname)
+            bundled = os.path.join(agy_root, plugin, "agents", fname)
+            if not os.path.isfile(bundled):
+                errors.append(f"antigravity/{plugin}/agents/{fname}: missing bundled copy")
+            elif not filecmp.cmp(canonical, bundled, shallow=False):
+                errors.append(f"antigravity/{plugin}/agents/{fname}: drifted from {source} — run scripts/sync_agents.py")
+
+    # Assert
+    assert not errors, "\n".join(errors)

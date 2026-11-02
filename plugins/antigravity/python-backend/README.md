@@ -27,11 +27,12 @@ plugins/antigravity/python-backend/
 │   ├── pre-tool-gate.js            # PreToolUse: Plan-First gate, gitflow & cloud deployment guardrails
 │   └── stop-gate.js                # Stop: quality gate checking test suite
 ├── agents/
-│   └── python-backend-orchestrator.md # Senior Python Backend Orchestrator (6-State DAG, Parallel Slices)
+│   ├── python-backend-orchestrator.md # Senior Python Backend Orchestrator (6-State DAG, Parallel Slices)
+│   └── <9 bundled senior-dev specialists>.md # product-analyst … e2e-blackbox-tester (synced copies)
 ├── rules/
 │   ├── python-backend-rules.md     # 6-State DAG, API/Migration Triage Gate, Parallel Slices & context/memory/
 │   └── git-hooks.md                # Blueprints for pre-commit & commit-msg hooks
-└── skills/                         # Bundled developer skills (14 modules)
+└── skills/                         # Bundled developer skills (22 modules)
     ├── python-expert/
     ├── test-driven-development/
     ├── pull-request-expert/
@@ -62,6 +63,9 @@ plugins/antigravity/python-backend/
 3. **Branch Safety (Gitflow) & Strict TDD**: Never commit directly to `main` or `develop`. Schema changes must always include a zero-downtime migration file and unit/integration tests.
 4. **`State 5` — Token-Conserving LLM Wiki Update**: Persist milestone state to `context/memory/` (`MEMORY.md`, `architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) only upon task completion or explicit handoff.
 
+
+**Bundled specialists** (canonical copies of the `senior-dev` agents, synced by `scripts/sync_agents.py` so this plugin works without `senior-dev` installed): `product-analyst`, `ui-ux-designer`, `architect-engineer`, `code-implementer`, `qa-tester`, `compliance-verifier`, `critic`, `challenger`, `e2e-blackbox-tester`. Edit them in `plugins/antigravity/senior-dev/agents/`, never here.
+
 ---
 
 ## 3. Model Context Protocol (`.mcp.json` / `mcp_config.json`)
@@ -81,7 +85,7 @@ Registers secure, lazy-loaded cloud management tools:
 
 ---
 
-## 5. Bundled Skills (14 Packaged Modules)
+## 5. Bundled Skills (22 Packaged Modules)
 
 On loading the plugin, the following 14 skills are automatically available:
 
@@ -99,6 +103,14 @@ On loading the plugin, the following 14 skills are automatically available:
 12. **`context-capture`**: Updates the Cross-AI LLM Wiki (`context/memory/MEMORY.md`, `architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) at `State 5` or explicit handoff.
 13. **`context-restore`**: Progressive disclosure reader (`context/memory/MEMORY.md` at `State 0`, drilling down on demand).
 14. **`loop-engineering`**: Bounded 3-strike fix loops for automated test and static-analysis verification.
+15. **`product-analyst`**: Preloaded by the bundled `product-analyst` agent (`prd.md`).
+16. **`ui-ux-designer`**: Preloaded by the bundled `ui-ux-designer` agent (`DESIGN.md`).
+17. **`code-implementer`**: Preloaded by the bundled `code-implementer` agent (TDD build tracks).
+18. **`qa-tester`**: Preloaded by the bundled `qa-tester` agent (`test-matrix.md` + `exit code 0`).
+19. **`compliance-verifier`**: Preloaded by the bundled `compliance-verifier` agent (`APPROVED` / `REJECTED`).
+20. **`code-critic`**: Preloaded by the bundled `critic` agent.
+21. **`adversarial-challenger`**: Preloaded by the bundled `challenger` agent.
+22. **`blackbox-tester`**: Preloaded by the bundled `e2e-blackbox-tester` agent.
 
 ---
 

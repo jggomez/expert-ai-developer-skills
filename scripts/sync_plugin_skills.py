@@ -39,6 +39,15 @@ PLUGIN_BUNDLED_SKILLS = {
         "senior-architect-engineering",
         "design-spec-expert",
         "build-and-ci-gates",
+        # Preloaded by the senior-dev specialist agents bundled for python-backend-orchestrator
+        "product-analyst",
+        "ui-ux-designer",
+        "code-implementer",
+        "qa-tester",
+        "compliance-verifier",
+        "code-critic",
+        "adversarial-challenger",
+        "blackbox-tester",
         "context-capture",
         "context-restore",
         "loop-engineering",
@@ -98,6 +107,15 @@ PLUGIN_BUNDLED_SKILLS = {
         "flutter-release-engineering",
         "flutter-upgrade-migration",
         "ui-ux-designer",
+        # Preloaded by the senior-dev specialist agents bundled for flutter-feature-orchestrator
+        "product-analyst",
+        "qa-tester",
+        "code-critic",
+        "code-smells-expert",
+        "refactoring-code-expert",
+        "adversarial-challenger",
+        "test-driven-development",
+        "blackbox-tester",
         "context-capture",
         "context-restore",
         "loop-engineering",
@@ -145,7 +163,7 @@ def sanitize_claude_content(text: str) -> str:
     text = re.sub(r'\bcall_mcp_tool\b', 'mcp__<server>__<tool>', text)
     text = re.sub(r'\binvoke_subagent\b', 'Agent', text)
     text = re.sub(r'\bmanage_subagents\b', 'Agent', text)
-    text = re.sub(r'\bsend_message\b', 'Agent', text)
+    text = re.sub(r'\bsend_message\b', 'SendMessage', text)
     text = re.sub(r'\bwrite_to_file\b', 'Write', text)
     text = re.sub(r'\breplace_file_content\b', 'Edit', text)
     text = re.sub(r'\bview_file\b', 'Read', text)

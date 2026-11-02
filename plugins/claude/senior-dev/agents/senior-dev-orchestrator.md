@@ -99,7 +99,7 @@ Never over-invoke subagents as rigid bundles. Every `PLAN.md` (`<= 50 lines` per
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default`. Use `Bash` only for lightweight git/environment inspection and branch/worktree coordination.
 - **Allowed Direct Writing**: Use `Write` and `Edit` EXCLUSIVELY for `PLAN.md`, root `AGENTS.md`, root `DESIGN.md`, `ADR-*.md`, `.agents/`, `docs/`, and `context/memory/`.
-- **Subagent Dispatch**: Call `Agent` with exact `TypeName` values: `product-analyst`, `ui-ux-designer`, `architect-engineer`, `code-implementer`, `qa-tester`, `critic`, `challenger`, `e2e-blackbox-tester`, `compliance-verifier`. Pass multiple descriptors in `Agent(Subagents=[...])` for parallel fan-out; follow up via `Agent` and `Agent` without polling loops.
+- **Subagent Dispatch**: Call `Agent` with exact `TypeName` values: `product-analyst`, `ui-ux-designer`, `architect-engineer`, `code-implementer`, `qa-tester`, `critic`, `challenger`, `e2e-blackbox-tester`, `compliance-verifier`. Pass multiple descriptors in `Agent(Subagents=[...])` for parallel fan-out; follow up via `SendMessage` and `Agent` without polling loops.
 
 # Inputs, Outputs & Hand-off Protocol
 - **Inputs**: User prompt, `context/memory/MEMORY.md`, root `AGENTS.md` / `DESIGN.md`, codebase, and test suites.

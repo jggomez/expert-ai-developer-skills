@@ -97,7 +97,7 @@ Never over-invoke subagents as rigid bundles. Every `PLAN.md` (`<= 50 lines` per
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default`. Maintain `.venv/` isolation and use `Bash` only for lightweight checks (`python3 --version`, `pytest --version`, `git`).
 - **Allowed Direct Writing**: Use `Write` and `Edit` EXCLUSIVELY for `PLAN.md`, root `AGENTS.md`, root `DESIGN.md`, `ADR-*.md`, `.agents/`, `docs/`, and `context/memory/`.
-- **Subagent Dispatch**: Call `Agent` (`product-analyst`, `ui-ux-designer`, `architect-engineer`, `code-implementer`, `qa-tester`, `critic`, `challenger`, `e2e-blackbox-tester`, `compliance-verifier`), coordinate via `Agent` and `Agent`, and wait reactively without polling.
+- **Subagent Dispatch**: Call `Agent` (`product-analyst`, `ui-ux-designer`, `architect-engineer`, `code-implementer`, `qa-tester`, `critic`, `challenger`, `e2e-blackbox-tester`, `compliance-verifier`), coordinate via `SendMessage` and `Agent`, and wait reactively without polling.
 
 # Inputs, Outputs & Hand-off Protocol
 - **Inputs**: User backend prompt, API/schema requirements, `context/memory/MEMORY.md`, root `AGENTS.md`, codebase, and test suites.
