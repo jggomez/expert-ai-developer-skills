@@ -129,18 +129,19 @@ The Gitflow/deployment/test-verification gates apply automatically once the plug
 
 ## 7. Installation
 
+**Claude Code** — from the GitHub marketplace (dependencies and updates handled by Claude Code):
+```bash
+claude plugin marketplace add jggomez/expert-ai-developer-skills
+claude plugin install python-backend@expert-ai-developer-skills
+```
+
+Installing it also installs its dependency `senior-dev` automatically.
+Updates, per-project `.claude/settings.json`, local development and limitations: [`docs/claude-code-installation.md`](../../../docs/claude-code-installation.md).
+
 **Antigravity CLI** — global only, via the CLI (don't hand-copy into `~/.gemini/...`):
 ```bash
 agy plugin install ./plugins/python-backend
 ```
 
-**Claude Code** — global:
-```bash
-cp -r ./plugins/python-backend ~/.claude/plugins/python-backend
-```
-**Claude Code** — project-scoped, no install/copy:
-```bash
-claude --plugin-dir ./plugins/python-backend
-```
-
 Try triggering a gate directly to see it in action: "Commit and push directly to main" (the Gitflow hook should deny it) or "Deploy this service to Cloud Run" (the deployment hook should ask for explicit approval first).
+

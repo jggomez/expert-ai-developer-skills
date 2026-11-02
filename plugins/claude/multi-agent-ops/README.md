@@ -60,9 +60,10 @@ flowchart TD
 
 ## 5. Installation
 
-In Claude Code, install from marketplace or local path:
+**Claude Code** — from the GitHub marketplace (dependencies and updates handled by Claude Code):
 ```bash
-/plugin install multi-agent-ops
-# or local:
-claude plugin install plugins/claude/multi-agent-ops
+claude plugin marketplace add jggomez/expert-ai-developer-skills
+claude plugin install multi-agent-ops@expert-ai-developer-skills
 ```
+Updates, per-project `.claude/settings.json`, local development and limitations: [`docs/claude-code-installation.md`](../../../docs/claude-code-installation.md).
+

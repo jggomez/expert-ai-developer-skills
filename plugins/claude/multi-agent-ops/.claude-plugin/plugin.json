@@ -1,6 +1,5 @@
 {
   "name": "multi-agent-ops",
-  "version": "1.0.0",
   "description": "Self-correcting loop engineering and automated codebase research.",
   "author": {
     "name": "jggomez"

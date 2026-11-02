@@ -174,14 +174,14 @@ host expects.
 
 ## 9. Installation
 
-**Claude Code** — project-scoped (no copy):
+**Claude Code** — from the GitHub marketplace (dependencies and updates handled by Claude Code):
 ```bash
-claude --plugin-dir ./plugins/senior-dev-flutter
+claude plugin marketplace add jggomez/expert-ai-developer-skills
+claude plugin install senior-dev-flutter@expert-ai-developer-skills
 ```
-**Claude Code** — global:
-```bash
-cp -r ./plugins/senior-dev-flutter ~/.claude/plugins/senior-dev-flutter
-```
+
+Installing it also installs its dependency `senior-dev` automatically.
+Updates, per-project `.claude/settings.json`, local development and limitations: [`docs/claude-code-installation.md`](../../../docs/claude-code-installation.md).
 
 **Antigravity CLI** — global, via `agy`:
 ```bash
@@ -191,3 +191,4 @@ agy plugin list      # confirm
 
 Then install the **required** official packs (see §1) and make sure `node` and
 `dart` are on `PATH`.
+

@@ -226,9 +226,10 @@ def sync_claude_plugins() -> None:
         # 1. .claude-plugin/plugin.json
         claude_plugin_dir = dest_plugin / ".claude-plugin"
         claude_plugin_dir.mkdir(parents=True, exist_ok=True)
+        # No "version": it is Claude Code's cache key, so a fixed value would freeze every
+        # user on the cached copy. Without it, git-hosted plugins are versioned by commit SHA.
         manifest = {
             "name": plugin_name,
-            "version": "1.0.0",
             "description": PLUGIN_DESCRIPTIONS.get(plugin_name, f"{plugin_name} plugin for Claude Code"),
             "author": {
                 "name": "jggomez"
@@ -236,7 +237,9 @@ def sync_claude_plugins() -> None:
         }
         if plugin_name in CLAUDE_PLUGIN_DEPENDENCIES:
             manifest["dependencies"] = CLAUDE_PLUGIN_DEPENDENCIES[plugin_name]
-        manifest.update(_extra_manifest_keys(claude_plugin_dir / "plugin.json", manifest))
+        extra = _extra_manifest_keys(claude_plugin_dir / "plugin.json", manifest)
+        extra.pop("version", None)
+        manifest.update(extra)
         (claude_plugin_dir / "plugin.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
         # 2. agents/ (with pure Claude tools and sanitized body if plugin has agents)

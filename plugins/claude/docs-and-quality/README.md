@@ -43,9 +43,10 @@ plugins/claude/docs-and-quality/
 
 ## 4. Installation
 
-In Claude Code, install from marketplace or local path:
+**Claude Code** — from the GitHub marketplace (dependencies and updates handled by Claude Code):
 ```bash
-/plugin install docs-and-quality
-# or local:
-claude plugin install plugins/claude/docs-and-quality
+claude plugin marketplace add jggomez/expert-ai-developer-skills
+claude plugin install docs-and-quality@expert-ai-developer-skills
 ```
+Updates, per-project `.claude/settings.json`, local development and limitations: [`docs/claude-code-installation.md`](../../../docs/claude-code-installation.md).
+

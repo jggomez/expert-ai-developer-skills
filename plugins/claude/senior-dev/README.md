@@ -154,9 +154,10 @@ Shared hook helpers live in `hooks/shared/gate-utils.js` (canonical: `scripts/cl
 
 ## 7. Installation
 
-**In Claude Code**:
+**Claude Code** — from the GitHub marketplace (dependencies and updates handled by Claude Code):
 ```bash
-/plugin install senior-dev
-# or local:
-claude plugin install plugins/claude/senior-dev
+claude plugin marketplace add jggomez/expert-ai-developer-skills
+claude plugin install senior-dev@expert-ai-developer-skills
 ```
+Updates, per-project `.claude/settings.json`, local development and limitations: [`docs/claude-code-installation.md`](../../../docs/claude-code-installation.md).
+

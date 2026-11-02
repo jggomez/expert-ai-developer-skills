@@ -152,14 +152,12 @@ No `uv` and no way to install it? `pip install "mcp<2"` for the `python3` on
 
 ## 8. Installation
 
-**Claude Code** — global, copy the plugin folder:
+**Claude Code** — from the GitHub marketplace (dependencies and updates handled by Claude Code):
 ```bash
-cp -r ./plugins/shared-context ~/.claude/plugins/shared-context
+claude plugin marketplace add jggomez/expert-ai-developer-skills
+claude plugin install shared-context@expert-ai-developer-skills
 ```
-**Claude Code** — project-scoped, no install/copy:
-```bash
-claude --plugin-dir ./plugins/shared-context
-```
+Updates, per-project `.claude/settings.json`, local development and limitations: [`docs/claude-code-installation.md`](../../../docs/claude-code-installation.md).
 
 **Antigravity CLI** — global, via `agy` (installs the agent, skills, hooks, MCP):
 ```bash
@@ -180,3 +178,4 @@ cp -r plugins/shared-context/mcp .agents/shared-context-mcp   # keep run-server.
 That's it — no `pip install`. Install `uv` once
 (`curl -LsSf https://astral.sh/uv/install.sh | sh`) and the launcher handles the
 MCP dependency itself (see §7).
+

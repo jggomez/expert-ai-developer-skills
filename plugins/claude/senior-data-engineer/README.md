@@ -61,8 +61,10 @@ plugins/claude/senior-data-engineer/
 
 ## 5. Installation
 
+**Claude Code** — from the GitHub marketplace (dependencies and updates handled by Claude Code):
 ```bash
-/plugin install senior-data-engineer
-# or local:
-claude plugin install plugins/claude/senior-data-engineer
+claude plugin marketplace add jggomez/expert-ai-developer-skills
+claude plugin install senior-data-engineer@expert-ai-developer-skills
 ```
+Updates, per-project `.claude/settings.json`, local development and limitations: [`docs/claude-code-installation.md`](../../../docs/claude-code-installation.md).
+

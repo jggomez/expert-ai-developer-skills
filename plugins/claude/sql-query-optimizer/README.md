@@ -58,8 +58,10 @@ plugins/claude/sql-query-optimizer/
 
 ## 5. Installation
 
+**Claude Code** — from the GitHub marketplace (dependencies and updates handled by Claude Code):
 ```bash
-/plugin install sql-query-optimizer
-# or local:
-claude plugin install plugins/claude/sql-query-optimizer
+claude plugin marketplace add jggomez/expert-ai-developer-skills
+claude plugin install sql-query-optimizer@expert-ai-developer-skills
 ```
+Updates, per-project `.claude/settings.json`, local development and limitations: [`docs/claude-code-installation.md`](../../../docs/claude-code-installation.md).
+

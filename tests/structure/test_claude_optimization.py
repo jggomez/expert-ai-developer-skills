@@ -153,3 +153,29 @@ def test_shared_hook_library_is_not_gitignored():
     # Assert
     assert copies, "no shared hook library copies found"
     assert not ignored, f"gitignored hook library copies (installed plugins would crash): {ignored}"
+
+
+def test_claude_plugins_track_commits_instead_of_a_frozen_version():
+    """A fixed plugin version is the cache key: users would never receive new commits.
+    Without `version`, Claude Code versions git-hosted plugins by commit SHA."""
+    # Arrange
+    marketplace = json.loads(_read(os.path.join(ROOT, ".claude-plugin", "marketplace.json")))
+    manifests = glob.glob(os.path.join(CLAUDE, "*", ".claude-plugin", "plugin.json"))
+    # Act
+    pinned_manifests = [m for m in manifests if "version" in json.loads(_read(m))]
+    pinned_entries = [p["name"] for p in marketplace["plugins"] if "version" in p]
+    # Assert
+    assert manifests
+    assert not pinned_manifests, f"remove 'version' from: {pinned_manifests}"
+    assert not pinned_entries, f"remove 'version' from marketplace entries: {pinned_entries}"
+
+
+def test_every_claude_plugin_readme_has_a_marketplace_install_line():
+    # Arrange
+    marketplace = json.loads(_read(os.path.join(ROOT, ".claude-plugin", "marketplace.json")))
+    # Act
+    missing = [p["name"] for p in marketplace["plugins"]
+               if f"claude plugin install {p['name']}@{marketplace['name']}"
+               not in _read(os.path.join(ROOT, p["source"], "README.md"))]
+    # Assert
+    assert not missing, f"README without install line: {missing}"

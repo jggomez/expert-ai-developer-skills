@@ -52,8 +52,10 @@ plugins/claude/git-workflow/
 
 ## 5. Installation
 
+**Claude Code** — from the GitHub marketplace (dependencies and updates handled by Claude Code):
 ```bash
-/plugin install git-workflow
-# or local:
-claude plugin install plugins/claude/git-workflow
+claude plugin marketplace add jggomez/expert-ai-developer-skills
+claude plugin install git-workflow@expert-ai-developer-skills
 ```
+Updates, per-project `.claude/settings.json`, local development and limitations: [`docs/claude-code-installation.md`](../../../docs/claude-code-installation.md).
+
