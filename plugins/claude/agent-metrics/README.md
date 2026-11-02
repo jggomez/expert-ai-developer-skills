@@ -81,3 +81,14 @@ uv tool uninstall agent-meter
 - **`agent-metrics`**: guides `agent-meter setup` (local vs cloud, billing vs sandbox), explains the metrics, keeps prices correct (`agent-meter pricing`), runs `agent-meter doctor`, and writes ad-hoc DuckDB / BigQuery queries.
 
 > **Maintaining the bundled skill**: `skills/agent-metrics/` is a physical copy of `/skills/agent-metrics`. After editing the canonical file, run `python3 scripts/sync_plugin_skills.py` from the repo root.
+
+---
+
+## 5. Installation
+
+**Claude Code** — from the GitHub marketplace (dependencies and updates handled by Claude Code):
+```bash
+claude plugin marketplace add jggomez/expert-ai-developer-skills
+claude plugin install agent-metrics@expert-ai-developer-skills
+```
+Updates, per-project `.claude/settings.json`, local development and limitations: [`docs/claude-code-installation.md`](../../../docs/claude-code-installation.md).
