@@ -8,7 +8,7 @@ description: Shared context memory rules enforcing Cross-AI LLM Wiki (context/me
 **Identifier**: `shared-context-rules`
 
 ## 1. Scope Partitioning Across `context/memory/`, Root Governance & `docs/<feature-name>/`
-- **Feature Directory (`docs/<feature-name>/`)**: Stores feature-scoped deliverables (`prd.md <= 70`, `design.md <= 35` delta, `adr-NNN-*.md <= 55`, `architecture.md <= 70`, `test-matrix.md <= 80`, verification reports `<= 50` lines).
+- **Feature Directory (`docs/<feature-name>/`)**: Stores feature-scoped deliverables (single `spec.md` with `## Product` / `## Design` / `## Architecture`, `adr-NNN-*.md <= 55`, `test-matrix.md <= 80`, `evidence/*.png`; review verdicts are returned, not written).
 - **Root Governance (`AGENTS.md` & `DESIGN.md`)**: Root `AGENTS.md` (`<= 90 lines`) holds verified build/test commands, conventions, and links to root Google `DESIGN.md` (`<= 110 lines` UI token spec) and `context/memory/MEMORY.md`.
 - **Repository Memory (`context/memory/`)**: Durable Cross-AI LLM Wiki shared across **Claude Code** and **Google Antigravity**:
   - `MEMORY.md` (`<= 80-100 lines`, ~500 tokens): Active host, branch/task, key decisions, and pointers to `architecture.md`, `conventions.md`, `AGENTS.md`, `DESIGN.md`, and the last 5 daily logs (`log/YYYY-MM-DD.md`).

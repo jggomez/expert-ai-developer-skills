@@ -1,5 +1,6 @@
 # Critic Code Review Report
 
+> **Return, don't write**: Emit this as your final message to the orchestrator; never save it as a file under `docs/`.
 > **Zero-Fluff Cap (`<= 50 lines` max, `<= 20 lines` on clean pass)**: Output ONLY the metadata header, 6-dimension rubric table, and actionable defects. Omit all prose sections. On a clean `PASSED` review, replace the Actionable Defects table with `None.`
 
 - **Feature**: `<feature-name>` | **Date**: `YYYY-MM-DD` | **Diff Ref**: `HEAD`

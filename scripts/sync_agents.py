@@ -16,7 +16,21 @@ import re
 import shutil
 import sys
 from pathlib import Path
+
 import yaml
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from claude_sync_config import (  # noqa: E402
+    CLAUDE_AGENT_OVERRIDES,
+    CLAUDE_ORCHESTRATOR_TOOLS,
+    CLAUDE_PLUGIN_DEPENDENCIES,
+    CLAUDE_WORKER_TOOLS,
+    E2E_APPENDIX,
+    GATED_PLUGINS,
+    orchestrator_appendix,
+    sanitize_claude_content,
+)
+from sync_plugin_skills import claude_skills  # noqa: E402
 
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
 PLUGINS_DIR = WORKSPACE_ROOT / "plugins"
@@ -26,8 +40,7 @@ MARKETPLACE_JSON = WORKSPACE_ROOT / ".claude-plugin" / "marketplace.json"
 
 ORCHESTRATORS = {"senior-dev-orchestrator", "flutter-feature-orchestrator", "python-backend-orchestrator"}
 
-CLAUDE_ORCHESTRATOR_TOOLS = ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "Agent"]
-CLAUDE_WORKER_TOOLS = ["Bash", "Read", "Write", "Edit", "Glob", "Grep"]
+HOOK_LIB_SRC = WORKSPACE_ROOT / "scripts" / "claude-hook-lib" / "gate-utils.js"
 
 PLUGIN_AGENTS_MAP = {
     "senior-dev": [
@@ -64,8 +77,8 @@ PLUGIN_AGENTS_MAP = {
 }
 
 # Specialist agents an orchestrator dispatches but whose canonical definition lives
-# in another plugin. They are copied into the consuming plugin (both ecosystems) so
-# every plugin stays self-contained when installed on its own.
+# in another plugin. Antigravity has no plugin dependencies, so they are copied into the
+# consuming Antigravity plugin; Claude Code declares "dependencies" instead.
 BUNDLED_AGENTS = {
     "senior-dev-flutter": (
         "senior-dev",
@@ -94,8 +107,8 @@ BUNDLED_AGENTS = {
     ),
 }
 
-for _plugin, (_source, _files) in BUNDLED_AGENTS.items():
-    PLUGIN_AGENTS_MAP[_plugin] = PLUGIN_AGENTS_MAP[_plugin] + [f for f in _files if f not in PLUGIN_AGENTS_MAP[_plugin]]
+# PLUGIN_AGENTS_MAP lists each plugin's OWN agents (what Claude Code ships). BUNDLED_AGENTS
+# are Antigravity-only copies; Claude Code gets them through CLAUDE_PLUGIN_DEPENDENCIES.
 
 PLUGIN_DESCRIPTIONS = {
     "senior-dev": "Senior Developer Orchestrator and specialized subagents for SDLC execution using TDD, clean code, and automated verification.",
@@ -121,54 +134,41 @@ def parse_frontmatter(content: str) -> tuple[dict, str]:
 
 
 def sanitize_claude_body(text: str) -> str:
-    """Sanitizes Antigravity tool and policy references in markdown bodies into Claude Code equivalents."""
-    text = re.sub(
-        r'invoke_subagent\(name="([^"]+)",\s*prompt="([^"]+)"\)',
-        r'Agent(agent="\1", prompt="\2")',
-        text,
-    )
-    text = re.sub(
-        r'invoke_subagent\(name="([^"]+)"\)',
-        r'Agent(agent="\1")',
-        text,
-    )
-    text = re.sub(r"commandExecutionPolicy:\s*['\"]?auto['\"]?", "permissionMode: default", text)
-    text = re.sub(r"\bcommandExecutionPolicy\b", "permissionMode", text)
-    text = re.sub(r"\bcall_mcp_tool\b", "mcp__<server>__<tool>", text)
-    text = re.sub(r"\binvoke_subagent\b", "Agent", text)
-    text = re.sub(r"\bmanage_subagents\b", "Agent", text)
-    text = re.sub(r"\bsend_message\b", "SendMessage", text)
-    text = re.sub(r"\bwrite_to_file\b", "Write", text)
-    text = re.sub(r"\breplace_file_content\b", "Edit", text)
-    text = re.sub(r"\bview_file\b", "Read", text)
-    text = re.sub(r"\brun_command\b", "Bash", text)
-    text = re.sub(r"\blist_dir\b", "Glob", text)
-    text = re.sub(r"\bgrep_search\b", "Grep", text)
-    text = re.sub(r"\bfind_by_name\b", "Glob", text)
-    text = re.sub(
-        r"In \*\*Google Antigravity\*\*:\s*Use `Write` and `Edit`",
-        "In **Claude Code**: Use `Write` and `Edit`",
-        text,
-    )
-    return text
+    """Translates Antigravity tool names and syntax into Claude Code equivalents."""
+    return sanitize_claude_content(text)
 
 
-def format_claude_agent(content: str, name: str) -> str:
+def _dependency_agents(plugin_name: str) -> dict[str, list[str]]:
+    deps = {}
+    for dep in CLAUDE_PLUGIN_DEPENDENCIES.get(plugin_name, []):
+        deps[dep] = [Path(f).stem for f in PLUGIN_AGENTS_MAP.get(dep, []) if Path(f).stem not in ORCHESTRATORS]
+    return deps
+
+
+def format_claude_agent(content: str, name: str, plugin_name: str = "") -> str:
     fm, body = parse_frontmatter(content)
     is_orch = name in ORCHESTRATORS
-    tools = CLAUDE_ORCHESTRATOR_TOOLS if is_orch else CLAUDE_WORKER_TOOLS
+    override = CLAUDE_AGENT_OVERRIDES.get(name, {})
+    tools = list(CLAUDE_ORCHESTRATOR_TOOLS if is_orch else CLAUDE_WORKER_TOOLS)
+    tools += [t for t in override.get("extra_tools", []) if t not in tools]
 
     claude_fm = {
         "name": name,
         "description": fm.get("description", ""),
-        "model": "inherit",
+        "model": override.get("model", "inherit"),
         "permissionMode": "default",
         "tools": tools,
     }
-    if fm.get("skills"):
-        claude_fm["skills"] = fm["skills"]
+    skills = override.get("skills", fm.get("skills"))
+    if skills:
+        claude_fm["skills"] = skills
 
-    sanitized_body = sanitize_claude_body(body)
+    sanitized_body = sanitize_claude_body(body).rstrip("\n") + "\n"
+    if is_orch and plugin_name:
+        own = [Path(f).stem for f in PLUGIN_AGENTS_MAP.get(plugin_name, [])]
+        sanitized_body += orchestrator_appendix(name, plugin_name, own, _dependency_agents(plugin_name))
+    if name == "e2e-blackbox-tester":
+        sanitized_body += E2E_APPENDIX
     dumped = yaml.dump(claude_fm, sort_keys=False, allow_unicode=True)
     return f"---\n{dumped}---\n{sanitized_body}"
 
@@ -234,6 +234,8 @@ def sync_claude_plugins() -> None:
                 "name": "jggomez"
             }
         }
+        if plugin_name in CLAUDE_PLUGIN_DEPENDENCIES:
+            manifest["dependencies"] = CLAUDE_PLUGIN_DEPENDENCIES[plugin_name]
         manifest.update(_extra_manifest_keys(claude_plugin_dir / "plugin.json", manifest))
         (claude_plugin_dir / "plugin.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
@@ -245,8 +247,12 @@ def sync_claude_plugins() -> None:
             for afname in agent_files:
                 src_af = src_plugin / "agents" / afname
                 raw_content = src_af.read_text(encoding="utf-8")
-                claude_text = format_claude_agent(raw_content, src_af.stem)
+                claude_text = format_claude_agent(raw_content, src_af.stem, plugin_name)
                 (agents_dir / afname).write_text(claude_text, encoding="utf-8")
+            for stale in agents_dir.glob("*.md"):
+                if stale.name not in agent_files:
+                    stale.unlink()
+                    print(f"   removed stale Claude agent {plugin_name}/agents/{stale.name}")
 
         # 3. skills/ (copied and sanitized for Claude Code)
         src_skills = src_plugin / "skills"
@@ -254,7 +260,10 @@ def sync_claude_plugins() -> None:
             dest_skills = dest_plugin / "skills"
             if dest_skills.exists():
                 shutil.rmtree(dest_skills)
-            shutil.copytree(src_skills, dest_skills)
+            dest_skills.mkdir(parents=True)
+            for skill_name in claude_skills(plugin_name):
+                if (src_skills / skill_name).is_dir():
+                    shutil.copytree(src_skills / skill_name, dest_skills / skill_name)
             sanitize_claude_skill_dir(dest_skills)
 
         # 4. hooks/ & hooks.json (do NOT overwrite existing Claude-native hooks or hooks.json)
@@ -266,6 +275,11 @@ def sync_claude_plugins() -> None:
                 dest_hook_file = dest_hooks_dir / hook_file.name
                 if hook_file.is_file() and not dest_hook_file.exists():
                     shutil.copy2(hook_file, dest_hook_file)
+
+        if plugin_name in GATED_PLUGINS:
+            lib_dir = dest_plugin / "hooks" / "shared"
+            lib_dir.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(HOOK_LIB_SRC, lib_dir / "gate-utils.js")
 
         src_hooks_json = src_plugin / "hooks.json"
         dest_hooks_json = dest_plugin / "hooks.json"

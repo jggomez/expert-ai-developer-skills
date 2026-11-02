@@ -8,7 +8,9 @@ description: Adversarial stress testing, fuzzing, worst-case inputs, failure-pat
 ## Overview
 This skill implements an adversarial testing philosophy designed to actively attempt to break software components. Operating as an objective, hostile challenger, it subjects systems to worst-case boundary inputs, fuzzing, intentional fault injection, network latency/disconnections, race conditions, and memory/resource saturation. 
 
-Its primary objective is discovering brittle edge cases, memory leaks, concurrency races, and unhandled exceptions *before* code reaches staging or production environments, compiling findings into the formal standard artifact: `docs/<feature-name>/adversarial-report.md`.
+Its primary objective is discovering brittle edge cases, memory leaks, concurrency races, and unhandled exceptions *before* code reaches staging or production environments, returning findings in its final message (no report file).
+
+**Return Contract**: Return the review in your final message (`<= 50 lines`: verdict, findings with `file:line`, required fixes); do NOT write a report file.
 
 ---
 
@@ -19,7 +21,7 @@ Its primary objective is discovering brittle edge cases, memory leaks, concurren
 - Probing multi-threaded, asynchronous, or distributed systems for concurrency race conditions and deadlocks.
 - Simulating network chaos, slow dependencies, socket timeouts, and intermittent connection drops.
 - Fuzzing APIs and interfaces with malformed JSON, boundary integers, null bytes, unicode overflows, and schema violations.
-- Generating the mandatory `docs/<feature-name>/adversarial-report.md` deliverable during adversarial verification stages.
+- Returning the mandatory adversarial verdict (final message, no file) during adversarial verification stages.
 
 ### When NOT to Use
 - **Happy-path functional verification**: Route standard acceptance testing to `qa-tester`.
@@ -41,7 +43,7 @@ flowchart TD
     V3 --> V4["Vector 4: Concurrency & Race Conditions"]
     V4 --> V5["Vector 5: Resource & Memory Saturation"]
     V5 --> COMPILE["Aggregate Findings & Severity Ratings"]
-    COMPILE --> REPORT["Write docs/<feature-name>/adversarial-report.md"]
+    COMPILE --> REPORT["Return report in final message"]
     REPORT --> STATUS{"Any CRIT or HIGH Defects?"}
     STATUS -->|"Yes"| REJECT["VULNERABLE / AT RISK: Escalate to code-implementer"]
     STATUS -->|"No"| APPROVE["RESILIENT: Release verification cleared"]
@@ -84,9 +86,9 @@ flowchart TD
 
 ---
 
-### Phase 3: Zero-Fluff Deliverable Generation (`docs/<feature-name>/adversarial-report.md` `<= 50 lines`)
+### Phase 3: Zero-Fluff Report Returned in Final Message (`<= 50 lines`)
 
-Create the target directory `docs/<feature-name>/` if not present. Generate a **Zero-Fluff** report strictly capped at **`<= 50 lines`** (`<= 20 lines` on clean passes) following the [Adversarial Report Template](references/adversarial-report-template.md). Omit empty per-probe prose sections—output ONLY the compact metadata header, the 5-vector summary table, and actionable defects (or `None.` when `RESILIENT`):
+Do NOT write a report file. Return a **Zero-Fluff** report in your final message strictly capped at **`<= 50 lines`** (`<= 20 lines` on clean passes) following the [Adversarial Report Template](references/adversarial-report-template.md). Omit empty per-probe prose sections—output ONLY the compact metadata header, the 5-vector summary table, and actionable defects (or `None.` when `RESILIENT`):
 
 ```markdown
 # Adversarial Stress & Resiliency Report
@@ -133,12 +135,12 @@ npx artillery run tests/stress/load-config.yaml
 
 ### Example Prompts
 - *"Execute an adversarial fuzzing campaign against the user registration API and check for unhandled 500 crashes."*
-- *"Simulate slow database responses and connection timeouts on the payment processing service; write `docs/payments/adversarial-report.md`."*
+- *"Simulate slow database responses and connection timeouts on the payment processing service; return the verdict with `file:line` findings."*
 - *"Run 50 concurrent transactions against the balance transfer endpoint to check for race conditions and double-spending bugs."*
 
 ### Host Execution Instructions
-- **Claude Code**: Invoke as `challenger` subagent; author adversarial stress tests in `tests/adversarial/`; execute via `Bash`; write report with `Write`.
-- **Antigravity**: Launch as the `challenger` subagent; execute stress probes using `run_command`; capture logs and compile the report to `docs/<feature-name>/adversarial-report.md`.
+- **Claude Code**: Invoke as `challenger` subagent; author adversarial stress tests in `tests/adversarial/`; execute via `Bash`; return the report in the final message.
+- **Antigravity**: Launch as the `challenger` subagent; execute stress probes using `run_command`; capture logs and return the report in the final message (no file).
 
 ---
 
@@ -158,10 +160,10 @@ npx artillery run tests/stress/load-config.yaml
 - [ ] Worst-case inputs (nulls, boundary numbers, 100k strings, malformed JSON) probed.
 - [ ] Network timeout and connection drop recovery tested.
 - [ ] Concurrent execution probed for race conditions and data corruption.
-- [ ] Formal deliverable saved to `docs/<feature-name>/adversarial-report.md` within the strict **`<= 50 lines` Zero-Fluff cap** (`<= 20 lines` when clean, omitting empty prose sections).
+- [ ] Report returned in the final message (no file) within the strict **`<= 50 lines` Zero-Fluff cap** (`<= 20 lines` when clean, omitting empty prose sections).
 - [ ] Any `CRIT` or `HIGH` defect accompanied by reproduction steps and remediation guidance.
 
 ---
 
 ## References
-- Adversarial Deliverable Template: [references/adversarial-report-template.md](references/adversarial-report-template.md)
+- Adversarial Report Format (final message): [references/adversarial-report-template.md](references/adversarial-report-template.md)

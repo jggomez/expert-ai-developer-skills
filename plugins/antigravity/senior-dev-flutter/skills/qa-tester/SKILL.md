@@ -17,7 +17,7 @@ This skill governs integration/E2E test automation and produces an actionable, I
 
 ## Process
 ### Phase 1: Scenario Design Across the Test Pyramid
-1. Extract `US-XX` and `AC-XX` from `docs/<feature-name>/prd.md` (or git diff when PRD was skipped).
+1. Extract `US-XX` and `AC-XX` from `## Product` in `docs/<feature-name>/spec.md` (or git diff when product discovery was skipped).
 2. Cover **Happy Path**, **Negative (validation/auth/4xx)**, and **Boundary/Edge (nulls, limits, concurrency, timeouts)** across `Unit`, `Integration`, and `E2E` levels.
 3. Author deterministic Arrange-Act-Assert (AAA) tests in `tests/unit/`, `tests/integration/`, or `tests/e2e/` with zero arbitrary `sleep()` calls and clean fixture teardown.
 
@@ -38,6 +38,7 @@ pytest tests/ -v
 ### Host Execution
 - **Claude Code**: Author missing integration/E2E tests via `Write`/`Edit`, execute via `Bash`, and write `docs/<feature-name>/test-matrix.md`.
 - **Antigravity**: Run suites via `run_command` and write `docs/<feature-name>/test-matrix.md` via `write_to_file` / `replace_file_content`.
+- **Return Contract**: Final message `<= 15 lines` (status, files changed, test command + exit code, next step); no long narratives.
 
 ## Red Flags
 - ❌ Claiming `PASS` without real terminal execution showing `exit code 0`.

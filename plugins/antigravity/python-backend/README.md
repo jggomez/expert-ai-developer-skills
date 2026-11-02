@@ -103,7 +103,7 @@ On loading the plugin, the following 14 skills are automatically available:
 12. **`context-capture`**: Updates the Cross-AI LLM Wiki (`context/memory/MEMORY.md`, `architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) at `State 5` or explicit handoff.
 13. **`context-restore`**: Progressive disclosure reader (`context/memory/MEMORY.md` at `State 0`, drilling down on demand).
 14. **`loop-engineering`**: Bounded 3-strike fix loops for automated test and static-analysis verification.
-15. **`product-analyst`**: Preloaded by the bundled `product-analyst` agent (`prd.md`).
+15. **`product-analyst`**: Preloaded by the bundled `product-analyst` agent (`## Product` in `docs/<feature-name>/spec.md`).
 16. **`ui-ux-designer`**: Preloaded by the bundled `ui-ux-designer` agent (`DESIGN.md`).
 17. **`code-implementer`**: Preloaded by the bundled `code-implementer` agent (TDD build tracks).
 18. **`qa-tester`**: Preloaded by the bundled `qa-tester` agent (`test-matrix.md` + `exit code 0`).

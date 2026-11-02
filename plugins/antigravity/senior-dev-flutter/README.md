@@ -130,8 +130,8 @@ Five host-neutral subagents (`model: inherit`, explicit `subagent`/`mainAgent`,
 | **`context-capture`** | Updates the Cross-AI LLM Wiki (`context/memory/MEMORY.md`, `architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) at `State 5` or explicit handoff. |
 | **`context-restore`** | Progressive disclosure reader (`context/memory/MEMORY.md` at `State 0`, drilling down to topic/log pages on demand). |
 | **`loop-engineering`** | Governs bounded 3-strike fix loops between `flutter-reviewer` / `flutter-release-engineer` and `flutter-implementer`. |
-| **`ui-ux-designer`** | Preloaded by the bundled `ui-ux-designer` agent: root `DESIGN.md` contract and `docs/<feature-name>/design.md` screen deltas. |
-| **`product-analyst`** | Preloaded by the bundled `product-analyst` agent: concise `prd.md` with `US-XX` / `AC-XX`. |
+| **`ui-ux-designer`** | Preloaded by the bundled `ui-ux-designer` agent: root `DESIGN.md` contract and `## Design` screen deltas in `docs/<feature-name>/spec.md`. |
+| **`product-analyst`** | Preloaded by the bundled `product-analyst` agent: concise `## Product` section of `docs/<feature-name>/spec.md` with `US-XX` / `AC-XX`. |
 | **`qa-tester`** | Preloaded by the bundled `qa-tester` agent: `test-matrix.md` + `exit code 0` proof. |
 | **`code-critic`** | Preloaded by the bundled `critic` agent (Tier 3, diffs `>= 150 LOC`). |
 | **`code-smells-expert`** | Preloaded by the bundled `critic` agent: smell taxonomy. |

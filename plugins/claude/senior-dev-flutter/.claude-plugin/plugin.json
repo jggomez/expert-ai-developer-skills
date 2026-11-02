@@ -4,5 +4,8 @@
   "description": "Senior Flutter orchestrator, architecture decisions, profiling, and release engineering.",
   "author": {
     "name": "jggomez"
-  }
+  },
+  "dependencies": [
+    "senior-dev"
+  ]
 }

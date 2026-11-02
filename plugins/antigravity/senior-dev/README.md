@@ -7,8 +7,8 @@ The `senior-dev` plugin packages the repository's **Graph Engineering** subagent
 
 Key architectural capabilities:
 - **LLM Wiki Memory (`context/memory/`)**: Cross-AI persistent memory shared seamlessly between Google Antigravity and Claude Code. At **State 0**, the orchestrator silently restores `context/memory/MEMORY.md` (~500 tokens) and reads linked topic pages (`architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) on demand. At **State 5**, completed milestones update `context/memory/` via `context-capture`.
-- **Mandatory Discovery Triage Gate**: Before writing implementation tasks for `code-implementer`, the orchestrator evaluates a deterministic **Discovery Triage Rubric** in `PLAN.md` (`## Discovery & Architecture Triage`) to determine when `product-analyst`, `ui-ux-designer` (for greenfield UI, screens, or `design.md`), and/or `architect-engineer` **MUST** be invoked upfront.
-- **Parallel Fan-Out / Fan-In Execution & Workspace Isolation**: Supports concurrent subagent execution across discovery (`product-analyst` || `ui-ux-designer` || `architect-engineer`), implementation (1 to N `code-implementer` instances using **Mode A: Disjoint File Partitioning** or **Mode B: Git Worktree Isolation**), and verification (`qa-tester` || `compliance-verifier`).
+- **Mandatory Discovery Triage Gate**: Before writing implementation tasks for `code-implementer`, the orchestrator evaluates a deterministic **Discovery Triage Rubric** in `PLAN.md` (`## Discovery & Architecture Triage`) to determine when `product-analyst`, `ui-ux-designer` (for greenfield UI, screens, or `DESIGN.md`), and/or `architect-engineer` **MUST** be invoked upfront. Invoked specialists run sequentially on one shared file, `docs/<feature-name>/spec.md` (`## Product`, `## Design`, `## Architecture`), each editing only its own section.
+- **Parallel Fan-Out / Fan-In Execution & Workspace Isolation**: Supports concurrent subagent execution across implementation (1 to N `code-implementer` instances using **Mode A: Disjoint File Partitioning** or **Mode B: Git Worktree Isolation**), and verification (`qa-tester` || `compliance-verifier`).
 
 - **Google Antigravity**: Install via `agy plugin install ./plugins/antigravity/senior-dev`. Subagents in `agents/` declare native Antigravity tools (`run_command`, `write_to_file`, `replace_file_content`, `view_file`, `invoke_subagent`, `manage_subagents`, `send_message`) with `commandExecutionPolicy: auto`.
 
@@ -32,8 +32,8 @@ plugins/antigravity/senior-dev/
 │   └── universal-quality-gate.js # Stop hook executing test suites and linters
 ├── agents/                 # 10 bundled subagents
 │   ├── senior-dev-orchestrator.md  # Main orchestrator; governs DAG, Triage Gate & PLAN.md
-│   ├── product-analyst.md          # Requirements & PRDs
-│   ├── ui-ux-designer.md           # UI/UX design systems & design.md
+│   ├── product-analyst.md          # Requirements -> spec.md ## Product
+│   ├── ui-ux-designer.md           # UI/UX design systems, DESIGN.md & spec.md ## Design
 │   ├── architect-engineer.md       # Architecture & ADRs
 │   ├── code-implementer.md         # Strict TDD implementation (parallel fan-out capable)
 │   ├── qa-tester.md                # E2E / integration testing (parallel fan-out capable)
@@ -68,13 +68,13 @@ plugins/antigravity/senior-dev/
 | Agent | Role | Execution Policy | Responsibilities |
 | :--- | :--- | :--- | :--- |
 | **`senior-dev-orchestrator`** | Lead Orchestrator | `auto` | Restores/updates `context/memory/`, authors `PLAN.md` with Discovery Triage & Parallel Tracks, governs DAG state machine. **Prohibited from writing code directly.** |
-| **`product-analyst`** | Requirements Engineer | `auto` | **Mandatory via Triage Gate** when new user-facing features, unstated edge cases/permissions, or open-ended prompts arise. Drafts PRDs and acceptance criteria. |
+| **`product-analyst`** | Requirements Engineer | `auto` | **Mandatory via Triage Gate** when new user-facing features, unstated edge cases/permissions, or open-ended prompts arise. Writes `## Product` (user stories, acceptance criteria) in `docs/<feature-name>/spec.md`. |
 | **`architect-engineer`** | System Designer | `auto` | **Mandatory via Triage Gate** when tasks touch >= 2 files/modules, alter schemas/contracts, or cross layers. Produces QADs, SEI tactics, ADRs, and interface contracts. |
 | **`code-implementer`** | TDD Implementer | `auto` | **MANDATORY worker (1..N parallel fan-out)**: Writes and refactors production code using strict Red-Green-Refactor within assigned `Disjoint Files` or `Git Worktree`. |
 | **`qa-tester`** | Test Engineer | `auto` | **MANDATORY worker (parallel with audit)**: Executes unit, integration, and regression suites; requires `exit code 0`. |
-| **`critic`** | Senior Code Critic | `auto` | **Adversarial Committee worker**: Independently reviews code for cyclomatic complexity, DRY, SOLID, and smells without writing fixes. Authors `docs/<feature-name>/critic-review.md`. |
-| **`challenger`** | Hostile Stress Tester | `auto` | **Adversarial Committee worker**: Fuzzes boundary inputs, injects network/timeout faults, and simulates concurrency/memory races. Authors `docs/<feature-name>/adversarial-report.md`. |
-| **`e2e-blackbox-tester`** | Black-Box Browser QA | `auto` | **Adversarial Committee worker**: Validates real user browser journeys, interactive GUI forms, responsive layouts, and console errors via Playwright/MCP. Authors `docs/<feature-name>/blackbox-report.md`. |
+| **`critic`** | Senior Code Critic | `auto` | **Adversarial Committee worker**: Independently reviews code for cyclomatic complexity, DRY, SOLID, and smells without writing fixes. Returns its verdict in the final message (`<= 50` lines, no report file). |
+| **`challenger`** | Hostile Stress Tester | `auto` | **Adversarial Committee worker**: Fuzzes boundary inputs, injects network/timeout faults, and simulates concurrency/memory races. Returns its verdict in the final message (`<= 50` lines, no report file). |
+| **`e2e-blackbox-tester`** | Black-Box Browser QA | `auto` | **Adversarial Committee worker**: Validates real user browser journeys, interactive GUI forms, responsive layouts, and console errors via Playwright/MCP. Returns its verdict in the final message (`<= 50` lines, no report file); `.png` evidence in `docs/<feature-name>/evidence/`. |
 | **`compliance-verifier`** | Release Auditor | `auto` | **MANDATORY worker (parallel with QA)**: Audits linters, OWASP, code smells, and architectural invariants; issues `APPROVED` verdict. |
 
 ---
@@ -108,7 +108,7 @@ The subagents and orchestrator execute along the standardized 9-stage engineerin
 
 | Phase | Command | Key Principle | Responsible Role |
 | :--- | :--- | :--- | :--- |
-| **Define what to build** | `/spec` | Spec before code | `product-analyst` (PRD, user stories, acceptance criteria) |
+| **Define what to build** | `/spec` | Spec before code | `product-analyst` (`spec.md` `## Product`: user stories, acceptance criteria) |
 | **Plan how to build it** | `/plan` | Small, atomic tasks | `senior-dev-orchestrator` / `architect-engineer` (Discovery Triage, ADR, parallel tracks) |
 | **Build incrementally** | `/build` | One slice at a time | `code-implementer` (1..N parallel fan-out, Red-Green-Refactor, vertical slices) |
 | **Prove it works** | `/test` | Tests are proof | `qa-tester` (unit, integration, regression verification) |
@@ -134,8 +134,8 @@ The subagents and orchestrator execute along the standardized 9-stage engineerin
 On loading the plugin, the following 15 skills are automatically loaded as the agents' skill dependencies:
 
 1. **`senior-dev-orchestrator`**: Phase breakdown, DAG state machine, Mandatory Discovery Triage Gate, Parallel Fan-Out/Fan-In orchestration, and LLM Wiki memory lifecycle.
-2. **`product-analyst`**: Requirement discovery workflow and PRD template.
-3. **`ui-ux-designer`**: Visual design systems, design tokens, component interaction states, responsive layouts, accessibility (WCAG AA/AAA), and standard `design.md` artifact generation.
+2. **`product-analyst`**: Requirement discovery workflow and `## Product` section template.
+3. **`ui-ux-designer`**: Visual design systems, design tokens, component interaction states, responsive layouts, accessibility (WCAG AA/AAA), root `DESIGN.md`, and the `## Design` section of `spec.md`.
 4. **`senior-architect-engineering`**: SEI quality attribute scenarios, tactics, ATAM, ADR template.
 5. **`code-implementer`**: Red-Green-Refactor TDD workflow.
 6. **`code-smells-expert`**: AST-based code smell detection.
@@ -158,7 +158,7 @@ On loading the plugin, the following 15 skills are automatically loaded as the a
 - "Orchestrate a fix for this bug report using senior engineering best practices."
 
 **Individual subagents, invoked directly**:
-- "Ask the product-analyst agent to turn this feature request into a PRD." (`product-analyst`)
+- "Ask the product-analyst agent to turn this feature request into the `## Product` section of `docs/<feature>/spec.md`." (`product-analyst`)
 - "Have the architect-engineer agent draft an ADR comparing sync vs. async processing for this endpoint." (`architect-engineer`)
 - "Use the code-implementer agent to build the new endpoint with TDD." (`code-implementer`)
 - "Have the qa-tester agent write tests for the checkout flow and map them to requirements." (`qa-tester`)

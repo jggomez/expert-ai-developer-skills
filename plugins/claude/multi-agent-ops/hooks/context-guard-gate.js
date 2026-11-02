@@ -80,9 +80,16 @@ const hasPagination =
   (toolInput.offset !== undefined && toolInput.offset !== null) ||
   (toolInput.limit !== undefined && toolInput.limit !== null);
 
+// 0. Images and PDFs: Claude Code's Read renders them natively (screenshots in
+// docs/<feature-name>/evidence/ must stay inspectable by reviewers). Read pages large PDFs itself.
+const NATIVE_READ_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.pdf']);
+if (NATIVE_READ_EXTENSIONS.has(ext)) {
+  allow();
+}
+
 // 1. Binary files check
 const BINARY_EXTENSIONS = new Set([
-  '.png', '.jpg', '.jpeg', '.gif', '.ico', '.pdf', '.zip', '.tar', '.gz',
+  '.ico', '.zip', '.tar', '.gz',
   '.exe', '.bin', '.dylib', '.so', '.dll', '.a', '.pyc', '.class', '.jar'
 ]);
 

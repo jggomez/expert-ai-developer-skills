@@ -27,7 +27,7 @@ flowchart LR
 ```
 
 ### 1. Layering Rule & Design Contract Alignment
-Inspect root `AGENTS.md` (`<= 90 lines` wired to `context/memory/MEMORY.md`), official Google root `DESIGN.md` (`<= 110 lines` 2-layer YAML + 8 sections), and optional `docs/<feature-name>/design.md` (`<= 35 lines` screen delta). Test at the lowest layer that catches the defect (see [references/test-pyramid-flutter.md](references/test-pyramid-flutter.md)):
+Inspect root `AGENTS.md` (`<= 90 lines` wired to `context/memory/MEMORY.md`), official Google root `DESIGN.md` (`<= 110 lines` 2-layer YAML + 8 sections), and optional `## Design` in `docs/<feature-name>/spec.md` (`<= 30 lines` screen delta). Test at the lowest layer that catches the defect (see [references/test-pyramid-flutter.md](references/test-pyramid-flutter.md)):
 - **Unit (`package:test`)**: Domain rules, DTO mappers, Notifier/Bloc transitions with fake repos.
 - **Widget (`WidgetTester`)**: Loading/empty/error/data branching, user gestures, 48x48dp & Semantics.
 - **Golden**: Pixel/theme/text-scale fidelity against root `DESIGN.md` tokens (`flutter-add-widget-preview`).

@@ -21,7 +21,8 @@
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/post-tool-autosave.js\"",
             "timeout": 10
           }
-        ]
+        ],
+        "matcher": "Write|Edit|Bash"
       }
     ],
     "Stop": [

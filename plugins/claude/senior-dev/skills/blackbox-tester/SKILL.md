@@ -6,7 +6,9 @@ description: Black-box browser verification validating real user flows, GUI form
 # Black-Box Browser Verification & Visual Testing Skill
 
 ## Overview
-This skill provides deterministic, fail-honest black-box browser verification from the perspective of an actual end user. Operating as a Senior Black-Box QA Engineer, it executes real Chromium browser journeys via **Playwright** (`Bash` / `Bash`), exercises interactive GUI forms, attaches console and network error listeners, captures physical `.png` screenshots across 4 responsive viewports in `docs/<feature-name>/evidence/`, and publishes a concise Zero-Fluff report (`<= 50 lines`) to `docs/<feature-name>/blackbox-report.md`.
+This skill provides deterministic, fail-honest black-box browser verification from the perspective of an actual end user. Operating as a Senior Black-Box QA Engineer, it executes real Chromium browser journeys via **Playwright** (`Bash` / `Bash`), exercises interactive GUI forms, attaches console and network error listeners, captures physical `.png` screenshots across 4 responsive viewports in `docs/<feature-name>/evidence/`, and returns a concise Zero-Fluff report (`<= 50 lines`) in its final message.
+
+**Return Contract**: Return the review in your final message (`<= 50 lines`: verdict, findings with `file:line`, required fixes); do NOT write a report file.
 
 It enforces a strict **Fail-Honest Anti-Hallucination Protocol**: if no web UI exists in scope it immediately returns `SKIPPED`, and if the dev server or Chromium binary cannot run it immediately stops and returns `BLOCKED` with the exact terminal error—never substituting `curl`, `TestClient`, `jsdom`, or static code inspection for a real browser.
 
@@ -20,7 +22,7 @@ It enforces a strict **Fail-Honest Anti-Hallucination Protocol**: if no web UI e
 - Auditing GUI form behavior (validation errors, disabled submit states, loading feedback, focus management).
 - Asserting `0` unhandled JavaScript runtime crashes (`pageerror` / `console.error`) and `0` unexpected HTTP `4xx/5xx` responses.
 - Capturing physical `.png` evidence across Mobile (`375x812`), Tablet (`768x1024`), Desktop (`1280x800`), and Widescreen (`1920x1080`) viewports in `docs/<feature-name>/evidence/`.
-- Authoring the standard deliverable `docs/<feature-name>/blackbox-report.md` (`<= 50 lines`) during State 3/4 verification.
+- Returning the standard verdict in the final message (`<= 50 lines`, no report file) during State 3/4 verification.
 
 ### When NOT to Use
 - **Pure backend/API/CLI/pipeline projects without a web UI**: Immediately return `SKIPPED: No web UI in scope`; route headless API tests to `qa-tester`.
@@ -43,7 +45,7 @@ flowchart TD
     PF2 -->|"Server Down / Install Blocked"| BLOCK["STOP & Return BLOCKED:<br/>Exact command & terminal error"]
     PF2 -->|"200 OK & Chromium Ready"| EXEC["Run Playwright Suite in tests/e2e/<br/>DOM Flows + Console/Net Listeners"]
     EXEC --> SHOTS["Save 4-Viewport .png Evidence<br/>docs/<feature-name>/evidence/"]
-    SHOTS --> REPORT["Write Zero-Fluff Report (<= 50 lines)<br/>docs/<feature-name>/blackbox-report.md"]
+    SHOTS --> REPORT["Return Zero-Fluff Report (<= 50 lines)<br/>in final message"]
 ```
 
 ### Phase 1: Mandatory 2-Step Pre-Flight & Fail-Honest Gate
@@ -65,7 +67,7 @@ flowchart TD
        #                    yarn add -D @playwright/test && yarn playwright install chromium
        ```
    - Verify `playwright` + `chromium` launches cleanly.
-   - **Strict Fail-Honest Stop**: If the dev server fails to start, the port is unreachable, network policies block Chromium download, or OS shared libraries are missing, **STOP IMMEDIATELY** and write/return:
+   - **Strict Fail-Honest Stop**: If the dev server fails to start, the port is unreachable, network policies block Chromium download, or OS shared libraries are missing, **STOP IMMEDIATELY** and return:
      `BLOCKED: Not executed — <exact command & terminal error>`
 
 ### Phase 2: Real Browser Execution (`tests/e2e/`)
@@ -80,8 +82,8 @@ Capture real, non-empty `.png` screenshots saved to `docs/<feature-name>/evidenc
 3. **Desktop (`1280x800`)**: Full navigation bar, modals, and hover/focus states (`desktop-1280x800.png`).
 4. **Widescreen (`1920x1080`)**: Max-width container alignment (`widescreen-1920x1080.png`).
 
-### Phase 4: Zero-Fluff Deliverable Generation (`<= 50 lines`)
-Verify that Playwright exited `0` **AND** non-empty `.png` files physically exist in `docs/<feature-name>/evidence/`, then write `docs/<feature-name>/blackbox-report.md` (`<= 50 lines` max, `<= 20 lines` on clean pass) using [references/blackbox-report-template.md](references/blackbox-report-template.md):
+### Phase 4: Zero-Fluff Report Returned in Final Message (`<= 50 lines`)
+Verify that Playwright exited `0` **AND** non-empty `.png` files physically exist in `docs/<feature-name>/evidence/`, then return the report in your final message — do NOT write a report file (`<= 50 lines` max, `<= 20 lines` on clean pass) using [references/blackbox-report-template.md](references/blackbox-report-template.md):
 
 ```markdown
 # Black-Box Browser Verification Report
@@ -128,11 +130,11 @@ uv run pytest tests/e2e/ --browser chromium --headed
 
 ### Example Prompts
 - *"Execute Playwright black-box browser verification on `http://localhost:3000/checkout` across all 4 viewports and capture `.png` evidence."*
-- *"Verify sign-up form validation and console/network cleanliness in Chromium, saving `docs/auth-signup/blackbox-report.md`."*
+- *"Verify sign-up form validation and console/network cleanliness in Chromium and return the verdict with `.png` evidence paths."*
 
 ### Host Execution Instructions
-- **Claude Code**: Bootstrap and run Playwright in `tests/e2e/` via `Bash`; author tests and `docs/<feature-name>/blackbox-report.md` via `Write`/`Edit`; verify `.png` evidence via `Glob`.
-- **Antigravity**: Launch as `e2e-blackbox-tester`; bootstrap and execute Playwright suites via `Bash`; verify physical `.png` files in `docs/<feature-name>/evidence/` via `Glob`; write concise `docs/<feature-name>/blackbox-report.md` via `Write`.
+- **Claude Code**: Bootstrap and run Playwright in `tests/e2e/` via `Bash`; author tests via `Write`/`Edit`; return the report in the final message; verify `.png` evidence via `Glob`.
+- **Antigravity**: Launch as `e2e-blackbox-tester`; bootstrap and execute Playwright suites via `Bash`; verify physical `.png` files in `docs/<feature-name>/evidence/` via `Glob`; return the concise report in the final message (no report file).
 
 ---
 
@@ -151,9 +153,9 @@ uv run pytest tests/e2e/ --browser chromium --headed
 - [ ] Real Playwright E2E suite in `tests/e2e/` exited with code `0`.
 - [ ] Console (`console` / `pageerror`) and HTTP response listeners verified `0` unhandled errors.
 - [ ] Non-empty `.png` screenshots saved in `docs/<feature-name>/evidence/` for `375x812`, `768x1024`, `1280x800`, and `1920x1080`.
-- [ ] Concise report (`<= 50 lines`, `<= 20 lines` if clean) written to `docs/<feature-name>/blackbox-report.md`.
+- [ ] Concise report (`<= 50 lines`, `<= 20 lines` if clean) returned in the final message; no report file written.
 
 ---
 
 ## References
-- Black-Box Deliverable Template: [references/blackbox-report-template.md](references/blackbox-report-template.md)
+- Black-Box Report Format (final message): [references/blackbox-report-template.md](references/blackbox-report-template.md)

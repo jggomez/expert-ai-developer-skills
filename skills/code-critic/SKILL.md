@@ -8,7 +8,7 @@ description: Independent code review inspecting cyclomatic complexity, DRY, SOLI
 ## Overview
 This skill provides an uncompromising, independent architectural code review discipline. Operating as an objective Senior Code Critic, it systematically inspects source code for excessive cyclomatic complexity, code duplication (DRY violations), SOLID principles non-conformance, object-oriented and architectural anti-patterns, maintainability friction, and interface brittleness. 
 
-Unlike conventional linters or superficial PR approvals, this skill conducts deep structural evaluations, calculates an empirical quality score, and publishes a formal review deliverable to `docs/<feature-name>/critic-review.md`.
+Unlike conventional linters or superficial PR approvals, this skill conducts deep structural evaluations, calculates an empirical quality score, and returns a formal review in its final message (no report file is written).
 
 ---
 
@@ -19,7 +19,7 @@ Unlike conventional linters or superficial PR approvals, this skill conducts dee
 - Evaluating complex modules exhibiting high churn, fragile test setups, or recurring regressions.
 - Auditing adherence to SOLID principles, DRY standards, and Clean Architecture layer boundaries.
 - Inspecting cyclomatic complexity and cognitive depth across modified files.
-- Producing a formal architectural critique deliverable (`docs/<feature-name>/critic-review.md`) during State 3/4 verification workflows.
+- Returning a formal architectural critique (final message, no file) during State 3/4 verification workflows.
 
 ### When NOT to Use
 - **Authoring production code or fixing defects**: Route implementation tasks to `code-implementer`.
@@ -32,7 +32,9 @@ Unlike conventional linters or superficial PR approvals, this skill conducts dee
 
 ## Process
 
-The code critique process evaluates code across six structural dimensions and produces the standard artifact at `docs/<feature-name>/critic-review.md`.
+The code critique process evaluates code across six structural dimensions and returns the standard review in the final message.
+
+**Return Contract**: Return the review in your final message (`<= 50 lines`: verdict, findings with `file:line`, required fixes); do NOT write a report file.
 
 ```mermaid
 flowchart TD
@@ -44,7 +46,7 @@ flowchart TD
     D5 --> D6["6. Interface Robustness & Error Paths"]
     D6 --> RUBRIC["Calculate Quality Score (0 - 100%)"]
     RUBRIC --> VERDICT{"Evaluate Thresholds"}
-    VERDICT -->|">=85% (No Dim <3)"| PASS["PASSED: Author docs/<feature-name>/critic-review.md"]
+    VERDICT -->|">=85% (No Dim <3)"| PASS["PASSED: Return review in final message"]
     VERDICT -->|"70-84% (No Dim <2)"| COND["CONDITIONAL PASS: Actionable tech-debt log"]
     VERDICT -->|"<70% or Critical Blocker"| REJECT["REJECTED: Detailed blocker remediation plan"]
 ```
@@ -104,9 +106,9 @@ Each dimension is scored from 1 (unacceptable) to 5 (exemplary). The weighted sc
 
 ---
 
-### Phase 3: Zero-Fluff Deliverable Generation (`docs/<feature-name>/critic-review.md` `<= 50 lines`)
+### Phase 3: Zero-Fluff Review Returned in Final Message (`<= 50 lines`)
 
-Create the target directory `docs/<feature-name>/` if not present. Generate a **Zero-Fluff** review artifact strictly capped at **`<= 50 lines`** (`<= 20 lines` on clean passes) conforming to the [Critic Review Template](references/critic-review-template.md). Omit empty dimension prose sections—output ONLY the compact metadata header, the 6-dimension rubric summary table, and actionable defects (or `None.` when clean):
+Do NOT write a review file. Return a **Zero-Fluff** review in your final message strictly capped at **`<= 50 lines`** (`<= 20 lines` on clean passes) conforming to the [Critic Review Template](references/critic-review-template.md). Omit empty dimension prose sections—output ONLY the compact metadata header, the 6-dimension rubric summary table, and actionable defects (or `None.` when clean):
 
 ```markdown
 # Critic Code Review Report
@@ -153,13 +155,13 @@ dart analyze --fatal-infos
 ```
 
 ### Example Prompts
-- *"Perform an independent code critique on the newly implemented authentication flow and produce `docs/auth-flow/critic-review.md`."*
+- *"Perform an independent code critique on the newly implemented authentication flow and return the verdict with `file:line` findings."*
 - *"Evaluate the order checkout service against SOLID principles, calculate our cyclomatic complexity score, and provide remediation steps."*
 - *"Audit this pull request diff for code smells, God methods, and swallowed error blocks."*
 
 ### Host Execution Instructions
-- **Claude Code**: Invoke as `critic` subagent; inspect files using `Read` and `Grep`; generate `docs/<feature-name>/critic-review.md` using `Write`.
-- **Antigravity**: Launch as the `critic` subagent; inspect code using `view_file` and `grep_search`; calculate scores and write the report to disk.
+- **Claude Code**: Invoke as `critic` subagent; inspect files using `Read` and `Grep`; return the review in the final message (no `Write`).
+- **Antigravity**: Launch as the `critic` subagent; inspect code using `view_file` and `grep_search`; calculate scores and return the review in the final message (no file).
 
 ---
 
@@ -170,7 +172,7 @@ dart analyze --fatal-infos
 - Writing code changes or modifying production files directly (violates reviewer separation of concerns).
 - Reporting vague subjective critiques without concrete `file:line` locations and actionable remediations.
 - Producing bloated review prose exceeding the strict **`<= 50 lines` Zero-Fluff cap** (`<= 20 lines` on clean passes).
-- Failing to create the destination directory before saving `docs/<feature-name>/critic-review.md`.
+- Writing the review to a file under `docs/` instead of returning it in the final message.
 
 ---
 
@@ -179,10 +181,10 @@ dart analyze --fatal-infos
 - [ ] Ensure cyclomatic complexity ($CC$) and nesting depth are computed and documented.
 - [ ] Ensure SOLID violations are categorized with exact `file:line` references.
 - [ ] Ensure the scoring rubric is filled out with a clear verdict (`PASSED`, `CONDITIONAL PASS`, or `REJECTED`).
-- [ ] Ensure `docs/<feature-name>/critic-review.md` adheres strictly to the **`<= 50 lines` Zero-Fluff cap** (`<= 20 lines` when clean, omitting empty prose sections).
+- [ ] Ensure the review returned in the final message adheres strictly to the **`<= 50 lines` Zero-Fluff cap** (`<= 20 lines` when clean, omitting empty prose sections).
 - [ ] Ensure non-passing verdicts include a prioritized remediation table for `code-implementer`.
 
 ---
 
 ## References
-- Standard Review Deliverable Template: [references/critic-review-template.md](references/critic-review-template.md)
+- Standard Review Format (final message): [references/critic-review-template.md](references/critic-review-template.md)

@@ -119,9 +119,17 @@ The subagents and orchestrator execute along the standardized 9-stage engineerin
 
 | Hook Event | Script | Behavior |
 | :--- | :--- | :--- |
-| **`PreToolUse`** | `hooks/orchestrator-role-gate.js` | Enforces Inviolable Role Boundaries: intercepts file edit tools (`Write`, `Edit`) when called by `senior-dev-orchestrator` on production code files (allowing `PLAN.md`, `ADR-*.md`, `docs/`, `.agents/`, and `context/memory/`), mandating delegation to `code-implementer`. |
-| **`Stop`** | `hooks/universal-quality-gate.js` | Enforces that tests pass (`exit code 0`) and no critical quality defects remain before session termination. |
+| **`PreToolUse`** | `hooks/orchestrator-role-gate.js` | Plan-First (`PLAN.md` before code; surgical `Edit`s of `<= 10` lines are exempt as Tier 1 fast-track), protected-branch safety, and the role boundary: when Claude Code reports an orchestrator as `agent_type` (`claude --agent senior-dev:senior-dev-orchestrator`), direct code edits are denied and must go to `code-implementer`. |
+| **`Stop`** | `hooks/universal-quality-gate.js` | Runs `scripts/verify.sh`, `dart analyze`, `npm test`, `pytest`, `cargo test` or `go test` **only when code changed since the last green run**; skips docs-only turns; shares gate ids with `python-backend` / `senior-dev-flutter` so a suite runs once; blocks at most 3 times per turn (`stop_hook_active`), then lets the turn end with a notice. |
+| **`SubagentStop`** | `hooks/e2e-evidence-gate.js` | Rejects an `e2e-blackbox-tester` `PASSED`/`REJECTED` verdict unless its own transcript shows a successful `browser_navigate` + `browser_take_screenshot` (Playwright MCP) or a successful Bash `playwright` run, and the screenshots exist on disk as real PNGs. `BLOCKED`/`SKIPPED` always pass. |
 
+Shared hook helpers live in `hooks/shared/gate-utils.js` (canonical: `scripts/claude-hook-lib/gate-utils.js`, copied by `scripts/sync_agents.py`).
+
+### Claude Code runtime
+- **Run the orchestrator as the main thread** so its alignment gate can use `AskUserQuestion` (removed inside subagents): `claude --agent senior-dev:senior-dev-orchestrator`, or `{ "agent": "senior-dev:senior-dev-orchestrator" }` in `.claude/settings.json`.
+- **Browser E2E**: `.mcp.json` ships the Playwright MCP server (`npx -y @playwright/mcp@latest --isolated`, headed so you can watch the run; add `--headless` for CI or machines without a display). It uses your installed Chrome by default.
+- **Models per role**: `sonnet` for `product-analyst`, `ui-ux-designer`, `qa-tester`, `e2e-blackbox-tester`, `compliance-verifier`; `inherit` for the orchestrator, `architect-engineer`, `code-implementer`, `critic`, `challenger`. Change them in `scripts/claude_sync_config.py` (`CLAUDE_AGENT_OVERRIDES`) and re-run the sync.
+- **Preloaded skills**: each agent preloads only its core skill; the rest load on demand through the `Skill` tool.
 ---
 
 ## 6. Bundled Skills (15 Packaged Modules)

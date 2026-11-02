@@ -28,16 +28,17 @@ This skill orchestrates multi-agent execution loops, isolated parallel worker to
 | Dimension / Phase | Tier 1: Fast-Track (Low Complexity) | Tier 2: Standard (Medium Complexity) | Tier 3: Mission-Critical (Complex) |
 | :--- | :--- | :--- | :--- |
 | **Typical Scope** | Single-file bugfix, doc fix, typo, chore, localized refactor without public contract change | 2–4 files, new API endpoint, single UI view/widget, DB migration, non-breaking contract update | Full end-to-end feature, payment/auth flow, cross-cutting refactor, breaking public API |
-| **Discovery (State 1)** | **SKIPPED**: Zero discovery artifacts authored | **SELECTIVE** (capability-gated): `prd.md <= 70L`, `DESIGN.md <= 110L` (+ delta `<= 35L`), `adr-*.md <= 55L` | **FULL** (capability-gated): `prd.md <= 70L`, `DESIGN.md <= 110L` (+ `design.md <= 35L`), `adr-*.md <= 55L` / `architecture.md <= 70L` |
-| **Interactive Alignment Gate** | **SKIPPED**: Auto-proceeds directly to build | **MANDATORY**: `ask_question` modal approval before build | **MANDATORY**: Strict `ask_question` modal sign-off before build |
+| **Discovery (State 1)** | **SKIPPED**: Zero discovery artifacts authored | **SELECTIVE** (capability-gated, sequential): `spec.md` (`## Product <= 50L` / `## Design <= 30L` / `## Architecture <= 50L`), `DESIGN.md <= 110L`, `adr-*.md <= 55L` | **FULL** (capability-gated, sequential): `spec.md` (all 3 sections), `DESIGN.md <= 110L`, `adr-*.md <= 55L` |
+| **Interactive Alignment Gate** | **SKIPPED**: Auto-proceeds directly to build | **MANDATORY**: `AskUserQuestion` modal approval before build | **MANDATORY**: Strict `AskUserQuestion` modal sign-off before build |
 | **Build & Isolation (State 2)** | 1 `code-implementer` under Mode A (Disjoint Files) | 1..N `code-implementer` in parallel under Mode A (Disjoint Files) | 1..N `code-implementer` under Mode A or Mode B (Git Worktree Isolation if shared files touched) |
-| **QA & Audit (State 3 & 4)** | Scoped test file (`exit 0`) + `compliance-verifier` (skips committee) | Full suite (`exit 0`) + `docs/<feature-name>/test-matrix.md` (`<= 80L`) + `compliance-verifier` (`APPROVED`) | **Adversarial Verification Committee** (capability-gated, reports `<= 50L`): `qa-tester`, `critic`, `challenger`, `e2e-blackbox-tester`, `compliance-verifier` |
+| **QA & Audit (State 3 & 4)** | Scoped test file (`exit 0`) + `compliance-verifier` (skips committee) | Full suite (`exit 0`) + `docs/<feature-name>/test-matrix.md` (`<= 80L`) + `compliance-verifier` (`APPROVED`) | **Adversarial Verification Committee** (capability-gated, verdicts returned in final message `<= 50L`, no report files): `qa-tester`, `critic`, `challenger`, `e2e-blackbox-tester`, `compliance-verifier` |
 | **Token & Latency Impact** | **70–85% token & latency savings** | Balanced overhead with rigorous traceability | Maximum empirical depth & zero regression tolerance |
 
 ### Multi-Agent Topologies & Isolation Modes
 1. **Manager-Worker**: Orchestrator decomposes tasks and dispatches isolated workers (`Mode A` strictly non-overlapping `Owned Files`, or `Mode B` Git Worktrees when shared routers/configs are touched). Each parallel worker runs **only its scoped test file** during State 2 loops.
-2. **Sequential DAG**: Deterministic `Plan -> Discover -> Align -> Build -> Verify -> Ship` state machine.
+2. **Sequential DAG**: Deterministic `Plan -> Discover -> Align -> Build -> Verify -> Ship` state machine. Discovery specialists run sequentially (product -> design -> architecture) because they share `docs/<feature-name>/spec.md`, each editing only its own section.
 3. **Adversarial Review Committee**: Capability-gated Tier 3 specialists (`critic` for `>= 150 LOC` diffs, `challenger` for auth/payments/concurrency/untrusted input, fail-honest `e2e-blackbox-tester` only when a runnable web UI exists).
+4. **Worker Return Contract**: Worker final message `<= 15 lines` (status, files changed, test command + exit code, next step); reviewers return `<= 50 lines` (verdict, `file:line` findings, required fixes). Orchestrators never request long narratives.
 
 ### Worktree Provisioning, PR Crons & 3-Loop Self-Correction Cap
 1. **Worktree Provisioning (Mode B)**:
@@ -62,7 +63,7 @@ python3 ./skills/loop-engineering/scripts/pr_cron_reviewer.py
 - ❌ Concurrent workers editing overlapping files without Mode B Git Worktree isolation, or running the full test suite inside parallel worker loops.
 - ❌ Over-invoking discovery specialists or adversarial committees on Tier 1 tasks (destroying 70–85% token/latency savings).
 - ❌ Leaving target projects without a concise root `AGENTS.md` (`<= 90 lines`) wired to executable commands, `DESIGN.md`, and `context/memory/MEMORY.md`.
-- ❌ Exceeding the 3-loop self-correction cap or skipping `ask_question` alignment on Tier 2 / Tier 3 tasks.
+- ❌ Exceeding the 3-loop self-correction cap or skipping `AskUserQuestion` alignment on Tier 2 / Tier 3 tasks.
 
 ## Verification
 - [ ] SDLC Tier (`Tier 1` `Fast-Track`, `Tier 2` `Standard`, or `Tier 3` `Mission-Critical`) and capability-gated `Invoke / SKIP` table recorded in `PLAN.md` (`<= 50 lines`).

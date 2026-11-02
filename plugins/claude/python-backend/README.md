@@ -27,21 +27,17 @@ plugins/python-backend/
 │   ├── pre-tool-gate.js            # Runs on PreToolUse; enforces Plan-First, gitflow & cloud deployment guardrails
 │   └── stop-gate.js                # Runs on Stop; quality gate checking test suite
 ├── agents/
-│   ├── python-backend-orchestrator.md # Senior Python Backend Orchestrator (6-State DAG, Parallel Slices)
-│   └── <9 bundled senior-dev specialists>.md # product-analyst … e2e-blackbox-tester (synced copies)
+│   └── python-backend-orchestrator.md # Senior Python Backend Orchestrator (6-State DAG, Parallel Slices)
 ├── rules/                # Central system guidelines
 │   ├── python-backend-rules.md     # 6-State DAG, API/Migration Triage Gate, Parallel Slices & context/memory/
 │   └── git-hooks.md                # Blueprints for pre-commit & commit-msg hooks
-└── skills/               # Bundled developer skills loaded globally (22 modules)
+└── skills/               # Bundled developer skills (11 modules; specialist skills come from senior-dev)
     ├── python-expert/
     ├── test-driven-development/
     ├── pull-request-expert/
-    ├── code-smells-expert/
-    ├── refactoring-code-expert/
     ├── security-audit/
     ├── performance-scalability/
     ├── database-migration-expert/
-    ├── senior-architect-engineering/
     ├── design-spec-expert/
     ├── build-and-ci-gates/
     ├── context-capture/
@@ -58,7 +54,7 @@ plugins/python-backend/
 3. **`State 5` — Token-Conserving LLM Wiki Update**: Updates `context/memory/` (`MEMORY.md`, `architecture.md` for API/schema contracts, `conventions.md`, and `log/YYYY-MM-DD.md`) only upon milestone completion or explicit user handoff.
 
 
-**Bundled specialists** (canonical copies of the `senior-dev` agents, synced by `scripts/sync_agents.py` so this plugin works without `senior-dev` installed): `product-analyst`, `ui-ux-designer`, `architect-engineer`, `code-implementer`, `qa-tester`, `compliance-verifier`, `critic`, `challenger`, `e2e-blackbox-tester`. Edit them in `plugins/antigravity/senior-dev/agents/`, never here.
+**Depends on `senior-dev`** (`"dependencies": ["senior-dev"]` in `.claude-plugin/plugin.json`): Claude Code installs it with this plugin. The orchestrator dispatches its specialists as `senior-dev:<agent>` (exact list in the agent's *Claude Code Runtime Notes*): `product-analyst`, `ui-ux-designer`, `architect-engineer`, `code-implementer`, `qa-tester`, `compliance-verifier`, `critic`, `challenger`, `e2e-blackbox-tester`. Their skills come from `senior-dev` too, so nothing is duplicated in context.
 
 ---
 
@@ -93,32 +89,23 @@ One file, two hosts — Claude Code reads the top-level `"hooks"` key, Antigravi
 
 ---
 
-## 5. Bundled Skills (22 Packaged Modules)
+## 5. Bundled Skills (11 Packaged Modules)
 
-On loading the plugin, the following 14 skills are automatically loaded into the agent's context:
+Bundled with this plugin (descriptions always listed; full content loads on demand through the `Skill` tool):
 
 1. **`python-expert`**: AST analysis and memory optimization check.
 2. **`test-driven-development`**: AAA execution patterns.
 3. **`pull-request-expert`**: Size checks and Conventional Commit logs.
-4. **`code-smells-expert`**: Code complexity diagnostics.
-5. **`refactoring-code-expert`**: Safe extraction methods.
-6. **`security-audit`**: OWASP Top 10 scanner.
-7. **`performance-scalability`**: CPU/Memory execution profiler.
-8. **`database-migration-expert`**: Alembic schema migrations.
-9. **`senior-architect-engineering`**: ADR templates.
-10. **`design-spec-expert`**: SDD schemas.
-11. **`build-and-ci-gates`**: Pre-commit quality hook gates.
-12. **`context-capture`**: Updates the Cross-AI LLM Wiki (`context/memory/MEMORY.md`, `architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) at `State 5` or explicit handoff.
-13. **`context-restore`**: Progressive disclosure reader (`context/memory/MEMORY.md` at `State 0`, drilling down on demand).
-14. **`loop-engineering`**: Bounded 3-strike fix loops for automated test and static-analysis verification.
-15. **`product-analyst`**: Preloaded by the bundled `product-analyst` agent (`prd.md`).
-16. **`ui-ux-designer`**: Preloaded by the bundled `ui-ux-designer` agent (`DESIGN.md`).
-17. **`code-implementer`**: Preloaded by the bundled `code-implementer` agent (TDD build tracks).
-18. **`qa-tester`**: Preloaded by the bundled `qa-tester` agent (`test-matrix.md` + `exit code 0`).
-19. **`compliance-verifier`**: Preloaded by the bundled `compliance-verifier` agent (`APPROVED` / `REJECTED`).
-20. **`code-critic`**: Preloaded by the bundled `critic` agent.
-21. **`adversarial-challenger`**: Preloaded by the bundled `challenger` agent.
-22. **`blackbox-tester`**: Preloaded by the bundled `e2e-blackbox-tester` agent.
+4. **`security-audit`**: OWASP Top 10 scanner.
+5. **`performance-scalability`**: CPU/Memory execution profiler.
+6. **`database-migration-expert`**: Alembic schema migrations.
+7. **`design-spec-expert`**: SDD schemas.
+8. **`build-and-ci-gates`**: Pre-commit quality hook gates.
+9. **`context-capture`**: Updates the Cross-AI LLM Wiki (`context/memory/MEMORY.md`, `architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) at `State 5` or explicit handoff.
+10. **`context-restore`**: Progressive disclosure reader (`context/memory/MEMORY.md` at `State 0`, drilling down on demand).
+11. **`loop-engineering`**: Bounded 3-strike fix loops for automated test and static-analysis verification (preloaded by the orchestrator).
+
+From the `senior-dev` dependency (not duplicated here): `code-smells-expert`, `refactoring-code-expert`, `senior-architect-engineering`, and the specialist skills (`product-analyst`, `ui-ux-designer`, `code-implementer`, `qa-tester`, `compliance-verifier`, `code-critic`, `adversarial-challenger`, `blackbox-tester`).
 
 ---
 

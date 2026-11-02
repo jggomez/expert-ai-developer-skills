@@ -4,5 +4,8 @@
   "description": "Production Python backend engineering skills: FastAPI, TDD, migrations, CI/CD, and performance.",
   "author": {
     "name": "jggomez"
-  }
+  },
+  "dependencies": [
+    "senior-dev"
+  ]
 }

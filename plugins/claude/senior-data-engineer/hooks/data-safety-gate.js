@@ -9,6 +9,7 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const g = require(path.join(__dirname, 'shared', 'gate-utils.js'));
 
 const PROTECTED_BRANCHES = new Set(['main', 'master', 'develop', 'dev']);
 
@@ -126,7 +127,8 @@ if (toolName === 'Write' || toolName === 'Edit') {
         path.join(cwd, '.agents', 'PLAN.md'),
         path.join(cwd, '.claude', 'PLAN.md')
       ];
-      const hasPlan = possiblePlanPaths.some(p => fs.existsSync(p));
+      // Tier 1 fast-track: surgical Edits (<= 10 lines each side) do not need a PLAN.md.
+    const hasPlan = possiblePlanPaths.some(p => fs.existsSync(p)) || g.isSmallEdit(toolName, toolInput);
 
       if (!hasPlan) {
         deny(

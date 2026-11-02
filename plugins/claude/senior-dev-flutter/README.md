@@ -14,8 +14,8 @@ root `plugin.json`, the `senior-dev-flutter-gates` group in `hooks.json`, and
 `mcp_config.json` cover **Antigravity CLI**. One folder, `agy plugin install`-safe.
 
 > **Maintaining the bundled skills**: `skills/` below is a physical copy of the
-> seven `flutter-*` skills plus `context-capture`, `context-restore`, `loop-engineering`, and the
-> 9 skills preloaded by the bundled `senior-dev` specialists, from the root `/skills` catalog (19 total). After editing any of
+> seven `flutter-*` skills plus `context-capture`, `context-restore`, and `loop-engineering`
+> from the root `/skills` catalog (10 total; specialist skills come from the `senior-dev` dependency). After editing any of
 > them under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo
 > root. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills`
 > fails CI if the two drift.
@@ -111,11 +111,11 @@ Five specialized subagents for Claude Code (`model: inherit`, explicit pure Clau
 | **`flutter-release-engineer`** | Runs in parallel with `flutter-reviewer`: verifies flavors, `--dart-define-from-file`, signing, `pubspec.yaml`, and build matrix. | `Agent` | `Write`, `Edit`, `Read`, `Bash`, `Glob`, `Grep` |
 
 
-**Bundled specialists** (canonical copies of the `senior-dev` agents, synced by `scripts/sync_agents.py` so this plugin works without `senior-dev` installed): `product-analyst`, `ui-ux-designer`, `qa-tester`, `critic`, `challenger`, `e2e-blackbox-tester`. Edit them in `plugins/antigravity/senior-dev/agents/`, never here.
+**Depends on `senior-dev`** (`"dependencies": ["senior-dev"]` in `.claude-plugin/plugin.json`): Claude Code installs it with this plugin. The orchestrator dispatches its specialists as `senior-dev:<agent>` (exact list in the agent's *Claude Code Runtime Notes*): `product-analyst`, `ui-ux-designer`, `qa-tester`, `critic`, `challenger`, `e2e-blackbox-tester`. Their skills come from `senior-dev` too, so nothing is duplicated in context.
 
 ---
 
-## 5. Bundled Skills (19 Packaged Modules)
+## 5. Bundled Skills (10 Packaged Modules)
 
 | Skill | Role (all *decision / checklist / strategy / cross-AI memory* — none restate a "how-to") |
 | :--- | :--- |
@@ -129,15 +129,6 @@ Five specialized subagents for Claude Code (`model: inherit`, explicit pure Clau
 | **`context-capture`** | Updates the Cross-AI LLM Wiki (`context/memory/MEMORY.md`, `architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) at `State 5` or explicit handoff. |
 | **`context-restore`** | Progressive disclosure reader (`context/memory/MEMORY.md` at `State 0`, drilling down to topic/log pages on demand). |
 | **`loop-engineering`** | Governs bounded 3-strike fix loops between `flutter-reviewer` / `flutter-release-engineer` and `flutter-implementer`. |
-| **`ui-ux-designer`** | Preloaded by the bundled `ui-ux-designer` agent: root `DESIGN.md` contract and `docs/<feature-name>/design.md` screen deltas. |
-| **`product-analyst`** | Preloaded by the bundled `product-analyst` agent: concise `prd.md` with `US-XX` / `AC-XX`. |
-| **`qa-tester`** | Preloaded by the bundled `qa-tester` agent: `test-matrix.md` + `exit code 0` proof. |
-| **`code-critic`** | Preloaded by the bundled `critic` agent (Tier 3, diffs `>= 150 LOC`). |
-| **`code-smells-expert`** | Preloaded by the bundled `critic` agent: smell taxonomy. |
-| **`refactoring-code-expert`** | Preloaded by the bundled `critic` agent: refactoring catalog. |
-| **`adversarial-challenger`** | Preloaded by the bundled `challenger` agent (auth, payments, isolates, untrusted input). |
-| **`test-driven-development`** | Preloaded by the bundled `challenger` agent. |
-| **`blackbox-tester`** | Preloaded by the bundled `e2e-blackbox-tester` agent (Flutter Web targets only). |
 
 ---
 

@@ -1,5 +1,6 @@
 # Black-Box Browser Verification Report
 
+> **Return, don't write**: Emit this as your final message to the orchestrator; never save it as a file under `docs/`.
 > **Zero-Fluff Cap (`<= 50 lines` max, `<= 20 lines` on clean pass)**: Output ONLY the metadata header, viewport metrics table, and actionable defects. Omit all prose sections. If `PASSED`, replace the Defects table with `None.` If pre-flight fails, output ONLY the header and `SKIPPED: No web UI in scope` or `BLOCKED: Not executed — <exact command & terminal error>`.
 
 - **Feature**: `<feature-name>` | **Date**: `YYYY-MM-DD` | **Target URL**: `http://localhost:3000`

@@ -25,8 +25,8 @@ This skill guides the authoring, structuring, and automated validation of Zero-F
 1. Select one Diátaxis mode per section — never mix tutorials, how-to steps, reference tables, and explanations together.
 2. Enforce strict **Zero-Fluff** conciseness caps across project and feature artifacts:
    - Root `AGENTS.md <= 90 lines` (verified build/lint/test commands, conventions, links to `DESIGN.md` & `context/memory/MEMORY.md`).
-   - Root Google `DESIGN.md <= 110 lines` (YAML tokens + 8 sections) and feature delta `docs/<feature-name>/design.md <= 35 lines`.
-   - Feature specs in `docs/<feature-name>/`: `prd.md <= 70 lines`, `adr-NNN-*.md <= 55 lines`, `architecture.md <= 70 lines`, `test-matrix.md <= 80 lines`, verification reports `<= 50 lines`.
+   - Root Google `DESIGN.md <= 110 lines` (YAML tokens + 8 sections) and feature UI delta in `docs/<feature-name>/spec.md` (`## Design <= 30 lines`).
+   - Feature specs in `docs/<feature-name>/`: single `spec.md` (`## Product <= 50`, `## Design <= 30`, `## Architecture <= 50`), `adr-NNN-*.md <= 55 lines`, `test-matrix.md <= 80 lines`; verification reports are returned in the reviewer's final message (`<= 50 lines`), never written as files.
 
 ### Phase 2: Syntax-Safe Mermaid.js Diagramming
 Use concise Mermaid blocks (`flowchart TD`, `flowchart LR`, `sequenceDiagram`, `stateDiagram-v2`, `erDiagram`) instead of prose walls. Always quote labels containing spaces, slashes, brackets, or parentheses (e.g., `api["Auth API (v2)"]`).

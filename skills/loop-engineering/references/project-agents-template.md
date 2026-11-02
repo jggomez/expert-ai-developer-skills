@@ -14,14 +14,14 @@
 - **Directory Layout**:
   - `src/` (or `lib/`): Core domain, application services, and HTTP/UI adapters.
   - `tests/`: `unit/`, `integration/`, and `e2e/` suites mirroring source modules.
-  - `docs/<feature-name>/`: Concise feature artifacts (`prd.md <= 70 lines`, `adr-NNN-*.md <= 55 lines`, `test-matrix.md <= 80 lines`).
+  - `docs/<feature-name>/`: Concise feature artifacts (single `spec.md` with `## Product` / `## Design` / `## Architecture`, `adr-NNN-*.md <= 55 lines`, `test-matrix.md <= 80 lines`; review verdicts are returned, not written).
 - **Key Invariants**:
   - Keep domain logic decoupled from database/HTTP frameworks at module boundaries (SOLID / KISS / YAGNI).
   - Never commit directly to `main`/`master`/`develop`; use Conventional Commits on `feat/<slug>` or `fix/<slug>` branches.
   - Require empirical `exit code 0` test proof before marking any task complete.
 
 ## 4. Design & Persistent Memory
-- **UI Design System (`DESIGN.md`)**: When building or modifying UI, read root [DESIGN.md](./DESIGN.md) (`<= 110 lines`, official Google 2-layer YAML + 8-section spec) for semantic color, typography, spacing, and component tokens; keep feature UI deltas in `docs/<feature-name>/design.md` (`<= 35 lines`).
+- **UI Design System (`DESIGN.md`)**: When building or modifying UI, read root [DESIGN.md](./DESIGN.md) (`<= 110 lines`, official Google 2-layer YAML + 8-section spec) for semantic color, typography, spacing, and component tokens; keep feature UI deltas in `## Design` of `docs/<feature-name>/spec.md` (`<= 30 lines`).
 - **Cross-Session AI Memory (`context/memory/`)**:
   - Silently read [context/memory/MEMORY.md](./context/memory/MEMORY.md) at session start to restore active handoff state across Claude Code and Antigravity.
   - Consult [context/memory/architecture.md](./context/memory/architecture.md), [context/memory/conventions.md](./context/memory/conventions.md), and daily logs in `context/memory/log/YYYY-MM-DD.md` on demand, and update them in-place upon milestone completion.

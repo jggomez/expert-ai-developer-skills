@@ -1,5 +1,6 @@
 # Adversarial Stress & Resiliency Report
 
+> **Return, don't write**: Emit this as your final message to the orchestrator; never save it as a file under `docs/`.
 > **Zero-Fluff Cap (`<= 50 lines` max, `<= 20 lines` on clean pass)**: Output ONLY the metadata header, vector summary table, and actionable defects. Omit per-probe prose sections. If `RESILIENT` with zero findings, replace the Actionable Defects table with `None.`
 
 - **Feature**: `<feature-name>` | **Date**: `YYYY-MM-DD` | **Targets**: `[Modules / Endpoints]`

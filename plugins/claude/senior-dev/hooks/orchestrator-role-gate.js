@@ -3,10 +3,12 @@
  * Senior Developer Orchestrator Role Gate for Claude Code (PreToolUse)
  * Enforces Graph Engineering constraints:
  * 1. "Plan First": An up-to-date PLAN.md must exist in the workspace before source code is modified.
- * 2. "Orchestrator Role Boundary": Blocks direct code edits on protected source paths when no plan exists.
+ * 2. "Orchestrator Role Boundary": Blocks direct code edits when the running agent (`agent_type`) is an orchestrator.
+ * Small surgical Edits (<= 10 lines) are exempt from Plan First (Tier 1 fast-track).
  */
 const fs = require('fs');
 const path = require('path');
+const g = require(path.join(__dirname, 'shared', 'gate-utils.js'));
 
 function allow() {
   process.exit(0);
@@ -93,7 +95,8 @@ const possiblePlanPaths = [
   path.join(workspaceRoot, 'docs', 'PLAN.md'),
   path.join(workspaceRoot, '.agents', 'PLAN.md')
 ];
-const hasPlan = possiblePlanPaths.some(p => fs.existsSync(p));
+// Tier 1 fast-track: surgical Edits (<= 10 lines each side) do not need a PLAN.md.
+    const hasPlan = possiblePlanPaths.some(p => fs.existsSync(p)) || g.isSmallEdit(toolName, toolInput);
 
 if (!hasPlan) {
   deny(
@@ -104,23 +107,15 @@ if (!hasPlan) {
 }
 
 // 2. GATE 2: "Orchestrator Role Boundary" Rule
-const transcriptPath = payload.transcriptPath || payload.transcript_path;
-if (transcriptPath && fs.existsSync(transcriptPath)) {
-  try {
-    const content = fs.readFileSync(transcriptPath, 'utf8');
-    const firstLine = content.trim().split('\n')[0] || '';
-    const isMainSession = firstLine.includes('<USER_REQUEST>');
-
-    if (isMainSession) {
-      deny(
-        `[GRAPH INVARIANT VIOLATION - ORCHESTRATOR CODE PROHIBITION]:\n` +
-        `As the Senior Developer Orchestrator, you are STRICTLY FORBIDDEN from modifying application source code (${basename}) directly.\n` +
-        `You MUST delegate to the 'code-implementer' subagent via Agent to write or modify code.`
-      );
-    }
-  } catch (err) {
-    // Fail open if transcript cannot be read
-  }
+// Claude Code puts the running agent's name in `agent_type` (main thread started with
+// `claude --agent <plugin>:<name>`, or inside a subagent). Orchestrators coordinate; workers write code.
+const ORCHESTRATORS = ['senior-dev-orchestrator', 'flutter-feature-orchestrator', 'python-backend-orchestrator'];
+if (g.isAgent(payload, ORCHESTRATORS)) {
+  deny(
+    `[GRAPH INVARIANT VIOLATION - ORCHESTRATOR CODE PROHIBITION]:\n` +
+    `As the "${payload.agent_type}" orchestrator, you are STRICTLY FORBIDDEN from modifying application source code (${basename}) directly.\n` +
+    `You MUST delegate to a worker subagent (e.g. 'code-implementer') via Agent to write or modify code.`
+  );
 }
 
 // Default: allow execution once Plan First gate is satisfied
