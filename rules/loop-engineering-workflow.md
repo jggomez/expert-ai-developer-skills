@@ -1,53 +1,26 @@
 ---
-trigger: always_on
-description: 9-stage engineering execution cycle governed by Graph Engineering DAG, Plan-First gating, orchestrator non-execution boundaries, and mandatory subagents.
+trigger: model_decision
+description: Apply when planning or coordinating a multi-step coding task, splitting work across subagents, or deciding how much process (plan, review, QA) a change needs.
 ---
 
-# Rule: Engineering Execution Workflow & Graph Engineering Protocol
+# Rule: Engineering Execution Workflow
 
 **Identifier**: `loop-engineering-workflow`
 
-## 1. Graph Engineering State Machine (Execution DAG)
+Scale the process to the risk of the change, never to its size. The full state machine lives in the `loop-engineering` skill and the orchestrator agents; this rule only holds the invariants.
 
-Every software task executed under this workflow must transition through an explicit state machine:
+## 1. Lean by Default
+- **MUST** pick the lightest tier that fits: Tier 1 (Fast-Track) for fixes, chores and localized refactors; Tier 2 (Standard) for a new endpoint, screen or schema change; Tier 3 (Mission-Critical) only for auth, payments, data migrations or breaking public APIs. Scale alone **NEVER** makes a task Tier 3.
+- **MUST** build exactly what was asked. Project rules constrain *how*, never *what*; list extra ideas as suggestions instead of implementing them.
+- **Multi-phase requests**: plan and confirm once, then run each phase at its own tier. Stop and report when a phase goes red instead of starting the next one.
 
-```
-[PLAN FIRST GATE: PLAN.md]
-          │
-          ▼
-[DISCOVERY (Optional)]: product-analyst | architect-engineer
-          │
-          ▼
-[BUILD (Mandatory)]: invoke_subagent(code-implementer)
-          │
-          ▼
-[TEST (Mandatory)]: invoke_subagent(qa-tester)  <──(Fail loop)──┐
-          │ (exit 0)                                            │
-          ▼                                                     │
-[AUDIT (Mandatory)]: invoke_subagent(compliance-verifier) ──────┘
-          │ (APPROVED)
-          ▼
-[SHIP & FINISH]
-```
+## 2. Plan, Delegate, Prove
+- **MUST** write a short `PLAN.md` before multi-file changes; small surgical edits need none.
+- Orchestrators coordinate and write only plans and docs; implementers write code.
+- "Done" means a test command with `exit code 0`. **NEVER** weaken assertions to reach green. Run `qa-tester` / `compliance-verifier` when the tier calls for them, not on every change.
 
-## 2. Inviolable Role Boundaries
-
-1. **Orchestrator Role Boundary**:
-   - The Orchestrator is purely a Coordinator and Technical Director.
-   - **STRICTLY PROHIBITED**: The Orchestrator is NEVER permitted to write or edit application source code (`src/`, `lib/`, `tests/`, etc.) directly.
-   - Writing tools are EXCLUSIVELY reserved for planning and architectural records (`PLAN.md`, `ADR-*.md`, docs).
-2. **Plan First**:
-   - Before executing any code implementation, an up-to-date `PLAN.md` must be authored and saved to disk.
-3. **Dynamic Discovery Nodes**:
-   - `product-analyst`: Optional. Invoked only when user requirements are ambiguous or require a formal PRD.
-   - `architect-engineer`: Optional. Invoked only when architectural blueprints, new subsystems, or ADRs are required.
-4. **Mandatory Execution Pipeline (Sí o sí)**:
-   - Implementation MUST be delegated to `code-implementer` via `invoke_subagent`.
-   - Testing MUST be delegated to `qa-tester` via `invoke_subagent`.
-   - Compliance & quality audit MUST be delegated to `compliance-verifier` via `invoke_subagent`.
-
-## 3. Mandatory Execution Gates
-
-- **Tests are Proof**: Never declare victory without empirical execution evidence (`exit code 0`).
-- **Isolation Protocol**: Never allow parallel subagents to concurrently edit overlapping files without isolated workspaces.
-- **Verification Guarantee**: `compliance-verifier` must issue an explicit `APPROVED` verdict before completing the task.
+## 3. Parallel Work Without Collisions
+- Run tasks in parallel only when they are truly independent and the gain is real; at most 3 implementers at once.
+- **Contract first**: agree on shared types, API shapes and file ownership before fanning out.
+- **Default (shared tree)**: every worker owns a disjoint list of files and **NEVER** runs git writes, dependency installs or code generation; the orchestrator does those once after fan-in.
+- **When files must overlap**: give each worker its own git worktree branched from the current feature branch, have each commit there, and merge the branches one at a time with tests after each merge.

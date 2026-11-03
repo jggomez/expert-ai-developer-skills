@@ -9,12 +9,11 @@ description: Enforce structured semantic conventional commits, atomic commits, b
 
 ## 1. Branch Safety Directives
 
-* **NEVER** commit or push directly to protected branches (`main`, `master`, `develop`, `release/*`).
-* **MUST** develop in isolated branches using mandatory naming conventions:
-  - `feature/<issue-id>-<short-description>`
-  - `bugfix/<issue-id>-<short-description>`
-  - `hotfix/<issue-id>-<short-description>`
-  - `docs/<short-description>`
+* **NEVER** commit or push directly to protected branches (`main`, `master`, `develop`, `dev`).
+* **MUST** develop in a short-lived branch named `<type>/<short-slug>`, using the commit types below:
+  - `feat/<slug>`, `fix/<slug>`, `refactor/<slug>`, `docs/<slug>`, `chore/<slug>`
+  - Add the issue id when there is one: `fix/123-null-session-token`.
+* **MUST** merge back with a pull request or `git merge --no-ff`; never rewrite history that others have pulled.
 
 ## 2. Conventional Commit Format
 
