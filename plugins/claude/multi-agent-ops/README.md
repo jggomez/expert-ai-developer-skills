@@ -1,69 +1,77 @@
-# Multi-Agent Ops Plugin (Claude Code)
+# multi-agent-ops
 
-[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
-[![Plugin](https://img.shields.io/badge/Plugin-multi--agent--ops-green?style=flat-square)](.)
+> Parallel agent loops, repository research and a context guard for Claude Code.
 
-The `multi-agent-ops` plugin packages manager-worker orchestration, **Mode A (Disjoint File Partitioning)** and **Mode B (Git Worktree Isolation)** parallel execution, self-correcting development loops, and context-guard safety gates for **Claude Code**.
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square)](../../../LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Claude%20Code-orange?style=flat-square)](../../../docs/claude-code-installation.md)
 
----
+`multi-agent-ops` helps one session coordinate several workers safely. `loop-engineering` covers 3-tier
+triage, parallel builds on disjoint files (Mode A) or git worktrees (Mode B), and a 3-iteration
+self-correction cap. `repo-research` maps a codebase into a short context file. A `PreToolUse` hook
+stops `Read` calls that would flood the context window.
 
-## 1. Directory Tree & Architecture
+## Requirements
 
-```
-plugins/claude/multi-agent-ops/
-├── README.md                       # This usage manual
-├── .claude-plugin/
-│   └── plugin.json                 # Claude Code plugin manifest
-├── hooks.json                      # Hook registrations
-├── hooks/
-│   └── context-guard-gate.js       # PreToolUse gate protecting token budget
-└── skills/
-    ├── loop-engineering/           # Manager-worker parallel-agent workflows (Mode A & Mode B)
-    └── repo-research/              # Repository structure/dependency analysis & project-context generation
-```
+- Claude Code with plugin support.
+- `node` on `PATH` (the hook is a Node.js script).
+- Python 3 and `git` for the skill scripts (worktree provisioning, branch audit, repo analysis).
 
----
+## Installation
 
-## 2. Multi-Agent Topologies & Execution DAG
-
-```mermaid
-flowchart TD
-    STATE0["STATE 0: MEMORY RESTORE & TRIAGE GATE<br/>Load context/memory/MEMORY.md + Author PLAN.md with Parallel Execution Tracks"]
-    STATE0 -->|"Discovery Needed"| STATE1["STATE 1: PARALLEL DISCOVERY<br/>product-analyst and architect-engineer"]
-    STATE0 -->|"Direct Build"| STATE2
-    STATE1 --> STATE2["STATE 2: PARALLEL FAN-OUT<br/>Mode A: Disjoint Files or Mode B: Git Worktrees"]
-    STATE2 --> VERIFY["STATE 3 & 4: PARALLEL VERIFY & AUDIT<br/>qa-tester (exit code 0) and compliance-verifier (APPROVED)"]
-    VERIFY -->|"Fail / Reject (Max 3 Loops)"| STATE2
-    VERIFY -->|"Pass"| STATE5["STATE 5: FAN-IN, MERGE & SHIP"]
-```
-
-* **Mode A — Disjoint File Partitioning [Default]**: Parallel `Agent` workers modify strictly non-overlapping files/directories in the same working tree with zero `git merge` overhead on Fan-In.
-* **Mode B — Git Worktree Isolation (`git worktree`)**: Parallel workers operate in isolated branches/worktrees when tracks touch shared files (`package.json`, routers, migrations) and merge cleanly at Fan-In.
-* **Review Committee**: Concurrent `qa-tester` and `compliance-verifier` evaluation capped at 3 self-correction iterations.
-
----
-
-## 3. Bundled Skills (2 Packaged Modules)
-
-1. **`loop-engineering`**: Guides parallel subagent dispatching via the `Agent` tool across **Mode A: Disjoint File Partitioning** (default in-tree parallel execution when workers own strictly non-overlapping files) and **Mode B: Git Worktree Isolation** (separate git worktrees when tracks touch shared files), concurrent `qa-tester` + `compliance-verifier` verification, self-correction loops bounded by the 3-loop cap, and PR review automation patterns.
-2. **`repo-research`**: Analyzes a repository's structure, technologies, and dependency graph to produce or update a project context document.
-
----
-
-## 4. Lifecycle Hooks & Token Guard
-
-| Hook Event | Script | Behavior |
-| :--- | :--- | :--- |
-| **`PreToolUse`** | `hooks/context-guard-gate.js` | Intercepts large file read operations, preventing massive token dumps and enforcing offset budgets. |
-
----
-
-## 5. Installation
-
-**Claude Code** — from the GitHub marketplace (dependencies and updates handled by Claude Code):
 ```bash
 claude plugin marketplace add jggomez/expert-ai-developer-skills
 claude plugin install multi-agent-ops@expert-ai-developer-skills
 ```
-Updates, per-project `.claude/settings.json`, local development and limitations: [`docs/claude-code-installation.md`](../../../docs/claude-code-installation.md).
 
+Updates, project scope and local development: [docs/claude-code-installation.md](../../../docs/claude-code-installation.md).
+
+## Quick start
+
+```text
+Analyze this repository and generate a project context document.
+I have 3 independent features: provision one git worktree per feature and give me a prompt for each worker.
+Audit the open feature branches for quality gate failures.
+```
+
+## What's included
+
+## Bundled Skills
+
+| Skill | Purpose |
+| :--- | :--- |
+| **`loop-engineering`** | 3-tier SDLC triage, root `AGENTS.md` bootstrap, Mode A / Mode B parallel workers, 3-loop self-correction. Scripts: `run_parallel_agents.py` (one `../worktree-<task>` per task, optional `tasks.json`), `pr_cron_reviewer.py` (feature branch audit). |
+| **`repo-research`** | Maps structure, stack, commands and invariants into `.agents/rules/project-context.md` (`<= 80` lines) and syncs root `AGENTS.md` and `context/memory/MEMORY.md`. Script: `repo_analyzer.py`. |
+
+### Hooks
+
+| Event | Script | Behavior |
+| :--- | :--- | :--- |
+| `PreToolUse` (`Read`) | `hooks/context-guard-gate.js` | Denies reads of binary files, of lockfiles and minified bundles over 200 KB without `offset`/`limit`, and of any file over 500 KB without `offset`/`limit`. |
+
+## How it works
+
+1. Every `Read` call passes through `context-guard-gate.js` (15 s timeout).
+2. Images and PDFs (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.pdf`) are always allowed.
+3. Binary extensions are always denied: `.ico`, `.zip`, `.tar`, `.gz`, `.exe`, `.bin`, `.dylib`, `.so`, `.dll`, `.a`, `.pyc`, `.class`, `.jar`.
+4. Lockfiles (`package-lock.json`, `yarn.lock`, `poetry.lock`, ...), `*.min.js`, `*.min.css` and `*.map` over 200 KB need `offset` or `limit`.
+5. Any other file over 500 KB needs `offset` or `limit`.
+6. Missing files and directories pass through to `Read` unchanged.
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+| :--- | :--- | :--- |
+| `[CONTEXT GUARD VIOLATION]` "appears to be a binary file" | Extension is on the binary list. | Inspect it with a shell tool (`unzip -l`, `file`) instead of `Read`. |
+| `[CONTEXT GUARD VIOLATION]` "exceeds the 500KB safe context threshold" | Large file read without pagination. | Pass `offset` and `limit`, or search with `Grep` first. |
+| `[CONTEXT GUARD VIOLATION]` on a lockfile | Lockfile or bundle over 200 KB. | Use `Grep` for the package or key you need. |
+| `git worktree add` fails in `run_parallel_agents.py` | The branch is already checked out in another worktree. | Pick a new branch name or `git worktree remove` the old worktree. |
+
+## Related plugins
+
+- [senior-dev](../senior-dev/README.md): orchestrator and specialist agents that run these loops.
+- [git-workflow](../git-workflow/README.md): branch safety and Conventional Commits gates.
+- [shared-context](../shared-context/README.md): cross-session memory in `context/`.
+
+## License
+
+Apache-2.0. See [LICENSE](../../../LICENSE).

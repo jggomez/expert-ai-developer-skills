@@ -318,7 +318,7 @@ def test_plugin_readme_bundled_skills_exist(workspace_root, plugin_dirs):
         with open(readme_path, "r", encoding="utf-8") as f:
             content = f.read()
 
-        section_match = re.search(r"## \d+\. Bundled Skills.*?(?=\n## |\Z)", content, re.DOTALL)
+        section_match = re.search(r"## (?:\d+\. )?Bundled Skills.*?(?=\n## |\Z)", content, re.DOTALL)
         if not section_match:
             errors.append(f"{plugin}: could not find a 'Bundled Skills' section in the README")
             continue

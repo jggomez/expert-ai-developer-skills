@@ -97,7 +97,7 @@ def _wrapper_args(command):
 
 
 def _readme_bundled_skills(readme):
-    section = re.search(r"## \d+\. Bundled Skills.*?(?=\n## |\Z)", readme, re.DOTALL)
+    section = re.search(r"## (?:\d+\. )?Bundled Skills.*?(?=\n## |\Z)", readme, re.DOTALL)
     assert section, "README has no '## N. Bundled Skills' section"
     return set(re.findall(r"\*\*`([a-z0-9-]+)`\*\*", section.group(0)))
 

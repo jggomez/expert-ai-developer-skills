@@ -1,147 +1,134 @@
-# Python Backend Plugin
+# python-backend
 
-[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
-[![Plugin](https://img.shields.io/badge/Plugin-python--backend-green?style=flat-square)](.)
+> Production Python backend engineering for Claude Code: FastAPI/Django/Flask orchestration, TDD, migrations, CI gates and Cloud Run / Firebase guardrails.
 
-The `python-backend` plugin is a unified customization package designed to automate quality gates, enforce branch safety constraints (Gitflow), validate test execution, and link external GCP and Firebase resources through the Model Context Protocol (MCP).
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](../../../LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Claude%20Code-orange)](../../../docs/claude-code-installation.md)
 
-This plugin supports **both Antigravity CLI and Claude Code**, each verified against its own official schema (not assumed): `hooks.json` carries a `"hooks"` key for Claude Code and a separate named group for Antigravity in the same file — each host reads only the key it understands. `.mcp.json` (Claude Code) and `mcp_config.json` (Antigravity) ship side by side since the filenames don't collide. The hook scripts detect the host at runtime (via `CLAUDE_PLUGIN_ROOT`) and emit the correct decision format for each — Claude Code's `hookSpecificOutput.permissionDecision`, or Antigravity's top-level `decision` field.
+`python-backend` adds a Python backend orchestrator, backend skills and quality gates on top of `senior-dev`.
+Its hooks require a plan before Python edits, block git writes on protected branches, ask before deployments, and run the test suite before a turn ends.
+It also registers the Cloud Run and Firebase MCP servers.
 
-> **Maintaining the bundled skills**: `skills/` below is a physical copy of the matching directories in the root `/skills` catalog, kept self-contained so the plugin folder can be distributed on its own. After editing any bundled skill under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo root to re-sync this copy — don't hand-edit both. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills` fails CI if the two ever drift.
+## Requirements
 
----
+| Requirement | Why |
+| :--- | :--- |
+| Claude Code | Plugin host |
+| `node` and `npx` on `PATH` | Hook scripts and MCP servers |
+| Python 3 (`pytest` recommended) | The stop gate runs `pytest`, or `unittest` as a fallback |
+| `senior-dev` plugin | Declared dependency; installed automatically |
 
-## 1. Directory Tree & Architecture
+## Installation
 
-```
-plugins/python-backend/
-├── README.md             # This usage and configuration manual
-├── plugin.json           # Required marker containing metadata (Antigravity reads this at plugin root)
-├── .claude-plugin/
-│   └── plugin.json       # Same metadata — Claude Code requires the manifest here, not at plugin root
-├── .mcp.json             # MCP definitions for Claude Code (GCP, Firebase)
-├── mcp_config.json       # Same MCP definitions, Antigravity's format (serverUrl-based entries not needed here — both are stdio)
-├── hooks.json            # Lifecycle hook registrations for both hosts, in one file
-├── hooks/                # Node.js hook event handlers (host-aware)
-│   ├── python-backend-activate.js  # Runs on SessionStart (Claude Code only — Antigravity has no SessionStart event; its rules/ dir auto-loads instead)
-│   ├── pre-tool-gate.js            # Runs on PreToolUse; enforces Plan-First, gitflow & cloud deployment guardrails
-│   └── stop-gate.js                # Runs on Stop; quality gate checking test suite
-├── agents/
-│   └── python-backend-orchestrator.md # Senior Python Backend Orchestrator (6-State DAG, Parallel Slices)
-├── rules/                # Central system guidelines
-│   ├── python-backend-rules.md     # 6-State DAG, API/Migration Triage Gate, Parallel Slices & context/memory/
-│   └── git-hooks.md                # Blueprints for pre-commit & commit-msg hooks
-└── skills/               # Bundled developer skills (11 modules; specialist skills come from senior-dev)
-    ├── python-expert/
-    ├── test-driven-development/
-    ├── pull-request-expert/
-    ├── security-audit/
-    ├── performance-scalability/
-    ├── database-migration-expert/
-    ├── design-spec-expert/
-    ├── build-and-ci-gates/
-    ├── context-capture/
-    ├── context-restore/
-    └── loop-engineering/
-```
-
----
-
-## 2. 6-State DAG, Triage Gate & Parallel Vertical Slices
-
-1. **`State 0` — Silent LLM Wiki Restore & API/Migration Triage Gate**: Silently reads `context/memory/MEMORY.md` (`~500 tokens`) and authors `PLAN.md` with an `## API & Database Migration Triage Gate` table evaluating when `database-migration-expert`, `senior-architect-engineering`, and `design-spec-expert` must be applied upfront.
-2. **Parallel Backend Vertical Slices**: Dispatches independent FastAPI/Django vertical slices in parallel under **Mode A (`Disjoint Files`)** across non-overlapping routers, services, repositories, and unit tests, or **Mode B (`Git Worktree` isolation)** when parallel tracks generate Alembic/Django migrations or edit shared `main.py`/settings.
-3. **`State 5` — Token-Conserving LLM Wiki Update**: Updates `context/memory/` (`MEMORY.md`, `architecture.md` for API/schema contracts, `conventions.md`, and `log/YYYY-MM-DD.md`) only upon milestone completion or explicit user handoff.
-
-
-**Depends on `senior-dev`** (`"dependencies": ["senior-dev"]` in `.claude-plugin/plugin.json`): Claude Code installs it with this plugin. The orchestrator dispatches its specialists as `senior-dev:<agent>` (exact list in the agent's *Claude Code Runtime Notes*): `product-analyst`, `ui-ux-designer`, `architect-engineer`, `code-implementer`, `qa-tester`, `compliance-verifier`, `critic`, `challenger`, `e2e-blackbox-tester`. Their skills come from `senior-dev` too, so nothing is duplicated in context.
-
----
-
-## 3. Integrated Configuration Assets
-
-### 3.1 Model Context Protocol (`.mcp.json` / `mcp_config.json`)
-Registers secure, lazy-loaded cloud management tools — for both Claude Code (`.mcp.json`) and Antigravity (`mcp_config.json`):
-- **`cloudrun`**: Enables listing services, fetching service details, viewing deployment logs, and running deployments.
-- **`firebase-mcp-server`**: Enables Cloud Firestore collection lookups, document mutations, and real-time database queries.
-
-### 3.2 Lifecycle Hook Mappings (`hooks.json`)
-One file, two hosts — Claude Code reads the top-level `"hooks"` key, Antigravity reads the separate `"python-backend-safety-gates"` named group (its own schema: `enabled` + event arrays):
-- **`SessionStart`** (Claude Code only — this event doesn't exist in Antigravity): runs `python-backend-activate.js` to load rules and check cloud credentials. On Antigravity, `rules/python-backend-rules.md` auto-loads via the plugin's `rules/` directory instead.
-- **`PreToolUse`**: runs `pre-tool-gate.js` before executing file modifications, command line tools, or MCP tools.
-- **`Stop`**: runs `stop-gate.js` before finishing a request to verify the test suite state.
-
----
-
-## 4. Operations & Safety Gates Detail
-
-### 4.1 Plan-First & Gitflow Branch Block (Intercepts edits & commits/pushes)
-- **Goal**: Require `PLAN.md` before modifying `.py` files (while permitting `context/memory/` and `.agents/` updates) and protect staging (`develop`) and production (`main`) branches.
-- **Mechanism**: The `PreToolUse` hook verifies `PLAN.md` exists before Python edits and checks the active git branch before `git add/commit/push/merge`, returning `deny` on `main` or `develop`.
-
-### 4.2 Deployment Lock (Ask)
-- **Goal**: Avoid accidental modifications or deployments to cloud targets.
-- **Mechanism**: If a command contains deployment keywords (`deploy`, `kubectl apply`) or calls GCP/Firebase MCP modification APIs, the `PreToolUse` hook returns an `ask` permission decision.
-
-### 4.3 Test Verification Gate (Request finalization blocker)
-- **Goal**: Ensure 0 regressions are delivered.
-- **Mechanism**: When the agent attempts to stop or complete a task, the `Stop` hook runs the project's test suite via `python3 ./skills/test-driven-development/scripts/verify_tests.py`. If tests fail, it halts termination, outputs the traceback, and forces the developer/agent loop to continue until resolved.
-
----
-
-## 5. Bundled Skills (11 Packaged Modules)
-
-Bundled with this plugin (descriptions always listed; full content loads on demand through the `Skill` tool):
-
-1. **`python-expert`**: AST analysis and memory optimization check.
-2. **`test-driven-development`**: AAA execution patterns.
-3. **`pull-request-expert`**: Size checks and Conventional Commit logs.
-4. **`security-audit`**: OWASP Top 10 scanner.
-5. **`performance-scalability`**: CPU/Memory execution profiler.
-6. **`database-migration-expert`**: Alembic schema migrations.
-7. **`design-spec-expert`**: SDD schemas.
-8. **`build-and-ci-gates`**: Pre-commit quality hook gates.
-9. **`context-capture`**: Updates the Cross-AI LLM Wiki (`context/memory/MEMORY.md`, `architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) at `State 5` or explicit handoff.
-10. **`context-restore`**: Progressive disclosure reader (`context/memory/MEMORY.md` at `State 0`, drilling down on demand).
-11. **`loop-engineering`**: Bounded 3-strike fix loops for automated test and static-analysis verification (preloaded by the orchestrator).
-
-From the `senior-dev` dependency (not duplicated here): `code-smells-expert`, `refactoring-code-expert`, `senior-architect-engineering`, and the specialist skills (`product-analyst`, `ui-ux-designer`, `code-implementer`, `qa-tester`, `compliance-verifier`, `code-critic`, `adversarial-challenger`, `blackbox-tester`).
-
----
-
-## 6. Example Prompts
-
-The Gitflow/deployment/test-verification gates apply automatically once the plugin is installed — no prompt needed. The skills below activate when you ask for what they cover:
-
-- "Review this Python module for PEP 8 compliance and `__slots__` memory optimization." (`python-expert`)
-- "Add a new field to the API and write it test-first, Red-Green-Refactor." (`test-driven-development`)
-- "Prepare this branch for a pull request and check it against the 200-line size guideline." (`pull-request-expert`)
-- "Scan this service for God classes and high-complexity methods." (`code-smells-expert`)
-- "Extract the validation logic from this function without changing its behavior." (`refactoring-code-expert`)
-- "Run a security audit on this codebase for hardcoded secrets and OWASP Top 10 issues." (`security-audit`)
-- "Profile this endpoint for N+1 queries and memory usage." (`performance-scalability`)
-- "Write a zero-downtime Alembic migration that adds a NOT NULL column." (`database-migration-expert`)
-- "Draft an ADR for choosing between REST and gRPC for this internal service." (`senior-architect-engineering`)
-- "Scaffold a Software Design Document for the new billing service." (`design-spec-expert`)
-- "Set up a pre-commit hook that runs lint, tests, and the secret scanner." (`build-and-ci-gates`)
-
----
-
-## 7. Installation
-
-**Claude Code** — from the GitHub marketplace (dependencies and updates handled by Claude Code):
 ```bash
 claude plugin marketplace add jggomez/expert-ai-developer-skills
 claude plugin install python-backend@expert-ai-developer-skills
 ```
 
-Installing it also installs its dependency `senior-dev` automatically.
-Updates, per-project `.claude/settings.json`, local development and limitations: [`docs/claude-code-installation.md`](../../../docs/claude-code-installation.md).
+`.claude-plugin/plugin.json` declares `"dependencies": ["senior-dev"]`, so Claude Code installs `senior-dev` too.
+This plugin does not ship copies of the `senior-dev` agents or skills.
 
-**Antigravity CLI** — global only, via the CLI (don't hand-copy into `~/.gemini/...`):
+Updates, per-project settings, local development and limitations: [Claude Code installation guide](../../../docs/claude-code-installation.md).
+
+## Quick start
+
+Run the orchestrator as the main thread so it can ask you for approval at the alignment gate:
+
 ```bash
-agy plugin install ./plugins/python-backend
+claude --agent python-backend:python-backend-orchestrator
 ```
 
-Try triggering a gate directly to see it in action: "Commit and push directly to main" (the Gitflow hook should deny it) or "Deploy this service to Cloud Run" (the deployment hook should ask for explicit approval first).
+Example prompts:
 
+- "Add a `GET /orders/{id}` endpoint, test-first, with a zero-downtime Alembic migration."
+- "Run a security audit on this service for hardcoded secrets and OWASP Top 10 issues."
+- "Profile this endpoint for N+1 queries and memory usage."
+
+The gates apply in any session once the plugin is installed. Try "commit this directly to main" to see the branch gate deny it.
+
+## What's included
+
+### Agents
+
+| Agent | Role | Model |
+| :--- | :--- | :--- |
+| `python-backend-orchestrator` | Plans and governs FastAPI, Django and Flask work; writes `PLAN.md` and delegates to specialists | `inherit` |
+
+The orchestrator dispatches `senior-dev` specialists by their namespaced type: `senior-dev:product-analyst`, `senior-dev:ui-ux-designer`, `senior-dev:architect-engineer`, `senior-dev:code-implementer`, `senior-dev:qa-tester`, `senior-dev:compliance-verifier`, `senior-dev:critic`, `senior-dev:challenger` and `senior-dev:e2e-blackbox-tester`.
+
+## Bundled Skills
+
+| Skill | Purpose |
+| :--- | :--- |
+| **`python-expert`** | PEP 8, modern type hints, generators, `__slots__`/dataclasses, `asyncio` TaskGroup |
+| **`test-driven-development`** | Red-Green-Refactor cycles, mocks and testable design |
+| **`database-migration-expert`** | Schema migrations, seed data and table versioning (Alembic, SQL) |
+| **`design-spec-expert`** | Concise API specs and design documents before coding new endpoints or services |
+| **`security-audit`** | Security review of code, IaC and designs (injection, access control, secrets) |
+| **`performance-scalability`** | Slow queries, caching, memory leaks and scaling limits |
+| **`build-and-ci-gates`** | Linters, formatters and CI pipelines that stop failing builds |
+| **`pull-request-expert`** | Concise pull requests with Conventional Commits validation |
+| **`context-capture`** | Write cross-session memory to `context/memory/` at the end of a milestone |
+| **`context-restore`** | Read `context/memory/MEMORY.md` at session start |
+| **`loop-engineering`** | Tier routing, parallel isolation (disjoint files or git worktree) and bounded fix loops |
+
+Architecture, refactoring, code-smell and specialist skills come from `senior-dev`.
+
+### Hooks
+
+| Event | Script | Behavior |
+| :--- | :--- | :--- |
+| `SessionStart` | `hooks/python-backend-activate.js` | Injects `rules/python-backend-rules.md` as context if present. This package ships no `rules/` directory, so it currently injects nothing |
+| `PreToolUse` (`Write`, `Edit`) | `hooks/pre-tool-gate.js` | Denies `.py` edits on `main`, `master`, `develop` or `dev`. Denies `.py` edits without `PLAN.md` unless the edit is small |
+| `PreToolUse` (`Bash`) | `hooks/pre-tool-gate.js` | Asks before deploy commands (`deploy`, `apply -f`). Denies `git add/commit/push/merge` on protected branches |
+| `PreToolUse` (MCP) | `hooks/pre-tool-gate.js` | Asks before Cloud Run `deploy_*` tools and Firebase add/update/delete/set tools |
+| `Stop` | `hooks/stop-gate.js` | If tests exist, runs `pytest` (or `unittest`) and blocks finishing on failures |
+
+### MCP servers
+
+| Server | Command | Purpose |
+| :--- | :--- | :--- |
+| `cloudrun` | `npx -y @google-cloud/cloud-run-mcp` | List, inspect, deploy and read logs of Cloud Run services |
+| `firebase-mcp-server` | `npx -y firebase-tools@latest mcp` | Firebase projects, Firestore, Auth and related tools |
+
+## How it works
+
+1. The orchestrator restores `context/memory/MEMORY.md` and writes a short `PLAN.md` with a tier and an API / migration triage table.
+2. Tier 2 and 3 run only the discovery specialists the plan justifies, then pause for your approval.
+3. Vertical slices (router, service, repository, tests) run in parallel on disjoint files, or in git worktrees when they touch migrations or shared settings.
+4. QA, compliance and, for high-risk changes, adversarial reviewers verify the work.
+5. The milestone is saved to `context/memory/`.
+
+The full lifecycle is described in the root [README](../../../README.md) and [AGENTS.md](../../../AGENTS.md).
+
+## Configuration
+
+To make the orchestrator the default agent for a project, add this to `.claude/settings.json`:
+
+```json
+{
+  "agent": "python-backend:python-backend-orchestrator"
+}
+```
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+| :--- | :--- | :--- |
+| `.py` edit denied with `PLAN-FIRST VIOLATION` | No `PLAN.md` at the repo root, `docs/`, `.agents/` or `.claude/` | Create `PLAN.md`. Small `Edit` calls (10 lines or fewer per side) are allowed without it |
+| `git commit` denied with `Gitflow Safety Blocked` | Protected branch (`main`, `master`, `develop`, `dev`) | Work on a `feature/` or `bugfix/` branch and merge via pull request |
+| A command containing `deploy` asks for approval | Deployment guardrail | Approve it if the deployment is intended |
+| Agent cannot finish: `PYTHON QUALITY GATE FAILURE` | Stop gate ran the tests and they failed | Fix the tests or code. The gate blocks at most 3 times per turn and skips if code is unchanged since the last pass |
+| Stop gate never runs tests | No `tests/`, `test/`, `pytest.ini`, `setup.cfg` or `test_*.py` at the workspace root | Add a test suite at the project root |
+
+## Related plugins
+
+- [senior-dev](../senior-dev/README.md): general SDLC orchestrator and specialists (required dependency).
+- [sql-query-optimizer](../sql-query-optimizer/README.md): diagnose and rewrite slow SQL queries.
+- [git-workflow](../git-workflow/README.md): branch and pull request workflow.
+- [shared-context](../shared-context/README.md): cross-agent memory in a committed `context/` directory.
+- [Antigravity variant](../../antigravity/python-backend/README.md) of this plugin.
+
+## License
+
+Apache-2.0. See [LICENSE](../../../LICENSE).

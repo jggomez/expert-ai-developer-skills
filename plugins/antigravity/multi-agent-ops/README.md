@@ -1,85 +1,82 @@
-# Multi-Agent Ops Plugin
+# multi-agent-ops
 
-[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
-[![Plugin](https://img.shields.io/badge/Plugin-multi--agent--ops-green?style=flat-square)](.)
+> Parallel agent loops, repository research and a context guard for Google Antigravity.
 
-The `multi-agent-ops` plugin packages manager-worker orchestration, **Mode A (Disjoint File Partitioning)** and **Mode B (Git Worktree Isolation)** parallel execution, self-correcting development loops, and context-guard safety gates for **Google Antigravity** and **Claude Code**.
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square)](../../../LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Antigravity-4285F4?style=flat-square)](.)
 
-> **Maintaining the bundled skills**: `skills/` below is a physical copy of the matching directories in the root `/skills` catalog. After editing either skill under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo root to re-sync this copy. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills` fails CI if the two ever drift.
+`multi-agent-ops` helps one session coordinate several workers safely. `loop-engineering` covers 3-tier
+triage, parallel builds on disjoint files (Mode A, `Workspace: "inherit"`) or git worktrees (Mode B,
+`Workspace: "branch"`), and a 3-iteration self-correction cap. `repo-research` maps a codebase into a
+short context file. A `PreToolUse` hook stops `view_file` calls that would flood the context window.
 
----
+## Requirements
 
-## 1. Directory Tree & Architecture
+- Google Antigravity with the `agy` CLI.
+- `node` on `PATH` (the hook is a Node.js script).
+- Python 3 and `git` for the skill scripts (worktree provisioning, branch audit, repo analysis).
 
-```
-plugins/antigravity/multi-agent-ops/
-├── README.md                       # This usage manual
-├── plugin.json                     # Antigravity plugin manifest
-├── .claude-plugin/
-│   └── plugin.json                 # Claude Code plugin manifest
-├── hooks.json                      # Hook registrations
-├── hooks/
-│   └── context-guard-gate.js       # PreToolUse gate protecting token budget
-├── rules/
-│   └── multi-agent-ops-rules.md    # Multi-agent DAG & parallel Mode A/B coordination rules
-└── skills/
-    ├── loop-engineering/           # Manager-worker parallel-agent workflows (Mode A & Mode B)
-    └── repo-research/              # Repository structure/dependency analysis & project-context generation
-```
+## Installation
 
----
-
-## 2. Multi-Agent Topologies & Execution DAG
-
-```mermaid
-flowchart TD
-    STATE0["STATE 0: MEMORY RESTORE & TRIAGE GATE<br/>Load context/memory/MEMORY.md + Author PLAN.md with Parallel Execution Tracks"]
-    STATE0 -->|"Discovery Needed"| STATE1["STATE 1: PARALLEL DISCOVERY<br/>product-analyst and architect-engineer"]
-    STATE0 -->|"Direct Build"| STATE2
-    STATE1 --> STATE2["STATE 2: PARALLEL FAN-OUT<br/>Mode A: Disjoint Files or Mode B: Git Worktrees"]
-    STATE2 --> VERIFY["STATE 3 & 4: PARALLEL VERIFY & AUDIT<br/>qa-tester (exit code 0) and compliance-verifier (APPROVED)"]
-    VERIFY -->|"Fail / Reject (Max 3 Loops)"| STATE2
-    VERIFY -->|"Pass"| STATE5["STATE 5: FAN-IN, MERGE & SHIP"]
-```
-
-* **Mode A — Disjoint File Partitioning (`Workspace: "inherit"`) [Default]**: Parallel workers modify strictly non-overlapping files/directories in the same working tree with zero `git merge` overhead on Fan-In.
-* **Mode B — Git Worktree Isolation (`Workspace: "branch"` / `git worktree`)**: Parallel workers operate in isolated branches/worktrees when tracks touch shared files (`package.json`, routers, migrations) and merge cleanly at Fan-In.
-* **Review Committee**: Concurrent `qa-tester` and `compliance-verifier` evaluation capped at 3 self-correction iterations.
-
----
-
-## 3. Bundled Skills (2 Packaged Modules)
-
-1. **`loop-engineering`**: Guides parallel subagent dispatching across **Mode A: Disjoint File Partitioning** (default in-tree parallel execution when workers own strictly non-overlapping files) and **Mode B: Git Worktree Isolation** (separate git worktrees when tracks touch shared files), concurrent `qa-tester` + `compliance-verifier` verification, self-correction loops bounded by the 3-loop cap, and PR review automation patterns.
-2. **`repo-research`**: Analyzes a repository's structure, technologies, and dependency graph to produce or update a project context document.
-
----
-
-## 4. Lifecycle Hooks & Token Guard
-
-| Hook Event | Script | Behavior |
-| :--- | :--- | :--- |
-| **`PreToolUse`** | `hooks/context-guard-gate.js` | Intercepts large file read operations (`view_file`), preventing massive token dumps and enforcing line-offset budgeting. |
-
----
-
-## 5. Example Prompts
-
-- "Analyze this repository and generate a project context document." (`repo-research`)
-- "I have 3 independent features to build — provision isolated worktrees for each so I can dispatch a subagent per branch." (`loop-engineering`)
-- "Audit the open feature branches for quality gate failures." (`loop-engineering`, via `pr_cron_reviewer.py`)
-- "Orchestrate a self-correcting development loop with a strict 3-loop cap." (`loop-engineering`)
-
----
-
-## 6. Installation
-
-**Antigravity CLI**:
 ```bash
 agy plugin install ./plugins/antigravity/multi-agent-ops
 ```
 
-**Claude Code**:
-```bash
-claude plugin install plugins/claude/multi-agent-ops
+## Quick start
+
+```text
+Analyze this repository and generate a project context document.
+I have 3 independent features: provision one git worktree per feature and give me a prompt for each worker.
+Audit the open feature branches for quality gate failures.
 ```
+
+## What's included
+
+## Bundled Skills
+
+| Skill | Purpose |
+| :--- | :--- |
+| **`loop-engineering`** | 3-tier SDLC triage, root `AGENTS.md` bootstrap, Mode A / Mode B parallel workers, 3-loop self-correction. Scripts: `run_parallel_agents.py` (one `../worktree-<task>` per task, optional `tasks.json`), `pr_cron_reviewer.py` (feature branch audit). |
+| **`repo-research`** | Maps structure, stack, commands and invariants into `.agents/rules/project-context.md` (`<= 80` lines) and syncs root `AGENTS.md` and `context/memory/MEMORY.md`. Script: `repo_analyzer.py`. |
+
+### Hooks
+
+| Event | Script | Behavior |
+| :--- | :--- | :--- |
+| `PreToolUse` (`view_file`) | `hooks/context-guard-gate.js` | Denies reading a file over 500 KB when neither `StartLine` nor `EndLine` is given. |
+
+### Rules
+
+| File | Purpose |
+| :--- | :--- |
+| `rules/multi-agent-ops-rules.md` | Always-on rule: 6-state DAG, 3-tier SDLC, per-subagent `Invoke / SKIP` triage, artifact caps, Fail-Honest E2E. |
+
+## How it works
+
+1. Every `view_file` call passes through `context-guard-gate.js` (10 s timeout).
+2. The hook reads the file size from `AbsolutePath`. Missing files are allowed.
+3. Over 500 KB without a line range, it returns `{ "decision": "deny", "reason": ... }`.
+4. All other calls return `{ "decision": "allow" }`.
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+| :--- | :--- | :--- |
+| `[CONTEXT GUARD BLOCKED]` on `view_file` | File is over 500 KB and no line range was given. | Locate the section with `grep_search`, then pass `StartLine` and `EndLine`. |
+| `git worktree add` fails in `run_parallel_agents.py` | The branch is already checked out in another worktree. | Pick a new branch name or `git worktree remove` the old worktree. |
+| Guard never fires | `node` is missing or the plugin is not installed. | Install Node.js and rerun the install command. |
+
+## Related plugins
+
+- [senior-dev](../senior-dev/README.md): orchestrator and specialist agents that run these loops.
+- [git-workflow](../git-workflow/README.md): branch safety and Conventional Commits gates.
+- [shared-context](../shared-context/README.md): cross-session memory in `context/`.
+
+## Maintenance
+
+`skills/` is a copy of the root `/skills` catalog. After editing a skill there, run
+`python3 scripts/sync_plugin_skills.py` from the repo root.
+
+## License
+
+Apache-2.0. See [LICENSE](../../../LICENSE).

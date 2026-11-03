@@ -1,73 +1,112 @@
-# Senior Data Engineer Plugin
+# senior-data-engineer
 
-[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
-[![Plugin](https://img.shields.io/badge/Plugin-senior--data--engineer-green?style=flat-square)](.)
+> Google Cloud data engineering subagent with BigQuery, Datastream, Dataform and Pub/Sub MCP access, for Google Antigravity.
 
-The `senior-data-engineer` plugin packages Google Cloud data engineering expertise for **Google Antigravity**: one specialized subagent, four bundled skills (GCP lakehouse architecture decisions, CDC/SCD patterns, and cross-AI LLM Wiki memory restore/capture), direct MCP access to GCP data services, parallel Silver/Gold mart & SQL audit execution, and deterministic lifecycle safety gates.
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square)](../../../LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Antigravity-4285F4?style=flat-square)](.)
 
-- **LLM Wiki Memory (`context/memory/`)**: At **State 0**, `senior-data-engineer` silently reads `context/memory/MEMORY.md` (and `architecture.md` on demand) to reuse known BigQuery dataset layouts, partition/clustering keys, and SLAs without redundant schema scans. At **State 6**, it persists Bronze/Silver/Gold table contracts, partition/cluster keys, and SLA decisions into `context/memory/`.
-- **Parallel Lakehouse Execution (`State 3 & 4`)**: Supports building independent Silver/Gold `.sqlx` marts in parallel (`Mode A: Disjoint Files`) and delegating slow SQL query tuning to `sql-query-optimizer` in parallel with Dataform quality assertions.
-- **Google Antigravity**: Install via `agy plugin install ./plugins/antigravity/senior-data-engineer`. Subagent in `agents/` declares native Antigravity tools (`run_command`, `write_to_file`, `replace_file_content`, `view_file`, `call_mcp_tool`) with `commandExecutionPolicy: auto`.
+`senior-data-engineer` designs and builds data pipelines on Google Cloud: lake/warehouse architecture, CDC through Datastream, SCD modeling in BigQuery and Dataform, and orchestration.
+It ships one subagent, four skills, an always-on rules file, two safety hooks and four MCP servers.
+The hooks block destructive data operations and stop the session when a Dataform project fails to compile or Python pipeline tests fail.
 
-> **Maintaining the bundled skills**: `skills/` below is a physical copy of the matching directories in the root `/skills` catalog. After editing any bundled skill under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo root to re-sync this copy. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills` fails CI if the two ever drift.
+## Requirements
 
----
+| Needs | For |
+| :--- | :--- |
+| `node` on `PATH` | Running the two hooks |
+| Google Cloud project and credentials (`gcloud` / `bq` with Application Default Credentials) | Live queries, dry runs and the MCP servers (`google_credentials` auth) |
+| `dataform` CLI (optional) | The Stop-hook compile check in Dataform projects |
+| `pytest` (optional) | The Stop-hook test run in Python pipeline projects |
 
-## 1. Directory Tree & Architecture
-
-```
-plugins/antigravity/senior-data-engineer/
-├── README.md                       # This usage manual
-├── plugin.json                     # Antigravity plugin manifest
-├── .claude-plugin/
-│   └── plugin.json                 # Manifest compatibility marker
-├── .mcp.json                       # BigQuery, Datastream, Dataform, Pub/Sub MCP servers
-├── mcp_config.json                 # Same 4 servers, Antigravity format
-├── hooks.json                      # Hook definitions
-├── hooks/
-│   ├── data-safety-gate.js         # PreToolUse gate preventing destructive operations
-│   └── data-quality-gate.js        # Stop hook validating Dataform/ETL compile
-├── agents/
-│   └── senior-data-engineer.md     # Specialized subagent (State 0-6 Lakehouse DAG)
-├── rules/
-│   └── data-engineer-rules.md      # GCP data architecture, LLM Wiki & parallel mart rules
-└── skills/                         # Physical copy of the 4 bundled skills
-    ├── gcp-data-engineering/       # Architecture decisions: storage, batch/streaming, BQ cost/perf
-    ├── cdc-scd-patterns/           # Datastream CDC checklist + SCD Type 0-6 + Dataform scaffolder
-    ├── context-capture/            # Persist lakehouse table contracts & SLAs to context/memory/
-    └── context-restore/            # Restore known BQ datasets, partition keys & SLAs at State 0
-```
-
----
-
-## 2. The Agent & Lakehouse DAG Integration
-
-| Agent | Role | Execution Policy | Typical Tools |
-| :--- | :--- | :--- | :--- |
-| **`senior-data-engineer`** | Restores/updates `context/memory/`, designs Bronze/Silver/Gold pipelines, implements CDC/SCD, builds parallel `.sqlx` marts (`Mode A: Disjoint Files`), and inspects real schemas via MCP. | `auto` | `run_command`, `write_to_file`, `replace_file_content`, `view_file`, `call_mcp_tool` |
-
----
-
-## 3. Lifecycle Hooks & Safety Gates
-
-| Hook Event | Script | Behavior |
-| :--- | :--- | :--- |
-| **`PreToolUse`** | `hooks/data-safety-gate.js` | Enforces Plan-First; blocks destructive BigQuery/GCS operations (`DROP TABLE`, `DELETE FROM` without WHERE, recursive bucket deletion). |
-| **`Stop`** | `hooks/data-quality-gate.js` | Validates Dataform compilation (`dataform compile`) and SQL syntax before session completion. |
-
----
-
-## 4. Bundled Skills (4 Packaged Modules)
-
-1. **`gcp-data-engineering`**: Guides Lakehouse vs Data Warehouse decisions, batch vs streaming tradeoffs, Cloud Composer vs Workflows vs Dataform selection, and BigQuery slot/partition optimization.
-2. **`cdc-scd-patterns`**: Datastream replication setup, BigQuery staging design, MERGE vs append patterns, and Slowly Changing Dimensions (Type 0-6) modeling.
-3. **`context-capture`**: Persists Bronze/Silver/Gold table contracts, partition/cluster keys, and SLA decisions into `context/memory/` (`MEMORY.md`, `architecture.md`, and `log/YYYY-MM-DD.md`) at `State 6`.
-4. **`context-restore`**: Silently restores `context/memory/MEMORY.md` (and `architecture.md` on demand) at `State 0` to reuse known BigQuery dataset layouts and partition/clustering keys.
-
----
-
-## 5. Installation
+## Installation
 
 ```bash
 agy plugin install ./plugins/antigravity/senior-data-engineer
 ```
+
+## Quick start
+
+```text
+Use the senior-data-engineer agent to design a Bronze/Silver/Gold lakehouse for our orders database replicated with Datastream.
+```
+
+```text
+Model the customers dimension as SCD Type 2 in Dataform and add uniqueness and not-null assertions.
+```
+
+```text
+Audit the partitioning and clustering of the analytics dataset and estimate the cost impact with bq query --dry_run.
+```
+
+## What's included
+
+### Agents
+
+| Agent | Role | Model |
+| :--- | :--- | :--- |
+| `senior-data-engineer` | Designs, builds and audits GCP pipelines: Medallion layers, Datastream CDC, SCD Type 1/2, Composer/Airflow DAGs, BigQuery cost and performance. `commandExecutionPolicy: auto`. | `inherit` |
+
+### Rules
+
+| File | Trigger | Purpose |
+| :--- | :--- | :--- |
+| `rules/data-engineer-rules.md` | `always_on` | Lakehouse workflow, 3-tier triage, memory handling and fail-honest verification |
+
+### Hooks
+
+| Event | Script | Behavior |
+| :--- | :--- | :--- |
+| `PreToolUse` (`run_command`, `call_mcp_tool`, `write_to_file`, `replace_file_content`) | `hooks/data-safety-gate.js` | Denies `DROP TABLE/SCHEMA/DATABASE`, `TRUNCATE TABLE`, `DELETE FROM ... WHERE 1=1`, `bq rm -f/-r`, `gsutil rm -r` and `gcloud storage rm --recursive`. Denies MCP `delete_table`, `delete_instance` and `delete_database`. Denies `.sql`, `.sqlx`, `.py` and `workflow_settings.yaml` writes on `main`, `master`, `develop` or `dev`, and without `PLAN.md` or `docs/PLAN.md`. |
+| `Stop` | `hooks/data-quality-gate.js` | On a model stop, runs `dataform compile` in Dataform projects and `pytest -q` in projects with `tests/` (or `test/`) plus `requirements.txt` or `pyproject.toml`. Asks the agent to continue on failure. Skips each check when its CLI is not installed. |
+
+### MCP servers
+
+| Server | Command | Purpose |
+| :--- | :--- | :--- |
+| `bigquery` | `https://bigquery.googleapis.com/mcp` | BigQuery datasets, schemas and query plans |
+| `datastream` | `https://datastream.googleapis.com/mcp` | Datastream CDC streams |
+| `dataform` | `https://dataform.us-central1.rep.googleapis.com/mcp` | Dataform repositories and workflows |
+| `pubsub` | `https://pubsub.googleapis.com/mcp` | Pub/Sub topics and subscriptions |
+
+All four are defined in `mcp_config.json` with `authProviderType: google_credentials`.
+
+## Bundled Skills
+
+| Skill | Purpose |
+| :--- | :--- |
+| **`gcp-data-engineering`** | Lake/warehouse/lakehouse design, batch vs. streaming, orchestration choice (Dataform, Composer/Airflow, Dataflow), BigQuery partitioning, clustering and slots |
+| **`cdc-scd-patterns`** | Datastream CDC ingestion and SCD Type 1/2 merge logic in BigQuery/Dataform; includes `scaffold_scd2_dataform.py` |
+| **`context-restore`** | Reads `context/memory/MEMORY.md` at session start to reuse known datasets, keys and SLAs |
+| **`context-capture`** | Writes table contracts, partition/cluster keys and SLA decisions to `context/memory/` when a task ships |
+
+Bundled skills are copies of the root `/skills` catalog. After editing a skill there, run `python3 scripts/sync_plugin_skills.py` from the repo root.
+
+## How it works
+
+1. The agent reads `context/memory/MEMORY.md` if it exists, then writes a short `PLAN.md` that classifies the task as Tier 1, 2 or 3.
+2. Tier 2 and 3 tasks pause on an `ask_question` prompt for your approval of data contracts, lineage and partitioning.
+3. Independent Silver/Gold `.sqlx` marts can be built in parallel on disjoint files.
+4. Verification uses `dataform compile` and `bq query --dry_run`. If a CLI or credentials are missing, the agent reports `BLOCKED` instead of inventing results.
+5. When the task ships, `context-capture` records durable decisions in `context/memory/`.
+
+Heavy SQL tuning is handed to [`sql-query-optimizer`](../sql-query-optimizer/README.md).
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+| :--- | :--- | :--- |
+| `[DATA SAFETY GATE VIOLATION]` on a command or MCP call | `DROP`, `TRUNCATE`, `WHERE 1=1` delete, forced/recursive `bq rm`, recursive storage delete, or an MCP delete call | Run it yourself after review |
+| `[DATA GRAPH GATE - PLAN FIRST]` when writing pipeline code | No `PLAN.md` in the workspace root or `docs/` | Create `PLAN.md`, then retry |
+| `[GIT BRANCH GOVERNANCE]` when writing pipeline code | You are on `main`, `master`, `develop` or `dev` | `git checkout -b feat/<slug>` |
+| Session continues with `[DATA QUALITY GATE VIOLATION]` | `dataform compile` or `pytest -q` failed | Fix the model or test; the output is included in the message |
+| Compile or test check never runs | `dataform` or `pytest` not on `PATH` | Install the CLI in the environment the hooks run in |
+
+## Related plugins
+
+- [`sql-query-optimizer`](../sql-query-optimizer/README.md): diagnoses and rewrites slow BigQuery and relational SQL.
+- [`shared-context`](../shared-context/README.md): the `context/memory/` store shared across sessions and hosts.
+- [Claude Code version](../../claude/senior-data-engineer/README.md) of this plugin.
+
+## License
+
+Apache-2.0. See [LICENSE](../../../LICENSE).

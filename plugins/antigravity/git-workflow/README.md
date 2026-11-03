@@ -1,64 +1,85 @@
-# Git Workflow Plugin
+# git-workflow
 
-[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
-[![Plugin](https://img.shields.io/badge/Plugin-git--workflow-green?style=flat-square)](.)
+> Branch safety, Conventional Commits and clean-merge gates for Google Antigravity.
 
-The `git-workflow` plugin packages git hygiene tooling — commit message standards, PR conventions, Gitflow branch safety gates, and clean-working-tree stop gates — for **Google Antigravity**.
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square)](../../../LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Antigravity-4285F4?style=flat-square)](.)
 
-- **Google Antigravity**: Install via `agy plugin install ./plugins/antigravity/git-workflow`.
+`git-workflow` keeps git history clean while an agent works. A `PreToolUse` hook denies git writes on
+`main`, `master` or `develop` and commit messages that break Conventional Commits. A `Stop` hook keeps
+the task open while merge conflicts are unresolved. An always-on rule and two skills cover branching,
+commit messages and pull requests.
 
-> **Maintaining the bundled skills**: `skills/` below is a physical copy of the matching directories in the root `/skills` catalog. After editing `commit-expert` or `pull-request-expert` under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo root to re-sync this copy. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills` fails CI if the two ever drift.
+## Requirements
 
----
+- Google Antigravity with the `agy` CLI.
+- `node` on `PATH` (hooks are Node.js scripts).
+- `git`. Python 3 to run the skill validator scripts.
 
-## 1. Directory Tree & Architecture
-
-```
-plugins/antigravity/git-workflow/
-├── README.md                       # This usage manual
-├── plugin.json                     # Antigravity plugin manifest
-├── .claude-plugin/
-│   └── plugin.json                 # Manifest compatibility marker
-├── hooks.json                      # Hook registrations
-├── hooks/
-│   ├── gitflow-branch-gate.js      # Blocks git add/commit/push/merge directly on main or develop
-│   └── git-clean-stop-gate.js      # Stop hook verifying clean git working state
-├── rules/
-│   └── gitflow-rules.md            # Git branching and commit guidelines
-└── skills/
-    ├── commit-expert/              # Conventional Commits guidelines & commit-msg validator
-    └── pull-request-expert/        # PR size limits, templates, branch/commit auditor
-```
-
----
-
-## 2. Gitflow Branch Safety Gate & Clean Stop Gate
-
-| Hook Event | Script | Behavior |
-| :--- | :--- | :--- |
-| **`PreToolUse`** | `hooks/gitflow-branch-gate.js` | Intercepts `run_command` shell calls. If it detects `git add`, `git commit`, `git push`, or `git merge` while the active branch is `main`, `master`, or `develop`, it denies the command. Feature work must happen on a dedicated branch. |
-| **`Stop`** | `hooks/git-clean-stop-gate.js` | Verifies that git working tree status is cleanly committed before session termination. |
-
----
-
-## 3. Bundled Skills (2 Packaged Modules)
-
-1. **`commit-expert`**: Conventional Commits regex formatting, the 7 rules of git messaging, and a `validate_commit_msg.py` hook script.
-2. **`pull-request-expert`**: PR size limits, atomic-change guidelines, PR template, and a `validate_pr_content.py` branch/commit auditor.
-
----
-
-## 4. Example Prompts
-
-- "Write a Conventional Commits message for these staged changes." (`commit-expert`)
-- "Validate this commit message file against Conventional Commits before I push." (`commit-expert`)
-- "Prepare this branch for a pull request — check the diff size and generate the PR description from the template." (`pull-request-expert`)
-- "Audit the last few commits on this branch for Conventional Commits compliance." (`pull-request-expert`)
-
----
-
-## 5. Installation
+## Installation
 
 ```bash
 agy plugin install ./plugins/antigravity/git-workflow
 ```
+
+## Quick start
+
+```text
+Write a Conventional Commits message for these staged changes.
+Prepare this branch for a pull request: check the diff size and fill in the PR template.
+Audit the last few commits on this branch for Conventional Commits compliance.
+```
+
+## What's included
+
+## Bundled Skills
+
+| Skill | Purpose |
+| :--- | :--- |
+| **`commit-expert`** | Conventional Commits guidelines, local git hook setup and `validate_commit_msg.py`. |
+| **`pull-request-expert`** | Concise, Fail-Honest PR descriptions, PR template and `validate_pr_content.py` (branch name, commit format, debug leaks). |
+
+### Hooks
+
+| Event | Script | Behavior |
+| :--- | :--- | :--- |
+| `PreToolUse` (`run_command`) | `hooks/gitflow-branch-gate.js` | Denies `git add`, `git commit`, `git push` and `git merge` when the current branch is `main`, `master` or `develop`. Denies `git commit -m` messages that do not match `<type>(<scope>): <subject>`. |
+| `Stop` | `hooks/git-clean-stop-gate.js` | On a model stop, returns `continue` when `git status --porcelain` shows unresolved conflicts (`UU`, `AA`, `DD`, ...). |
+
+### Rules
+
+| File | Purpose |
+| :--- | :--- |
+| `rules/gitflow-rules.md` | Always-on rule: protected branches, auto-branching, scope drift checks, Conventional Commits, atomic staging, concise PRs. |
+
+## How it works
+
+1. Every `run_command` call passes through `gitflow-branch-gate.js` (15 s timeout).
+2. The gate reads the branch with `git symbolic-ref --short HEAD`. A non-git folder is allowed.
+3. Allowed commit types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
+4. The hooks answer with JSON `{ "decision": "allow" | "deny" }` on stdout.
+5. The `Stop` hook (20 s timeout) runs only when `terminationReason` is `model_stop` and the workspace has a `.git` entry.
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+| :--- | :--- | :--- |
+| "Gitflow Safety Blocked" on `git add` or `git commit` | Current branch is `main`, `master` or `develop`. | `git checkout -b feat/<slug>` and retry. |
+| `[CONVENTIONAL COMMITS VIOLATION]` | The `-m` message has no valid type prefix. | Use `<type>(<scope>): <subject>`, e.g. `feat(auth): implement token refresh flow`. |
+| Task continues after the agent tried to stop | Unresolved merge conflicts in the working tree. | Resolve the conflicted files and stage them. |
+| No hook fires | `node` is missing or the plugin is not installed. | Install Node.js and rerun the install command. |
+
+## Related plugins
+
+- [senior-dev](../senior-dev/README.md): orchestrated SDLC that commits on feature branches.
+- [docs-and-quality](../docs-and-quality/README.md): anti-lazy code gate and documentation standards.
+- [multi-agent-ops](../multi-agent-ops/README.md): git worktree isolation for parallel work.
+
+## Maintenance
+
+`skills/` is a copy of the root `/skills` catalog. After editing a skill there, run
+`python3 scripts/sync_plugin_skills.py` from the repo root.
+
+## License
+
+Apache-2.0. See [LICENSE](../../../LICENSE).

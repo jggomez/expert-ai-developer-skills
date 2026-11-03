@@ -1,69 +1,93 @@
-# Docs and Quality Plugin
+# docs-and-quality
 
-[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
-[![Plugin](https://img.shields.io/badge/Plugin-docs--and--quality-green?style=flat-square)](.)
+> Documentation standards, testing practices, Karpathy guidelines and an anti-lazy code gate for Google Antigravity.
 
-The `docs-and-quality` plugin packages the repository's stack-agnostic documentation standards, testing methodologies, and Andrej Karpathy behavioral guidelines as a self-contained plugin for **Google Antigravity** and **Claude Code**. It includes deterministic lifecycle stop gates to enforce anti-lazy code policies (blocking placeholder stubs).
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square)](../../../LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Antigravity-4285F4?style=flat-square)](.)
 
-> **Maintaining the bundled skills**: `skills/` below is a physical copy of the matching directories in the root `/skills` catalog. After editing any of these three skills under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo root to re-sync this copy. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills` fails CI if the two ever drift.
+`docs-and-quality` bundles three stack-agnostic skills: technical documentation, automated testing,
+and behavioral guidelines that keep changes small and verifiable. An always-on rule sets artifact
+line caps. A `Stop` hook scans added lines for placeholder stubs and keeps the task open until they
+are replaced.
 
----
+## Requirements
 
-## 1. Directory Tree & Architecture
+- Google Antigravity with the `agy` CLI.
+- `node` on `PATH` (the hook is a Node.js script).
+- `git` (the hook reads `git diff -U0 HEAD`). Python 3 to run the skill validator scripts.
 
-```
-plugins/antigravity/docs-and-quality/
-├── README.md                       # This usage manual
-├── plugin.json                     # Antigravity plugin manifest
-├── .claude-plugin/
-│   └── plugin.json                 # Claude Code plugin manifest
-├── hooks.json                      # Hook registrations
-├── hooks/
-│   └── anti-lazy-code-gate.js      # Stop hook blocking TODO stubs & placeholders
-├── rules/
-│   └── docs-and-quality-rules.md   # Karpathy guidelines & documentation rules
-└── skills/
-    ├── documentation-expert/       # Diátaxis framework & Mermaid diagram standards
-    ├── testing-expert/             # AAA pattern, hermetic tests, Gherkin/BDD syntax
-    └── guidelines-karpathy/        # Behavioral checklist to avoid over-engineering & LLM pitfalls
-```
+## Installation
 
----
-
-## 2. Bundled Skills (3 Packaged Modules)
-
-1. **`documentation-expert`**: Diátaxis documentation hierarchy, Mermaid.js diagram guides, and a `validate_docs.py` link/path checker.
-2. **`testing-expert`**: Arrange-Act-Assert pattern, hermetic test boundaries, Gherkin BDD syntax, and a `validate_gherkin.py` syntax checker.
-3. **`guidelines-karpathy`**: Behavioral checklist to keep changes surgical, avoid speculative abstractions, prevent common LLM coding pitfalls, and enforce anti-lazy code standards.
-
----
-
-## 3. Lifecycle Hooks & Deterministic Gates
-
-| Hook Event | Script | Behavior |
-| :--- | :--- | :--- |
-| **`Stop`** | `hooks/anti-lazy-code-gate.js` | Inspects git diffs before session termination. Scans for lazy placeholders (`TODO: implement later`, `# ... rest of code`, `pass # placeholder`, `/* unimplemented */`). Blocks exit if stubs are detected. |
-
----
-
-## 4. Example Prompts
-
-- "Write a README for this service following the Diátaxis framework, with a Mermaid diagram of the architecture." (`documentation-expert`)
-- "Check this documentation for broken relative links and absolute path leaks." (`documentation-expert`)
-- "Write Gherkin BDD scenarios for the password-reset flow, covering the happy path and expired-token case." (`testing-expert`)
-- "Review these tests for hermeticity — are any of them hitting a real network call?" (`testing-expert`)
-- "Before we add this abstraction, check it against the Karpathy guidelines — do we actually need it yet?" (`guidelines-karpathy`)
-
----
-
-## 5. Installation
-
-**Antigravity CLI**:
 ```bash
 agy plugin install ./plugins/antigravity/docs-and-quality
 ```
 
-**Claude Code**:
-```bash
-claude plugin install plugins/claude/docs-and-quality
+## Quick start
+
+```text
+Write a README for this service using the Diátaxis framework, with a Mermaid architecture diagram.
+Write Gherkin scenarios for the password-reset flow, covering the expired-token case.
+Before we add this abstraction, check it against the Karpathy guidelines.
 ```
+
+## What's included
+
+## Bundled Skills
+
+| Skill | Purpose |
+| :--- | :--- |
+| **`documentation-expert`** | Concise docs, root `AGENTS.md`, `DESIGN.md` alignment, Diátaxis guides, Mermaid diagrams; `validate_docs.py` checks links and absolute path leaks. |
+| **`testing-expert`** | Arrange-Act-Assert suites, hermetic tests, `TC-XX` test cases, Gherkin BDD; `validate_gherkin.py` checks `.feature` files. |
+| **`guidelines-karpathy`** | Checklist against overcomplication: surgical changes, stated assumptions, verifiable success criteria. |
+
+### Hooks
+
+| Event | Script | Behavior |
+| :--- | :--- | :--- |
+| `Stop` | `hooks/anti-lazy-code-gate.js` | On a model stop, scans added lines in `git diff -U0 HEAD` and returns `continue` when a placeholder is found. |
+
+Patterns the gate rejects in added lines:
+
+| Pattern | Example |
+| :--- | :--- |
+| TODO deferral | `TODO: implement later`, `TODO: add later`, `TODO: to be implemented`, `TODO: placeholder` |
+| Placeholder `pass` | `pass # placeholder`, `pass # todo`, `pass # implement` |
+| Fill-in comment | `// your code here`, `// implement here`, `... # your code here` |
+| Unimplemented error | `throw UnimplementedError()` |
+
+### Rules
+
+| File | Purpose |
+| :--- | :--- |
+| `rules/docs-and-quality-rules.md` | Always-on rule: artifact line caps, Fail-Honest reporting, Karpathy/DRY/KISS, anti-lazy policy, Mermaid safety. |
+
+## How it works
+
+1. The `Stop` hook (20 s timeout) runs only when `terminationReason` is `model_stop`.
+2. It skips workspaces without a `.git` entry.
+3. Every added line in the diff is checked, including documentation files.
+4. It returns `{ "decision": "continue", "reason": ... }` with up to 5 offending lines, else `allow`.
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+| :--- | :--- | :--- |
+| `[ANTI-LAZY CODE GATE VIOLATION]` | An added line matches a placeholder pattern. | Replace the placeholder with a full implementation. |
+| Gate fires on a Markdown example | The Antigravity gate scans all files, docs included. | Reword the example so it does not match the pattern. |
+| A stub in a new file was not caught | Untracked files are not part of `git diff HEAD`. | Stage the file (`git add <file>`) so the gate sees it. |
+| Gate never runs | No `.git` in the workspace root, or `node` is missing. | Run inside a git repository with Node.js installed. |
+
+## Related plugins
+
+- [senior-dev](../senior-dev/README.md): orchestrated SDLC that relies on these standards.
+- [git-workflow](../git-workflow/README.md): branch safety and Conventional Commits gates.
+- [multi-agent-ops](../multi-agent-ops/README.md): parallel loops and context guard.
+
+## Maintenance
+
+`skills/` is a copy of the root `/skills` catalog. After editing a skill there, run
+`python3 scripts/sync_plugin_skills.py` from the repo root.
+
+## License
+
+Apache-2.0. See [LICENSE](../../../LICENSE).

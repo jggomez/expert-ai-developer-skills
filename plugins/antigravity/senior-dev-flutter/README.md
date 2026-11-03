@@ -1,203 +1,144 @@
-# `senior-dev-flutter` Plugin
+# senior-dev-flutter
 
-**The senior Flutter layer on top of the official Flutter & Dart skill packs.**
+> Senior Flutter orchestration, architecture decisions, review, profiling and release engineering for Google Antigravity.
 
-The Dart and Flutter teams already publish ~23 agent skills that cover *how* to
-build layouts, wire routing, serialize JSON, write every kind of test, run the
-analyzer, and more — plus the official **Dart & Flutter MCP server**. This
-plugin does **not** repeat any of that. It installs *on top* and adds the layer
-those packs leave to you: **orchestrating, deciding, and reviewing.**
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](../../../LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Antigravity-4285F4)](../../../README.md)
 
-Its `agents/`, `skills/`, `hooks.json` (`"hooks"` key), `.mcp.json`, and
-`${CLAUDE_PLUGIN_ROOT}` layout follow the **Claude Code plugin format**; the
-root `plugin.json`, the `senior-dev-flutter-gates` group in `hooks.json`, and
-`mcp_config.json` cover **Antigravity CLI**. One folder, `agy plugin install`-safe.
+The Flutter and Dart teams publish official agent skills and an MCP server that cover *how* to build layouts, routing, serialization, tests and analysis.
+This plugin does not duplicate the official packs. It installs on top of them and adds the senior layer: planning, deciding, reviewing and shipping.
+It bundles copies of the `senior-dev` specialists, so it works without `senior-dev` installed.
 
-> **Maintaining the bundled skills**: `skills/` below is a physical copy of the
-> seven `flutter-*` skills plus `context-capture`, `context-restore`, `loop-engineering`, and the
-> 9 skills preloaded by the bundled `senior-dev` specialists, from the root `/skills` catalog (19 total). After editing any of
-> them under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo
-> root. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills`
-> fails CI if the two drift.
+## Requirements
 
----
+| Requirement | Why |
+| :--- | :--- |
+| Antigravity CLI (`agy`) | Plugin host |
+| `node` on `PATH` | Runs the hook scripts |
+| Dart / Flutter SDK (`dart` on `PATH`) | `dart mcp-server` and the `dart analyze` stop gate |
+| Official Flutter and Dart skill packs | Required companion; this plugin routes to them |
 
-## 1. Required companion — the official packs
+## Installation
 
-This plugin is useless on its own. Install the official skills and MCP server first:
+```bash
+agy plugin install ./plugins/antigravity/senior-dev-flutter
+agy plugin list      # confirm
+```
+
+Install the required official packs. The Dart MCP server ships with the Dart SDK:
 
 ```bash
 npx skills add flutter/agent-plugins --skill '*' --agent universal --yes
 npx skills add dart-lang/skills      --skill '*' --agent universal --yes
+dart --version   # `dart mcp-server` comes with the SDK
 ```
 
-MCP server (`.mcp.json` / `mcp_config.json` here declare it — you just need `dart` on PATH):
+Official docs: [agent skills](https://docs.flutter.dev/ai/agent-skills) · [MCP server](https://docs.flutter.dev/ai/mcp-server).
 
-```bash
-dart --version          # Dart SDK must be installed; `dart mcp-server` ships with it
-```
+## Quick start
 
-Docs: [docs.flutter.dev/ai/agent-skills](https://docs.flutter.dev/ai/agent-skills)
-· [docs.flutter.dev/ai/mcp-server](https://docs.flutter.dev/ai/mcp-server)
-
----
-
-## 2. The boundary — what this plugin does *not* touch
-
-| Concern | Owned by the official packs (do not duplicate) | Owned by `senior-dev-flutter` |
-| :--- | :--- | :--- |
-| **How-to / procedural** | `flutter/agent-plugins` (responsive layout, `go_router`, localization, `json_serialization`, `http`, widget/integration tests, widget previews, layered architecture, fix layout issues) · `dart-lang/skills` (unit tests, mocks, coverage, `dart analyze`, pattern matching, FFI, CLI, docs, pub conflicts, runtime errors) | — |
-| **Tools** | official Dart & Flutter **MCP server** (analyzer diagnostics, symbol resolution, test runners, runtime inspection) | — (declared in this plugin's MCP config so install wires it) |
-| **Orchestration & Parallel Fan-Out** | — | 6-State DAG, Mandatory Flutter Architecture Triage Gate in `PLAN.md`, Parallel Fan-Out/Fan-In (`Mode A Disjoint Files` / `Mode B Git Worktree`) |
-| **Cross-AI Persistent Memory** | — | `context/memory/` LLM Wiki (`MEMORY.md`, `architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) shared between Claude Code & Antigravity |
-| **Architecture decisions** | `flutter-apply-architecture-best-practices` teaches the *pattern* | *choosing* state mgmt (Riverpod/Bloc/signals/setState), module boundaries, ADRs |
-| **Review judgment** | `flutter-fix-layout-issues` fixes overflow; `dart-run-static-analysis` runs the linter | rebuild scope, `const`, keys, `dispose`, `BuildContext` after `await`, list/image perf, `RepaintBoundary`, a11y semantics, golden coverage, ADR conformance |
-| **Test strategy** | skills for *writing* each test type | *what* to test at which layer + coverage gates |
-| **Performance** | — | DevTools timeline, jank hunting, profile mode, shader jank, `--trace-startup` |
-| **Release engineering** | — | flavors, `--dart-define-from-file`, signing, `flutter build` matrix, store metadata, OTA (Shorebird) decision |
-| **Upgrade / migration** | `dart fix`, `dart-resolve-package-conflicts` | project-scale SDK upgrade sweep, deprecation triage, dependency major bumps |
-
-Every agent prompt says the same thing: **for any "how", invoke the official
-`flutter-*` / `dart-*` skill; this plugin only decides, sequences, and reviews.**
-
----
-
-## 3. Directory Tree
-
-```
-plugins/senior-dev-flutter/
-├── .claude-plugin/plugin.json   # Claude Code manifest
-├── plugin.json                  # Antigravity manifest (same content)
-├── README.md
-├── .mcp.json                    # Claude Code: dart mcp-server (type: stdio)
-├── mcp_config.json              # Antigravity: dart mcp-server
-├── hooks.json                   # "hooks" key (Claude Code) + "senior-dev-flutter-gates" group (Antigravity)
-├── hooks/
-│   ├── flutter-pre-tool-gate.js # PreToolUse: Plan-First gate, orchestrator Dart edit guard, protected-branch safety
-│   └── flutter-stop-gate.js     # Stop: require `dart analyze` clean before finishing (skips if not a Flutter repo / no dart)
-├── agents/
-│   ├── flutter-feature-orchestrator.md   # mainAgent — 6-state DAG, Triage Gate, Parallel Fan-Out/Fan-In, context/memory/
-│   ├── flutter-architect.md              # state-mgmt choice, module boundaries, ADRs
-│   ├── flutter-implementer.md            # TDD; invokes official flutter-*/dart-* skills; parallel vertical slices
-│   ├── flutter-reviewer.md               # the review checklist + dart analyze + ADR conformance
-│   └── flutter-release-engineer.md       # flavors, signing, build matrix, versioning, OTA, SDK/dep upgrades
-├── rules/
-│   └── flutter-rules.md                  # 6-State DAG, Triage Rubric, Parallel Fan-Out & 60/120fps rules
-└── skills/                               # physical copy of the 10 bundled skills
-    ├── flutter-senior-orchestration/
-    ├── flutter-architecture-decisions/
-    ├── flutter-review-checklist/
-    ├── flutter-test-strategy/
-    ├── flutter-performance-profiling/
-    ├── flutter-release-engineering/
-    ├── flutter-upgrade-migration/
-    ├── context-capture/
-    ├── context-restore/
-    └── loop-engineering/
-```
-
----
-
-## 4. The Agents, Triage Gate & Parallel Fan-Out
-
-Five host-neutral subagents (`model: inherit`, explicit `subagent`/`mainAgent`,
-`commandExecutionPolicy: auto`):
-
-| Agent | Role | Execution Policy | Typical Action |
-| :--- | :--- | :--- | :--- |
-| **`flutter-feature-orchestrator`** (`mainAgent`) | Runs the 6-State DAG: silent `context/memory/MEMORY.md` restore (`State 0`), Mandatory Flutter Architecture Triage Gate in `PLAN.md`, Parallel Fan-Out/Fan-In (`State 1–4`), and LLM Wiki persistence (`State 5`). | `auto` | `invoke_subagent`, `send_message`, `write_to_file` (`PLAN.md`, `context/memory/`) |
-| **`flutter-architect`** | Invoked upfront when `>= 2` screens/widgets/notifiers, state mgmt (`Riverpod`/`Bloc`/`Signals`), `GoRouter` routes, or native plugins change. | `auto` | `write_to_file`, `run_command` |
-| **`flutter-implementer`** | Dispatched as `1..N` parallel tracks (**Mode A**: Disjoint `Owned Files` in `Workspace: 'inherit'`; **Mode B**: Git Worktree isolation for `pubspec.yaml`/router/`build_runner`). | `auto` | `run_command`, `replace_file_content`, `write_to_file` |
-| **`flutter-reviewer`** | Runs in parallel with `flutter-release-engineer`: walks `flutter-review-checklist` (60/120fps jank, `.dispose()` leaks, `BuildContext` async gaps, semantics). | `auto` | `run_command`, `replace_file_content` |
-| **`flutter-release-engineer`** | Runs in parallel with `flutter-reviewer`: verifies flavors, `--dart-define-from-file`, signing, `pubspec.yaml`, and build matrix. | `auto` | `run_command`, `replace_file_content` |
-
-
-**Bundled specialists** (canonical copies of the `senior-dev` agents, synced by `scripts/sync_agents.py` so this plugin works without `senior-dev` installed): `product-analyst`, `ui-ux-designer`, `qa-tester`, `critic`, `challenger`, `e2e-blackbox-tester`. Edit them in `plugins/antigravity/senior-dev/agents/`, never here.
-
----
-
-## 5. Bundled Skills (19 Packaged Modules)
-
-| Skill | Role (all *decision / checklist / strategy / cross-AI memory* — none restate a "how-to") |
-| :--- | :--- |
-| **`flutter-senior-orchestration`** | The 6-state DAG phase map the orchestrator follows: `context/memory/` restore, Mandatory Architecture Triage Gate, Parallel Fan-Out/Fan-In, and official skill routing. |
-| **`flutter-architecture-decisions`** | State-management decision matrix (Riverpod/Bloc/signals/setState), module-boundary checklist, Flutter ADR template. |
-| **`flutter-review-checklist`** | Senior Flutter review checklist + `flutter_project_audit.py` (file-only project audit). |
-| **`flutter-test-strategy`** | What to test at unit vs widget vs golden vs integration level; coverage gates; routes to the official test-writing skills. |
-| **`flutter-performance-profiling`** | Diagnose jank/slow startup with DevTools, profile mode, UI/raster split, shader jank; fix by symptom. |
-| **`flutter-release-engineering`** | Flavors + `--dart-define-from-file`, signing, `flutter build` matrix, versioning, store metadata, OTA decision. |
-| **`flutter-upgrade-migration`** | Ordered SDK-upgrade sweep, deprecation triage, dependency major bumps — around `dart fix` / `dart-resolve-package-conflicts`. |
-| **`context-capture`** | Updates the Cross-AI LLM Wiki (`context/memory/MEMORY.md`, `architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) at `State 5` or explicit handoff. |
-| **`context-restore`** | Progressive disclosure reader (`context/memory/MEMORY.md` at `State 0`, drilling down to topic/log pages on demand). |
-| **`loop-engineering`** | Governs bounded 3-strike fix loops between `flutter-reviewer` / `flutter-release-engineer` and `flutter-implementer`. |
-| **`ui-ux-designer`** | Preloaded by the bundled `ui-ux-designer` agent: root `DESIGN.md` contract and `## Design` screen deltas in `docs/<feature-name>/spec.md`. |
-| **`product-analyst`** | Preloaded by the bundled `product-analyst` agent: concise `## Product` section of `docs/<feature-name>/spec.md` with `US-XX` / `AC-XX`. |
-| **`qa-tester`** | Preloaded by the bundled `qa-tester` agent: `test-matrix.md` + `exit code 0` proof. |
-| **`code-critic`** | Preloaded by the bundled `critic` agent (Tier 3, diffs `>= 150 LOC`). |
-| **`code-smells-expert`** | Preloaded by the bundled `critic` agent: smell taxonomy. |
-| **`refactoring-code-expert`** | Preloaded by the bundled `critic` agent: refactoring catalog. |
-| **`adversarial-challenger`** | Preloaded by the bundled `challenger` agent (auth, payments, isolates, untrusted input). |
-| **`test-driven-development`** | Preloaded by the bundled `challenger` agent. |
-| **`blackbox-tester`** | Preloaded by the bundled `e2e-blackbox-tester` agent (Flutter Web targets only). |
-
----
-
-## 6. The 9-Stage Command Framework
-
-The Flutter subagents and orchestrator execute along the 9-stage engineering cycle, governed by `rules/flutter-rules.md`:
-
-| Phase | Command | Key Principle | Flutter Implementation |
-| :--- | :--- | :--- | :--- |
-| **Define what to build** | `/spec` | Spec before code | Target platforms, screen resolutions, offline-first behavior |
-| **Plan how to build it** | `/plan` | Small, atomic tasks | State management ADR (Riverpod/Bloc/Signals), module contracts |
-| **Build incrementally** | `/build` | One slice at a time | Widget/logic TDD via official Flutter skills, atomic vertical slices |
-| **Prove it works** | `/test` | Tests are proof | Unit, widget, golden, and integration test coverage (`flutter test`) |
-| **Set the quality bar** | `/constraints` | Decide once, enforce everywhere | `analysis_options.yaml`, zero analyzer warnings, strict typing |
-| **Review before merge** | `/review` | Improve code health | Rebuild scope audit, `const` constructors, `dispose()` checks |
-| **Audit performance** | `/perf` | Measure before you optimize | DevTools timeline, shader warm-up, raster/UI thread jank |
-| **Simplify the code** | `/code-simplify` | Clarity over cleverness | Dead code pruning, widget nesting flattening, KISS |
-| **Ship to production** | `/ship` | Faster is safer | Flavors, `--dart-define-from-file`, signing, store readiness |
-
----
-
-## 7. Hooks
-
-| Event | Hook | Behavior |
-| :--- | :--- | :--- |
-| `PreToolUse` (`Bash` / `run_command`) | `flutter-pre-tool-gate.js` | On `main` / `master` / `develop`, **denies** `flutter build appbundle\|aab\|ipa` (store artifacts belong in CI) and `(flutter\|dart) pub upgrade --major-versions` (needs a branch + ADR). Silent on any other command, non-git, or non-Flutter repo. |
-| `Stop` | `flutter-stop-gate.js` | If the repo is a Flutter project and `dart` is on PATH, runs `dart analyze`; a failure blocks finishing (Claude Code: exit 2; Antigravity: `{"decision":"continue"}`) with the analyzer output and a reminder to run `flutter test`. No-op otherwise. |
-
-Host is detected via `CLAUDE_PLUGIN_ROOT`; each hook emits the decision shape the
-host expects.
-
----
-
-## 8. Example Prompts
+`flutter-feature-orchestrator` is the plugin's main agent (`mainAgent: true`). Example prompts:
 
 - "Use the flutter-feature-orchestrator agent to build a profile-edit feature end to end."
 - "Have the flutter-architect agent choose state management for this app and write the ADR."
-- "Ask the flutter-reviewer agent to review this PR for rebuild scope, leaks, and accessibility."
-- "This list janks on Android — have flutter-implementer profile and fix it."
 - "Get flutter-release-engineer to set up dev/staging/prod flavors and a signed build matrix."
 
----
+## What's included
 
-## 9. Installation
+### Agents
 
-**Claude Code** — project-scoped (no copy):
-```bash
-claude --plugin-dir ./plugins/senior-dev-flutter
-```
-**Claude Code** — global:
-```bash
-cp -r ./plugins/senior-dev-flutter ~/.claude/plugins/senior-dev-flutter
-```
+All agents use `model: inherit` and `commandExecutionPolicy: auto`.
 
-**Antigravity CLI** — global, via `agy`:
-```bash
-agy plugin install ./plugins/senior-dev-flutter
-agy plugin list      # confirm
-```
+| Agent | Role |
+| :--- | :--- |
+| `flutter-feature-orchestrator` | Main agent. Sizes the request, writes `PLAN.md`, sequences official skills and delegates |
+| `flutter-architect` | State management choice, module boundaries, MADR ADRs |
+| `flutter-implementer` | Flutter/Dart changes with TDD and `DESIGN.md` token fidelity |
+| `flutter-reviewer` | Rebuild scope, `const`, keys, dispose/leaks, async `BuildContext`, ADR conformance |
+| `flutter-release-engineer` | Flavors, `--dart-define-from-file`, signing, build matrix, versioning, Shorebird OTA, upgrades |
+| `product-analyst` | Bundled specialist: `## Product` section of `docs/<feature-name>/spec.md` |
+| `ui-ux-designer` | Bundled specialist: root `DESIGN.md` and `## Design` deltas |
+| `qa-tester` | Bundled specialist: `test-matrix.md` with exit-code-0 proof |
+| `critic` | Bundled specialist: independent code review |
+| `challenger` | Bundled specialist: stress, fuzzing and failure-path probes |
+| `e2e-blackbox-tester` | Bundled specialist: Playwright browser verification of a live web UI |
 
-Then install the **required** official packs (see §1) and make sure `node` and
-`dart` are on `PATH`.
+The six specialists are synced copies of the `senior-dev` agents (`scripts/sync_agents.py`). Edit them in [`../senior-dev/agents/`](../senior-dev/agents/), not here.
+
+## Bundled Skills
+
+| Skill | Purpose |
+| :--- | :--- |
+| **`flutter-senior-orchestration`** | Run a feature or fix end to end: context restore, tier routing, gated dispatch via `PLAN.md` |
+| **`flutter-architecture-decisions`** | Choose state management (Riverpod, Bloc, signals, setState), module boundaries, ADRs |
+| **`flutter-review-checklist`** | Senior review checklist and a file-only project audit script |
+| **`flutter-test-strategy`** | What to test at unit, widget, golden and integration level; coverage gates |
+| **`flutter-performance-profiling`** | Diagnose jank and slow startup with DevTools, profile mode and startup tracing |
+| **`flutter-release-engineering`** | Flavors, environment config, signing, build matrix, versioning, store metadata |
+| **`flutter-upgrade-migration`** | SDK upgrades, major dependency bumps and deprecation sweeps |
+| **`context-capture`** | Write cross-session memory to `context/memory/` at the end of a milestone |
+| **`context-restore`** | Read `context/memory/MEMORY.md` at session start |
+| **`loop-engineering`** | Tier routing, parallel isolation (disjoint files or git worktree) and bounded fix loops |
+| **`product-analyst`** | Used by the bundled `product-analyst` agent |
+| **`ui-ux-designer`** | Used by the bundled `ui-ux-designer` agent |
+| **`qa-tester`** | Used by the bundled `qa-tester` agent |
+| **`code-critic`** | Used by the bundled `critic` agent |
+| **`code-smells-expert`** | Smell taxonomy for the `critic` agent |
+| **`refactoring-code-expert`** | Refactoring catalog for the `critic` agent |
+| **`adversarial-challenger`** | Used by the bundled `challenger` agent |
+| **`test-driven-development`** | Red-Green-Refactor guidance for the `challenger` agent |
+| **`blackbox-tester`** | Used by the bundled `e2e-blackbox-tester` agent (Flutter Web targets) |
+
+Skills are copies of the root [`skills/`](../../../skills/) catalog. Edit them there and run `python3 scripts/sync_plugin_skills.py`.
+
+### Hooks
+
+Registered in the `senior-dev-flutter-gates` group of `hooks.json`.
+
+| Event | Script | Behavior |
+| :--- | :--- | :--- |
+| `PreToolUse` (`write_to_file`, `replace_file_content`) | `hooks/flutter-pre-tool-gate.js` | In a Flutter repo: denies `.dart` / `pubspec.yaml` edits on `main`, `master`, `develop` or `dev`; denies `.dart` edits without `PLAN.md`; denies `.dart` edits by the orchestrator itself |
+| `PreToolUse` (`run_command`) | `hooks/flutter-pre-tool-gate.js` | On a protected branch, denies `flutter build appbundle\|aab\|ipa` and `pub upgrade --major-versions` |
+| `Stop` | `hooks/flutter-stop-gate.js` | If `pubspec.yaml` exists and `dart` is available, runs `dart analyze` and returns `continue` on findings |
+
+### MCP servers
+
+| Server | Command | Purpose |
+| :--- | :--- | :--- |
+| `dart` | `dart mcp-server` | Official Dart and Flutter MCP server, declared in `mcp_config.json` |
+
+### Rules
+
+[`rules/flutter-rules.md`](rules/flutter-rules.md) (`trigger: always_on`) holds the Flutter lifecycle, triage rubric and 60/120fps frame budgets.
+
+## How it works
+
+1. The orchestrator restores `context/memory/MEMORY.md` and writes a short `PLAN.md` with a tier (1 fast-track, 2 standard, 3 mission-critical).
+2. Tier 2 and 3 run only the discovery specialists the plan justifies, then pause for your approval.
+3. `flutter-implementer` tracks run in parallel, on disjoint files or in git worktrees.
+4. `flutter-reviewer`, `qa-tester` and, when needed, `flutter-release-engineer` and adversarial reviewers verify the work.
+5. The milestone is saved to `context/memory/`.
+
+The full lifecycle is described in the root [README](../../../README.md) and [AGENTS.md](../../../AGENTS.md).
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+| :--- | :--- | :--- |
+| `.dart` edit denied with `PLAN FIRST` | No `PLAN.md` at the workspace root or `doc/` | Create `PLAN.md` before editing Dart code |
+| `.dart` edit denied with `GRAPH INVARIANT VIOLATION` | The orchestrator tried to edit Dart code directly | Delegate the change to `flutter-implementer` |
+| Dart edit denied on `main` | Protected branch (`main`, `master`, `develop`, `dev`) | `git checkout -b feat/<slug>` |
+| `flutter build ipa` or `pub upgrade --major-versions` denied | Store builds and major bumps are blocked on protected branches | Run them from a release or chore branch, or in CI |
+| Agent cannot finish: "`dart analyze` is not clean" | Stop gate found analyzer issues | Fix the findings, then run `flutter test` (the hook does not) |
+| Gates never fire | All gates need `pubspec.yaml` in the workspace root; the stop gate also needs `dart` on `PATH` | Run from the Flutter project root with the Dart SDK installed |
+
+## Related plugins
+
+- [senior-dev](../senior-dev/README.md): general SDLC orchestrator and the source of the bundled specialists.
+- [shared-context](../shared-context/README.md): cross-agent memory in a committed `context/` directory.
+- [git-workflow](../git-workflow/README.md): branch and commit workflow.
+- [Claude Code variant](../../claude/senior-dev-flutter/README.md) of this plugin.
+
+## License
+
+Apache-2.0. See [LICENSE](../../../LICENSE).

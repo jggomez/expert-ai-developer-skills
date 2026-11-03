@@ -119,7 +119,7 @@ def test_readme_declares_official_packs_as_required_companion():
     assert "dart mcp-server" in readme
     # the boundary must be stated
     assert re.search(r"do(es)? not (repeat|duplicate|touch)", readme, re.I)
-    section = re.search(r"## \d+\. Bundled Skills.*?(?=\n## |\Z)", readme, re.DOTALL)
+    section = re.search(r"## (?:\d+\. )?Bundled Skills.*?(?=\n## |\Z)", readme, re.DOTALL)
     assert section
     names = set(re.findall(r"\*\*`([a-z0-9-]+)`\*\*", section.group(0)))
     assert set(SKILLS) <= names

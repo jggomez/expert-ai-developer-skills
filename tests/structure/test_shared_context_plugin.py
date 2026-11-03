@@ -119,7 +119,7 @@ def test_rules_file_enforces_ask_before_load():
 def test_readme_bundled_skills_section_lists_both_skills():
     readme = _read("README.md")
     import re
-    section = re.search(r"## \d+\. Bundled Skills.*?(?=\n## |\Z)", readme, re.DOTALL)
+    section = re.search(r"## (?:\d+\. )?Bundled Skills.*?(?=\n## |\Z)", readme, re.DOTALL)
     assert section, "no 'Bundled Skills' section"
     names = set(re.findall(r"\*\*`([a-z0-9-]+)`\*\*", section.group(0)))
     assert {"context-capture", "context-restore"} <= names
