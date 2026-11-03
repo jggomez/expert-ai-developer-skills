@@ -6,7 +6,7 @@
 [![Platform](https://img.shields.io/badge/platform-Antigravity-4285F4?style=flat-square)](.)
 
 `git-workflow` keeps git history clean while an agent works. A `PreToolUse` hook denies git writes on
-`main`, `master` or `develop` and commit messages that break Conventional Commits. A `Stop` hook keeps
+`main`, `master`, `develop` or `dev` and commit messages that break Conventional Commits. A `Stop` hook keeps
 the task open while merge conflicts are unresolved. An always-on rule and two skills cover branching,
 commit messages and pull requests.
 
@@ -43,7 +43,7 @@ Audit the last few commits on this branch for Conventional Commits compliance.
 
 | Event | Script | Behavior |
 | :--- | :--- | :--- |
-| `PreToolUse` (`run_command`) | `hooks/gitflow-branch-gate.js` | Denies `git add`, `git commit`, `git push` and `git merge` when the current branch is `main`, `master` or `develop`. Denies `git commit -m` messages that do not match `<type>(<scope>): <subject>`. |
+| `PreToolUse` (`run_command`) | `hooks/gitflow-branch-gate.js` | Denies `git add`, `git commit`, `git push` and `git merge` when the current branch is `main`, `master`, `develop` or `dev`. Denies `git commit -m` messages that do not match `<type>(<scope>): <subject>`. |
 | `Stop` | `hooks/git-clean-stop-gate.js` | On a model stop, returns `continue` when `git status --porcelain` shows unresolved conflicts (`UU`, `AA`, `DD`, ...). |
 
 ### Rules
@@ -58,13 +58,13 @@ Audit the last few commits on this branch for Conventional Commits compliance.
 2. The gate reads the branch with `git symbolic-ref --short HEAD`. A non-git folder is allowed.
 3. Allowed commit types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
 4. The hooks answer with JSON `{ "decision": "allow" | "deny" }` on stdout.
-5. The `Stop` hook (20 s timeout) runs only when `terminationReason` is `model_stop` and the workspace has a `.git` entry.
+5. The `Stop` hook (30 s timeout) runs only when `terminationReason` is `model_stop` and the workspace has a `.git` entry.
 
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
 | :--- | :--- | :--- |
-| "Gitflow Safety Blocked" on `git add` or `git commit` | Current branch is `main`, `master` or `develop`. | `git checkout -b feat/<slug>` and retry. |
+| "Gitflow Safety Blocked" on `git add` or `git commit` | Current branch is `main`, `master`, `develop` or `dev`. | `git checkout -b feat/<slug>` and retry. |
 | `[CONVENTIONAL COMMITS VIOLATION]` | The `-m` message has no valid type prefix. | Use `<type>(<scope>): <subject>`, e.g. `feat(auth): implement token refresh flow`. |
 | Task continues after the agent tried to stop | Unresolved merge conflicts in the working tree. | Resolve the conflicted files and stage them. |
 | No hook fires | `node` is missing or the plugin is not installed. | Install Node.js and rerun the install command. |

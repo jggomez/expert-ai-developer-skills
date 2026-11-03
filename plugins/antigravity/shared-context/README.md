@@ -59,7 +59,7 @@ Use the context-keeper agent to archive a full session snapshot and roll up deci
 
 | Agent | Role | Model |
 | :--- | :--- | :--- |
-| `context-keeper` | Maintains `context/memory/` and the session archive in its own context window, so the main agent spends no tokens on bookkeeping. Subagent only (`mainAgent: false`), `commandExecutionPolicy: auto`. | `inherit` |
+| `context-keeper` | Maintains `context/memory/` and the session archive in its own context window, so the main agent spends no tokens on bookkeeping. Subagent only (`mainAgent: false`), `commandExecutionPolicy: auto`. | `flash` |
 
 ### Rules
 
@@ -69,12 +69,12 @@ Use the context-keeper agent to archive a full session snapshot and roll up deci
 
 ### Hooks
 
-Antigravity runs the `shared-context-relay` group in `hooks.json`. It has no `SessionStart` event, so the start hook runs on `PreInvocation`.
+Antigravity runs the `shared-context-relay` group in `hooks.json`.
 
 | Event | Script | Behavior |
 | :--- | :--- | :--- |
-| `PreInvocation` | `hooks/session-start-context.js` | If `context/memory/MEMORY.md` exists, tells the agent to read it silently. Otherwise, if archived sessions exist, tells the agent to ask you what to load. At most once every 4 hours per repo. |
-| `PostToolUse` (`*`) | `hooks/post-tool-autosave.js` | Counts tool calls once `context/` exists. Silent when `MEMORY.md` exists; with the archive only, nudges a checkpoint after 25 calls or 10 minutes. Always allows. |
+| `SessionStart` | `hooks/session-start-context.js` | If `context/memory/MEMORY.md` exists, injects a system message telling the agent to read it silently. Otherwise, if archived sessions exist, tells the agent to ask you what to load. At most once every 4 hours per repo. |
+| `PostToolUse` (`write_to_file\|replace_file_content\|multi_replace_file_content\|run_command`) | `hooks/post-tool-autosave.js` | Counts tool calls once `context/` exists. Silent when `MEMORY.md` exists; with the archive only, nudges a checkpoint after 25 calls or 10 minutes. Always allows. |
 | `Stop` | `hooks/stop-flush.js` | If `context/` exists and the session used tools, reminds the agent to update `context/memory/` (or flush the archive). Always allows. |
 
 ### MCP servers

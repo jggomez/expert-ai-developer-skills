@@ -47,7 +47,7 @@ Official docs: [agent skills](https://docs.flutter.dev/ai/agent-skills) · [MCP 
 
 ### Agents
 
-All agents use `model: inherit` and `commandExecutionPolicy: auto`.
+`product-analyst`, `ui-ux-designer`, `qa-tester`, `e2e-blackbox-tester` and `flutter-release-engineer` run on `model: flash`; the rest use `model: inherit`. All agents use `commandExecutionPolicy: auto`.
 
 | Agent | Role |
 | :--- | :--- |
@@ -97,9 +97,9 @@ Registered in the `senior-dev-flutter-gates` group of `hooks.json`.
 
 | Event | Script | Behavior |
 | :--- | :--- | :--- |
-| `PreToolUse` (`write_to_file`, `replace_file_content`) | `hooks/flutter-pre-tool-gate.js` | In a Flutter repo: denies `.dart` / `pubspec.yaml` edits on `main`, `master`, `develop` or `dev`; denies `.dart` edits without `PLAN.md`; denies `.dart` edits by the orchestrator itself |
+| `PreToolUse` (`write_to_file`, `replace_file_content`, `multi_replace_file_content`) | `hooks/flutter-pre-tool-gate.js` | In a Flutter repo: denies `.dart` / `pubspec.yaml` edits on `main`, `master`, `develop` or `dev`; denies `.dart` edits without `PLAN.md` (edits of 10 lines or fewer are exempt); denies `.dart` edits by the orchestrator itself |
 | `PreToolUse` (`run_command`) | `hooks/flutter-pre-tool-gate.js` | On a protected branch, denies `flutter build appbundle\|aab\|ipa` and `pub upgrade --major-versions` |
-| `Stop` | `hooks/flutter-stop-gate.js` | If `pubspec.yaml` exists and `dart` is available, runs `dart analyze` and returns `continue` on findings |
+| `Stop` | `hooks/flutter-stop-gate.js` | On `model_stop`, if `pubspec.yaml` exists and `dart` is available, runs `dart analyze` and returns `continue` on findings. A green result is cached until the code changes; after 3 blocks per message it lets the agent stop |
 
 ### MCP servers
 

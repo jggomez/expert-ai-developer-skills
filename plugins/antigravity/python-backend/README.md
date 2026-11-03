@@ -38,7 +38,7 @@ The gates apply once the plugin is installed. Try "commit this directly to main"
 
 ### Agents
 
-All agents use `model: inherit` and `commandExecutionPolicy: auto`.
+`product-analyst`, `ui-ux-designer`, `qa-tester` and `e2e-blackbox-tester` run on `model: flash`; the rest use `model: inherit`. All agents use `commandExecutionPolicy: auto`.
 
 | Agent | Role |
 | :--- | :--- |
@@ -90,10 +90,10 @@ Registered in the `python-backend-safety-gates` group of `hooks.json`.
 
 | Event | Script | Behavior |
 | :--- | :--- | :--- |
-| `PreToolUse` (`write_to_file`, `replace_file_content`) | `hooks/pre-tool-gate.js` | Denies `.py` edits on `main`, `master`, `develop` or `dev`, and `.py` edits without `PLAN.md` |
+| `PreToolUse` (`write_to_file`, `replace_file_content`, `multi_replace_file_content`) | `hooks/pre-tool-gate.js` | Denies `.py` edits on `main`, `master`, `develop` or `dev`, and `.py` edits without `PLAN.md` (edits of 10 lines or fewer are exempt) |
 | `PreToolUse` (`run_command`) | `hooks/pre-tool-gate.js` | Asks before deploy commands (`deploy`, `apply -f`). Denies `git add/commit/push/merge` on protected branches |
 | `PreToolUse` (`call_mcp_tool`) | `hooks/pre-tool-gate.js` | Asks before Cloud Run `deploy_*` tools and Firebase add/update/delete/set tools |
-| `Stop` | `hooks/stop-gate.js` | If `skills/test-driven-development/scripts/verify_tests.py` exists in the workspace, runs it and returns `continue` on failure |
+| `Stop` | `hooks/stop-gate.js` | On `model_stop` in a Python project, runs `skills/test-driven-development/scripts/verify_tests.py` if the workspace has it, else `pytest -q`, else `python -m unittest`, and returns `continue` on failure |
 
 ### MCP servers
 
@@ -127,7 +127,7 @@ The full lifecycle is described in the root [README](../../../README.md) and [AG
 | `.py` edit denied with `GIT BRANCH GOVERNANCE` | Protected branch (`main`, `master`, `develop`, `dev`) | `git checkout -b feat/<slug>` |
 | `git commit` denied with `Gitflow Safety Blocked` | Git writes are blocked on protected branches | Work on a `feature/` or `bugfix/` branch and merge via pull request |
 | A command containing `deploy` asks for approval | Deployment guardrail | Approve it if the deployment is intended |
-| Stop gate never runs tests | It only runs `skills/test-driven-development/scripts/verify_tests.py` from the workspace | Run your test suite explicitly before finishing |
+| Stop gate never runs tests | No `pyproject.toml`, `requirements.txt` or `tests/` in the workspace root, or a green result is cached for the current code | Expected; it re-runs as soon as the code changes |
 
 ## Related plugins
 
