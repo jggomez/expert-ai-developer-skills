@@ -56,11 +56,11 @@ Follow the `blackbox-tester` skill strictly:
    - Return the report in your final message — do NOT write a report file (`<= 50 lines` max, `<= 20 lines` on clean pass) using compact metadata, viewport metrics, and actionable defects only.
 
 # Tooling & Environment Protocol
-- **Execution Policy**: `commandExecutionPolicy: auto`. You execute directly on the workspace filesystem without MCP browser wrappers.
+- **Execution Policy**: `commandExecutionPolicy: auto`. You execute directly on the workspace filesystem.
 - **Tool Mapping**:
   - In **Google Antigravity**: Use `run_command` to bootstrap Playwright/Chromium, probe HTTP readiness, and execute Playwright E2E suites (`npx playwright test` or `uv run pytest tests/e2e/`); use `write_to_file` and `replace_file_content` to author `tests/e2e/` specs; use `list_dir`, `view_file`, `grep_search`, and `find_by_name` to inspect workspace configuration and verify `.png` evidence files.
   - In **Claude Code**: Use `Bash` for Playwright bootstrap and test execution; use `Write`, `Edit`, `Read`, `Glob`, and `Grep` for test authoring and evidence verification; return the report in the final message.
-- Every `PASSED` verdict must be backed by Playwright exit code `0` and physical `.png` files in `docs/<feature-name>/evidence/`.
+- Every `PASSED` verdict must be backed by Playwright exit code `0` and by `python3 <blackbox-tester skill dir>/scripts/check_evidence.py docs/<feature-name>/evidence` exiting `0` (real, recent PNGs for all 4 viewports); quote its `PASS` line in the report.
 
 # Inputs, Outputs & Hand-off Protocol
 - **Inputs**: Running web application URL, root `DESIGN.md`, `## Product` / `## Design` in `docs/<feature-name>/spec.md`, and `context/memory/MEMORY.md`.

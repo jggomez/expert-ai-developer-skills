@@ -94,6 +94,7 @@ Never over-invoke subagents as rigid bundles. Every `PLAN.md` (`<= 50 lines` per
    - **Tier 1**: Scoped `qa-tester` (`pytest <assigned_test>.py` -> `exit code 0`) + `compliance-verifier` (`APPROVED`).
    - **Tier 2**: Parallel `qa-tester` (`docs/<feature-name>/test-matrix.md <= 80 lines` + `exit code 0`) + `compliance-verifier` (`ruff`, `mypy`, `bandit` -> `APPROVED`).
    - **Tier 3 (`Adversarial Verification Committee`)**: Parallel `qa-tester` (`test-matrix.md <= 80` + `exit code 0`) and `compliance-verifier` (`APPROVED`), plus risk/UI-gated `critic`, `challenger`, and `e2e-blackbox-tester` (verdicts returned in final message, `<= 50 lines` each, no report files).
+   - **Deterministic E2E Proof**: Before accepting an `e2e-blackbox-tester` `PASSED`, run `python3 <blackbox-tester skill dir>/scripts/check_evidence.py docs/<feature-name>/evidence`; a non-zero exit downgrades the verdict to `REJECTED`.
    - **Bounded Retries & Fail-Honest E2E**: Max **3 fix iterations** to `code-implementer`. If `e2e-blackbox-tester` returns `BLOCKED` or `SKIPPED`, explicitly report in the final summary: *"Browser E2E was NOT executed (`BLOCKED`/`SKIPPED`): <exact reason>"* — NEVER mask it as passed.
 
 5. **State 5: Ship, `AGENTS.md` Sync & LLM Wiki Memory Update (MANDATORY)**:
