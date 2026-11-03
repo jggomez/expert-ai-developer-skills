@@ -3,5 +3,6 @@
   "description": "Self-correcting loop engineering and automated codebase research.",
   "author": {
     "name": "jggomez"
-  }
+  },
+  "hooks": "./hooks.json"
 }

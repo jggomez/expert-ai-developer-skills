@@ -179,3 +179,16 @@ def test_every_claude_plugin_readme_has_a_marketplace_install_line():
                not in _read(os.path.join(ROOT, p["source"], "README.md"))]
     # Assert
     assert not missing, f"README without install line: {missing}"
+
+
+def test_root_hooks_json_is_declared_in_the_manifest():
+    """Claude Code only auto-loads hooks/hooks.json; a root hooks.json loads only via the
+    manifest "hooks" field. Without it every hook of the plugin silently never runs."""
+    # Arrange
+    plugin_dirs = [d for d in glob.glob(os.path.join(CLAUDE, "*")) if os.path.isfile(os.path.join(d, "hooks.json"))]
+    # Act
+    undeclared = [os.path.basename(d) for d in plugin_dirs
+                  if json.loads(_read(os.path.join(d, ".claude-plugin", "plugin.json"))).get("hooks") != "./hooks.json"]
+    # Assert
+    assert plugin_dirs
+    assert not undeclared, f"hooks.json never loads in: {undeclared}"

@@ -3,5 +3,6 @@
   "description": "Cross-agent working memory: captures and restores architecture decisions across AI sessions.",
   "author": {
     "name": "jggomez"
-  }
+  },
+  "hooks": "./hooks.json"
 }

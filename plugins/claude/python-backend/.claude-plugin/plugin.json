@@ -6,5 +6,6 @@
   },
   "dependencies": [
     "senior-dev"
-  ]
+  ],
+  "hooks": "./hooks.json"
 }

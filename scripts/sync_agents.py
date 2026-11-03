@@ -237,6 +237,9 @@ def sync_claude_plugins() -> None:
         }
         if plugin_name in CLAUDE_PLUGIN_DEPENDENCIES:
             manifest["dependencies"] = CLAUDE_PLUGIN_DEPENDENCIES[plugin_name]
+        # Claude Code auto-loads only hooks/hooks.json; a root hooks.json must be declared.
+        if (dest_plugin / "hooks.json").is_file() or (src_plugin / "hooks.json").is_file():
+            manifest["hooks"] = "./hooks.json"
         extra = _extra_manifest_keys(claude_plugin_dir / "plugin.json", manifest)
         extra.pop("version", None)
         manifest.update(extra)

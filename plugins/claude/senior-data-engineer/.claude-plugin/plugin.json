@@ -3,5 +3,6 @@
   "description": "Google Cloud data engineering subagent with BigQuery, Datastream, Dataform, and Pub/Sub MCP access.",
   "author": {
     "name": "jggomez"
-  }
+  },
+  "hooks": "./hooks.json"
 }

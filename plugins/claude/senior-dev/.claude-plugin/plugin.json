@@ -3,5 +3,6 @@
   "description": "Senior Developer Orchestrator and specialized subagents for SDLC execution using TDD, clean code, and automated verification.",
   "author": {
     "name": "jggomez"
-  }
+  },
+  "hooks": "./hooks.json"
 }
