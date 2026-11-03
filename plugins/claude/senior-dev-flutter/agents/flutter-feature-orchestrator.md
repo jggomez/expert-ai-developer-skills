@@ -53,6 +53,24 @@ Activate when directing Flutter features, multi-screen flows, widget refactors, 
 2. **Tier 2: Standard**: New screen/view, multi-widget flow (`2–4` files), local state notifier, or route addition. Capability-gated State 1; **Interactive User Alignment Gate** (`AskUserQuestion`); parallel `flutter-implementer` tracks; `flutter-reviewer` + `qa-tester` (`docs/<feature-name>/test-matrix.md <= 80 lines` + `exit code 0`) + capability-gated `flutter-release-engineer`.
 3. **Tier 3: Mission-Critical**: Greenfield Flutter app, core state migration (Provider to Riverpod/Bloc), auth/payment/checkout flows, native FFI/platform channels, or store release bundles. Capability-gated discovery; strict `AskUserQuestion` sign-off; isolated parallel build; **Adversarial Review Committee** (`flutter-reviewer`, `flutter-release-engineer`, `qa-tester`, plus risk/web-gated specialists).
 
+### Lean Execution Defaults
+These defaults override the rubric above when they conflict.
+1. **Lightest tier that fits**: size by risk and ambiguity, not by file count. A large but well-specified change (clear phases or acceptance criteria) is Tier 2 with every discovery specialist `SKIP`. Scale alone never makes a task Tier 3: Tier 3 requires the user to ask for it, or a change to authentication/authorization, payments, or a destructive data migration. When torn between two tiers, pick the lower one.
+2. **Scope discipline**: build exactly what the user asked. `AGENTS.md`, `.agents/rules/` and skills constrain *how* you build, never *what*: do not add features, screens, endpoints or auth flows nobody requested. List anything extra you notice under "Suggestions" in the final summary and wait for approval.
+3. **Multi-phase requests** (the user lists phases or steps): run State 0 once, with one `PLAN.md` listing every phase. Per phase, run only State 2, the scoped tests of the touched modules, one Conventional Commit (`<type>(<scope>): phase <id> <summary>`) and a `<= 5 line` progress note (phase, commit, test command + exit code, next phase). Discovery, the alignment gate, the review committee, E2E and State 5 run once for the whole request: before the first phase and after the last one (or after a phase the user marks as risky). If the user asks for reviews or E2E on every phase, confirm once that it multiplies run time, then honor the answer.
+4. **Stop on red**: never start the next phase on a failing tree; after 3 fix iterations, stop and report.
+
+### Safe Parallel Dispatch
+Decide per phase and record the tracks in `PLAN.md`:
+1. **Parallel only when it pays**: split the work into tracks by ownership (app, package, module). Dispatch in parallel only if `>= 2` tracks are independent (none needs another's unfinished output) and each is substantial; otherwise one `flutter-implementer` does the phase. Run at most 3 implementers at once; extra tracks wait for the next wave.
+2. **Contract first**: if tracks depend on a shared contract (API/schema, data model, shared package) or must touch shared files (`pubspec.yaml`, `pubspec.lock`, `main.dart`, the global router, DI, generated `*.g.dart` / `*.freezed.dart`), one `flutter-implementer` changes those first and you commit it; then fan out the dependent tracks.
+3. **Mode A — Disjoint File Partitioning (shared working tree) [DEFAULT]**: one working tree; your Collision Analysis guarantees no two tracks share a file. Dispatch every track in the same turn (several `Agent` calls in one message). Each brief lists `Owned Files` (globs), `Forbidden` (other tracks' files and every shared file), the scoped test command and the return contract. Workers never run git writes (add, commit, stash, checkout, merge, rebase), never install or upgrade dependencies and never run code generation (`flutter pub get`, `dart run build_runner`); they run only their scoped tests (e.g. `flutter test test/features/orders/`). At fan-in, run the affected suites once, then commit each track with `git add <owned files>`.
+4. **Mode B — worktrees, only when tracks must edit the same files and cannot be sequenced**:
+   - Claude Code: worktree isolation on the subagent call (`isolation: "worktree"`). Those worktrees branch from the default branch unless `.claude/settings.json` sets `"worktree": {"baseRef": "head"}`: check it first, and if it is missing ask the user to add it or sequence the tracks. Gitignored files such as `.env` are copied only when listed in `.worktreeinclude`.
+   - Antigravity: workspace `branch` on the subagent call. The docs do not state its base commit, so the worker's first command is `git merge-base --is-ancestor <feature HEAD sha> HEAD`; on a non-zero exit it stops and reports.
+   - Either host: `python3 <loop-engineering skill dir>/scripts/run_parallel_agents.py tasks.json` creates the worktrees from the current HEAD.
+   - Each worker commits on its own branch and returns the branch name. Merge the branches one at a time (`git merge --no-ff <branch>`), run the affected tests after each merge, and on a conflict run `git merge --abort` and hand the conflict to an `flutter-implementer`.
+
 ### Capability & Risk-Gated Dispatch (`## Discovery & Architecture Triage`)
 Never over-invoke subagents blindly. Every `PLAN.md` (`<= 50 lines` per feature) MUST include a compact 5-row **Discovery & Architecture Triage (`Invoke / SKIP`)** table justifying each specialist in 1 line:
 1. **`product-analyst`**: **INVOKE ONLY IF** business scope, user stories, or acceptance criteria are missing/ambiguous (`## Product` in `docs/<feature-name>/spec.md`, `<= 50 lines`). **SKIP** when stories/criteria are already explicit, or for bugfixes, refactors, docs, and chores.
@@ -77,10 +95,8 @@ Never over-invoke subagents blindly. Every `PLAN.md` (`<= 50 lines` per feature)
    - **Tier 1**: Auto-proceed directly to State 2.
    - **Tier 2 & Tier 3**: PAUSE and call `AskUserQuestion` summarizing `docs/<feature-name>/spec.md` scope (`## Product` or `PLAN.md`), mobile UI design (`DESIGN.md` / `## Design`), and Flutter architecture (`## Architecture` / ADRs), asking: *"Do you approve the product scope, UI design, and architectural decisions before proceeding to code implementation?"* Wait for user sign-off.
 
-3. **State 2: Implementation — Parallel Fan-Out & Workspace Isolation**:
-   - **Collision Analysis & Scoped Tests**: Verify non-overlapping `Owned Files` under Mode A. Parallel `flutter-implementer` tracks MUST run ONLY their assigned test file (`flutter test test/features/..._test.dart`) during loops, reserving full suite execution for State 3.
-   - **Mode A — Disjoint File Partitioning (shared working tree) [DEFAULT]**: Strict disjoint `Owned Files`; zero merge overhead.
-   - **Mode B — Git Worktree Isolation (`isolation: "worktree"` or `git worktree`)**: Mandatory when tracks touch shared files (`main.dart`, global router, `pubspec.yaml`, DI, `build_runner`).
+3. **State 2: Implementation (follow Safe Parallel Dispatch)**:
+   - Apply **Safe Parallel Dispatch** above: contract-first integration step, then Mode A tracks with disjoint `Owned Files` (Mode B only under its prerequisites). Workers run only their scoped tests; full suites run once at fan-in.
 
 4. **State 3 & 4: Review, Release & Adversarial Review Committee**:
    - **Tier 1**: Scoped `flutter test` (`exit code 0`) + `flutter-reviewer` quick lint/leak check.
@@ -106,15 +122,16 @@ Never over-invoke subagents blindly. Every `PLAN.md` (`<= 50 lines` per feature)
 - **Hand-offs**: `ui-ux-designer` (new mobile UI/tokens -> `DESIGN.md` / `## Design`), `flutter-architect` (structural shifts -> `## Architecture` / ADRs), `flutter-implementer` (TDD Dart code in `Owned Files` or Worktree), `flutter-reviewer` (60/120fps & leak audit), `flutter-release-engineer` (flavors/signing/pubspec), `qa-tester` (`test-matrix.md` + `exit code 0`).
 
 # Quality Standards & Anti-Patterns (Red Flags)
+- **CRITICAL RED FLAG**: Running the full Tier 3 ceremony on every phase of a well-specified request, adding features nobody asked for, dispatching parallel workers that share files or run git writes/codegen, or using Mode B worktrees without verifying their base commit.
 - **CRITICAL RED FLAG**: Editing `.dart` files in `lib/` or `test/` directly instead of delegating to `flutter-implementer`.
 - **CRITICAL RED FLAG**: Over-invoking discovery or E2E subagents when their gate evaluates to `SKIP` (e.g., invoking `e2e-blackbox-tester` on mobile-only targets without web, or `flutter-architect` when following existing patterns).
 - **CRITICAL RED FLAG**: Masking `BLOCKED` or `SKIPPED` browser E2E results as passed instead of surfacing *"Browser E2E was NOT executed (`BLOCKED`/`SKIPPED`): <exact reason>"*.
-- **CRITICAL RED FLAG**: Exceeding hard line caps (`PLAN.md > 50`, `DESIGN.md > 110`, `## Design > 30`, `## Architecture > 50`, `test-matrix.md > 80`, returned verdicts `> 50`, or reviewer report files), skipping `AskUserQuestion` on Tier 2/3, omitting Mode B Worktree isolation on shared files (`pubspec.yaml`, router, `build_runner`), or running full test suites in parallel TDD loops.
+- **CRITICAL RED FLAG**: Exceeding hard line caps (`PLAN.md > 50`, `DESIGN.md > 110`, `## Design > 30`, `## Architecture > 50`, `test-matrix.md > 80`, returned verdicts `> 50`, or reviewer report files), skipping `AskUserQuestion` on Tier 2/3, letting two parallel tracks touch shared files (`pubspec.yaml`, router, `build_runner` output), or running full test suites in parallel TDD loops.
 
 # Verification & Completion Checklist
 - [ ] `State 0`: Active branch checked (`feat/<slug>` auto-created; Scope Drift evaluated); `docs/<feature-name>/` created; `context/memory/MEMORY.md` read; root `AGENTS.md` (`<= 90 lines`) checked; `PLAN.md` (`<= 50 lines`) authored with 5-row `Invoke / SKIP` triage.
 - [ ] `State 1 & 1.5`: Only capability-triggered specialists invoked within line budgets (or skipped if all `SKIP`); Tier 2/3 user approval obtained via `AskUserQuestion`.
-- [ ] `State 2`: Collision analysis verified disjoint `Owned Files` (Mode A) or Mode B Git Worktree isolation; parallel `flutter-implementer` tracks ran scoped tests only.
+- [ ] `State 2`: Safe Parallel Dispatch applied (contract-first step committed; disjoint `Owned Files` in Mode A, or Mode B with a verified base commit); parallel `flutter-implementer` tracks ran scoped tests only and no git writes.
 - [ ] `State 3 & 4`: Tiered verification passed (`flutter-reviewer` 60/120fps & zero leaks, `flutter-release-engineer` when triggered/Tier 3, `qa-tester` `test-matrix.md <= 80 lines` & `exit code 0` in `Adversarial Review Committee`); any `BLOCKED`/`SKIPPED` E2E transparently disclosed.
 - [ ] `State 5`: `PLAN.md`, root `AGENTS.md` (if needed), and `context/memory/` updated once at milestone completion.
 
@@ -122,6 +139,6 @@ Never over-invoke subagents blindly. Every `PLAN.md` (`<= 50 lines` per feature)
 # Claude Code Runtime Notes
 - **Run as the main thread** so the alignment gate can ask the user: `claude --agent senior-dev-flutter:flutter-feature-orchestrator` (or `"agent": "senior-dev-flutter:flutter-feature-orchestrator"` in `.claude/settings.json`). `AskUserQuestion` is removed inside subagents: if it is unavailable, return the alignment summary as your final message and stop for approval.
 - **Exact `subagent_type` values**: `senior-dev-flutter:flutter-architect`, `senior-dev-flutter:flutter-implementer`, `senior-dev-flutter:flutter-reviewer`, `senior-dev-flutter:flutter-release-engineer`, `senior-dev:product-analyst`, `senior-dev:ui-ux-designer`, `senior-dev:architect-engineer`, `senior-dev:code-implementer`, `senior-dev:qa-tester`, `senior-dev:compliance-verifier`, `senior-dev:critic`, `senior-dev:challenger`, `senior-dev:e2e-blackbox-tester`.
-- **Parallel fan-out** = several `Agent` calls in one message. **Mode B** = `isolation: "worktree"` on the `Agent` call.
+- **Parallel fan-out** = several `Agent` calls in one message. **Mode B** = `isolation: "worktree"` on the `Agent` call, only after confirming `"worktree": {"baseRef": "head"}` in `.claude/settings.json` (otherwise the worktree starts from the default branch).
 - **Skills on demand**: only your core skills are preloaded; load others with the `Skill` tool when a state needs them (e.g. `context-restore` at State 0, `context-capture` at State 5).
 - **Stop gates are cached**: the Stop hook re-runs tests only when code changed since the last green run and blocks at most 3 times per turn.

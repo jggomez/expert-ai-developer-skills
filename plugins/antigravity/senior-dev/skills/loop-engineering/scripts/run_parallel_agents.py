@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
-"""Provision isolated git worktrees for parallel feature work.
+"""Provision isolated git worktrees for parallel feature work (Mode B).
 
-Subagents run inside a live agent session (Antigravity or Claude Code) and
-are launched by the model itself via its Agent/subagent tool — there is no
-importable SDK for spawning one from a standalone script. What IS scriptable,
-and genuinely useful on its own, is the isolation half of parallel work: a
-dedicated branch + worktree per task, so multiple subagents never touch the
-same working directory.
-
-This script creates one worktree per task and prints the prompt to hand each
-corresponding subagent.
+Subagents are launched by the model through its host's Agent/subagent tool; there is no SDK for
+spawning one from a script. What IS scriptable is the isolation half: one branch + worktree per
+task, created from the CURRENT HEAD so every worker starts from the in-progress feature branch
+(Claude Code's own subagent worktrees start from the default branch unless worktree.baseRef is
+"head"). Each worker commits on its branch; the orchestrator merges the branches one at a time.
 
 Usage:
-  python3 run_parallel_agents.py              # uses the example tasks below
-  python3 run_parallel_agents.py tasks.json    # [{"task_name", "branch_name", "instruction"}, ...]
+  python3 run_parallel_agents.py tasks.json
+  tasks.json = [{"task_name": "app-admin", "branch_name": "feat/x-admin", "instruction": "..."}, ...]
+
+Exit codes: 0 = worktrees ready, 1 = git failure, 2 = usage error.
 """
 import json
 import logging
@@ -27,18 +25,7 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)],
 )
 
-DEFAULT_TASKS = [
-    {
-        "task_name": "auth",
-        "branch_name": "feature/add-oauth-flow",
-        "instruction": "Implement a secure OAuth2 authentication flow with token validation.",
-    },
-    {
-        "task_name": "billing",
-        "branch_name": "feature/integrate-stripe",
-        "instruction": "Integrate the Stripe checkout webhook listener and update subscription status in the DB.",
-    },
-]
+REQUIRED_KEYS = ("task_name", "branch_name", "instruction")
 
 
 def branch_exists(branch_name: str, repo_root: str) -> bool:
@@ -50,7 +37,8 @@ def branch_exists(branch_name: str, repo_root: str) -> bool:
 
 
 def create_worktree(task_name: str, branch_name: str, repo_root: str) -> str:
-    worktree_path = os.path.join(os.path.dirname(repo_root), f"worktree-{task_name}")
+    """Creates <repo>-wt-<task> next to the repository; a new branch starts at the current HEAD."""
+    worktree_path = os.path.join(os.path.dirname(repo_root), f"{os.path.basename(repo_root)}-wt-{task_name}")
 
     if os.path.exists(worktree_path):
         logging.info(f"Worktree already exists at '{worktree_path}', skipping creation.")
@@ -59,40 +47,68 @@ def create_worktree(task_name: str, branch_name: str, repo_root: str) -> str:
     if branch_exists(branch_name, repo_root):
         cmd = ["git", "worktree", "add", worktree_path, branch_name]
     else:
-        cmd = ["git", "worktree", "add", "-b", branch_name, worktree_path]
+        cmd = ["git", "worktree", "add", "-b", branch_name, worktree_path, "HEAD"]
 
-    subprocess.run(cmd, cwd=repo_root, check=True)
+    subprocess.run(cmd, cwd=repo_root, check=True, capture_output=True, text=True)
     logging.info(f"Created worktree for '{task_name}' at '{worktree_path}' on branch '{branch_name}'.")
     return worktree_path
 
 
-def main():
-    repo_root = os.getcwd()
-    tasks = DEFAULT_TASKS
-    if len(sys.argv) > 1:
-        with open(sys.argv[1], "r", encoding="utf-8") as f:
-            tasks = json.load(f)
-
-    logging.info(f"Provisioning {len(tasks)} isolated worktree(s) for parallel work...")
-
+def load_tasks(path: str) -> list:
+    with open(path, "r", encoding="utf-8") as f:
+        tasks = json.load(f)
+    if not isinstance(tasks, list) or not tasks:
+        raise ValueError("tasks.json must be a non-empty JSON list")
     for task in tasks:
-        worktree_path = create_worktree(task["task_name"], task["branch_name"], repo_root)
-        print("\n" + "=" * 80)
-        print(f"Task: {task['task_name']}  |  Branch: {task['branch_name']}  |  Worktree: {worktree_path}")
-        print("Launch one subagent per task via your host's Agent/subagent tool with this prompt:")
-        print("-" * 80)
-        print(
-            f"Working directory: {worktree_path}\n"
-            f"Implement: {task['instruction']}\n"
-            f"Write tests, commit your changes, and open a draft PR from '{task['branch_name']}'."
-        )
+        if not isinstance(task, dict):
+            raise ValueError(f"task {task!r} must be an object")
+        missing = [k for k in REQUIRED_KEYS if not task.get(k)]
+        if missing:
+            raise ValueError(f"task {task!r} is missing {missing}")
+    return tasks
+
+
+def main() -> int:
+    if len(sys.argv) != 2:
+        print("usage: run_parallel_agents.py tasks.json  "
+              '(tasks.json = [{"task_name", "branch_name", "instruction"}, ...])', file=sys.stderr)
+        return 2
+    try:
+        tasks = load_tasks(sys.argv[1])
+    except (OSError, ValueError) as exc:
+        print(f"usage error: {exc}", file=sys.stderr)
+        return 2
+
+    top = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True, check=False)
+    if top.returncode != 0:
+        print("error: run this inside a git repository", file=sys.stderr)
+        return 1
+    repo_root = top.stdout.strip()
+
+    logging.info(f"Provisioning {len(tasks)} isolated worktree(s) from the current HEAD...")
+    try:
+        for task in tasks:
+            worktree_path = create_worktree(task["task_name"], task["branch_name"], repo_root)
+            print("\n" + "=" * 80)
+            print(f"Task: {task['task_name']}  |  Branch: {task['branch_name']}  |  Worktree: {worktree_path}")
+            print("Dispatch one implementer with this brief:")
+            print("-" * 80)
+            print(
+                f"Working directory: {worktree_path}\n"
+                f"Implement: {task['instruction']}\n"
+                f"Run only the tests for your files, then commit on '{task['branch_name']}'. "
+                "Do not push and do not open a PR; report the branch name and the test exit code."
+            )
+    except subprocess.CalledProcessError as exc:
+        logging.error(f"git worktree failed: {(exc.stderr or '').strip() or exc}")
+        return 1
 
     print("\n" + "=" * 80)
-    print(
-        "Worktrees are ready. Dispatch one subagent per task above, then run "
-        "pr_cron_reviewer.py once they've pushed to audit the resulting branches."
-    )
+    print("Worktrees are ready. After the workers return, merge each branch one at a time "
+          "(git merge --no-ff <branch>), run the affected tests after each merge, then "
+          "remove the worktree (git worktree remove <path>).")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

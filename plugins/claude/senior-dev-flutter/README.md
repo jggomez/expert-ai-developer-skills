@@ -104,7 +104,7 @@ Specialist skills (product, design, QA, critic, challenger, black-box) come from
 
 1. The orchestrator restores `context/memory/MEMORY.md` and writes a short `PLAN.md` with a tier (1 fast-track, 2 standard, 3 mission-critical).
 2. Tier 2 and 3 run only the discovery specialists the plan justifies, then pause for your approval.
-3. `flutter-implementer` tracks run in parallel, on disjoint files or in git worktrees.
+3. Shared files (`pubspec.yaml`, router, DI, generated code) change first in one committed step; then up to 3 `flutter-implementer` tracks run in parallel on disjoint files, without git writes or `build_runner`. Worktrees are a last resort.
 4. `flutter-reviewer`, `qa-tester` and, when needed, `flutter-release-engineer` and adversarial reviewers verify the work.
 5. The milestone is saved to `context/memory/`.
 

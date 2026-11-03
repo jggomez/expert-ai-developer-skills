@@ -124,9 +124,40 @@ function workspaceOf(payload) {
   }
 }
 
-/** Antigravity also fires Stop on errors and step limits; only a normal model stop is verified. */
+/** Where a plan-first gate accepts the plan, relative to a checkout root. */
+const PLAN_LOCATIONS = ['PLAN.md', path.join('docs', 'PLAN.md'), path.join('doc', 'PLAN.md'), path.join('.agents', 'PLAN.md'), path.join('.claude', 'PLAN.md')];
+
+/**
+ * Path of the active PLAN.md for `dir`, or null. Looks in `dir`, then in the main checkout when
+ * `dir` is a linked git worktree: PLAN.md is usually untracked, so a parallel implementer's fresh
+ * worktree does not contain it even though the orchestrator wrote it.
+ */
+function findPlan(dir) {
+  if (!dir) return null;
+  const roots = [dir];
+  try {
+    const common = git(dir, ['rev-parse', '--path-format=absolute', '--git-common-dir']).trim();
+    if (common && path.basename(common) === '.git') roots.push(path.dirname(common));
+  } catch (err) {
+    // Not a git repository (or git unavailable): only `dir` itself is checked.
+  }
+  for (const root of roots) {
+    for (const rel of PLAN_LOCATIONS) {
+      const candidate = path.join(root, rel);
+      if (fs.existsSync(candidate)) return candidate;
+    }
+  }
+  return null;
+}
+
+/**
+ * Antigravity also fires Stop on errors and step limits; only a normal model stop is verified.
+ * `fullyIdle: false` means background tasks (e.g. parallel subagents) are still running, so the
+ * tree may hold other workers' half-finished edits: verify once everything is idle.
+ */
 function isFinalStop(payload) {
   if (detectHost(payload) !== 'antigravity') return true;
+  if (payload.fullyIdle === false) return false;
   return !payload.terminationReason || payload.terminationReason === 'model_stop';
 }
 
@@ -450,6 +481,7 @@ module.exports = {
   detectHost,
   hostOf,
   workspaceOf,
+  findPlan,
   isFinalStop,
   isCodePath,
   changedCodeFiles,

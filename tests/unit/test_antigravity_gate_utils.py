@@ -54,7 +54,7 @@ def repo(tmp_path):
     return tmp_path
 
 
-def _stop(repo, cmd, user_input="fix the bug", reason="model_stop", workspace=None, counter=None):
+def _stop(repo, cmd, user_input="fix the bug", reason="model_stop", workspace=None, counter=None, idle=True):
     harness = repo / ".git" / "harness.js"
     harness.write_text(HARNESS)
     payload = {
@@ -65,7 +65,7 @@ def _stop(repo, cmd, user_input="fix the bug", reason="model_stop", workspace=No
         "modelName": "flash",
         "executionNum": 1,
         "terminationReason": reason,
-        "fullyIdle": True,
+        "fullyIdle": idle,
         "lastUserInput": user_input,
     }
     if counter:
@@ -125,6 +125,18 @@ def test_only_a_model_stop_runs_verification(repo):
     counter = repo / ".git" / "count"
     # Act
     _, out = _stop(repo, "exit 1", reason="max_steps_exceeded", counter=counter)
+    # Assert
+    assert out["decision"] == "allow"
+    assert not counter.exists()
+
+
+def test_stop_waits_while_subagents_or_background_tasks_still_run(repo):
+    # Arrange: fullyIdle=false means background work (e.g. parallel implementers) is still running,
+    # so the tree may hold half-finished edits from other workers
+    (repo / "app.py").write_text("x = 2\n")
+    counter = repo / ".git" / "count"
+    # Act
+    _, out = _stop(repo, "exit 1", idle=False, counter=counter)
     # Assert
     assert out["decision"] == "allow"
     assert not counter.exists()

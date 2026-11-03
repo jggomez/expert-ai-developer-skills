@@ -59,7 +59,7 @@ Patterns the gate rejects in added lines:
 
 | File | Purpose |
 | :--- | :--- |
-| `rules/docs-and-quality-rules.md` | Always-on rule: artifact line caps, Fail-Honest reporting, Karpathy/DRY/KISS, anti-lazy policy, Mermaid safety. |
+| `rules/docs-and-quality-rules.md` | Short always-on rule (~350 tokens): no placeholders, no speculative code, artifact line caps, Fail-Honest reporting, Mermaid safety. |
 
 ## How it works
 

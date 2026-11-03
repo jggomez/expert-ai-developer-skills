@@ -163,7 +163,7 @@ def orchestrator_appendix(name: str, plugin: str, own_agents: list[str], depende
 # Claude Code Runtime Notes
 - **Run as the main thread** so the alignment gate can ask the user: `claude --agent {plugin}:{name}` (or `"agent": "{plugin}:{name}"` in `.claude/settings.json`). `AskUserQuestion` is removed inside subagents: if it is unavailable, return the alignment summary as your final message and stop for approval.
 - **Exact `subagent_type` values**: {_subagent_types(plugin, workers, dependency_agents)}.
-- **Parallel fan-out** = several `Agent` calls in one message. **Mode B** = `isolation: "worktree"` on the `Agent` call.
+- **Parallel fan-out** = several `Agent` calls in one message. **Mode B** = `isolation: "worktree"` on the `Agent` call, only after confirming `"worktree": {{"baseRef": "head"}}` in `.claude/settings.json` (otherwise the worktree starts from the default branch).
 - **Skills on demand**: only your core skills are preloaded; load others with the `Skill` tool when a state needs them (e.g. `context-restore` at State 0, `context-capture` at State 5).
 - **Stop gates are cached**: the Stop hook re-runs tests only when code changed since the last green run and blocks at most 3 times per turn.
 """

@@ -54,7 +54,7 @@ python3 skills/bigquery-query-optimization/scripts/lint_sql_query.py path/to/sql
 
 | File | Trigger | Purpose |
 | :--- | :--- | :--- |
-| `rules/sql-optimization-rules.md` | `always_on` | 3-tier triage, BigQuery dry runs and `STATIC_ANALYSIS_ONLY` / `BLOCKED` reporting |
+| `rules/sql-optimization-rules.md` | `model_decision` | Read-only safety, BigQuery dry runs, semantic equivalence and `STATIC_ANALYSIS_ONLY` / `BLOCKED` reporting |
 
 ### Hooks
 

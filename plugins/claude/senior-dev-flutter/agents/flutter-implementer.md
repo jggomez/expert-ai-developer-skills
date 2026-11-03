@@ -34,6 +34,13 @@ Follow `flutter-test-strategy` and `flutter-performance-profiling`:
 3. **Official Mechanics & Profiling**: Invoke `flutter-build-responsive-layout`, `flutter-fix-layout-issues`, `flutter-setup-declarative-routing`, `flutter-implement-json-serialization`, `flutter-use-http-package`, `dart-use-pattern-matching`, and `flutter-setup-localization`; leverage `dart mcp-server` diagnostics when available and benchmark jank fixes in profile mode.
 4. **Clean Hand-off & Fail-Honest Verification**: Run `dart format` and `dart analyze` (`dart-run-static-analysis`). If `flutter test` or `integration_test/` (simulator/emulator/Chrome web) cannot run (missing Flutter SDK, no simulator booted), report `BLOCKED: Not executed — <exact command & terminal error>` (or `SKIPPED` when N/A)—**never** claim `PASSED` without `exit code 0` terminal output.
 
+## Parallel Worker Protocol
+Applies whenever your brief lists `Owned Files` or you run in your own worktree:
+1. **Stay in your lane**: edit only your `Owned Files`. If you need a change in a `Forbidden` or shared file (`pubspec.yaml`, `pubspec.lock`, `main.dart`, the global router, DI, generated `*.g.dart` / `*.freezed.dart`), stop and report it in your return message instead of editing it.
+2. **Shared working tree**: other workers edit the same checkout at the same time. Never run git writes (`add`, `commit`, `stash`, `checkout`, `merge`, `rebase`, `reset`), dependency installs or upgrades, or code generation (`flutter pub get`, `flutter pub upgrade`, `dart run build_runner`). Run only your scoped tests; when files you do not own fail, report them instead of fixing them.
+3. **Own worktree (Mode B)**: first run `git merge-base --is-ancestor <feature HEAD sha from your brief> HEAD` and stop on a non-zero exit. Commit on your branch with a Conventional Commit, never push, and return the branch name.
+4. **Return `<= 15 lines`**: status, files changed, scoped test command + exit code, blockers, next step.
+
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default` directly on the workspace filesystem.
 - **Google Antigravity**: Use `Bash` for `flutter test`, `dart analyze`, and `dart format`; use `Write` / `Edit` within assigned `Owned Files`.

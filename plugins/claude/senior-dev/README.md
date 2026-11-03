@@ -118,7 +118,8 @@ flowchart LR
 ```
 
 The orchestrator classifies each task as Tier 1 (fast-track), Tier 2 (standard) or Tier 3 (mission-critical) and invokes only the specialists the task needs.
-Parallel workers run in one message; worktree isolation (`isolation: "worktree"`) is used when tracks share files.
+Parallel workers run in one message, at most 3 at a time, on disjoint files; shared files change first in one committed step. Worktree isolation (`isolation: "worktree"`) is a last resort and needs `"worktree": {"baseRef": "head"}` in `.claude/settings.json`, because Claude Code otherwise branches worktrees from the default branch.
+Well-specified work stays light: scale alone never makes a task Tier 3, the orchestrator never adds unrequested features, and a multi-phase request runs discovery, review and E2E once for the whole request, with one commit per phase.
 The full state machine is documented in [AGENTS.md](../../../AGENTS.md) and the [root README](../../../README.md).
 
 ## Configuration

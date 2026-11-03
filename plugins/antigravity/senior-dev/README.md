@@ -65,7 +65,7 @@ Reviewers return their verdict in the final message (50 lines or fewer); they do
 
 ### Rules
 
-`rules/senior-dev-rules.md` (`trigger: always_on`) defines the state machine, role boundaries, tier routing and line budgets.
+`rules/senior-dev-rules.md` (`trigger: always_on`, ~400 tokens) holds only invariants: branch safety, scope discipline, plan-first, test proof, fail-honest reporting. The state machine lives in the orchestrator agent and the `loop-engineering` skill.
 
 ## Bundled Skills
 
@@ -123,6 +123,7 @@ flowchart LR
 ```
 
 The orchestrator classifies each task as Tier 1 (fast-track), Tier 2 (standard) or Tier 3 (mission-critical) and invokes only the specialists the task needs.
+Well-specified work stays light: scale alone never makes a task Tier 3, the orchestrator never adds unrequested features, and a multi-phase request runs discovery, review and E2E once for the whole request, with one commit per phase. Parallel workers (at most 3) own disjoint files; shared files change first in one committed step.
 Discovery specialists run in sequence on one shared `docs/<feature-name>/spec.md`, each editing only its own section.
 The full state machine is documented in [AGENTS.md](../../../AGENTS.md) and the [root README](../../../README.md).
 

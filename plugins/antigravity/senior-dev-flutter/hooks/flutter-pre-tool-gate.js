@@ -115,8 +115,7 @@ if (isFileModTool && targetFile) {
     if (ext === '.dart') {
       // Check Plan First
       const hasPlan =
-        fs.existsSync(path.join(cwd, 'PLAN.md')) ||
-        fs.existsSync(path.join(cwd, 'doc', 'PLAN.md')) ||
+        g.findPlan(cwd) !== null ||
       g.isSmallEdit(toolName, toolArgs);
 
       if (!hasPlan) {

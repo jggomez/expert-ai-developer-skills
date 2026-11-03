@@ -65,7 +65,7 @@ Use the context-keeper agent to archive a full session snapshot and roll up deci
 
 | File | Trigger | Purpose |
 | :--- | :--- | :--- |
-| `rules/shared-context-rules.md` | `always_on` | Read `MEMORY.md` at start, ask before loading archived sessions, save only when a task ships, redact secrets |
+| `rules/shared-context-rules.md` | `model_decision` | Read `MEMORY.md` lightly, ask before loading archived sessions, save only when a task ships, redact secrets. The `SessionStart` hook covers session start. |
 
 ### Hooks
 

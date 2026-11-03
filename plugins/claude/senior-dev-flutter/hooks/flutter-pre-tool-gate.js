@@ -85,14 +85,8 @@ if (isFileModTool) {
     }
 
     if (isDartFile && isLibOrTest) {
-      const possiblePlanPaths = [
-        path.join(cwd, 'PLAN.md'),
-        path.join(cwd, 'docs', 'PLAN.md'),
-        path.join(cwd, '.agents', 'PLAN.md'),
-        path.join(cwd, '.claude', 'PLAN.md')
-      ];
       // Tier 1 fast-track: surgical Edits (<= 10 lines each side) do not need a PLAN.md.
-    const hasPlan = possiblePlanPaths.some(p => fs.existsSync(p)) || g.isSmallEdit(toolName, toolInput);
+      const hasPlan = g.findPlan(cwd) !== null || g.isSmallEdit(toolName, toolInput);
 
       if (!hasPlan) {
         deny(
