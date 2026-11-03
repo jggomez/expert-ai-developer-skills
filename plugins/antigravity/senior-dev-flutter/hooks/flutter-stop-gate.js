@@ -1,36 +1,27 @@
 #!/usr/bin/env node
 /**
- * senior-dev-flutter Stop gate. When the session ends in a Flutter/Dart repo
- * and `dart` is on PATH, runs `dart analyze` (fast). If it fails, the agent is
- * not allowed to finish until it's clean. `flutter test` is NOT run here (too
- * slow for a Stop hook) — the reason text reminds the agent to run it.
- * No-op on a non-Flutter repo or when `dart` is unavailable.
+ * senior-dev-flutter Stop gate for Claude Code.
+ * When the session ends in a Flutter/Dart repo and `dart` is on PATH,
+ * runs `dart analyze`. If it fails, the agent is blocked from stopping
+ * (console.error and exit code 2).
+ * No-op on non-Flutter repo or when `dart` is unavailable.
+ * Skips when no code changed / the same code state already passed, shares the
+ * 'dart-analyze' gate with senior-dev's universal gate (runs once), and gives up
+ * after 3 blocks per turn (see hooks/shared/gate-utils.js).
  */
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const g = require(path.join(__dirname, 'shared', 'gate-utils.js'));
 
-const isClaudeCode = Boolean(process.env.CLAUDE_PLUGIN_ROOT);
-
-let raw = '';
-try {
-  raw = fs.readFileSync(0, 'utf-8');
-} catch (e) {
-  finishAllow();
-}
-let payload = {};
-if (raw.trim()) {
-  try {
-    payload = JSON.parse(raw);
-  } catch (e) {
-    payload = {};
-  }
-}
-
-const cwd = payload.cwd || (payload.workspacePaths && payload.workspacePaths[0]) || process.cwd();
+const payload = g.readStdinJson();
+if (!g.isFinalStop(payload)) g.exitAllow();
+const cwd = g.workspaceOf(payload);
 
 const pubspec = path.join(cwd, 'pubspec.yaml');
-if (!fs.existsSync(pubspec)) finishAllow();
+if (!fs.existsSync(pubspec)) {
+  g.exitAllow();
+}
 
 let dartOk = true;
 try {
@@ -38,7 +29,17 @@ try {
 } catch (e) {
   dartOk = false;
 }
-if (!dartOk) finishAllow();
+if (!dartOk) {
+  g.exitAllow();
+}
+
+const gate = g.createStopGate({ gateId: 'dart-analyze', payload });
+if (gate.retryLimitReached()) {
+  g.exitAllow(g.retryLimitNotice('dart-analyze'));
+}
+if (gate.begin()) {
+  g.exitAllow();
+}
 
 try {
   execSync('dart analyze', { cwd, stdio: 'pipe', timeout: 120000 });
@@ -52,18 +53,8 @@ try {
     'run `flutter test` — this hook does not.\n\n' +
     out.slice(0, 4000);
 
-  if (isClaudeCode) {
-    console.error(reason);
-    process.exit(2); // blocks the stop, feeds stderr back
-  } else {
-    console.log(JSON.stringify({ decision: 'continue', reason }));
-    process.exit(0);
-  }
+  g.exitBlock(gate.markFail(reason)); // host-aware block (hooks/shared/gate-utils.js)
 }
 
-finishAllow();
-
-function finishAllow() {
-  if (!isClaudeCode) console.log(JSON.stringify({ decision: 'allow' }));
-  process.exit(0);
-}
+gate.markPass();
+g.exitAllow();

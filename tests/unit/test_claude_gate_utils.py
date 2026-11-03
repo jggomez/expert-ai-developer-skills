@@ -1,4 +1,4 @@
-"""Behavioural tests for scripts/claude-hook-lib/gate-utils.js and the Claude Stop gates using it.
+"""Behavioural tests for scripts/hook-lib/gate-utils.js and the Claude Stop gates using it.
 
 Each test builds a throw-away git repo, pipes a Claude Code hook payload into Node and
 asserts exit code / stdout / stderr, so the real hook contract is exercised end to end.
@@ -14,7 +14,7 @@ import time
 import pytest
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-LIB = os.path.join(ROOT, "scripts", "claude-hook-lib", "gate-utils.js")
+LIB = os.path.join(ROOT, "scripts", "hook-lib", "gate-utils.js")
 CLAUDE_PLUGINS = os.path.join(ROOT, "plugins", "claude")
 
 pytestmark = pytest.mark.skipif(shutil.which("node") is None or shutil.which("git") is None,

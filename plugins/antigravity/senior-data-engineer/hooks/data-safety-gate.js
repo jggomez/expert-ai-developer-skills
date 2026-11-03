@@ -7,6 +7,7 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const g = require(path.join(__dirname, 'shared', 'gate-utils.js'));
 
 const PROTECTED_BRANCHES = new Set(['main', 'master', 'develop', 'dev']);
 
@@ -40,7 +41,7 @@ const toolName = toolCall.name || payload.tool_name || '';
 const toolArgs = toolCall.args || payload.tool_input || {};
 const command = toolArgs.CommandLine || toolArgs.command || '';
 const targetFile = toolArgs.TargetFile || toolArgs.file_path || toolArgs.path || '';
-const cwd = payload.workspacePaths?.[0] || payload.cwd || toolArgs.Cwd || process.cwd();
+const cwd = (payload.workspacePaths ? g.workspaceOf(payload) : null) || payload.cwd || toolArgs.Cwd || process.cwd();
 
 // 1. GATE: Destructive Commands via run_command
 if (toolName === 'run_command' && command) {
@@ -67,7 +68,7 @@ if (toolName === 'call_mcp_tool') {
 }
 
 // 3. GATE: Plan-First before creating/modifying pipeline files
-const isFileModTool = /^(write_to_file|replace_file_content)$/i.test(toolName);
+const isFileModTool = /^(write_to_file|replace_file_content|multi_replace_file_content)$/i.test(toolName);
 if (isFileModTool && targetFile) {
   const basename = path.basename(targetFile);
   const ext = path.extname(targetFile).toLowerCase();
@@ -101,7 +102,8 @@ if (isFileModTool && targetFile) {
 
     const hasPlan =
       fs.existsSync(path.join(cwd, 'PLAN.md')) ||
-      fs.existsSync(path.join(cwd, 'docs', 'PLAN.md'));
+      fs.existsSync(path.join(cwd, 'docs', 'PLAN.md')) ||
+      g.isSmallEdit(toolName, toolArgs);
 
     if (!hasPlan) {
       deny(

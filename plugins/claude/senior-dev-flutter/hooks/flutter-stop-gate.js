@@ -15,11 +15,12 @@ const path = require('path');
 const g = require(path.join(__dirname, 'shared', 'gate-utils.js'));
 
 const payload = g.readStdinJson();
+if (!g.isFinalStop(payload)) g.exitAllow();
 const cwd = g.workspaceOf(payload);
 
 const pubspec = path.join(cwd, 'pubspec.yaml');
 if (!fs.existsSync(pubspec)) {
-  process.exit(0);
+  g.exitAllow();
 }
 
 let dartOk = true;
@@ -29,7 +30,7 @@ try {
   dartOk = false;
 }
 if (!dartOk) {
-  process.exit(0);
+  g.exitAllow();
 }
 
 const gate = g.createStopGate({ gateId: 'dart-analyze', payload });
@@ -37,7 +38,7 @@ if (gate.retryLimitReached()) {
   g.exitAllow(g.retryLimitNotice('dart-analyze'));
 }
 if (gate.begin()) {
-  process.exit(0);
+  g.exitAllow();
 }
 
 try {
@@ -52,8 +53,8 @@ try {
     'run `flutter test` — this hook does not.\n\n' +
     out.slice(0, 4000);
 
-  g.exitBlock(gate.markFail(reason)); // Claude Code stop failure contract: stderr + exit 2
+  g.exitBlock(gate.markFail(reason)); // host-aware block (hooks/shared/gate-utils.js)
 }
 
 gate.markPass();
-process.exit(0);
+g.exitAllow();

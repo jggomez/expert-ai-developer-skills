@@ -9,6 +9,7 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const g = require(path.join(__dirname, 'shared', 'gate-utils.js'));
 
 const PROTECTED_BRANCHES = new Set(['main', 'master', 'develop', 'dev']);
 
@@ -70,10 +71,10 @@ const toolCall = payload.toolCall || {};
 const toolName = toolCall.name || payload.tool_name || '';
 const toolInput = toolCall.args || payload.tool_input || {};
 const commandLine = toolInput.command || toolInput.CommandLine || '';
-const cwd = payload.cwd || toolInput.Cwd || payload.workspacePaths?.[0] || process.cwd();
+const cwd = payload.cwd || toolInput.Cwd || (payload.workspacePaths ? g.workspaceOf(payload) : null) || process.cwd();
 
 // 1. GATE: Plan-First before creating/modifying Python code
-const isFileModTool = /^(write_to_file|replace_file_content|Write|Edit)$/i.test(toolName);
+const isFileModTool = /^(write_to_file|replace_file_content|multi_replace_file_content|Write|Edit)$/i.test(toolName);
 if (isFileModTool) {
   const targetFile = toolInput.TargetFile || toolInput.file_path || toolInput.path || '';
   const basename = path.basename(targetFile);
@@ -105,7 +106,8 @@ if (isFileModTool) {
 
     const hasPlan =
       fs.existsSync(path.join(cwd, 'PLAN.md')) ||
-      fs.existsSync(path.join(cwd, 'docs', 'PLAN.md'));
+      fs.existsSync(path.join(cwd, 'docs', 'PLAN.md')) ||
+      g.isSmallEdit(toolName, toolInput);
 
     if (!hasPlan) {
       deny(

@@ -8,6 +8,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const g = require(path.join(__dirname, 'shared', 'gate-utils.js'));
 
 function allow() {
   const isClaudeCode = Boolean(process.env.CLAUDE_PLUGIN_ROOT);
@@ -54,13 +55,13 @@ const toolName = toolCall.name || payload.tool_name || '';
 const toolArgs = toolCall.args || payload.tool_input || {};
 const targetFile = toolArgs.TargetFile || toolArgs.file_path || toolArgs.path || '';
 const workspaceRoot =
-  payload.workspacePaths?.[0] ||
+  (payload.workspacePaths ? g.workspaceOf(payload) : null) ||
   payload.cwd ||
   toolArgs.Cwd ||
   process.cwd();
 
 // Only inspect file-writing tools: write_to_file, replace_file_content, Write, Edit
-const isFileModTool = /^(write_to_file|replace_file_content|Write|Edit)$/i.test(toolName);
+const isFileModTool = /^(write_to_file|replace_file_content|multi_replace_file_content|Write|Edit)$/i.test(toolName);
 if (!isFileModTool || !targetFile) {
   allow();
 }
@@ -108,7 +109,7 @@ const possiblePlanPaths = [
   path.join(workspaceRoot, 'docs', 'PLAN.md'),
   path.join(workspaceRoot, '.agents', 'PLAN.md')
 ];
-const hasPlan = possiblePlanPaths.some(p => fs.existsSync(p));
+const hasPlan = possiblePlanPaths.some(p => fs.existsSync(p)) || g.isSmallEdit(toolName, toolArgs);
 
 if (!hasPlan) {
   deny(
@@ -124,7 +125,7 @@ if (!hasPlan) {
 const transcriptPath = payload.transcriptPath;
 if (transcriptPath && fs.existsSync(transcriptPath)) {
   try {
-    const content = fs.readFileSync(transcriptPath, 'utf8');
+    const content = g.readFileHead(transcriptPath);
     const firstLine = content.trim().split('\n')[0] || '';
     
     // Subagents are given specialized prompts and do not have '<USER_REQUEST>' as the original user prompt

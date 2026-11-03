@@ -40,7 +40,7 @@ MARKETPLACE_JSON = WORKSPACE_ROOT / ".claude-plugin" / "marketplace.json"
 
 ORCHESTRATORS = {"senior-dev-orchestrator", "flutter-feature-orchestrator", "python-backend-orchestrator"}
 
-HOOK_LIB_SRC = WORKSPACE_ROOT / "scripts" / "claude-hook-lib" / "gate-utils.js"
+HOOK_LIB_SRC = WORKSPACE_ROOT / "scripts" / "hook-lib" / "gate-utils.js"
 
 PLUGIN_AGENTS_MAP = {
     "senior-dev": [
@@ -283,9 +283,11 @@ def sync_claude_plugins() -> None:
                     shutil.copy2(hook_file, dest_hook_file)
 
         if plugin_name in GATED_PLUGINS:
-            lib_dir = dest_plugin / "hooks" / "shared"
-            lib_dir.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(HOOK_LIB_SRC, lib_dir / "gate-utils.js")
+            # The shared hook library is host-aware: same file for Claude Code and Antigravity.
+            for plugin_root in (dest_plugin, src_plugin):
+                lib_dir = plugin_root / "hooks" / "shared"
+                lib_dir.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(HOOK_LIB_SRC, lib_dir / "gate-utils.js")
 
         src_hooks_json = src_plugin / "hooks.json"
         dest_hooks_json = dest_plugin / "hooks.json"

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Gitflow Branch & Commit Safety Gate (PreToolUse)
- * 1. Blocks direct git add/commit/push/merge on protected branches (main, master, develop).
+ * 1. Blocks direct git add/commit/push/merge on protected branches (main, master, develop, dev).
  * 2. Enforces Conventional Commits format on git commit messages.
  */
 const { execSync } = require('child_process');
@@ -55,12 +55,12 @@ const cwd = payload.workspacePaths?.[0] || payload.cwd || toolInput.Cwd || proce
 const isShellTool = toolName === 'run_command' || toolName === 'Bash';
 if (!isShellTool || !commandLine) allow();
 
-// 1. GATE: Gitflow Branch Safety Gate (never commit/push directly on main or develop)
+// 1. GATE: Gitflow Branch Safety Gate (never commit/push directly on main, master, develop or dev)
 const gitWriteRegex = /\b(git\s+commit|git\s+push|git\s+add|git\s+merge)\b/i;
 if (gitWriteRegex.test(commandLine)) {
   try {
     const activeBranch = execSync('git symbolic-ref --short HEAD', { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
-    if (activeBranch === 'main' || activeBranch === 'master' || activeBranch === 'develop') {
+    if (['main', 'master', 'develop', 'dev'].includes(activeBranch)) {
       deny(
         `Gitflow Safety Blocked: directly running git add/commit/push/merge on "${activeBranch}" is prohibited. Use a feature/ or bugfix/ branch and merge via Pull Request.`
       );

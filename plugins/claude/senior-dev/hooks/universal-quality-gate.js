@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Senior Developer Universal Quality Gate for Claude Code (Stop Hook)
+ * Senior Developer Universal Quality Gate (Stop hook, Claude Code and Antigravity)
  * Polyglot verification hook:
  * When Claude Code finishes a turn / attempts to stop:
  * Inspects the project environment and executes relevant test suites or linters.
- * If tests/linters fail (exit code != 0), exits with code 2 and feeds error back via stderr.
+ * If tests/linters fail, keeps the agent working and feeds the output back (gate-utils exitBlock).
  *
  * Cost controls (hooks/shared/gate-utils.js):
  * - A suite is skipped when no code file changed, or when the same code state already passed it.
@@ -19,6 +19,7 @@ const path = require('path');
 const g = require(path.join(__dirname, 'shared', 'gate-utils.js'));
 
 const payload = g.readStdinJson();
+if (!g.isFinalStop(payload)) g.exitAllow();
 const workspaceRoot = g.workspaceOf(payload);
 const exists = (rel) => fs.existsSync(path.join(workspaceRoot, rel));
 
@@ -91,6 +92,8 @@ const SUITES = [
   },
 ];
 
+// The host kills the hook at its hooks.json timeout (180 s): share that budget across suites.
+const budget = g.createBudget(180000);
 const notices = [];
 for (const suite of SUITES) {
   if (!suite.applies()) continue;
@@ -102,8 +105,14 @@ for (const suite of SUITES) {
   }
   if (gate.begin()) continue; // no code change, already green, or verified by a parallel gate
 
+  const timeout = budget.timeout(120000);
+  if (timeout < 10000) {
+    gate.abandon(); // release the lock without recording a result
+    notices.push(`[universal quality gate] skipped '${suite.gateId}': hook time budget exhausted`);
+    continue;
+  }
   try {
-    execSync(suite.command, { cwd: workspaceRoot, stdio: 'pipe', timeout: 120000 });
+    execSync(suite.command, { cwd: workspaceRoot, stdio: 'pipe', timeout });
     gate.markPass();
   } catch (error) {
     const out = (error.stdout?.toString() || '') + (error.stderr?.toString() || '') || error.message || '';

@@ -181,7 +181,7 @@ E2E_APPENDIX = """
 # --------------------------------------------------------------------------------------
 # 4. Shared hook library
 # --------------------------------------------------------------------------------------
-# Claude plugins whose hooks import hooks/shared/gate-utils.js (canonical: scripts/claude-hook-lib/).
+# Claude plugins whose hooks import hooks/shared/gate-utils.js (canonical: scripts/hook-lib/).
 GATED_PLUGINS = [
     "senior-dev",
     "python-backend",

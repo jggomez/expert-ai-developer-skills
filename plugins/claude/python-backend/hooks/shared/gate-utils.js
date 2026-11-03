@@ -1,15 +1,21 @@
 'use strict';
 /**
- * Shared helpers for Claude Code plugin hooks.
+ * Shared helpers for plugin hooks, for both Claude Code and Google Antigravity.
  *
- * CANONICAL SOURCE: scripts/claude-hook-lib/gate-utils.js
- * Copied verbatim into plugins/claude/<plugin>/hooks/shared/ by scripts/sync_agents.py.
- * Never edit the copies; tests/unit/test_claude_gate_utils.py fails on drift.
+ * CANONICAL SOURCE: scripts/hook-lib/gate-utils.js
+ * Copied verbatim into plugins/{claude,antigravity}/<plugin>/hooks/shared/ by scripts/sync_agents.py.
+ * Never edit the copies; tests/unit/test_{claude,antigravity}_gate_utils.py fail on drift.
+ *
+ * Host contract (detected from the stdin payload by readStdinJson):
+ * - Claude Code: block = stderr + exit 2; turn retries flagged by `stop_hook_active`.
+ * - Antigravity (antigravity.google/docs/hooks): always exit 0 with JSON on stdout
+ *   (`{"decision":"continue","reason"}` keeps a Stop going; non-zero exits are ignored);
+ *   no retry flag, so a turn is keyed by conversationId + lastUserInput; the workspace is
+ *   `workspacePaths[0]` resolved to its git root; Stop only verifies on `model_stop`.
  *
  * 1. Stop-gate state (createStopGate):
- *    - Bounded retries: honours Claude Code's `stop_hook_active` flag. A gate blocks at most
- *      MAX_BLOCKS consecutive times inside one user turn, then lets the turn end with a
- *      notice instead of looping forever.
+ *    - Bounded retries: a gate blocks at most MAX_BLOCKS consecutive times inside one user
+ *      turn, then lets the turn end with a notice instead of looping forever.
  *    - Change detection: verification is skipped when no code file changed, or when the
  *      exact same code state already passed this gate (fingerprint = HEAD + changed code
  *      file contents).
@@ -66,6 +72,18 @@ function readStdinRaw(timeoutMs = 10000) {
   return Buffer.concat(chunks).toString('utf-8');
 }
 
+let host = 'claude';
+
+/** 'antigravity' for Antigravity payloads (conversationId / workspacePaths / toolCall), else 'claude'. */
+function detectHost(payload) {
+  if (!payload || payload.hook_event_name) return 'claude';
+  return payload.conversationId || Array.isArray(payload.workspacePaths) || payload.toolCall ? 'antigravity' : 'claude';
+}
+
+function hostOf() {
+  return host;
+}
+
 function readStdinJson() {
   let raw = '';
   try {
@@ -77,19 +95,39 @@ function readStdinJson() {
   if (!raw.trim()) return {};
   try {
     const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' ? parsed : {};
+    const payload = parsed && typeof parsed === 'object' ? parsed : {};
+    host = detectHost(payload);
+    return payload;
   } catch (err) {
     return {};
   }
 }
 
-function workspaceOf(payload) {
-  return payload.cwd || (payload.workspacePaths && payload.workspacePaths[0]) || process.cwd();
-}
-
 function git(cwd, args) {
   // --no-optional-locks: never take .git/index.lock (parallel hooks, user's own git commands).
   return execFileSync('git', ['--no-optional-locks', ...args], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+}
+
+/**
+ * Directory the checks run in. Claude Code sends `cwd`. Antigravity sends `workspacePaths`, which
+ * may point at a subfolder: resolve it to the git root so PLAN.md, tests and .git are found.
+ * (Antigravity runs hooks with the plugin root as cwd, so process.cwd() is only a last resort.)
+ */
+function workspaceOf(payload) {
+  if (payload.cwd) return payload.cwd;
+  const ws = Array.isArray(payload.workspacePaths) ? payload.workspacePaths[0] : null;
+  if (!ws) return process.cwd();
+  try {
+    return git(ws, ['rev-parse', '--show-toplevel']).trim() || ws;
+  } catch (err) {
+    return ws;
+  }
+}
+
+/** Antigravity also fires Stop on errors and step limits; only a normal model stop is verified. */
+function isFinalStop(payload) {
+  if (detectHost(payload) !== 'antigravity') return true;
+  return !payload.terminationReason || payload.terminationReason === 'model_stop';
 }
 
 function resolveGitDir(cwd) {
@@ -178,7 +216,12 @@ function createStopGate({ gateId, payload, maxBlocks = MAX_BLOCKS }) {
   const scope = gitDir ? 'repo' : crypto.createHash('sha1').update(cwd).digest('hex').slice(0, 12);
   const stateFile = path.join(stateDir, `claude-stop-gates-${scope}.json`);
   const lockFile = path.join(stateDir, `claude-stop-gate-${gateId}-${scope}.lock`);
-  const continuing = payload.stop_hook_active === true;
+  // Claude Code flags retries inside a turn; Antigravity has no flag, so the turn is keyed by
+  // conversation + latest user message (a new message resets the block counter).
+  const turnKey = detectHost(payload) === 'antigravity'
+    ? crypto.createHash('sha1').update(`${payload.conversationId || ''}\0${payload.lastUserInput || ''}`).digest('hex')
+    : null;
+  const isContinuing = (gate) => (turnKey ? gate.turn === turnKey : payload.stop_hook_active === true);
   const startedAt = Date.now();
 
   let files = null;
@@ -247,6 +290,7 @@ function createStopGate({ gateId, payload, maxBlocks = MAX_BLOCKS }) {
      */
     begin() {
       const { gate } = readGateState();
+      const continuing = isContinuing(gate);
       const blocks = continuing ? gate.blocks || 0 : 0;
       if (!continuing && gate.blocks) writeGateState({ blocks: 0 });
 
@@ -280,7 +324,7 @@ function createStopGate({ gateId, payload, maxBlocks = MAX_BLOCKS }) {
 
     retryLimitReached() {
       const { gate } = readGateState();
-      return continuing && (gate.blocks || 0) >= maxBlocks;
+      return isContinuing(gate) && (gate.blocks || 0) >= maxBlocks;
     },
 
     markPass() {
@@ -288,27 +332,75 @@ function createStopGate({ gateId, payload, maxBlocks = MAX_BLOCKS }) {
       releaseLock();
     },
 
+    /** Releases the lock without recording a result (e.g. the check was skipped for time). */
+    abandon() {
+      releaseLock();
+    },
+
     /** Records the failure and returns the reason decorated with the retry counter. */
     markFail(reason) {
       const { gate } = readGateState();
-      const blocks = (continuing ? gate.blocks || 0 : 0) + 1;
-      writeGateState({ red: fingerprint || 'unknown', redAt: Date.now(), greenAt: null, blocks });
+      const blocks = (isContinuing(gate) ? gate.blocks || 0 : 0) + 1;
+      writeGateState({ red: fingerprint || 'unknown', redAt: Date.now(), greenAt: null, blocks, turn: turnKey });
       releaseLock();
       return `${reason}\n\n[stop gate ${gateId}: block ${blocks}/${maxBlocks} this turn]`;
     },
   };
 }
 
-/** Exit 2: Claude Code feeds stderr back to the model and keeps working. */
+/**
+ * Keeps the agent working and feeds `reason` back to the model.
+ * Claude Code: stderr + exit 2. Antigravity: {"decision":"continue"} on stdout, exit 0.
+ */
 function exitBlock(reason) {
+  if (host === 'antigravity') {
+    process.stdout.write(JSON.stringify({ decision: 'continue', reason }));
+    process.exit(0);
+  }
   process.stderr.write(`${reason}\n`);
   process.exit(2);
 }
 
-/** Exit 0, optionally showing the user a non-blocking notice. */
+/**
+ * Lets the agent stop / the tool run. Claude Code shows `notice` to the user as a systemMessage;
+ * Antigravity has no user notice for an allowed Stop, so it goes to the hook log (stderr).
+ */
 function exitAllow(notice) {
+  if (host === 'antigravity') {
+    if (notice) process.stderr.write(`${notice}\n`);
+    process.stdout.write(JSON.stringify({ decision: 'allow' }));
+    process.exit(0);
+  }
   if (notice) process.stdout.write(JSON.stringify({ systemMessage: notice }));
   process.exit(0);
+}
+
+/**
+ * Wall-clock budget for a hook that runs several checks: the host kills a hook at its
+ * hooks.json `timeout`, so each check gets min(its own limit, what is left).
+ * @param {number} totalMs  The hook's hooks.json timeout, in ms.
+ */
+function createBudget(totalMs, reserveMs = 5000) {
+  const deadline = Date.now() + totalMs - reserveMs;
+  return {
+    remaining: () => Math.max(0, deadline - Date.now()),
+    timeout: (maxMs) => Math.max(0, Math.min(maxMs, deadline - Date.now())),
+  };
+}
+
+/** First `maxBytes` of a file as UTF-8 ('' when unreadable): never load a whole transcript. */
+function readFileHead(file, maxBytes = 4096) {
+  let fd = null;
+  try {
+    fd = fs.openSync(file, 'r');
+    const buf = Buffer.alloc(maxBytes);
+    const n = fs.readSync(fd, buf, 0, maxBytes, 0);
+    return buf.subarray(0, n).toString('utf8');
+  } catch (err) {
+    return '';
+  } finally {
+    if (fd !== null) fs.closeSync(fd);
+  }
 }
 
 /** Notice shown when a gate gives up after MAX_BLOCKS consecutive blocks. */
@@ -325,24 +417,48 @@ function isAgent(payload, names) {
   return names.includes(bare);
 }
 
-/** True for a surgical Edit (both sides <= SMALL_EDIT_MAX_LINES lines, no replace_all). */
+/**
+ * True for a surgical edit of an existing file (both sides <= maxLines lines in total):
+ * Claude Code `Edit` (no replace_all), Antigravity `replace_file_content` (no AllowMultiple)
+ * and `multi_replace_file_content` (all chunks together). Whole-file writes never qualify.
+ */
 function isSmallEdit(toolName, toolInput, maxLines = SMALL_EDIT_MAX_LINES) {
-  if (!/^Edit$/i.test(toolName || '') || !toolInput || toolInput.replace_all) return false;
+  if (!toolInput) return false;
   const lines = (s) => (typeof s === 'string' ? s.split('\n').length : Infinity);
-  return lines(toolInput.old_string) <= maxLines && lines(toolInput.new_string) <= maxLines;
+  const name = toolName || '';
+  if (/^Edit$/i.test(name)) {
+    if (toolInput.replace_all) return false;
+    return lines(toolInput.old_string) <= maxLines && lines(toolInput.new_string) <= maxLines;
+  }
+  if (name === 'replace_file_content') {
+    if (toolInput.AllowMultiple) return false;
+    return lines(toolInput.TargetContent) <= maxLines && lines(toolInput.ReplacementContent) <= maxLines;
+  }
+  if (name === 'multi_replace_file_content') {
+    const chunks = toolInput.ReplacementChunks;
+    if (!Array.isArray(chunks) || chunks.length === 0) return false;
+    const total = (key) => chunks.reduce((sum, chunk) => sum + lines(chunk && chunk[key]), 0);
+    return total('TargetContent') <= maxLines && total('ReplacementContent') <= maxLines;
+  }
+  return false;
 }
 
 module.exports = {
   MAX_BLOCKS,
   SMALL_EDIT_MAX_LINES,
   readStdinJson,
+  detectHost,
+  hostOf,
   workspaceOf,
+  isFinalStop,
   isCodePath,
   changedCodeFiles,
   createStopGate,
   exitBlock,
   exitAllow,
   retryLimitNotice,
+  createBudget,
+  readFileHead,
   isSmallEdit,
   isAgent,
 };

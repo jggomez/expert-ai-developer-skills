@@ -14,6 +14,7 @@ const path = require('path');
 const g = require(path.join(__dirname, 'shared', 'gate-utils.js'));
 
 const payload = g.readStdinJson();
+if (!g.isFinalStop(payload)) g.exitAllow();
 const workspaceRoot = g.workspaceOf(payload);
 
 // 1. Check for verify_tests.py in skills layout
@@ -36,7 +37,7 @@ if (!hasTestsDir && !hasPytestConfig) {
 
 const testsExist = hasVerifyScript || hasTestsDir || hasPytestConfig || hasTestFiles;
 if (!testsExist) {
-  process.exit(0);
+  g.exitAllow();
 }
 
 const gate = g.createStopGate({ gateId: 'python-tests', payload });
@@ -44,7 +45,7 @@ if (gate.retryLimitReached()) {
   g.exitAllow(g.retryLimitNotice('python-tests'));
 }
 if (gate.begin()) {
-  process.exit(0);
+  g.exitAllow();
 }
 
 // 3. Execute tests
@@ -81,8 +82,8 @@ try {
     `Fix the failing tests or application code before completing your turn.\n\n` +
     `Test Output:\n${testOutput.slice(0, 4000)}`;
 
-  g.exitBlock(gate.markFail(reason)); // Claude Code stop failure contract: stderr + exit 2
+  g.exitBlock(gate.markFail(reason)); // host-aware block (hooks/shared/gate-utils.js)
 }
 
 gate.markPass();
-process.exit(0);
+g.exitAllow();

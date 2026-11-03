@@ -8,6 +8,7 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const g = require(path.join(__dirname, 'shared', 'gate-utils.js'));
 
 const PROTECTED = new Set(['main', 'master', 'develop', 'dev']);
 
@@ -67,7 +68,7 @@ const targetFile =
   toolArgs.target_file ||
   '';
 const cwd =
-  payload.workspacePaths?.[0] ||
+  (payload.workspacePaths ? g.workspaceOf(payload) : null) ||
   payload.cwd ||
   toolArgs.Cwd ||
   toolArgs.cwd ||
@@ -77,7 +78,7 @@ const cwd =
 if (!fs.existsSync(path.join(cwd, 'pubspec.yaml'))) allow();
 
 // 1. GATE: File Modification (write_to_file / replace_file_content / Write / Edit)
-const isFileModTool = /^(write_to_file|replace_file_content|Write|Edit)$/i.test(toolName);
+const isFileModTool = /^(write_to_file|replace_file_content|multi_replace_file_content|Write|Edit)$/i.test(toolName);
 if (isFileModTool && targetFile) {
   const basename = path.basename(targetFile);
   const ext = path.extname(targetFile).toLowerCase();
@@ -115,7 +116,8 @@ if (isFileModTool && targetFile) {
       // Check Plan First
       const hasPlan =
         fs.existsSync(path.join(cwd, 'PLAN.md')) ||
-        fs.existsSync(path.join(cwd, 'doc', 'PLAN.md'));
+        fs.existsSync(path.join(cwd, 'doc', 'PLAN.md')) ||
+      g.isSmallEdit(toolName, toolArgs);
 
       if (!hasPlan) {
         deny(
@@ -128,7 +130,7 @@ if (isFileModTool && targetFile) {
       const transcriptPath = payload.transcriptPath;
       if (transcriptPath && fs.existsSync(transcriptPath)) {
         try {
-          const firstLine = fs.readFileSync(transcriptPath, 'utf8').trim().split('\n')[0] || '';
+          const firstLine = g.readFileHead(transcriptPath).trim().split('\n')[0] || '';
           if (firstLine.includes('<USER_REQUEST>')) {
             deny(
               `[FLUTTER GRAPH INVARIANT VIOLATION]: As the Flutter Feature Orchestrator, you are STRICTLY FORBIDDEN ` +

@@ -5,7 +5,7 @@
       {
         "type": "command",
         "command": "node ./hooks/anti-lazy-code-gate.js",
-        "timeout": 20
+        "timeout": 30
       }
     ]
   }

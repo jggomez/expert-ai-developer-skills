@@ -17,7 +17,7 @@
       {
         "type": "command",
         "command": "node ./hooks/data-quality-gate.js",
-        "timeout": 120
+        "timeout": 180
       }
     ]
   }

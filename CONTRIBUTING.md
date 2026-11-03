@@ -10,7 +10,7 @@ Thanks for helping improve Expert AI Developer Skills. This guide covers how the
 | An agent, Antigravity hook or plugin manifest | `plugins/antigravity/<plugin>/` | `python3 scripts/sync_agents.py` |
 | Claude Code-only behavior (tool names, models, dependencies, preloaded skills) | `scripts/claude_sync_config.py` | `python3 scripts/sync_agents.py` |
 | A Claude Code hook | `plugins/claude/<plugin>/hooks/` and `hooks.json` | — |
-| The shared Claude Code Stop-gate library | `scripts/claude-hook-lib/gate-utils.js` | `python3 scripts/sync_agents.py` |
+| The shared hook library (both hosts) | `scripts/hook-lib/gate-utils.js` | `python3 scripts/sync_agents.py` |
 | A plugin README | `plugins/<host>/<plugin>/README.md` (both hosts) | — |
 
 Do not hand-edit generated files under `plugins/claude/<plugin>/agents/` or `skills/`; the sync scripts overwrite them.
