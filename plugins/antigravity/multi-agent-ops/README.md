@@ -65,6 +65,7 @@ Audit the open feature branches for quality gate failures.
 | `[CONTEXT GUARD BLOCKED]` on `view_file` | File is over 500 KB and no line range was given. | Locate the section with `grep_search`, then pass `StartLine` and `EndLine`. |
 | `git worktree add` fails in `run_parallel_agents.py` | The branch is already checked out in another worktree. | Pick a new branch name or `git worktree remove` the old worktree. |
 | Guard never fires | `node` is missing or the plugin is not installed. | Install Node.js and rerun the install command. |
+| A worker's `git merge-base --is-ancestor` check fails | The `branch` workspace did not start from your feature branch. | Create the worktrees from `HEAD` with `run_parallel_agents.py tasks.json`, or run the tracks one after another. |
 
 ## Related plugins
 

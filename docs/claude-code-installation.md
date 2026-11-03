@@ -109,6 +109,45 @@ installs once at project scope:
 claude plugin install senior-dev-flutter@expert-ai-developer-skills --scope project
 ```
 
+### Parallel workers in their own worktree
+
+By default the orchestrators run parallel implementers in the same checkout, each on its own files
+(Mode A). They give each worker its own git worktree (Mode B) only when two tracks must touch the same
+files. Claude Code creates those worktrees from the repository's default branch (`"fresh"`), not from
+your feature branch, so a worker would start without your in-progress commits. To let the orchestrator
+use Mode B, add this to the project's `.claude/settings.json` (team), `.claude/settings.local.json`
+(only you) or `~/.claude/settings.json` (every project):
+
+```json
+{
+  "worktree": {
+    "baseRef": "head"
+  }
+}
+```
+
+Without it, the orchestrator asks you to add the setting or runs those tracks one after another.
+
+Each worktree is a fresh checkout under `.claude/worktrees/`:
+
+- **Gitignored files are not copied** unless listed in a `.worktreeinclude` file at the project root
+  (`.gitignore` syntax). Example for a Flutter project:
+
+  ```text
+  .env
+  android/key.properties
+  ```
+
+- **Dependencies are not installed**: the worker runs `flutter pub get` (and `build_runner` if used),
+  `uv sync` or `npm ci` inside its own worktree before testing.
+- Add `.claude/worktrees/` to `.gitignore` so worktrees do not show up as untracked files.
+- Each worker commits on its own branch and never pushes; the orchestrator merges the branches one at
+  a time and runs the tests after each merge. Worktrees without changes are removed automatically;
+  run `git worktree list` and `git worktree remove <path>` for the rest.
+
+Project-scoped plugins installed in the main checkout also load in its worktrees. Reference:
+[Run parallel sessions with worktrees](https://code.claude.com/docs/en/worktrees).
+
 ## 6. Where things live
 
 | Path (under `~/.claude/plugins/`) | Content |

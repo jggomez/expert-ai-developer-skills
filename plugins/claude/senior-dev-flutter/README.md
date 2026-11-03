@@ -120,6 +120,14 @@ To make the orchestrator the default agent for a project, add this to `.claude/s
 }
 ```
 
+**Parallel workers in their own worktree.** When two tracks must edit the same files, the orchestrator gives each worker its own git worktree. Claude Code branches those from `main` unless the project's `.claude/settings.json` has:
+
+```json
+{ "worktree": { "baseRef": "head" } }
+```
+
+Without it the orchestrator asks you to add it or runs those tracks one after another. Gitignored files (`.env`, `android/key.properties`) need a `.worktreeinclude`; see [docs/claude-code-installation.md](../../../docs/claude-code-installation.md#parallel-workers-in-their-own-worktree).
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |

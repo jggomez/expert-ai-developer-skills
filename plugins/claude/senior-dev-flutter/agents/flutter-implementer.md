@@ -38,7 +38,7 @@ Follow `flutter-test-strategy` and `flutter-performance-profiling`:
 Applies whenever your brief lists `Owned Files` or you run in your own worktree:
 1. **Stay in your lane**: edit only your `Owned Files`. If you need a change in a `Forbidden` or shared file (`pubspec.yaml`, `pubspec.lock`, `main.dart`, the global router, DI, generated `*.g.dart` / `*.freezed.dart`), stop and report it in your return message instead of editing it.
 2. **Shared working tree**: other workers edit the same checkout at the same time. Never run git writes (`add`, `commit`, `stash`, `checkout`, `merge`, `rebase`, `reset`), dependency installs or upgrades, or code generation (`flutter pub get`, `flutter pub upgrade`, `dart run build_runner`). Run only your scoped tests; when files you do not own fail, report them instead of fixing them.
-3. **Own worktree (Mode B)**: first run `git merge-base --is-ancestor <feature HEAD sha from your brief> HEAD` and stop on a non-zero exit. Commit on your branch with a Conventional Commit, never push, and return the branch name.
+3. **Own worktree (Mode B)**: first run `git merge-base --is-ancestor <feature HEAD sha from your brief> HEAD` and stop on a non-zero exit. The worktree is a fresh checkout without dependencies or generated files, so run `flutter pub get`, plus `dart run build_runner build` if the project uses it there before your tests; installs are allowed only in your own worktree. Commit on your branch with a Conventional Commit, never push, and return the branch name.
 4. **Return `<= 15 lines`**: status, files changed, scoped test command + exit code, blockers, next step.
 
 # Tooling & Environment Protocol

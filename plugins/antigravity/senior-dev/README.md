@@ -127,6 +127,8 @@ Well-specified work stays light: scale alone never makes a task Tier 3, the orch
 Discovery specialists run in sequence on one shared `docs/<feature-name>/spec.md`, each editing only its own section.
 The full state machine is documented in [AGENTS.md](../../../AGENTS.md) and the [root README](../../../README.md).
 
+**Worktrees in Antigravity.** No setting is needed: when two tracks must edit the same files, the orchestrator runs each worker with subagent workspace `branch`. The docs do not say which commit that branch starts from, so each worker first runs `git merge-base --is-ancestor <feature HEAD> HEAD` and stops if your feature commits are missing; the orchestrator then sequences the tracks or creates the worktrees from your current `HEAD` with `run_parallel_agents.py` (loop-engineering skill). A worktree is a fresh checkout, so the worker installs dependencies inside it before testing.
+
 ## Configuration
 
 `hooks.json` groups both gates under `senior-dev-gates` with `"enabled": true`.

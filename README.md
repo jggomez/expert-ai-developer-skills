@@ -102,7 +102,7 @@ flowchart LR
     E -->|approved| F[Ship<br/>commit + memory update]
 ```
 
-Every task starts with a `PLAN.md`. Discovery writes a single `docs/<feature-name>/spec.md`; implementers work on disjoint files or separate git worktrees; reviewers return verdicts instead of writing report files. Full description: [docs/architecture.md](docs/architecture.md). Operating rules for agents: [AGENTS.md](AGENTS.md).
+Every task starts with a `PLAN.md`. Discovery writes a single `docs/<feature-name>/spec.md`; implementers work on disjoint files or, when they must share files, separate git worktrees (in Claude Code set `"worktree": {"baseRef": "head"}`, see [docs/claude-code-installation.md](docs/claude-code-installation.md#parallel-workers-in-their-own-worktree)); reviewers return verdicts instead of writing report files. Full description: [docs/architecture.md](docs/architecture.md). Operating rules for agents: [AGENTS.md](AGENTS.md).
 
 ## Repository layout
 
