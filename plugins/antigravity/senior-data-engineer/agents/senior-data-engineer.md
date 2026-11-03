@@ -15,10 +15,10 @@ tools:
   - find_by_name
   - ask_question
 skills:
-  - gcp-data-engineering
-  - cdc-scd-patterns
-  - context-restore
-  - context-capture
+  - skills/gcp-data-engineering
+  - skills/cdc-scd-patterns
+  - skills/context-restore
+  - skills/context-capture
 ---
 
 # Role & Objective

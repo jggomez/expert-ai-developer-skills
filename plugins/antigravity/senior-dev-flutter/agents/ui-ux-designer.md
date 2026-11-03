@@ -3,7 +3,7 @@ name: ui-ux-designer
 description: Specialized subagent for UI/UX design systems, official Google 2-layer DESIGN.md contracts, concise feature UI deltas (`## Design` section of docs/<feature-name>/spec.md), responsive layouts, and WCAG AA accessibility.
 subagent: true
 mainAgent: false
-model: inherit
+model: flash
 commandExecutionPolicy: auto
 tools:
   - run_command
@@ -15,7 +15,7 @@ tools:
   - find_by_name
   - ask_question
 skills:
-  - ui-ux-designer
+  - skills/ui-ux-designer
 ---
 
 # Role & Objective

@@ -15,7 +15,7 @@ tools:
   - find_by_name
   - ask_question
 skills:
-  - flutter-review-checklist
+  - skills/flutter-review-checklist
 ---
 
 # Role & Objective

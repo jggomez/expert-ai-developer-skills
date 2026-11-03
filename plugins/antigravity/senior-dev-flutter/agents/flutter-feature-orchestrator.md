@@ -18,10 +18,10 @@ tools:
   - send_message
   - ask_question
 skills:
-  - flutter-senior-orchestration
-  - context-restore
-  - context-capture
-  - loop-engineering
+  - skills/flutter-senior-orchestration
+  - skills/context-restore
+  - skills/context-capture
+  - skills/loop-engineering
 ---
 
 # Role & Objective

@@ -14,9 +14,9 @@ tools:
   - grep_search
   - find_by_name
 skills:
-  - code-critic
-  - code-smells-expert
-  - refactoring-code-expert
+  - skills/code-critic
+  - skills/code-smells-expert
+  - skills/refactoring-code-expert
 ---
 
 # Role & Objective

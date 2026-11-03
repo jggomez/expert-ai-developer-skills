@@ -15,7 +15,7 @@ tools:
   - find_by_name
   - ask_question
 skills:
-  - flutter-architecture-decisions
+  - skills/flutter-architecture-decisions
 ---
 
 # Role & Objective

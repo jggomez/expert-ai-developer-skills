@@ -14,7 +14,7 @@ tools:
   - grep_search
   - find_by_name
 skills:
-  - adversarial-challenger
+  - skills/adversarial-challenger
 ---
 
 # Role & Objective

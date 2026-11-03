@@ -3,7 +3,7 @@ name: e2e-blackbox-tester
 description: Specialized black-box browser verification subagent validating live web UI user journeys, interactive GUI forms, responsive viewports, console/network errors, and physical screenshot evidence via deterministic Playwright execution.
 subagent: true
 mainAgent: false
-model: inherit
+model: flash
 commandExecutionPolicy: auto
 tools:
   - run_command
@@ -14,7 +14,7 @@ tools:
   - grep_search
   - find_by_name
 skills:
-  - blackbox-tester
+  - skills/blackbox-tester
 ---
 
 # Role & Objective

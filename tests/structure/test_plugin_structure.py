@@ -12,6 +12,13 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "scripts"))
 from claude_sync_config import CLAUDE_AGENT_OVERRIDES, CLAUDE_PLUGIN_DEPENDENCIES  # noqa: E402
 
+# Template/checklist-driven roles run on Antigravity's cheaper 'flash' tier; orchestrators,
+# implementers and reviewers inherit the main model (same split as the Claude overrides).
+AGY_FLASH_AGENTS = {
+    "product-analyst", "ui-ux-designer", "qa-tester", "e2e-blackbox-tester",
+    "flutter-release-engineer", "context-keeper",
+}
+
 
 def _discover_plugins(workspace_root):
     plugins_dir = os.path.join(workspace_root, "plugins", "antigravity")
@@ -158,8 +165,10 @@ def test_plugin_agents_frontmatter(workspace_root, plugin_dirs):
     register the agent at all (it does not fall back to their documented
     defaults). The frontmatter is kept host-neutral so the same file loads in
     both Claude Code and Antigravity: no 'tools' key (its values are
-    host-specific), and 'model' is only ever 'inherit' (the sole value both
-    hosts accept)."""
+    host-specific). 'model' uses Antigravity's documented tiers (template-driven
+    roles run on 'flash', everything else inherits) and 'skills' lists the
+    documented 'skills/<name>' paths, each bundled in the same plugin. The Claude
+    copies get their own model and bare skill names from scripts/sync_agents.py."""
     errors = []
 
     for plugin in plugin_dirs:
@@ -211,11 +220,20 @@ def test_plugin_agents_frontmatter(workspace_root, plugin_dirs):
                     for orch_tool in ("invoke_subagent", "manage_subagents", "send_message"):
                         if orch_tool not in tools:
                             errors.append(f"{plugin}/agents/{fname}: orchestrator 'tools' missing '{orch_tool}'")
-            if data.get("model") not in (None, "inherit"):
+            expected_model = "flash" if agent_name in AGY_FLASH_AGENTS else "inherit"
+            if data.get("model") != expected_model:
                 errors.append(
-                    f"{plugin}/agents/{fname}: 'model' is '{data.get('model')}' — use "
-                    "'inherit' (the only value both Claude Code and Antigravity accept)"
+                    f"{plugin}/agents/{fname}: 'model' is '{data.get('model')}' — expected "
+                    f"'{expected_model}' (Antigravity tiers: inherit, flash, pro)"
                 )
+            for skill in data.get("skills") or []:
+                if not str(skill).startswith("skills/"):
+                    errors.append(
+                        f"{plugin}/agents/{fname}: skill '{skill}' must be a 'skills/<name>' path "
+                        "(antigravity.google/docs/subagents)"
+                    )
+                elif not os.path.isfile(os.path.join(workspace_root, "plugins", "antigravity", plugin, skill, "SKILL.md")):
+                    errors.append(f"{plugin}/agents/{fname}: skill path '{skill}' is not bundled in the plugin")
             cep = data.get("commandExecutionPolicy")
             if cep == "sandbox":
                 errors.append(
@@ -606,7 +624,7 @@ def test_senior_dev_llm_wiki_triage_and_parallel_dag(workspace_root):
     fm = yaml.safe_load(match.group(1))
     orch_skills = fm.get("skills", [])
     for skill in required_new_skills:
-        assert skill in orch_skills, (
+        assert f"skills/{skill}" in orch_skills, (
             f"senior-dev-orchestrator.md frontmatter 'skills' missing '{skill}'"
         )
 
@@ -730,7 +748,7 @@ def test_ui_ux_designer_agent_and_skill_parity(workspace_root):
     assert agy_fm.get("commandExecutionPolicy") == "auto", (
         f"Expected commandExecutionPolicy 'auto', got {agy_fm.get('commandExecutionPolicy')}"
     )
-    assert agy_fm.get("model") == "inherit", f"Expected model 'inherit', got {agy_fm.get('model')}"
+    assert agy_fm.get("model") == "flash", f"Expected model 'flash', got {agy_fm.get('model')}"
 
     expected_agy_tools = [
         "run_command",
@@ -1047,10 +1065,10 @@ def test_track20_track22_adversarial_committee_and_sync_parity(workspace_root):
         agy_fm = yaml.safe_load(agy_match.group(1))
         assert agy_fm.get("name") == agent_name, f"{agy_path} name expected {agent_name}, got {agy_fm.get('name')}"
         assert agy_fm.get("commandExecutionPolicy") == "auto"
-        assert agy_fm.get("model") == "inherit"
+        assert agy_fm.get("model") == ("flash" if agent_name in AGY_FLASH_AGENTS else "inherit")
         assert agy_fm.get("subagent") is True
         assert agy_fm.get("mainAgent") is False
-        assert skill_name in agy_fm.get("skills", []), f"{agy_path} missing skill '{skill_name}'"
+        assert f"skills/{skill_name}" in agy_fm.get("skills", []), f"{agy_path} missing skill '{skill_name}'"
 
         # Claude Code agent check and zero tool bleed
         claude_path = os.path.join(workspace_root, "plugins", "claude", "senior-dev", "agents", agent_file)
@@ -1067,6 +1085,9 @@ def test_track20_track22_adversarial_committee_and_sync_parity(workspace_root):
         assert "subagent" not in claude_fm
         assert "commandExecutionPolicy" not in claude_fm
         assert skill_name in claude_fm.get("skills", []), f"{claude_path} missing skill '{skill_name}'"
+        assert not any(str(sk).startswith("skills/") for sk in claude_fm.get("skills", [])), (
+            f"{claude_path}: Claude Code preloads skills by bare name, not 'skills/<name>' paths"
+        )
 
         for tool in claude_fm.get("tools", []):
             assert _is_claude_tool(tool), f"Invalid Claude tool '{tool}' in {claude_path}"

@@ -3,7 +3,7 @@ name: product-analyst
 description: Specialized subagent for product discovery, business rule disambiguation, and authoring the concise `## Product` section of docs/<feature-name>/spec.md (<= 50 lines) with US-XX stories and AC-XX acceptance criteria.
 subagent: true
 mainAgent: false
-model: inherit
+model: flash
 commandExecutionPolicy: auto
 tools:
   - run_command
@@ -15,7 +15,7 @@ tools:
   - find_by_name
   - ask_question
 skills:
-  - product-analyst
+  - skills/product-analyst
 ---
 
 # Role & Objective

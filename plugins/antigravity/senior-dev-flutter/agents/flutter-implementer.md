@@ -15,8 +15,8 @@ tools:
   - find_by_name
   - ask_question
 skills:
-  - flutter-test-strategy
-  - flutter-performance-profiling
+  - skills/flutter-test-strategy
+  - skills/flutter-performance-profiling
 ---
 
 # Role & Objective

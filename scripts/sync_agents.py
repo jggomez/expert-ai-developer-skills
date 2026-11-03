@@ -159,7 +159,8 @@ def format_claude_agent(content: str, name: str, plugin_name: str = "") -> str:
         "permissionMode": "default",
         "tools": tools,
     }
-    skills = override.get("skills", fm.get("skills"))
+    # Antigravity lists skills as 'skills/<name>' paths; Claude Code preloads them by bare name.
+    skills = override.get("skills") or [Path(str(s)).name for s in fm.get("skills") or []]
     if skills:
         claude_fm["skills"] = skills
 

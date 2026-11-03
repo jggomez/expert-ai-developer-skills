@@ -15,9 +15,9 @@ tools:
   - find_by_name
   - ask_question
 skills:
-  - code-implementer
-  - code-smells-expert
-  - refactoring-code-expert
+  - skills/code-implementer
+  - skills/code-smells-expert
+  - skills/refactoring-code-expert
 ---
 
 # Role & Objective

@@ -15,10 +15,10 @@ tools:
   - find_by_name
   - ask_question
 skills:
-  - bigquery-query-optimization
-  - sql-query-optimization
-  - context-restore
-  - context-capture
+  - skills/bigquery-query-optimization
+  - skills/sql-query-optimization
+  - skills/context-restore
+  - skills/context-capture
 ---
 
 # Role & Objective

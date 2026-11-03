@@ -18,15 +18,15 @@ tools:
   - send_message
   - ask_question
 skills:
-  - python-expert
-  - database-migration-expert
-  - design-spec-expert
-  - senior-architect-engineering
-  - security-audit
-  - refactoring-code-expert
-  - context-restore
-  - context-capture
-  - loop-engineering
+  - skills/python-expert
+  - skills/database-migration-expert
+  - skills/design-spec-expert
+  - skills/senior-architect-engineering
+  - skills/security-audit
+  - skills/refactoring-code-expert
+  - skills/context-restore
+  - skills/context-capture
+  - skills/loop-engineering
 ---
 
 # Role & Objective

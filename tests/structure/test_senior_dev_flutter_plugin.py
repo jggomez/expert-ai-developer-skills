@@ -103,7 +103,8 @@ def test_all_five_agents_are_host_neutral():
         assert fm["name"] == name, name
         assert isinstance(fm["subagent"], bool) and isinstance(fm["mainAgent"], bool), name
         assert isinstance(fm.get("tools"), list) and "write_to_file" in fm["tools"], f"{name} must declare tools with write_to_file"
-        assert fm["model"] == "inherit", name
+        expected = "flash" if name == "flutter-release-engineer" else "inherit"
+        assert fm["model"] == expected, name
         assert fm["commandExecutionPolicy"] in ("off", "auto", "eager"), name
         assert isinstance(fm.get("skills"), list) and fm["skills"], name
     orch = yaml.safe_load(_read("agents/flutter-feature-orchestrator.md").split("---", 2)[1])
@@ -130,7 +131,7 @@ def test_agent_skill_refs_are_bundled():
     for name in AGENTS:
         fm = yaml.safe_load(_read(f"agents/{name}.md").split("---", 2)[1])
         for s in fm["skills"]:
-            assert s in bundled, f"{name} refs unbundled skill {s}"
+            assert s.startswith("skills/") and s[len("skills/"):] in bundled, f"{name} refs unbundled skill {s}"
 
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="node not available")

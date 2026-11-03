@@ -18,14 +18,14 @@ tools:
   - send_message
   - ask_question
 skills:
-  - senior-dev-orchestrator
-  - senior-architect-engineering
-  - ui-ux-designer
-  - code-smells-expert
-  - refactoring-code-expert
-  - context-restore
-  - context-capture
-  - loop-engineering
+  - skills/senior-dev-orchestrator
+  - skills/senior-architect-engineering
+  - skills/ui-ux-designer
+  - skills/code-smells-expert
+  - skills/refactoring-code-expert
+  - skills/context-restore
+  - skills/context-capture
+  - skills/loop-engineering
 ---
 
 # Role & Objective

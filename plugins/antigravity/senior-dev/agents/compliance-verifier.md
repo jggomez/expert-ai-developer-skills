@@ -15,8 +15,8 @@ tools:
   - find_by_name
   - ask_question
 skills:
-  - compliance-verifier
-  - code-smells-expert
+  - skills/compliance-verifier
+  - skills/code-smells-expert
 ---
 
 # Role & Objective

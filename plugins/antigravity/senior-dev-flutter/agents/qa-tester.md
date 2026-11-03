@@ -3,7 +3,7 @@ name: qa-tester
 description: Specialized subagent for Integration and E2E test execution, boundary verification, and authoring concise IEEE/ISTQB QA Test Matrix artifacts (docs/<feature-name>/test-matrix.md <= 80 lines) with empirical exit code 0 proof.
 subagent: true
 mainAgent: false
-model: inherit
+model: flash
 commandExecutionPolicy: auto
 tools:
   - run_command
@@ -15,7 +15,7 @@ tools:
   - find_by_name
   - ask_question
 skills:
-  - qa-tester
+  - skills/qa-tester
 ---
 
 # Role & Objective

@@ -109,9 +109,9 @@ def test_context_keeper_agent_is_host_neutral():
     assert fm["name"] == "context-keeper"
     assert isinstance(fm["subagent"], bool) and isinstance(fm["mainAgent"], bool)
     assert isinstance(fm.get("tools"), list) and "write_to_file" in fm["tools"]
-    assert fm["model"] == "inherit"
+    assert fm["model"] == "flash"
     assert fm["commandExecutionPolicy"] in ("off", "auto", "eager")
-    assert set(fm["skills"]) == {"context-capture", "context-restore"}
+    assert set(fm["skills"]) == {"skills/context-capture", "skills/context-restore"}
 
 
 def test_rules_file_enforces_ask_before_load():
