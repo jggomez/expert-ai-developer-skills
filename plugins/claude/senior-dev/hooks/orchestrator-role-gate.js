@@ -90,13 +90,8 @@ try {
 
 // 1. GATE 1: "Plan First" Rule
 // Verify that a PLAN.md exists in the workspace before any implementation file is created/edited
-const possiblePlanPaths = [
-  path.join(workspaceRoot, 'PLAN.md'),
-  path.join(workspaceRoot, 'docs', 'PLAN.md'),
-  path.join(workspaceRoot, '.agents', 'PLAN.md')
-];
 // Tier 1 fast-track: surgical Edits (<= 10 lines each side) do not need a PLAN.md.
-    const hasPlan = possiblePlanPaths.some(p => fs.existsSync(p)) || g.isSmallEdit(toolName, toolInput);
+    const hasPlan = g.findPlan(workspaceRoot) !== null || g.isSmallEdit(toolName, toolInput);
 
 if (!hasPlan) {
   deny(

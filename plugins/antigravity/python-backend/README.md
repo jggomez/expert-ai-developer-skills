@@ -113,7 +113,7 @@ Registered in the `python-backend-safety-gates` group of `hooks.json`.
 
 1. The orchestrator restores `context/memory/MEMORY.md` and writes a short `PLAN.md` with a tier and an API / migration triage table.
 2. Tier 2 and 3 run only the discovery specialists the plan justifies, then pause for your approval.
-3. Vertical slices (router, service, repository, tests) run in parallel on disjoint files, or in git worktrees when they touch migrations or shared settings.
+3. Migrations and shared settings change first in one committed step; then up to 3 vertical slices (router, service, repository, tests) run in parallel on disjoint files. Worktrees are a last resort.
 4. QA, compliance and, for high-risk changes, adversarial reviewers verify the work.
 5. The milestone is saved to `context/memory/`.
 

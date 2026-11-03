@@ -123,6 +123,7 @@ flowchart LR
 ```
 
 The orchestrator classifies each task as Tier 1 (fast-track), Tier 2 (standard) or Tier 3 (mission-critical) and invokes only the specialists the task needs.
+Well-specified work stays light: scale alone never makes a task Tier 3, the orchestrator never adds unrequested features, and a multi-phase request runs discovery, review and E2E once for the whole request, with one commit per phase. Parallel workers (at most 3) own disjoint files; shared files change first in one committed step.
 Discovery specialists run in sequence on one shared `docs/<feature-name>/spec.md`, each editing only its own section.
 The full state machine is documented in [AGENTS.md](../../../AGENTS.md) and the [root README](../../../README.md).
 

@@ -34,33 +34,39 @@ This skill orchestrates multi-agent execution loops, isolated parallel worker to
 | **QA & Audit (State 3 & 4)** | Scoped test file (`exit 0`) + `compliance-verifier` (skips committee) | Full suite (`exit 0`) + `docs/<feature-name>/test-matrix.md` (`<= 80L`) + `compliance-verifier` (`APPROVED`) | **Adversarial Verification Committee** (capability-gated, verdicts returned in final message `<= 50L`, no report files): `qa-tester`, `critic`, `challenger`, `e2e-blackbox-tester`, `compliance-verifier` |
 | **Token & Latency Impact** | **70–85% token & latency savings** | Balanced overhead with rigorous traceability | Maximum empirical depth & zero regression tolerance |
 
-### Multi-Agent Topologies & Isolation Modes
-1. **Manager-Worker**: Orchestrator decomposes tasks and dispatches isolated workers (`Mode A` strictly non-overlapping `Owned Files`, or `Mode B` Git Worktrees when shared routers/configs are touched). Each parallel worker runs **only its scoped test file** during State 2 loops.
-2. **Sequential DAG**: Deterministic `Plan -> Discover -> Align -> Build -> Verify -> Ship` state machine. Discovery specialists run sequentially (product -> design -> architecture) because they share `docs/<feature-name>/spec.md`, each editing only its own section.
-3. **Adversarial Review Committee**: Capability-gated Tier 3 specialists (`critic` for `>= 150 LOC` diffs, `challenger` for auth/payments/concurrency/untrusted input, fail-honest `e2e-blackbox-tester` only when a runnable web UI exists).
-4. **Worker Return Contract**: Worker final message `<= 15 lines` (status, files changed, test command + exit code, next step); reviewers return `<= 50 lines` (verdict, `file:line` findings, required fixes). Orchestrators never request long narratives.
+### Lean Execution Defaults
+1. **Lightest tier that fits**: size by risk and ambiguity, not by file count. A large but well-specified change is Tier 2 with every discovery specialist `SKIP`. Scale alone never makes a task Tier 3: Tier 3 requires the user to ask for it, or a change to authentication/authorization, payments, or a destructive data migration.
+2. **Scope discipline**: build exactly what was asked. Repository rules constrain *how*, never *what*; extra ideas go under "Suggestions" in the final summary.
+3. **Multi-phase requests**: State 0 once (one `PLAN.md` listing every phase); per phase only build + scoped tests + one Conventional Commit + a `<= 5 line` progress note; discovery, alignment, the review committee, E2E and State 5 run once for the whole request (before the first and after the last phase, or after a phase the user marks as risky).
+4. **Stop on red**: never start the next phase on a failing tree.
 
-### Worktree Provisioning, PR Crons & 3-Loop Self-Correction Cap
-1. **Worktree Provisioning (Mode B)**:
-   ```bash
-   python3 ./skills/loop-engineering/scripts/run_parallel_agents.py --tasks "task1:path1" "task2:path2"
-   ```
-2. **Automated Branch Review Cron**:
-   ```bash
-   python3 ./skills/loop-engineering/scripts/pr_cron_reviewer.py
-   ```
-3. **Self-Correction Protocol (Strict 3-Loop Cap)**: On test or compliance failure, remediate surgically up to a **maximum of 3 iterations**. If still failing after 3 attempts, halt immediately and escalate a concise diagnostic report (failing traceback, 3 hypotheses tried, user decision needed).
+### Safe Parallel Dispatch
+1. **Parallel only when it pays**: `>= 2` independent, substantial tracks split by ownership (app, package, module); otherwise one implementer. At most 3 implementers at once.
+2. **Contract first**: shared contracts (API/schema, data model, shared package) and shared files (manifests, lockfiles, routers, DI, entry points, migrations, generated code) change in ONE integration step that is committed before the fan-out.
+3. **Mode A [DEFAULT] — one working tree, disjoint files**: every brief lists `Owned Files`, `Forbidden` files, the scoped test command and the return contract. Workers never run git writes, dependency installs or code generation, and run only their scoped tests. The orchestrator runs the affected suites once at fan-in and commits each track with `git add <owned files>`.
+4. **Mode B — worktrees, only when tracks must edit the same files and cannot be sequenced**:
+   - Claude Code (`isolation: "worktree"`): worktrees branch from the default branch unless `.claude/settings.json` sets `"worktree": {"baseRef": "head"}`; gitignored files are copied only when listed in `.worktreeinclude`.
+   - Antigravity (workspace `branch`): the base commit is undocumented, so the worker first runs `git merge-base --is-ancestor <feature HEAD sha> HEAD` and stops on a non-zero exit.
+   - Either host: `python3 ./skills/loop-engineering/scripts/run_parallel_agents.py tasks.json` creates the worktrees from the current HEAD.
+   - Workers commit on their own branch and return its name; the orchestrator merges one branch at a time (`git merge --no-ff`), tests after each merge, and on a conflict aborts the merge and hands it to an implementer.
+5. **Worker Return Contract**: workers return `<= 15 lines` (status, files changed, test command + exit code, next step); reviewers return `<= 50 lines` (verdict, `file:line` findings, required fixes).
+
+### Discovery & Review Topologies
+1. **Sequential discovery**: product -> design -> architecture, never in parallel (they share `docs/<feature-name>/spec.md`, each editing only its own section).
+2. **Adversarial Review Committee (Tier 3)**: capability-gated `critic` (`>= 150 LOC` diffs), `challenger` (auth/payments/concurrency/untrusted input), fail-honest `e2e-blackbox-tester` (only with a runnable web UI).
+3. **Self-Correction Protocol (Strict 3-Loop Cap)**: remediate surgically up to 3 iterations; then halt and escalate (failing output, hypotheses tried, decision needed).
 
 ## Usage
 ```bash
-python3 ./skills/loop-engineering/scripts/run_parallel_agents.py
-python3 ./skills/loop-engineering/scripts/pr_cron_reviewer.py
+python3 ./skills/loop-engineering/scripts/run_parallel_agents.py tasks.json   # Mode B worktrees from HEAD
+python3 ./skills/loop-engineering/scripts/pr_cron_reviewer.py                # audit worker branches
 ```
-- **Claude Code**: Provision worktrees when Mode B applies and dispatch workers via `Agent(...)`.
-- **Antigravity**: Dispatch workers via `invoke_subagent(...)` (`Workspace='inherit'` for Mode A, `Workspace='branch'`/`'share'` for Mode B).
+- **Claude Code**: parallel fan-out = several `Agent` calls in one message; Mode B = `isolation: "worktree"` with `worktree.baseRef` set to `"head"`.
+- **Antigravity**: several subagents in one `invoke_subagent` call; workspace `inherit` for Mode A, `branch` for Mode B.
 
 ## Red Flags
-- ❌ Concurrent workers editing overlapping files without Mode B Git Worktree isolation, or running the full test suite inside parallel worker loops.
+- ❌ Concurrent workers editing overlapping files, running git writes or codegen in a shared tree, or running the full test suite inside parallel worker loops.
+- ❌ Running the full Tier 3 ceremony on every phase of a well-specified request, or adding features nobody asked for.
 - ❌ Over-invoking discovery specialists or adversarial committees on Tier 1 tasks (destroying 70–85% token/latency savings).
 - ❌ Leaving target projects without a concise root `AGENTS.md` (`<= 90 lines`) wired to executable commands, `DESIGN.md`, and `context/memory/MEMORY.md`.
 - ❌ Exceeding the 3-loop self-correction cap or skipping `ask_question` alignment on Tier 2 / Tier 3 tasks.
@@ -68,7 +74,7 @@ python3 ./skills/loop-engineering/scripts/pr_cron_reviewer.py
 ## Verification
 - [ ] SDLC Tier (`Tier 1` `Fast-Track`, `Tier 2` `Standard`, or `Tier 3` `Mission-Critical`) and capability-gated `Invoke / SKIP` table recorded in `PLAN.md` (`<= 50 lines`).
 - [ ] Target-project root `AGENTS.md` (`<= 90 lines`) bootstrapped or updated per [references/project-agents-template.md](references/project-agents-template.md) when missing or outdated.
-- [ ] Parallel tracks verified collision-free (Mode A disjoint files or Mode B worktrees via `run_parallel_agents.py`), with 3-loop self-correction cap enforced.
+- [ ] Parallel tracks verified collision-free (contract-first step committed; Mode A disjoint files, or Mode B worktrees with a verified base commit), with the 3-loop self-correction cap enforced.
 
 ## References
 - [Target-Project AGENTS.md Template (`<= 65 lines`)](references/project-agents-template.md)

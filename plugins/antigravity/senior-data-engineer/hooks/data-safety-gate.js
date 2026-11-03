@@ -101,8 +101,7 @@ if (isFileModTool && targetFile) {
     }
 
     const hasPlan =
-      fs.existsSync(path.join(cwd, 'PLAN.md')) ||
-      fs.existsSync(path.join(cwd, 'docs', 'PLAN.md')) ||
+      g.findPlan(cwd) !== null ||
       g.isSmallEdit(toolName, toolArgs);
 
     if (!hasPlan) {
