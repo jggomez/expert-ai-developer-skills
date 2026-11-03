@@ -7,35 +7,29 @@
  * - "pass # placeholder"
  * - "/* unimplemented *\/" / "// unimplemented"
  * If lazy stubs are detected in code files, blocks stopping (console.error + exit code 2).
+ * Gives up after 3 blocks per turn and skips unchanged code states (hooks/shared/gate-utils.js).
  */
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const g = require(path.join(__dirname, 'shared', 'gate-utils.js'));
 
-let inputData = '';
-try {
-  if (!process.stdin.isTTY) {
-    inputData = fs.readFileSync(0, 'utf-8');
-  }
-} catch (e) {
+const payload = g.readStdinJson();
+const cwd = g.workspaceOf(payload);
+
+const gate = g.createStopGate({ gateId: 'anti-lazy', payload });
+if (gate.retryLimitReached()) {
+  g.exitAllow(g.retryLimitNotice('anti-lazy'));
+}
+if (gate.begin()) {
   process.exit(0);
 }
-
-let payload = {};
-if (inputData.trim()) {
-  try {
-    payload = JSON.parse(inputData);
-  } catch (e) {
-    payload = {};
-  }
-}
-
-const cwd = payload.cwd || (payload.workspacePaths && payload.workspacePaths[0]) || process.cwd();
 
 // Verify git repository
 try {
   execSync('git rev-parse --is-inside-work-tree', { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
 } catch (e) {
+  gate.markPass();
   process.exit(0); // Not a git repo
 }
 
@@ -53,6 +47,7 @@ try {
 }
 
 if (!diff.trim()) {
+  gate.markPass();
   process.exit(0);
 }
 
@@ -106,8 +101,8 @@ if (violations.length > 0) {
     `\n\nPer Karpathy Guidelines and quality standards, LLM shortcut stubs are prohibited. ` +
     `Provide complete, robust, production-grade implementations for all methods before finishing.`;
 
-  console.error(reason);
-  process.exit(2); // Claude Code stop failure contract
+  g.exitBlock(gate.markFail(reason)); // Claude Code stop failure contract
 }
 
+gate.markPass();
 process.exit(0);

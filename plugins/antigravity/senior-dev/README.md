@@ -1,174 +1,148 @@
-# Senior Dev Plugin
+# senior-dev
 
-[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
-[![Plugin](https://img.shields.io/badge/Plugin-senior--dev-green?style=flat-square)](.)
+> A senior-developer orchestrator and nine specialist subagents that plan, build, test and audit code with TDD.
 
-The `senior-dev` plugin packages the repository's **Graph Engineering** subagent topology — a Senior Developer Orchestrator plus 9 specialized subagents (Product Analyst, UI/UX Designer, Architect, Code Implementer, QA Tester, Critic, Challenger, E2E Black-box Tester, Compliance Verifier) — as a self-contained plugin for **Google Antigravity**.
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](../../../LICENSE)
+![Platform: Google Antigravity](https://img.shields.io/badge/platform-Google%20Antigravity-4285F4.svg)
 
-Key architectural capabilities:
-- **LLM Wiki Memory (`context/memory/`)**: Cross-AI persistent memory shared seamlessly between Google Antigravity and Claude Code. At **State 0**, the orchestrator silently restores `context/memory/MEMORY.md` (~500 tokens) and reads linked topic pages (`architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) on demand. At **State 5**, completed milestones update `context/memory/` via `context-capture`.
-- **Mandatory Discovery Triage Gate**: Before writing implementation tasks for `code-implementer`, the orchestrator evaluates a deterministic **Discovery Triage Rubric** in `PLAN.md` (`## Discovery & Architecture Triage`) to determine when `product-analyst`, `ui-ux-designer` (for greenfield UI, screens, or `design.md`), and/or `architect-engineer` **MUST** be invoked upfront.
-- **Parallel Fan-Out / Fan-In Execution & Workspace Isolation**: Supports concurrent subagent execution across discovery (`product-analyst` || `ui-ux-designer` || `architect-engineer`), implementation (1 to N `code-implementer` instances using **Mode A: Disjoint File Partitioning** or **Mode B: Git Worktree Isolation**), and verification (`qa-tester` || `compliance-verifier`).
+`senior-dev` is a Google Antigravity plugin for teams that want a repeatable SDLC loop: triage, discovery, TDD build, QA, and a compliance audit before shipping.
+The orchestrator writes `PLAN.md`, delegates work to specialist subagents, and never edits application code itself.
+Hooks enforce plan-first, branch safety and passing tests before the agent stops.
 
-- **Google Antigravity**: Install via `agy plugin install ./plugins/antigravity/senior-dev`. Subagents in `agents/` declare native Antigravity tools (`run_command`, `write_to_file`, `replace_file_content`, `view_file`, `invoke_subagent`, `manage_subagents`, `send_message`) with `commandExecutionPolicy: auto`.
+## Requirements
 
-> **Maintaining the bundled skills**: `skills/` below is a physical copy of the matching directories in the root `/skills` catalog, kept self-contained so the plugin folder can be distributed on its own. After editing any bundled skill under `/skills`, run `python3 scripts/sync_plugin_skills.py` from the repo root to re-sync this copy — don't hand-edit both. `tests/structure/test_plugin_structure.py::test_plugin_skills_match_root_skills` fails CI if the two ever drift.
+- Antigravity CLI (`agy`).
+- Node.js on `PATH`: every hook runs with `node`.
+- `npx`: starts the bundled MCP servers (Cloud Run, Firebase).
+- `git`, plus the test tools your project uses (`pytest`, `npm`, `dart`, `cargo`, `go`), for the Stop gate.
 
----
+## Installation
 
-## 1. Directory Tree & Architecture
-
-```
-plugins/antigravity/senior-dev/
-├── README.md               # This usage manual
-├── plugin.json             # Required plugin metadata descriptor (Antigravity, plugin root)
-├── .claude-plugin/
-│   └── plugin.json         # Manifest compatibility marker
-├── .mcp.json               # MCP definitions (GCP Cloud Run, Firebase)
-├── mcp_config.json         # Same MCP servers, Antigravity format
-├── hooks.json              # Lifecycle hook definitions
-├── hooks/
-│   ├── orchestrator-role-gate.js # PreToolUse gate preventing orchestrator from editing code
-│   └── universal-quality-gate.js # Stop hook executing test suites and linters
-├── agents/                 # 10 bundled subagents
-│   ├── senior-dev-orchestrator.md  # Main orchestrator; governs DAG, Triage Gate & PLAN.md
-│   ├── product-analyst.md          # Requirements & PRDs
-│   ├── ui-ux-designer.md           # UI/UX design systems & design.md
-│   ├── architect-engineer.md       # Architecture & ADRs
-│   ├── code-implementer.md         # Strict TDD implementation (parallel fan-out capable)
-│   ├── qa-tester.md                # E2E / integration testing (parallel fan-out capable)
-│   ├── critic.md                   # Adversarial code review (cyclomatic complexity, DRY, SOLID)
-│   ├── challenger.md               # Adversarial stress testing, fuzzing, fault injection
-│   ├── e2e-blackbox-tester.md      # Black-box browser verification, DOM/GUI, Playwright/MCP
-│   └── compliance-verifier.md      # Final NFR / security audit (parallel with qa-tester)
-├── rules/                  # Senior dev 9-stage cycle & tool execution rules
-│   └── senior-dev-rules.md
-└── skills/                 # Physical copy of the 15 skills these agents depend on
-    ├── senior-dev-orchestrator/
-    ├── product-analyst/
-    ├── ui-ux-designer/
-    ├── senior-architect-engineering/
-    ├── code-implementer/
-    ├── code-smells-expert/
-    ├── refactoring-code-expert/
-    ├── qa-tester/
-    ├── compliance-verifier/
-    ├── code-critic/
-    ├── adversarial-challenger/
-    ├── blackbox-tester/
-    ├── context-capture/
-    ├── context-restore/
-    └── loop-engineering/
-```
-
----
-
-## 2. Subagent Panel & Inviolable Boundaries
-
-| Agent | Role | Execution Policy | Responsibilities |
-| :--- | :--- | :--- | :--- |
-| **`senior-dev-orchestrator`** | Lead Orchestrator | `auto` | Restores/updates `context/memory/`, authors `PLAN.md` with Discovery Triage & Parallel Tracks, governs DAG state machine. **Prohibited from writing code directly.** |
-| **`product-analyst`** | Requirements Engineer | `auto` | **Mandatory via Triage Gate** when new user-facing features, unstated edge cases/permissions, or open-ended prompts arise. Drafts PRDs and acceptance criteria. |
-| **`architect-engineer`** | System Designer | `auto` | **Mandatory via Triage Gate** when tasks touch >= 2 files/modules, alter schemas/contracts, or cross layers. Produces QADs, SEI tactics, ADRs, and interface contracts. |
-| **`code-implementer`** | TDD Implementer | `auto` | **MANDATORY worker (1..N parallel fan-out)**: Writes and refactors production code using strict Red-Green-Refactor within assigned `Disjoint Files` or `Git Worktree`. |
-| **`qa-tester`** | Test Engineer | `auto` | **MANDATORY worker (parallel with audit)**: Executes unit, integration, and regression suites; requires `exit code 0`. |
-| **`critic`** | Senior Code Critic | `auto` | **Adversarial Committee worker**: Independently reviews code for cyclomatic complexity, DRY, SOLID, and smells without writing fixes. Authors `docs/<feature-name>/critic-review.md`. |
-| **`challenger`** | Hostile Stress Tester | `auto` | **Adversarial Committee worker**: Fuzzes boundary inputs, injects network/timeout faults, and simulates concurrency/memory races. Authors `docs/<feature-name>/adversarial-report.md`. |
-| **`e2e-blackbox-tester`** | Black-Box Browser QA | `auto` | **Adversarial Committee worker**: Validates real user browser journeys, interactive GUI forms, responsive layouts, and console errors via Playwright/MCP. Authors `docs/<feature-name>/blackbox-report.md`. |
-| **`compliance-verifier`** | Release Auditor | `auto` | **MANDATORY worker (parallel with QA)**: Audits linters, OWASP, code smells, and architectural invariants; issues `APPROVED` verdict. |
-
----
-
-## 3. Graph Engineering State Machine (DAG) & Topologies
-
-Multi-agent coordination in `senior-dev` follows a deterministic **6-State Directed Acyclic Graph (DAG)** with a **Mandatory Discovery Triage Gate** and **Parallel Fan-Out / Fan-In**:
-
-```mermaid
-flowchart TD
-    STATE0["STATE 0: MEMORY RESTORE & TRIAGE GATE<br/>Load context/memory/MEMORY.md + Author PLAN.md with Discovery Triage Table"]
-    STATE0 -->|"New Feature / Ambiguous / Schema or Auth Change"| STATE1["STATE 1: UPFRONT DISCOVERY (Parallel)<br/>product-analyst and architect-engineer"]
-    STATE0 -->|"Pure Bugfix / Localized Refactor (Explicit Justification)"| STATE2
-    STATE1 --> STATE2["STATE 2: PARALLEL BUILD (Mandatory)<br/>Mode A: Disjoint Files or Mode B: Git Worktrees<br/>code-implementer (1..N)"]
-    STATE2 --> VERIFY["STATE 3 & 4: PARALLEL VERIFY & AUDIT (Mandatory)<br/>qa-tester (exit code 0) and compliance-verifier (APPROVED)"]
-    VERIFY -->|"Fail / Reject (Max 3 Loops)"| STATE2
-    VERIFY -->|"Both Pass: Green + Approved"| STATE5["STATE 5: SHIP & MEMORY CAPTURE<br/>Update context/memory/ LLM Wiki + git commit"]
-    VERIFY -->|"3-Loop Cap Exceeded"| ESCALATE["HALT & ESCALATE<br/>Diagnostic report to user"]
-```
-
-### Multi-Agent Topologies Taxonomy
-1. **Manager-Worker Topology (Mode A & Mode B Parallelism)**: `senior-dev-orchestrator` coordinates high-level objectives and delegates atomic tasks to concurrent workers using **Mode A: Disjoint File Partitioning** (`Workspace: "inherit"` on non-overlapping file sets) or **Mode B: Git Worktree Isolation** (dedicated branches/worktrees when tracks touch shared files).
-2. **Sequential Pipeline with Parallel Fan-Out/Fan-In (DAG)**: Deterministic progression through State 0 (Memory Restore + Triage Gate in `PLAN.md`) &rarr; State 1 (Upfront Discovery) &rarr; State 2 (Parallel Build) &rarr; State 3 & 4 (Concurrent QA & Compliance Audit) &rarr; State 5 (Memory Capture & Ship) with bounded failure loops (max 3 retries).
-3. **Review Committee**: Parallel specialist evaluations where `qa-tester` and `compliance-verifier` audit diffs concurrently and fan-in before completion.
-
----
-
-## 4. The 9-Stage Command Framework
-
-The subagents and orchestrator execute along the standardized 9-stage engineering cycle, governed by `rules/senior-dev-rules.md`:
-
-| Phase | Command | Key Principle | Responsible Role |
-| :--- | :--- | :--- | :--- |
-| **Define what to build** | `/spec` | Spec before code | `product-analyst` (PRD, user stories, acceptance criteria) |
-| **Plan how to build it** | `/plan` | Small, atomic tasks | `senior-dev-orchestrator` / `architect-engineer` (Discovery Triage, ADR, parallel tracks) |
-| **Build incrementally** | `/build` | One slice at a time | `code-implementer` (1..N parallel fan-out, Red-Green-Refactor, vertical slices) |
-| **Prove it works** | `/test` | Tests are proof | `qa-tester` (unit, integration, regression verification) |
-| **Set the quality bar** | `/constraints` | Decide once, enforce everywhere | `compliance-verifier` (security gates, OWASP, linter rules) |
-| **Review before merge** | `/review` | Improve code health | `compliance-verifier` / peer review (code smells, debt) |
-| **Audit performance** | `/perf` | Measure before you optimize | `code-implementer` / orchestrator (profiling, bottlenecks) |
-| **Simplify the code** | `/code-simplify` | Clarity over cleverness | `code-implementer` (dead code elimination, KISS) |
-| **Ship to production** | `/ship` | Faster is safer | `senior-dev-orchestrator` (conventional commits, `context/memory/` update, release) |
-
----
-
-## 5. Lifecycle Hooks & Deterministic Gates
-
-| Hook Event | Script | Behavior |
-| :--- | :--- | :--- |
-| **`PreToolUse`** | `hooks/orchestrator-role-gate.js` | Enforces Inviolable Role Boundaries: intercepts file edit tools (`write_to_file`, `replace_file_content`) when called by `senior-dev-orchestrator` on production code files (allowing `PLAN.md`, `ADR-*.md`, `docs/`, `.agents/`, and `context/memory/`), mandating delegation to `code-implementer`. |
-| **`Stop`** | `hooks/universal-quality-gate.js` | Enforces that tests pass (`exit code 0`) and no critical quality defects remain before session termination. |
-
----
-
-## 6. Bundled Skills (15 Packaged Modules)
-
-On loading the plugin, the following 15 skills are automatically loaded as the agents' skill dependencies:
-
-1. **`senior-dev-orchestrator`**: Phase breakdown, DAG state machine, Mandatory Discovery Triage Gate, Parallel Fan-Out/Fan-In orchestration, and LLM Wiki memory lifecycle.
-2. **`product-analyst`**: Requirement discovery workflow and PRD template.
-3. **`ui-ux-designer`**: Visual design systems, design tokens, component interaction states, responsive layouts, accessibility (WCAG AA/AAA), and standard `design.md` artifact generation.
-4. **`senior-architect-engineering`**: SEI quality attribute scenarios, tactics, ATAM, ADR template.
-5. **`code-implementer`**: Red-Green-Refactor TDD workflow.
-6. **`code-smells-expert`**: AST-based code smell detection.
-7. **`refactoring-code-expert`**: Safe, test-guarded refactoring steps.
-8. **`qa-tester`**: E2E/integration test-plan construction and RTM template.
-9. **`compliance-verifier`**: Final NFR/security/coverage audit and verdict format.
-10. **`code-critic`**: Independent architectural code review, cyclomatic complexity, DRY, and SOLID auditing.
-11. **`adversarial-challenger`**: Adversarial stress testing, fuzzing, fault injection, and concurrency probing.
-12. **`blackbox-tester`**: Black-box browser verification, interactive GUI forms, responsive layouts, and console error auditing.
-13. **`context-capture`**: Cross-AI LLM Wiki memory persistence (`context/memory/MEMORY.md`, `architecture.md`, `conventions.md`, and `log/YYYY-MM-DD.md`) at milestone completion (`State 5`).
-14. **`context-restore`**: Cross-AI LLM Wiki memory restoration (`context/memory/MEMORY.md` and on-demand topic pages) at task initialization (`State 0`).
-15. **`loop-engineering`**: Parallel Fan-Out/Fan-In execution, Disjoint File Partitioning vs. Git Worktree isolation, and autonomous verification loops.
-
----
-
-## 7. Example Prompts
-
-**Full pipeline via the orchestrator**:
-- "Use the senior-dev-orchestrator agent to build a password-reset feature end to end — requirements, design, implementation, tests, and a final audit."
-- "Orchestrate a fix for this bug report using senior engineering best practices."
-
-**Individual subagents, invoked directly**:
-- "Ask the product-analyst agent to turn this feature request into a PRD." (`product-analyst`)
-- "Have the architect-engineer agent draft an ADR comparing sync vs. async processing for this endpoint." (`architect-engineer`)
-- "Use the code-implementer agent to build the new endpoint with TDD." (`code-implementer`)
-- "Have the qa-tester agent write tests for the checkout flow and map them to requirements." (`qa-tester`)
-- "Ask the compliance-verifier agent for a release-readiness verdict on this branch." (`compliance-verifier`)
-
----
-
-## 8. Installation
-
-**Antigravity CLI**:
 ```bash
 agy plugin install ./plugins/antigravity/senior-dev
 ```
+
+## Quick start
+
+Run the full pipeline through the orchestrator:
+
+```text
+Use the senior-dev-orchestrator agent to build a password-reset feature end to end — requirements, design, implementation, tests, and a final audit.
+```
+
+```text
+Orchestrate a fix for this bug report using senior engineering best practices.
+```
+
+Invoke a single specialist directly:
+
+```text
+Have the architect-engineer agent draft an ADR comparing sync vs. async processing for this endpoint.
+Use the code-implementer agent to build the new endpoint with TDD.
+Ask the compliance-verifier agent for a release-readiness verdict on this branch.
+```
+
+## What's included
+
+### Agents
+
+All agents use `model: inherit` and `commandExecutionPolicy: auto`.
+
+| Agent | Role |
+| :--- | :--- |
+| `senior-dev-orchestrator` | Main agent: triages the task, writes `PLAN.md`, dispatches subagents via `invoke_subagent` |
+| `product-analyst` | Clarifies business rules; writes `## Product` in `docs/<feature-name>/spec.md` |
+| `ui-ux-designer` | Maintains root `DESIGN.md` and `## Design`; WCAG AA |
+| `architect-engineer` | Module boundaries, API/DB contracts, MADR records, `## Architecture` |
+| `code-implementer` | Writes production code with Red-Green-Refactor TDD |
+| `qa-tester` | Runs unit/integration/E2E suites; writes `test-matrix.md` |
+| `critic` | Independent review: complexity, DRY, SOLID, maintainability |
+| `challenger` | Stress tests, fuzzing, boundary and concurrency probes |
+| `e2e-blackbox-tester` | Browser journeys with `.png` evidence in `docs/<feature-name>/evidence/` |
+| `compliance-verifier` | Static analysis, security and NFR audit; issues `APPROVED` |
+
+Reviewers return their verdict in the final message (50 lines or fewer); they do not write report files.
+
+### Rules
+
+`rules/senior-dev-rules.md` (`trigger: always_on`) defines the state machine, role boundaries, tier routing and line budgets.
+
+## Bundled Skills
+
+| Skill | Purpose |
+| :--- | :--- |
+| **`senior-dev-orchestrator`** | SDLC orchestration: tier routing, gated dispatch, parallel TDD, memory |
+| **`loop-engineering`** | Tier state machine, worker isolation (disjoint files or git worktree), review loops |
+| **`product-analyst`** | `## Product` section with user stories and acceptance criteria |
+| **`ui-ux-designer`** | `DESIGN.md` contracts, design tokens, `## Design` deltas |
+| **`senior-architect-engineering`** | MADR decision records and `## Architecture` section |
+| **`code-implementer`** | TDD and clean-code implementation |
+| **`code-smells-expert`** | Code smell and technical debt diagnosis |
+| **`refactoring-code-expert`** | Behavior-preserving refactoring |
+| **`qa-tester`** | Test suites and QA test matrix with exit-code proof |
+| **`compliance-verifier`** | NFR, static analysis, coverage and security checks |
+| **`code-critic`** | Independent code review |
+| **`adversarial-challenger`** | Fuzzing, worst-case inputs, failure-path probes |
+| **`blackbox-tester`** | Browser verification with 4-viewport screenshot evidence |
+| **`context-capture`** | Writes milestone memory to `context/memory/` |
+| **`context-restore`** | Restores `context/memory/MEMORY.md` at session start |
+
+`skills/` is a copy of the root `/skills` catalog. Edit the root copy, then run `python3 scripts/sync_plugin_skills.py`; `tests/structure/test_plugin_structure.py` fails if they drift.
+
+### Hooks
+
+| Event | Script | Behavior |
+| :--- | :--- | :--- |
+| `PreToolUse` (`write_to_file\|replace_file_content`) | `hooks/orchestrator-role-gate.js` | Allows docs and plans (`*.md`, `*.txt`, `docs/`, `.agents/`, `context/`, `.gemini/`). For code: denies edits on `main`/`master`/`develop`/`dev`, denies edits without a `PLAN.md`, and denies edits from the main orchestrator session. |
+| `Stop` | `hooks/universal-quality-gate.js` | On `model_stop`, runs `scripts/verify.sh`, `dart analyze`, `npm test`, `pytest -q`, `cargo test` or `go test ./...` when they apply, and asks the agent to continue if one fails. |
+
+### MCP servers
+
+Declared in `mcp_config.json`:
+
+| Server | Command | Purpose |
+| :--- | :--- | :--- |
+| `cloudrun` | `npx -y @google-cloud/cloud-run-mcp` | Google Cloud Run deployments and logs |
+| `firebase-mcp-server` | `npx -y firebase-tools@latest mcp` | Firebase projects, Firestore, Auth, deploys |
+
+The compatibility manifest `.mcp.json` declares the same servers plus `playwright` (`npx -y @playwright/mcp@latest --isolated`).
+
+## How it works
+
+```mermaid
+flowchart LR
+    T[Triage + PLAN.md] --> D[Discovery: Tier 2/3 only]
+    D --> G[ask_question approval]
+    G --> B[Build: 1..N code-implementer]
+    T -->|Tier 1| B
+    B --> V[QA + compliance + risk-gated reviewers]
+    V -->|fail, max 3 loops| B
+    V --> S[Ship + memory update]
+```
+
+The orchestrator classifies each task as Tier 1 (fast-track), Tier 2 (standard) or Tier 3 (mission-critical) and invokes only the specialists the task needs.
+Discovery specialists run in sequence on one shared `docs/<feature-name>/spec.md`, each editing only its own section.
+The full state machine is documented in [AGENTS.md](../../../AGENTS.md) and the [root README](../../../README.md).
+
+## Configuration
+
+`hooks.json` groups both gates under `senior-dev-gates` with `"enabled": true`.
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+| :--- | :--- | :--- |
+| `PLAN FIRST` denial on a code edit | No `PLAN.md` in the root, `docs/` or `.agents/` | Create `PLAN.md` before editing code |
+| `PROTECTED BRANCH` denial | Working on `main`, `master`, `develop` or `dev` | Run `git checkout -b feat/<slug>` |
+| `ORCHESTRATOR CODE PROHIBITION` denial | The main orchestrator session tried to edit code | Expected: delegate to `code-implementer` via `invoke_subagent` |
+| Agent keeps working; `UNIVERSAL QUALITY GATE VIOLATION` | A detected test suite or linter fails | Fix the failures shown in the gate output |
+
+## Related plugins
+
+- [senior-dev-flutter](../senior-dev-flutter/README.md): Flutter layer.
+- [python-backend](../python-backend/README.md): Python backend layer.
+- [shared-context](../shared-context/README.md), [git-workflow](../git-workflow/README.md), [docs-and-quality](../docs-and-quality/README.md), [multi-agent-ops](../multi-agent-ops/README.md).
+
+## License
+
+Apache-2.0. See [LICENSE](../../../LICENSE).

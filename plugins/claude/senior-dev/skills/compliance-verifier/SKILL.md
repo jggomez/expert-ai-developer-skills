@@ -37,7 +37,7 @@ This skill ensures that software deliverables pass all quality gates, static ana
 2. Check for memory leaks, unclosed streams, unhandled async task rejections, or runaway loops.
 
 ### Phase 4: Formal Audit Verdict
-Issue an official audit report:
+Return the official audit verdict in your final message (`<= 50 lines`: verdict, findings with `file:line`, required fixes); do NOT write a report file:
 - **`APPROVED`**: Issued only when all quality gates, security scans, and tests pass completely.
 - **`REJECTED`**: Issued if any critical vulnerability, test failure, or NFR violation is detected, accompanied by numbered, actionable remediation instructions.
 
@@ -56,7 +56,7 @@ pytest --cov=. --cov-fail-under=80
 - *"Audit the repository before release and provide a formal APPROVED/REJECTED verdict with findings."*
 
 ### Host Execution Instructions
-- **Claude Code**: Direct the agent to execute test and linting commands, review outputs, and formulate the compliance report.
+- **Claude Code**: Direct the agent to execute test and linting commands, review outputs, and return the compliance verdict in the final message (no report file).
 - **Antigravity**: Launch as the final compliance subagent (`compliance-verifier`) before closing a development loop or merging.
 
 ## Red Flags
@@ -70,5 +70,5 @@ pytest --cov=. --cov-fail-under=80
 - [ ] Linters and type checkers report zero errors or unhandled warnings.
 - [ ] Secret scanner detects zero leaked API keys, tokens, or credentials.
 - [ ] NFRs and performance criteria verified against project specifications.
-- [ ] Formal audit report produced with an unambiguous `APPROVED` or `REJECTED` verdict.
+- [ ] Formal audit verdict returned in the final message (no report file) with an unambiguous `APPROVED` or `REJECTED` verdict.
 

@@ -7,6 +7,11 @@ import re
 import pytest
 import yaml
 
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "scripts"))
+from claude_sync_config import CLAUDE_AGENT_OVERRIDES, CLAUDE_PLUGIN_DEPENDENCIES  # noqa: E402
+
 
 def _discover_plugins(workspace_root):
     plugins_dir = os.path.join(workspace_root, "plugins", "antigravity")
@@ -14,6 +19,17 @@ def _discover_plugins(workspace_root):
         name for name in os.listdir(plugins_dir)
         if os.path.isdir(os.path.join(plugins_dir, name)) and not name.startswith(".")
     )
+
+
+# Native Claude Code tools an agent may list in `tools:` (plus any MCP tool, `mcp__<server>__<tool>`).
+CLAUDE_CODE_TOOLS = {
+    "Bash", "Read", "Write", "Edit", "Glob", "Grep", "Agent", "WebSearch", "WebFetch",
+    "Skill", "AskUserQuestion", "SendMessage",
+}
+
+
+def _is_claude_tool(name):
+    return name in CLAUDE_CODE_TOOLS or re.fullmatch(r"mcp__[\w-]+__\w+", name) is not None
 
 
 @pytest.fixture
@@ -302,7 +318,7 @@ def test_plugin_readme_bundled_skills_exist(workspace_root, plugin_dirs):
         with open(readme_path, "r", encoding="utf-8") as f:
             content = f.read()
 
-        section_match = re.search(r"## \d+\. Bundled Skills.*?(?=\n## |\Z)", content, re.DOTALL)
+        section_match = re.search(r"## (?:\d+\. )?Bundled Skills.*?(?=\n## |\Z)", content, re.DOTALL)
         if not section_match:
             errors.append(f"{plugin}: could not find a 'Bundled Skills' section in the README")
             continue
@@ -488,7 +504,7 @@ def test_claude_plugins_manifest_and_tools(workspace_root):
     claude_plugins_dir = os.path.join(workspace_root, "plugins", "claude")
     assert os.path.isdir(claude_plugins_dir), "plugins/claude directory does not exist"
 
-    valid_claude_tools = {"Bash", "Read", "Write", "Edit", "Glob", "Grep", "Agent", "WebSearch", "WebFetch"}
+    valid_claude_tools = CLAUDE_CODE_TOOLS
     antigravity_only_tools = {
         "run_command",
         "view_file",
@@ -543,7 +559,7 @@ def test_claude_plugins_manifest_and_tools(workspace_root):
                 fm = yaml.safe_load(match.group(1))
                 tools = fm.get("tools", [])
                 for t in tools:
-                    if t not in valid_claude_tools:
+                    if not _is_claude_tool(t):
                         errors.append(f"plugins/claude/{plugin_name}/agents/{fname}: non-Claude tool '{t}'")
                     if t in antigravity_only_tools:
                         errors.append(f"plugins/claude/{plugin_name}/agents/{fname}: leaked Antigravity tool '{t}'")
@@ -688,12 +704,13 @@ def test_ui_ux_designer_agent_and_skill_parity(workspace_root):
     3. plugins/antigravity/senior-dev/agents/ui-ux-designer.md exists with frontmatter
        name: ui-ux-designer, commandExecutionPolicy: auto, model: inherit,
        Antigravity tools (run_command, view_file, write_to_file, replace_file_content,
-       list_dir, grep_search, find_by_name, ask_question), and references design.md.
+       list_dir, grep_search, find_by_name, ask_question), and references root DESIGN.md
+       plus the `## Design` section of docs/<feature-name>/spec.md.
     4. plugins/claude/senior-dev/agents/ui-ux-designer.md exists with pure Claude tools
        (Bash, Read, Write, Edit, Glob, Grep) and zero Antigravity tool bleed.
     5. In both ecosystems (antigravity, claude),
        plugins/<ecosystem>/senior-dev/skills/ui-ux-designer/SKILL.md exists.
-    6. senior-dev-orchestrator.md references ui-ux-designer and design.md.
+    6. senior-dev-orchestrator.md references ui-ux-designer, DESIGN.md and the spec.md `## Design` section.
     """
     # 1. Canonical skill and required sections
     skill_path = os.path.join(workspace_root, "skills", "ui-ux-designer", "SKILL.md")
@@ -752,7 +769,10 @@ def test_ui_ux_designer_agent_and_skill_parity(workspace_root):
     for tool in expected_agy_tools:
         assert tool in agy_tools, f"Antigravity agent ui-ux-designer missing tool '{tool}'"
 
-    assert "design.md" in agy_content, f"{agy_agent_path} must reference 'design.md'"
+    assert "DESIGN.md" in agy_content, f"{agy_agent_path} must reference root 'DESIGN.md'"
+    assert "docs/<feature-name>/spec.md" in agy_content and "## Design" in agy_content, (
+        f"{agy_agent_path} must reference the '## Design' section of docs/<feature-name>/spec.md"
+    )
 
     # 4. Claude Code agent definition and zero Antigravity tool bleed
     claude_agent_path = os.path.join(
@@ -766,7 +786,7 @@ def test_ui_ux_designer_agent_and_skill_parity(workspace_root):
     assert match_claude, f"{claude_agent_path} missing YAML frontmatter"
     claude_fm = yaml.safe_load(match_claude.group(1))
 
-    valid_claude_tools = {"Bash", "Read", "Write", "Edit", "Glob", "Grep", "Agent", "WebSearch", "WebFetch"}
+    valid_claude_tools = CLAUDE_CODE_TOOLS
     antigravity_only_tools = {
         "run_command",
         "view_file",
@@ -779,7 +799,7 @@ def test_ui_ux_designer_agent_and_skill_parity(workspace_root):
     claude_tools = claude_fm.get("tools", [])
     assert claude_tools, f"{claude_agent_path} must declare tools"
     for tool in claude_tools:
-        assert tool in valid_claude_tools, f"Invalid Claude tool '{tool}' in {claude_agent_path}"
+        assert _is_claude_tool(tool), f"Invalid Claude tool '{tool}' in {claude_agent_path}"
         assert tool not in antigravity_only_tools, f"Leaked Antigravity tool '{tool}' in {claude_agent_path}"
 
     for forbidden in antigravity_only_tools:
@@ -794,7 +814,7 @@ def test_ui_ux_designer_agent_and_skill_parity(workspace_root):
         )
         assert os.path.isfile(bundled_skill_path), f"Missing {bundled_skill_path}"
 
-    # 6. senior-dev-orchestrator.md references ui-ux-designer and design.md
+    # 6. senior-dev-orchestrator.md references ui-ux-designer, DESIGN.md and spec.md ## Design
     for ecosystem in ("antigravity", "claude"):
         orch_path = os.path.join(
             workspace_root, "plugins", ecosystem, "senior-dev", "agents", "senior-dev-orchestrator.md"
@@ -803,7 +823,8 @@ def test_ui_ux_designer_agent_and_skill_parity(workspace_root):
         with open(orch_path, "r", encoding="utf-8") as f:
             orch_text = f.read()
         assert "ui-ux-designer" in orch_text, f"{orch_path} missing reference to 'ui-ux-designer'"
-        assert "design.md" in orch_text, f"{orch_path} missing reference to 'design.md'"
+        assert "DESIGN.md" in orch_text, f"{orch_path} missing reference to 'DESIGN.md'"
+        assert "## Design" in orch_text, f"{orch_path} missing reference to spec.md '## Design'"
 
 
 def test_senior_dev_git_branch_governance_and_scope_drift(workspace_root):
@@ -875,7 +896,8 @@ def test_ecosystem_wide_git_branch_governance_and_scope_drift(workspace_root):
             # Flutter-specific checks for UI/UX integration
             if plugin == "senior-dev-flutter":
                 assert "ui-ux-designer" in orch_text, f"{orch_path} missing 'ui-ux-designer'"
-                assert "design.md" in orch_text, f"{orch_path} missing 'design.md'"
+                assert "DESIGN.md" in orch_text, f"{orch_path} missing 'DESIGN.md'"
+                assert "## Design" in orch_text, f"{orch_path} missing spec.md '## Design'"
 
         # 2. Rules in Antigravity
         rules_path = os.path.join(workspace_root, "plugins", "antigravity", plugin, "rules", rules_file)
@@ -902,30 +924,40 @@ def test_ecosystem_wide_git_branch_governance_and_scope_drift(workspace_root):
     assert "Git Branch Governance" in skill_text, f"{flutter_skill} missing 'Git Branch Governance'"
     assert "Scope Drift" in skill_text, f"{flutter_skill} missing 'Scope Drift'"
     assert "ui-ux-designer" in skill_text, f"{flutter_skill} missing 'ui-ux-designer'"
-    assert "design.md" in skill_text, f"{flutter_skill} missing 'design.md'"
+    assert "DESIGN.md" in skill_text, f"{flutter_skill} missing 'DESIGN.md'"
+    assert "docs/<feature-name>/spec.md" in skill_text, f"{flutter_skill} missing 'docs/<feature-name>/spec.md'"
 
 
 def test_track17_feature_artifacts_and_user_alignment_gate(workspace_root):
     """Verifies Track 17:
-    1. Feature artifacts centralization in docs/<feature-name>/ (prd.md, design.md, architecture.md).
+    1. Feature discovery centralized in ONE file docs/<feature-name>/spec.md with fixed sections
+       (## Product, ## Design, ## Architecture), each owned by one specialist; the legacy
+       per-feature prd.md / design.md / architecture.md files are no longer referenced.
     2. Interactive User Alignment Gate (State 1 -> State 2 transition with ask_question).
     3. Reinforced Parallel Collision Prevention Analysis & Scoped Test Isolation."""
-    # 1. Check Discovery agents in both ecosystems
+    # 1. Check Discovery agents in both ecosystems: shared spec.md, one owned section each
+    discovery_agents = (
+        ("product-analyst.md", "## Product"),
+        ("ui-ux-designer.md", "## Design"),
+        ("architect-engineer.md", "## Architecture"),
+    )
+    legacy_discovery_files = (
+        "docs/<feature-name>/prd.md",
+        "docs/<feature-name>/design.md",
+        "docs/<feature-name>/architecture.md",
+    )
     for ecosystem in ("antigravity", "claude"):
-        pa_path = os.path.join(workspace_root, "plugins", ecosystem, "senior-dev", "agents", "product-analyst.md")
-        with open(pa_path, "r", encoding="utf-8") as f:
-            pa_text = f.read()
-        assert "docs/<feature-name>/prd.md" in pa_text, f"{pa_path} missing docs/<feature-name>/prd.md"
-
-        ui_path = os.path.join(workspace_root, "plugins", ecosystem, "senior-dev", "agents", "ui-ux-designer.md")
-        with open(ui_path, "r", encoding="utf-8") as f:
-            ui_text = f.read()
-        assert "docs/<feature-name>/design.md" in ui_text, f"{ui_path} missing docs/<feature-name>/design.md"
-
-        arch_path = os.path.join(workspace_root, "plugins", ecosystem, "senior-dev", "agents", "architect-engineer.md")
-        with open(arch_path, "r", encoding="utf-8") as f:
-            arch_text = f.read()
-        assert "docs/<feature-name>/architecture.md" in arch_text, f"{arch_path} missing docs/<feature-name>/architecture.md"
+        for agent_file, owned_section in discovery_agents:
+            agent_path = os.path.join(workspace_root, "plugins", ecosystem, "senior-dev", "agents", agent_file)
+            with open(agent_path, "r", encoding="utf-8") as f:
+                agent_text = f.read()
+            assert "docs/<feature-name>/spec.md" in agent_text, f"{agent_path} missing docs/<feature-name>/spec.md"
+            assert owned_section in agent_text, f"{agent_path} missing its owned spec.md section '{owned_section}'"
+            assert f"edit **ONLY** `{owned_section}`" in agent_text, (
+                f"{agent_path} must state it edits ONLY its own spec.md section '{owned_section}'"
+            )
+            for legacy in legacy_discovery_files:
+                assert legacy not in agent_text, f"{agent_path} still references removed artifact {legacy}"
 
     # 2. Check Orchestrators for User Alignment Gate and Collision Analysis
     for ecosystem in ("antigravity", "claude"):
@@ -936,6 +968,11 @@ def test_track17_feature_artifacts_and_user_alignment_gate(workspace_root):
             assert "Interactive User Alignment Gate" in orch_text or "Alignment Gate" in orch_text, f"{orch_path} missing Alignment Gate"
             assert "Collision" in orch_text, f"{orch_path} missing Collision Analysis"
             assert "docs/<feature-name>/" in orch_text, f"{orch_path} missing docs/<feature-name>/ convention"
+            assert "docs/<feature-name>/spec.md" in orch_text, f"{orch_path} missing docs/<feature-name>/spec.md"
+            assert "sequentially" in orch_text, f"{orch_path} must run discovery specialists sequentially"
+            for section in ("## Product", "## Design", "## Architecture"):
+                assert section in orch_text, f"{orch_path} missing spec.md section '{section}'"
+            assert "Return Contract" in orch_text, f"{orch_path} missing Worker Return Contract"
 
     # 3. Check AGENTS.md and loop-engineering-workflow.md
     for governance_file in ("AGENTS.md", os.path.join(".agents", "rules", "loop-engineering-workflow.md")):
@@ -943,6 +980,9 @@ def test_track17_feature_artifacts_and_user_alignment_gate(workspace_root):
         with open(gov_path, "r", encoding="utf-8") as f:
             gov_text = f.read()
         assert "docs/<feature-name>/" in gov_text, f"{gov_path} missing docs/<feature-name>/"
+        assert "docs/<feature-name>/spec.md" in gov_text, f"{gov_path} missing docs/<feature-name>/spec.md"
+        for legacy in ("docs/<feature-name>/prd.md", "docs/<feature-name>/design.md", "docs/<feature-name>/architecture.md"):
+            assert legacy not in gov_text, f"{gov_path} still references removed artifact {legacy}"
         assert "Alignment Gate" in gov_text or "INTERACTIVE USER ALIGNMENT GATE" in gov_text, f"{gov_path} missing Alignment Gate"
         assert "Collision" in gov_text, f"{gov_path} missing Collision Analysis"
 
@@ -999,7 +1039,8 @@ def test_track20_track22_adversarial_committee_and_sync_parity(workspace_root):
     2. Asserts zero tool bleed in Claude agents (no run_command, invoke_subagent, write_to_file, etc.).
     3. Asserts presence and frontmatter of canonical skills code-critic, adversarial-challenger,
        blackbox-tester across root skills/ and both plugin copies.
-    4. Asserts output artifacts referenced: critic-review.md, adversarial-report.md, blackbox-report.md."""
+    4. Asserts reviewers return their report in the final message (<= 50 lines) and never reference
+       the removed report files critic-review.md, adversarial-report.md, blackbox-report.md."""
     adversarial_agents = [
         ("critic.md", "critic", "code-critic"),
         ("challenger.md", "challenger", "adversarial-challenger"),
@@ -1014,7 +1055,8 @@ def test_track20_track22_adversarial_committee_and_sync_parity(workspace_root):
         "manage_subagents",
         "call_mcp_tool",
     }
-    valid_claude_tools = {"Bash", "Read", "Write", "Edit", "Glob", "Grep", "Agent", "WebSearch", "WebFetch"}
+    valid_claude_tools = CLAUDE_CODE_TOOLS
+    removed_report_files = ("critic-review.md", "adversarial-report.md", "blackbox-report.md")
 
     # 1 & 2. Agent definitions and tool bleed check
     for agent_file, agent_name, skill_name in adversarial_agents:
@@ -1042,20 +1084,29 @@ def test_track20_track22_adversarial_committee_and_sync_parity(workspace_root):
         assert claude_match, f"{claude_path} missing frontmatter"
         claude_fm = yaml.safe_load(claude_match.group(1))
         assert claude_fm.get("name") == agent_name
-        assert claude_fm.get("model") == "inherit"
+        expected_model = CLAUDE_AGENT_OVERRIDES.get(agent_name, {}).get("model", "inherit")
+        assert claude_fm.get("model") == expected_model
         assert claude_fm.get("permissionMode") == "default"
         assert "subagent" not in claude_fm
         assert "commandExecutionPolicy" not in claude_fm
         assert skill_name in claude_fm.get("skills", []), f"{claude_path} missing skill '{skill_name}'"
 
         for tool in claude_fm.get("tools", []):
-            assert tool in valid_claude_tools, f"Invalid Claude tool '{tool}' in {claude_path}"
+            assert _is_claude_tool(tool), f"Invalid Claude tool '{tool}' in {claude_path}"
             assert tool not in antigravity_only_tools, f"Antigravity tool '{tool}' leaked in {claude_path}"
 
         for forbidden in antigravity_only_tools:
             assert forbidden not in claude_content, f"Antigravity tool '{forbidden}' leaked in body of {claude_path}"
 
-    # 3 & 4. Canonical skills and deliverables across root and both plugins
+        # Reviewer return contract: verdict returned in final message, no report file
+        for reviewer_path, reviewer_content in ((agy_path, agy_content), (claude_path, claude_content)):
+            assert "Return Contract" in reviewer_content, f"{reviewer_path} missing Return Contract"
+            assert "final message" in reviewer_content, f"{reviewer_path} must return its report in the final message"
+            assert "<= 50 lines" in reviewer_content, f"{reviewer_path} must cap the returned report at <= 50 lines"
+            for removed in removed_report_files:
+                assert removed not in reviewer_content, f"{reviewer_path} still references removed report file '{removed}'"
+
+    # 3 & 4. Canonical skills return their report in the final message across root and both plugins
     adversarial_skills = [
         ("code-critic", "critic-review.md"),
         ("adversarial-challenger", "adversarial-report.md"),
@@ -1077,7 +1128,8 @@ def test_track20_track22_adversarial_committee_and_sync_parity(workspace_root):
             fm = yaml.safe_load(fm_match.group(1))
             assert fm.get("name") == skill_name, f"{skill_md} expected name '{skill_name}', got '{fm.get('name')}'"
             assert fm.get("description"), f"{skill_md} has empty description"
-            assert artifact_name in content, f"{skill_md} missing reference to artifact '{artifact_name}'"
+            assert "final message" in content, f"{skill_md} must return its report in the final message"
+            assert artifact_name not in content, f"{skill_md} still references removed report file '{artifact_name}'"
 
 
 def test_track21_orchestrators_canonical_structure_and_adversarial_dispatch(workspace_root):
@@ -1134,7 +1186,9 @@ def test_all_agents_have_exactly_one_frontmatter(workspace_root):
     exactly twice (opening and closing) and no duplicate frontmatter blocks exist."""
     pattern = os.path.join(workspace_root, "plugins", "*", "*", "agents", "*.md")
     agent_files = sorted(glob.glob(pattern))
-    assert len(agent_files) == 38, f"Expected exactly 38 agent files matching {pattern}, got {len(agent_files)}"
+    # 19 own agents x 2 ecosystems + 15 senior-dev specialists copied into Antigravity only
+    # (6 flutter, 9 python-backend); Claude Code gets them via plugin "dependencies".
+    assert len(agent_files) == 53, f"Expected exactly 53 agent files matching {pattern}, got {len(agent_files)}"
 
     errors = []
     for agent_path in agent_files:
@@ -1202,7 +1256,8 @@ def test_track23_track26_universal_multi_plugin_standardization(workspace_root):
 
             for tier in ("Tier 1", "Tier 2", "Tier 3"):
                 assert tier in content, f"{orch_path} missing '{tier}'"
-            assert "ask_question" in content, f"{orch_path} missing 'ask_question'"
+            ask_tool = "ask_question" if eco == "antigravity" else "AskUserQuestion"
+            assert ask_tool in content, f"{orch_path} missing '{ask_tool}'"
             assert "docs/<feature-name>/" in content, f"{orch_path} missing 'docs/<feature-name>/'"
 
     # 2. Specialist agents in both ecosystems
@@ -1258,7 +1313,7 @@ def test_track23_track26_universal_multi_plugin_standardization(workspace_root):
     # 4. Total agent files count parity
     pattern = os.path.join(workspace_root, "plugins", "*", "*", "agents", "*.md")
     agent_files = sorted(glob.glob(pattern))
-    assert len(agent_files) == 38, f"Expected exactly 38 agents across both ecosystems, got {len(agent_files)}"
+    assert len(agent_files) == 53, f"Expected exactly 53 agents across both ecosystems, got {len(agent_files)}"
 
 
 def test_antigravity_subagents_strict_tool_registry_whitelist(workspace_root, plugin_dirs):
@@ -1559,3 +1614,67 @@ def test_track29_ecosystem_wide_concise_standards_and_fail_honest_parity(workspa
     # Assert
     assert not errors, "\n".join(errors)
 
+
+
+ORCHESTRATOR_DISPATCH_RE = re.compile(r"\*\*Subagent Dispatch\*\*:(.*)")
+
+
+@pytest.mark.parametrize("ecosystem", ["antigravity", "claude"])
+def test_orchestrator_dispatched_agents_are_bundled(workspace_root, ecosystem):
+    """Every subagent an orchestrator dispatches must ship inside the same plugin
+    (Antigravity) or in a plugin it declares as a dependency (Claude Code), so an
+    installed plugin never routes to a non-existent agent."""
+    # Arrange
+    plugins_root = os.path.join(workspace_root, "plugins", ecosystem)
+    orchestrators = glob.glob(os.path.join(plugins_root, "*", "agents", "*-orchestrator.md"))
+    assert orchestrators, f"no orchestrator agents found under {plugins_root}"
+    errors = []
+
+    # Act
+    for orch_path in orchestrators:
+        agents_dir = os.path.dirname(orch_path)
+        plugin = os.path.basename(os.path.dirname(agents_dir))
+        bundled = {os.path.splitext(f)[0] for f in os.listdir(agents_dir) if f.endswith(".md")}
+        if ecosystem == "claude":
+            # Claude Code resolves plugin "dependencies" at install time.
+            for dep in CLAUDE_PLUGIN_DEPENDENCIES.get(plugin, []):
+                dep_dir = os.path.join(plugins_root, dep, "agents")
+                bundled |= {os.path.splitext(f)[0] for f in os.listdir(dep_dir) if f.endswith(".md")}
+        with open(orch_path, encoding="utf-8") as f:
+            match = ORCHESTRATOR_DISPATCH_RE.search(f.read())
+        if not match:
+            errors.append(f"{ecosystem}/{plugin}: orchestrator has no '**Subagent Dispatch**:' line")
+            continue
+        dispatched = set(re.findall(r"`([a-z0-9]+(?:-[a-z0-9]+)*)`", match.group(1)))
+        for name in sorted(dispatched - bundled):
+            errors.append(f"{ecosystem}/{plugin}: orchestrator dispatches '{name}' but agents/{name}.md is not bundled")
+
+    # Assert
+    assert not errors, "\n".join(errors)
+
+
+def test_bundled_specialist_agents_match_canonical(workspace_root):
+    """Bundled specialist copies must be byte-identical to the canonical senior-dev
+    agents (Antigravity) so edits only ever happen in one place."""
+    # Arrange
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "sync_agents", os.path.join(workspace_root, "scripts", "sync_agents.py")
+    )
+    sync_agents = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(sync_agents)
+    agy_root = os.path.join(workspace_root, "plugins", "antigravity")
+    errors = []
+
+    # Act
+    for plugin, (source, files) in sync_agents.BUNDLED_AGENTS.items():
+        for fname in files:
+            canonical = os.path.join(agy_root, source, "agents", fname)
+            bundled = os.path.join(agy_root, plugin, "agents", fname)
+            if not os.path.isfile(bundled):
+                errors.append(f"antigravity/{plugin}/agents/{fname}: missing bundled copy")
+            elif not filecmp.cmp(canonical, bundled, shallow=False):
+                errors.append(f"antigravity/{plugin}/agents/{fname}: drifted from {source} — run scripts/sync_agents.py")
+
+    # Assert
+    assert not errors, "\n".join(errors)

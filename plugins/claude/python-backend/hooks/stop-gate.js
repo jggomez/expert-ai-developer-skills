@@ -4,30 +4,17 @@
  * Checks if a test suite exists (tests/ directory, pytest.ini, test_*.py files, or verify_tests.py).
  * Runs pytest or python3 -m unittest discover.
  * If tests fail, logs error to console.error and exits with code 2. Exit 0 for success.
+ * Skips when no code changed / the same code state already passed, shares the
+ * 'python-tests' gate with senior-dev's universal gate (runs once), and gives up
+ * after 3 blocks per turn (see hooks/shared/gate-utils.js).
  */
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const g = require(path.join(__dirname, 'shared', 'gate-utils.js'));
 
-let inputData = '';
-try {
-  if (!process.stdin.isTTY) {
-    inputData = fs.readFileSync(0, 'utf-8');
-  }
-} catch (e) {
-  process.exit(0);
-}
-
-let payload = {};
-if (inputData.trim()) {
-  try {
-    payload = JSON.parse(inputData);
-  } catch (e) {
-    payload = {};
-  }
-}
-
-const workspaceRoot = payload.cwd || (payload.workspacePaths && payload.workspacePaths[0]) || process.cwd();
+const payload = g.readStdinJson();
+const workspaceRoot = g.workspaceOf(payload);
 
 // 1. Check for verify_tests.py in skills layout
 const verifyScript = path.join(workspaceRoot, 'skills', 'test-driven-development', 'scripts', 'verify_tests.py');
@@ -49,6 +36,14 @@ if (!hasTestsDir && !hasPytestConfig) {
 
 const testsExist = hasVerifyScript || hasTestsDir || hasPytestConfig || hasTestFiles;
 if (!testsExist) {
+  process.exit(0);
+}
+
+const gate = g.createStopGate({ gateId: 'python-tests', payload });
+if (gate.retryLimitReached()) {
+  g.exitAllow(g.retryLimitNotice('python-tests'));
+}
+if (gate.begin()) {
   process.exit(0);
 }
 
@@ -76,7 +71,7 @@ if (hasVerifyScript) {
 }
 
 try {
-  execSync(testCommand, { cwd: workspaceRoot, stdio: 'pipe', timeout: 60000 });
+  execSync(testCommand, { cwd: workspaceRoot, stdio: 'pipe', timeout: 150000 });
 } catch (error) {
   const testOutput =
     (error.stdout ? error.stdout.toString() : '') +
@@ -86,8 +81,8 @@ try {
     `Fix the failing tests or application code before completing your turn.\n\n` +
     `Test Output:\n${testOutput.slice(0, 4000)}`;
 
-  console.error(reason);
-  process.exit(2); // Claude Code stop failure contract: console.error and exit 2
+  g.exitBlock(gate.markFail(reason)); // Claude Code stop failure contract: stderr + exit 2
 }
 
+gate.markPass();
 process.exit(0);

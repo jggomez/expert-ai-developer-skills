@@ -1,83 +1,111 @@
-# `agent-metrics` Plugin (Claude Code)
+# agent-metrics
 
-**Optional** convenience plugin for [`agent-meter`](../../../tools/agent-meter/README.md): token, API-equivalent cost and latency metrics for Claude Code and Antigravity, per project, client, task and subagent.
+> Optional hooks that hand each finished task and session to the `agent-meter` CLI.
 
-The plugin is opt-in and fully decoupled:
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square)](../../../LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Claude%20Code-orange?style=flat-square)](../../../docs/claude-code-installation.md)
 
-- No other plugin in this repository depends on it, references it or bundles its skill. Installing or removing it changes nothing else.
-- `agent-meter` works **without this plugin**: install the CLI and run `agent-meter setup`, which can register the same hooks directly in `~/.claude/settings.json`. The plugin is just another way to register them.
-- The hooks are thin wrappers. If the CLI is not installed they do nothing: they exit 0 and print one hint line to stderr.
+`agent-metrics` is an optional convenience plugin for [`agent-meter`](../../../tools/agent-meter/README.md):
+token, API-equivalent cost and latency metrics per project, client, task and subagent. It only registers
+two hooks that call the CLI. `agent-meter setup` can register the same hooks without the plugin. No other
+plugin depends on it. Overview and privacy: [docs/agent-metrics/README.md](../../../docs/agent-metrics/README.md).
 
-Overview, options and privacy: [docs/agent-metrics/README.md](../../../docs/agent-metrics/README.md).
+## Requirements
 
----
+- Claude Code with plugin support and `node` on `PATH`.
+- The `agent-meter` CLI (Python >= 3.11, installed by `uv`). The plugin does nothing without it.
 
-## 1. What It Installs
+## Installation
 
-```
-plugins/claude/agent-metrics/
-├── .claude-plugin/plugin.json   # Claude Code manifest ("hooks": "./hooks.json")
-├── hooks.json                   # SessionEnd + Stop → hooks/agent-meter-hook.js
-├── hooks/
-│   └── agent-meter-hook.js      # runs `agent-meter hook …` with the payload on stdin
-├── README.md
-└── skills/
-    └── agent-metrics/           # mirror of /skills/agent-metrics
-```
-
-| Event | Command | Timeout |
-| :--- | :--- | :---: |
-| `SessionEnd` | `node "${CLAUDE_PLUGIN_ROOT}/hooks/agent-meter-hook.js" --host claude-code --event session-end` → `agent-meter hook --host claude-code --event session-end` | 10 s |
-| `Stop` (end of every task) | `node "${CLAUDE_PLUGIN_ROOT}/hooks/agent-meter-hook.js" --host claude-code --event task-end` → `agent-meter hook --host claude-code --event task-end` | 10 s |
-
-Wrapper contract:
-
-- It always exits `0` and never blocks Claude Code.
-- It writes **nothing to stdout**, so there is zero token overhead: nothing reaches the model context. The CLI's own stdout is discarded.
-- It enforces its own timeout (`AGENT_METER_HOOK_TIMEOUT_MS`, default 8000 ms, clamped to 100–9000 ms) below the 10 s host timeout, and kills a hung CLI.
-- It looks for `agent-meter` on `PATH`, then in `~/.local/bin` (the default for `uv tool` and `pipx`). If neither has it, it prints `agent-meter not installed: see <docs url>` to stderr and exits 0.
-- The CLI keeps only allowlisted payload keys (`session_id`, `transcript_path`, `cwd`, `hook_event_name`, `reason`, `stop_hook_active`). It hands off to a detached worker and returns within about 2 s.
-
-## 2. Install
-
-1. Install the CLI (Python ≥ 3.11; `uv` provisions it):
+1. Install the CLI:
 
    ```bash
    uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
-   # or: pipx install --python python3.12 "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
    ```
 
 2. Install the plugin:
 
    ```bash
-   /plugin marketplace add jggomez/expert-ai-developer-skills
-   /plugin install agent-metrics@expert-ai-developer-skills
-   # or from a local checkout:
-   claude plugin install plugins/claude/agent-metrics
+   claude plugin marketplace add jggomez/expert-ai-developer-skills
+   claude plugin install agent-metrics@expert-ai-developer-skills
    ```
 
-3. Run the setup wizard (backfill, scheduler, projects, optional cloud):
+3. Run the setup wizard. It detects the enabled plugin (`enabledPlugins` in `~/.claude/settings.json`)
+   and does not add user-level hooks, so events are not registered twice.
 
    ```bash
-   agent-meter setup --local      # Option A: local only, zero network calls
-   agent-meter setup --cloud --gcp-project <project> --mode billing   # Option B: + BigQuery
+   agent-meter setup --local                                         # Option A: local only, no network calls
+   agent-meter setup --cloud --gcp-project <project> --mode billing  # Option B: adds BigQuery
    ```
 
-   The wizard detects the enabled plugin (`enabledPlugins` in `~/.claude/settings.json`) and **does not add user-level hooks**, so events are not registered twice. Even if they were, ingestion is idempotent and notifications are deduplicated.
+More install options (pipx, BigQuery extra, local clone): [tools/agent-meter/README.md](../../../tools/agent-meter/README.md).
+Plugin updates and project scope: [docs/claude-code-installation.md](../../../docs/claude-code-installation.md).
 
-4. Check the installation with `agent-meter doctor`. After your next task, `agent-meter last` or `agent-meter tasks --last` prints a summary.
+## Quick start
 
-## 3. Uninstall
+```bash
+agent-meter doctor          # check hooks, scheduler, prices
+agent-meter last            # summary of your last session
+agent-meter tasks --last 5  # the last 5 tasks, with every subagent
+```
+
+## What's included
+
+## Bundled Skills
+
+| Skill | Purpose |
+| :--- | :--- |
+| **`agent-metrics`** | Guides `agent-meter setup` (local vs cloud, billing vs sandbox), explains the metrics, fixes prices with `agent-meter pricing`, runs `agent-meter doctor`, writes DuckDB / BigQuery queries. |
+
+### Hooks
+
+| Event | Script | Behavior |
+| :--- | :--- | :--- |
+| `SessionEnd` | `hooks/agent-meter-hook.js` | Runs `agent-meter hook --host claude-code --event session-end` with the payload on stdin. |
+| `Stop` | `hooks/agent-meter-hook.js` | Runs `agent-meter hook --host claude-code --event task-end` with the payload on stdin. |
+
+## How it works
+
+1. Both hooks run the same Node wrapper with a 10 s host timeout.
+2. The wrapper looks for `agent-meter` on `PATH`, then in `~/.local/bin`.
+3. It always exits 0 and writes nothing to stdout, so nothing reaches the model context.
+4. The CLI keeps only allowlisted payload keys (`session_id`, `transcript_path`, `cwd`, `hook_event_name`, `reason`, `stop_hook_active`).
+5. The CLI hands off to a detached worker and returns in about 2 s.
+
+## Configuration
+
+| Variable | Default | Effect |
+| :--- | :--- | :--- |
+| `AGENT_METER_HOOK_TIMEOUT_MS` | `8000` | Wrapper timeout before it kills a hung CLI. Clamped to 100-9000 ms. |
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+| :--- | :--- | :--- |
+| stderr shows `agent-meter not installed: see <url>` | CLI not on `PATH` or in `~/.local/bin`. | Install it with `uv tool install` (above); run `uv tool update-shell`. |
+| stderr shows `timed out` | CLI ran longer than the wrapper timeout. | Run `agent-meter doctor`; raise `AGENT_METER_HOOK_TIMEOUT_MS` if needed. |
+| No data after a task | Hooks or scheduler not set up. | Run `agent-meter doctor`, then `agent-meter collect`. |
+| A cost shows `≥ $0.00` | The model has no price. | `agent-meter pricing unpriced` prints the fix command. |
+
+## Uninstall
 
 ```bash
 /plugin uninstall agent-metrics        # removes the plugin hooks
-agent-meter uninstall                  # removes the scheduler and any user-level hooks; keeps the data
+agent-meter uninstall                  # removes the scheduler and user-level hooks; keeps the data
 agent-meter uninstall --purge --yes    # also deletes ~/.agent-meter/
 uv tool uninstall agent-meter
 ```
 
-## 4. Bundled Skills
+## Related plugins
 
-- **`agent-metrics`**: guides `agent-meter setup` (local vs cloud, billing vs sandbox), explains the metrics, keeps prices correct (`agent-meter pricing`), runs `agent-meter doctor`, and writes ad-hoc DuckDB / BigQuery queries.
+- [shared-context](../shared-context/README.md): cross-session memory in `context/`.
+- [senior-dev](../senior-dev/README.md): orchestrated SDLC whose subagents the metrics break down.
 
-> **Maintaining the bundled skill**: `skills/agent-metrics/` is a physical copy of `/skills/agent-metrics`. After editing the canonical file, run `python3 scripts/sync_plugin_skills.py` from the repo root.
+## Maintenance
+
+`skills/agent-metrics/` is a copy of `/skills/agent-metrics`. After editing it, run
+`python3 scripts/sync_plugin_skills.py` from the repo root.
+
+## License
+
+Apache-2.0. See [LICENSE](../../../LICENSE).

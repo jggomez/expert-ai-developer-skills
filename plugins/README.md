@@ -1,114 +1,62 @@
-# Plugin Ecosystem Guide: Google Antigravity & Anthropic Claude Code
+# Plugins
 
-[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
-[![Plugins Count](https://img.shields.io/badge/Plugins-9%20Core%20%2B%201%20Add--on-orange?style=flat-square)](.)
-[![Dual Runtime](https://img.shields.io/badge/Runtime-Antigravity%20%7C%20Claude%20Code-green?style=flat-square)](.)
-[![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey?style=flat-square)](../LICENSE)
+> One set of engineering plugins, packaged for Claude Code and Google Antigravity.
 
-This directory contains the **Dual Plugin Ecosystem** powering production-grade multi-agent software engineering across two premier AI coding hosts: **Google Antigravity (AGY)** and **Anthropic Claude Code**.
+Each plugin exists twice: `antigravity/<plugin>/` is the source of truth, and `claude/<plugin>/` is generated from it by `scripts/sync_agents.py`, with Claude Code tool names, plugin dependencies and Claude-specific hooks.
 
----
+## Catalog
 
-## 1. Dual Ecosystem Architecture
+| Plugin | What it does | Claude Code | Antigravity |
+| :--- | :--- | :--- | :--- |
+| `senior-dev` | SDLC orchestrator and the shared specialist subagents. | [README](claude/senior-dev/README.md) | [README](antigravity/senior-dev/README.md) |
+| `senior-dev-flutter` | Flutter and Dart architecture, profiling and release engineering. | [README](claude/senior-dev-flutter/README.md) | [README](antigravity/senior-dev-flutter/README.md) |
+| `python-backend` | FastAPI/Django backends, migrations, CI/CD gates. | [README](claude/python-backend/README.md) | [README](antigravity/python-backend/README.md) |
+| `senior-data-engineer` | Google Cloud lakehouse, CDC and BigQuery modeling. | [README](claude/senior-data-engineer/README.md) | [README](antigravity/senior-data-engineer/README.md) |
+| `sql-query-optimizer` | SQL diagnosis from real execution plans. | [README](claude/sql-query-optimizer/README.md) | [README](antigravity/sql-query-optimizer/README.md) |
+| `shared-context` | Working memory shared across sessions and hosts. | [README](claude/shared-context/README.md) | [README](antigravity/shared-context/README.md) |
+| `git-workflow` | Branch protection and Conventional Commits. | [README](claude/git-workflow/README.md) | [README](antigravity/git-workflow/README.md) |
+| `docs-and-quality` | Documentation standards and anti-placeholder gate. | [README](claude/docs-and-quality/README.md) | [README](antigravity/docs-and-quality/README.md) |
+| `multi-agent-ops` | Loop engineering and repository research. | [README](claude/multi-agent-ops/README.md) | [README](antigravity/multi-agent-ops/README.md) |
+| `agent-metrics` *(optional)* | Session recording for the `agent-meter` CLI. | [README](claude/agent-metrics/README.md) | [README](antigravity/agent-metrics/README.md) |
 
-Every plugin in this repository is engineered as an autonomous, self-contained package providing specialized subagents, deterministic lifecycle safety hooks, MCP server configurations, and bundled skills:
+## Install
 
-```
-plugins/
-├── antigravity/                  # Google Antigravity Plugin Ecosystem
-│   ├── senior-dev/               # Core SDLC orchestrator + 6 specialized subagents
-│   ├── senior-dev-flutter/       # Mobile & web Flutter architecture, profiling & release
-│   ├── python-backend/           # FastAPI, Django, Alembic migrations & Cloud Run
-│   ├── senior-data-engineer/     # GCP Lakehouse, BigQuery, Datastream CDC & SCD modeling
-│   ├── sql-query-optimizer/      # Real-plan SQL optimization & static anti-pattern audit
-│   ├── shared-context/           # Cross-AI LLM Wiki working memory (context/memory/)
-│   ├── git-workflow/             # Branch governance & Conventional Commits validation
-│   ├── docs-and-quality/         # Diátaxis docs, Karpathy guidelines & QA standards
-│   ├── multi-agent-ops/          # DAG state machines & parallel loop engineering
-│   └── agent-metrics/            # Optional token, cost & latency observability
-└── claude/                       # Anthropic Claude Code Plugin Ecosystem
-    ├── senior-dev/               # 1:1 Parity Claude Code subagents & hooks
-    ├── senior-dev-flutter/       # 1:1 Parity Claude Code subagents & hooks
-    ├── python-backend/           # 1:1 Parity Claude Code subagents & hooks
-    ├── senior-data-engineer/     # 1:1 Parity Claude Code subagents & hooks
-    ├── sql-query-optimizer/      # 1:1 Parity Claude Code subagents & hooks
-    ├── shared-context/           # 1:1 Parity Claude Code subagents & hooks
-    ├── git-workflow/             # 1:1 Parity Claude Code subagents & hooks
-    ├── docs-and-quality/         # 1:1 Parity Claude Code subagents & hooks
-    ├── multi-agent-ops/          # 1:1 Parity Claude Code subagents & hooks
-    └── agent-metrics/            # 1:1 Parity Claude Code subagents & hooks
-```
-
----
-
-## 2. Zero Tool Bleed & Dual-Host Isolation
-
-A core architectural invariant of this repository is **Zero Cross-Environment Tool Contamination**:
-- **Google Antigravity** agents declare and execute only native Antigravity primitives: `run_command`, `view_file`, `write_to_file`, `replace_file_content`, `list_dir`, `grep_search`, `find_by_name`, `ask_question`, `invoke_subagent`, `manage_subagents`, `send_message`.
-- **Anthropic Claude Code** agents declare and execute only native Claude Code tools: `Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Agent`.
-- **Automated Synchronization**: Running `python3 scripts/sync_agents.py` and `python3 scripts/sync_plugin_skills.py` automatically converts canonical agent definitions and skills into pure, sanitized Claude Code configurations without manual duplication.
-
----
-
-## 3. Available Plugins Catalog
-
-| Plugin | Primary Focus & Domain | Agents Bundled | Bundled Skills | Native MCP Servers |
-| :--- | :--- | :---: | :---: | :--- |
-| **[`senior-dev`](antigravity/senior-dev/README.md)** | Full SDLC lead orchestrator, discovery specialists, TDD implementers, QA matrix generation, and adversarial verification. | 10 | 15 | Cloud Run, Firebase |
-| **[`senior-dev-flutter`](antigravity/senior-dev-flutter/README.md)** | Senior Flutter & Dart layer on top of official Flutter packs: 60/120fps profiling, Riverpod/Bloc ADRs, release matrices. | 5 | 10 | Dart MCP |
-| **[`python-backend`](antigravity/python-backend/README.md)** | Production Python backend: FastAPI/Django vertical slices, zero-downtime Alembic migrations, CI/CD gates. | 1 | 14 | Cloud Run, Firebase |
-| **[`senior-data-engineer`](antigravity/senior-data-engineer/README.md)** | Google Cloud Lakehouse architecture, Datastream CDC, BigQuery SCD Type 2 modeling, data contracts, and dry-run cost controls. | 1 | 4 | BigQuery, Cloud SQL, GCS |
-| **[`sql-query-optimizer`](antigravity/sql-query-optimizer/README.md)** | SQL performance diagnosis from real execution plans, BigQuery slot/skew tuning, dialect-aware rewrites. | 1 | 4 | BigQuery, Cloud SQL |
-| **[`shared-context`](antigravity/shared-context/README.md)** | Cross-AI LLM Wiki memory (`context/memory/MEMORY.md`): zero-amnesia working memory shared between Claude and Antigravity. | 1 | 2 | Shared Context MCP |
-| **[`git-workflow`](antigravity/git-workflow/README.md)** | Git branch protection (blocks direct commits to `main`/`develop`), auto-branching, scope drift detection, Conventional Commits. | 0 | 2 | — |
-| **[`docs-and-quality`](antigravity/docs-and-quality/README.md)** | Technical documentation standards (Diátaxis), Mermaid diagrams, Karpathy clean-code guidelines, Anti-Lazy code policy. | 0 | 3 | — |
-| **[`multi-agent-ops`](antigravity/multi-agent-ops/README.md)** | 3-Tier SDLC DAG execution, parallel fan-out (Mode A: Disjoint Files vs Mode B: Worktrees), finite 3-loop self-correction. | 0 | 2 | — |
-| **[`agent-metrics`](antigravity/agent-metrics/README.md)** | *(Optional)* Session and task token, USD cost, cache efficiency, and latency observability via `agent-meter`. | 0 | 1 | — |
-
----
-
-## 4. Quick Installation Guide
-
-### Option A: Installing in Google Antigravity
-Use the `agy` CLI to install individual plugins or the entire suite:
+### Claude Code
 
 ```bash
-# Install individual plugins
-agy plugin install ./plugins/antigravity/senior-dev
-agy plugin install ./plugins/antigravity/senior-dev-flutter
-agy plugin install ./plugins/antigravity/python-backend
-agy plugin install ./plugins/antigravity/senior-data-engineer
-agy plugin install ./plugins/antigravity/sql-query-optimizer
+claude plugin marketplace add jggomez/expert-ai-developer-skills
+claude plugin install senior-dev@expert-ai-developer-skills
+```
 
-# Install all 9 core plugins in one loop
+`senior-dev-flutter` and `python-backend` depend on `senior-dev`, which installs automatically. See [Installing the Claude Code plugins](../docs/claude-code-installation.md) for scopes, updates and team settings.
+
+### Google Antigravity
+
+```bash
+# One plugin
+agy plugin install ./plugins/antigravity/senior-dev
+
+# All core plugins
 for p in senior-dev senior-dev-flutter python-backend senior-data-engineer sql-query-optimizer shared-context git-workflow docs-and-quality multi-agent-ops; do
   agy plugin install "./plugins/antigravity/$p"
 done
 ```
 
-### Option B: Installing in Anthropic Claude Code
-Install directly from the repository marketplace or local clone:
+Run these from a clone of the repository. Antigravity has no plugin dependencies, so `senior-dev-flutter` and `python-backend` bundle copies of the `senior-dev` specialists.
 
-```bash
-# 1. Register the marketplace repository
-/plugin marketplace add jggomez/expert-ai-developer-skills
+## Differences between hosts
 
-# 2. Install any plugin
-/plugin install senior-dev
-/plugin install senior-dev-flutter
-/plugin install python-backend
-/plugin install senior-data-engineer
-/plugin install sql-query-optimizer
-```
+| Aspect | Claude Code | Antigravity |
+| :--- | :--- | :--- |
+| Manifest | `.claude-plugin/plugin.json` | `plugin.json` |
+| MCP config | `.mcp.json` | `mcp_config.json` |
+| Tools in agents | `Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Skill`, `Agent`, `AskUserQuestion` | `run_command`, `view_file`, `write_to_file`, `replace_file_content`, `invoke_subagent`, `ask_question`, … |
+| Shared specialists | Plugin `dependencies` | Bundled copies |
+| E2E browser | Playwright MCP + evidence hook in `senior-dev` | Defined by the agent instructions |
+| Stop gates | Cached: run only when code changed, block at most 3 times per turn | Per-plugin hook scripts |
 
----
+Tool names never cross hosts: a test fails if Antigravity tool names appear under `claude/`.
 
-## 5. Architectural Standards Enforced by Plugins
+## Adding or changing a plugin
 
-1. **Plan-First Mandatory Gate**: Orchestrators are strictly forbidden from modifying source code without authoring an up-to-date `PLAN.md` containing discovery triage and execution tracks.
-2. **Dynamic 3-Tier Adaptive SDLC**:
-   - **Tier 1 (Fast-Track)**: Single-file bugfixes/docs bypass discovery and alignment modals, delivering **70–85% token & latency savings**.
-   - **Tier 2 (Standard)**: 2–4 files, selective discovery in `docs/<feature-name>/`, interactive user approval modal (`ask_question`), parallel Mode A implementation.
-   - **Tier 3 (Mission-Critical)**: Full discovery suite, mandatory user sign-off, and parallel dispatch of the **Adversarial Verification Committee** (`qa-tester`, `critic`, `challenger`, `e2e-blackbox-tester`, `compliance-verifier`).
-3. **Automated Branch Governance**: Protected base branches (`main`, `master`, `develop`, `dev`) are guarded at the hook level; orchestrators automatically provision dedicated feature branches (`feat/<slug>`, `fix/<slug>`) and proactively detect scope drift via interactive GUI dialogs.
-4. **Feature Artifacts Centralization**: Technical specifications, design tokens, architecture ADRs, and QA test matrices reside permanently under `docs/<feature-name>/`.
+See [CONTRIBUTING.md](../CONTRIBUTING.md).

@@ -16,7 +16,7 @@ description: Drafts concise Backend / API Design Specifications and Software Des
 ### When NOT to Use
 - **Changes following existing endpoints/models**: **SKIP** SDD/`api-spec.md` creation completely when changes fit established routes, schemas, or localized Tier 1 bugfixes/refactors.
 - **Single architectural pattern trade-off**: Use `senior-architect-engineering` for a concise MADR (`<= 55 lines`).
-- **Product user stories**: Use `product-analyst` (`docs/<feature-name>/prd.md <= 70 lines`).
+- **Product user stories**: Use `product-analyst` (`## Product` in `docs/<feature-name>/spec.md`, `<= 50 lines`).
 
 ## Process
 1. **Check Capability Gate & Context**: Inspect root `AGENTS.md` (`<= 90 lines` wired to `context/memory/MEMORY.md`) and existing routers/models. If the task reuses existing endpoints and models, skip SDD authoring and proceed to TDD.
@@ -25,7 +25,7 @@ description: Drafts concise Backend / API Design Specifications and Software Des
    - `## 2. Architecture & Data Model`: Compact Mermaid flow + exact table/column/index migration delta.
    - `## 3. API Endpoints & Contracts`: Compact table (`Method & Path` | Request schema | Response schema | Status codes).
    - `## 4. Security, Edge Cases & Trade-offs`: AuthN/AuthZ, rate/input validation, idempotency/retries, and `+` Pros / `-` Risks.
-3. **Gate Sign-off**: Align contracts with stakeholders (`ask_question` in Tier 2/3) and mark status `Approved` before delegating to `code-implementer`.
+3. **Gate Sign-off**: Align contracts with stakeholders (`AskUserQuestion` in Tier 2/3) and mark status `Approved` before delegating to `code-implementer`.
 
 ## Usage
 ### Commands & Example Prompts

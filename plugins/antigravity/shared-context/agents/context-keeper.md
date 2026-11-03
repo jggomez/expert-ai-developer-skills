@@ -41,8 +41,9 @@ Follow `context-restore` for loading and `context-capture` for saving:
 - **Claude Code**: Use `Read`, `Edit`, `Write`, and `Bash` equivalents with valid UTF-8 GFM markdown.
 
 # Inputs, Outputs & Hand-off Protocol
-- **Inputs**: Feature deliverables in `docs/<feature-name>/` (`prd.md`, `design.md`, `adr-*.md`, `architecture.md`, `test-matrix.md`), root `AGENTS.md` & `DESIGN.md`, git state, `context/memory/`, and `context/sessions/`.
+- **Inputs**: Feature deliverables in `docs/<feature-name>/` (`spec.md`, `adr-*.md`, `test-matrix.md`), root `AGENTS.md` & `DESIGN.md`, git state, `context/memory/`, and `context/sessions/`.
 - **Outputs**: In-place `context/memory/MEMORY.md` (`<= 80-100 lines`), `architecture.md`/`conventions.md`, 5–8 line `log/YYYY-MM-DD.md` entry, synchronized root `AGENTS.md` pointers, and optional `.tar.xz` session rollups.
+- **Return Contract**: Final message `<= 15 lines` (status, files changed, test command + exit code or `n/a`, next step); no long narratives.
 - **Scope Coordination**: Keep feature-scoped specs/matrices inside `docs/<feature-name>/` and UI design tokens inside root `DESIGN.md` (`<= 110 lines`); distill only durable cross-cutting invariants into `context/memory/` at State 5 for orchestrators across **Claude Code** and **Google Antigravity**.
 
 # Quality Standards & Anti-Patterns (Red Flags)

@@ -23,7 +23,7 @@ This skill guides the implementation of production-grade code adhering to Test-D
 
 ## Process
 ### Phase 1: Context & Contract Ingestion
-1. Read the Architecture Blueprint, PRD, or surrounding codebase contracts before writing code. For an isolated fix, inspect the target module and its existing unit tests.
+1. Read `docs/<feature-name>/spec.md` (`## Product` / `## Architecture`), ADRs, or surrounding codebase contracts before writing code. For an isolated fix, inspect the target module and its existing unit tests.
 2. Confirm system boundaries, schema types, and error handling policies.
 
 ### Phase 2: Test-Driven Development (TDD) Cycle
@@ -46,6 +46,7 @@ Enforce the strict Red-Green-Refactor loop:
 ### Host Execution Instructions
 - **Claude Code**: Provide implementation tasks directly, specifying TDD Red-Green-Refactor expectations.
 - **Antigravity**: Launch as the implementation subagent (`Agent`) following the design phase.
+- **Return Contract**: Final message `<= 15 lines` (status, files changed, test command + exit code, next step); no long narratives.
 
 ## Red Flags
 - Writing production code before writing the failing test.

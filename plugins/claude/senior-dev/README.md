@@ -1,154 +1,151 @@
-# Senior Dev Plugin (Claude Code)
+# senior-dev
 
-[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
-[![Plugin](https://img.shields.io/badge/Plugin-senior--dev-green?style=flat-square)](.)
+> A senior-developer orchestrator and nine specialist subagents that plan, build, test and audit code with TDD.
 
-The `senior-dev` plugin packages the repository's **Graph Engineering** subagent topology — a Senior Developer Orchestrator plus 9 specialized subagents (Product Analyst, UI/UX Designer, Architect, Code Implementer, QA Tester, Critic, Challenger, E2E Black-box Tester, Compliance Verifier) — as a self-contained plugin for **Claude Code**.
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](../../../LICENSE)
+![Platform: Claude Code](https://img.shields.io/badge/platform-Claude%20Code-orange.svg)
 
-Key architectural capabilities:
-- **LLM Wiki Memory (`context/memory/`)**: Cross-AI persistent memory shared seamlessly between Claude Code and Google Antigravity. At **State 0**, the orchestrator silently restores `context/memory/MEMORY.md` (~500 tokens) and reads linked topic pages (`architecture.md`, `conventions.md`, `log/YYYY-MM-DD.md`) on demand. At **State 5**, completed milestones update `context/memory/` via `context-capture`.
-- **Mandatory Discovery Triage Gate**: Before writing implementation tasks for `code-implementer`, the orchestrator evaluates a deterministic **Discovery Triage Rubric** in `PLAN.md` (`## Discovery & Architecture Triage`) to determine when `product-analyst` and/or `architect-engineer` **MUST** be invoked upfront.
-- **Parallel Fan-Out / Fan-In Execution & Workspace Isolation**: Supports concurrent subagent execution via parallel `Agent` calls across discovery (`product-analyst` || `architect-engineer`), implementation (1 to N `code-implementer` instances using **Mode A: Disjoint File Partitioning** or **Mode B: Git Worktree Isolation**), and verification (`qa-tester` || `compliance-verifier`).
+`senior-dev` is a Claude Code plugin for teams that want a repeatable SDLC loop: triage, discovery, TDD build, QA, and a compliance audit before shipping.
+The orchestrator writes `PLAN.md`, delegates work to specialist subagents, and never edits application code itself.
+Hooks enforce plan-first, branch safety and passing tests; a Playwright MCP server lets the black-box tester verify real browser flows.
+`senior-dev-flutter` and `python-backend` depend on this plugin and install it automatically.
 
-- **Claude Code**: Install via `/plugin install senior-dev` from the marketplace or `claude plugin install plugins/claude/senior-dev`. Subagents use native Claude Code tools (`Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep`, `Agent`).
+## Requirements
 
----
+- Claude Code with plugin marketplace support (the one-step `--marketplace` install needs 2.1.292+).
+- Node.js on `PATH`: every hook runs with `node`.
+- `npx`: starts the bundled MCP servers (Playwright, Cloud Run, Firebase).
+- Google Chrome for browser E2E runs (the Playwright MCP default browser).
+- `git`, plus the test tools your project uses (`pytest`, `npm`, `dart`, `cargo`, `go`), for the Stop gate.
 
-## 1. Directory Tree & Architecture
+## Installation
 
-```
-plugins/claude/senior-dev/
-├── README.md               # This usage manual
-├── .claude-plugin/
-│   └── plugin.json         # Claude Code plugin manifest
-├── .mcp.json               # MCP definitions (GCP Cloud Run, Firebase)
-├── hooks.json              # Lifecycle hook definitions
-├── hooks/
-│   ├── orchestrator-role-gate.js # PreToolUse gate preventing orchestrator from editing code
-│   └── universal-quality-gate.js # Stop hook executing test suites and linters
-├── agents/                 # 10 bundled subagents
-│   ├── senior-dev-orchestrator.md  # Main orchestrator; governs DAG, Triage Gate & PLAN.md
-│   ├── product-analyst.md          # Requirements & PRDs
-│   ├── ui-ux-designer.md           # UI/UX design systems & design.md
-│   ├── architect-engineer.md       # Architecture & ADRs
-│   ├── code-implementer.md         # Strict TDD implementation (parallel fan-out capable)
-│   ├── qa-tester.md                # E2E / integration testing (parallel fan-out capable)
-│   ├── critic.md                   # Adversarial code review (cyclomatic complexity, DRY, SOLID)
-│   ├── challenger.md               # Adversarial stress testing, fuzzing, fault injection
-│   ├── e2e-blackbox-tester.md      # Black-box browser verification, DOM/GUI, Playwright/MCP
-│   └── compliance-verifier.md      # Final NFR / security audit (parallel with qa-tester)
-└── skills/                 # Physical copy of the 15 skills these agents depend on (sanitized for Claude)
-    ├── senior-dev-orchestrator/
-    ├── product-analyst/
-    ├── ui-ux-designer/
-    ├── senior-architect-engineering/
-    ├── code-implementer/
-    ├── code-smells-expert/
-    ├── refactoring-code-expert/
-    ├── qa-tester/
-    ├── compliance-verifier/
-    ├── code-critic/
-    ├── adversarial-challenger/
-    ├── blackbox-tester/
-    ├── context-capture/
-    ├── context-restore/
-    └── loop-engineering/
+```bash
+claude plugin marketplace add jggomez/expert-ai-developer-skills
+claude plugin install senior-dev@expert-ai-developer-skills
 ```
 
----
+Updates, install scopes, per-project settings and branch pinning: [docs/claude-code-installation.md](../../../docs/claude-code-installation.md).
 
-## 2. Subagent Panel & Inviolable Boundaries
+## Quick start
 
-| Agent | Role | Invocation | Responsibilities |
-| :--- | :--- | :--- | :--- |
-| **`senior-dev-orchestrator`** | Lead Orchestrator | Main Session | Restores/updates `context/memory/`, authors `PLAN.md` with Discovery Triage & Parallel Tracks, governs DAG state machine. **Prohibited from writing code directly.** |
-| **`product-analyst`** | Requirements Engineer | `Agent` | **Mandatory via Triage Gate** when new user-facing features, unstated edge cases/permissions, or open-ended prompts arise. Drafts PRDs and acceptance criteria. |
-| **`ui-ux-designer`** | UI/UX Designer | `Agent` | **Mandatory via Triage Gate** when greenfield UI, new screens/views, layout/theming modifications, or `design.md` creation/updates arise. Drafts `design.md` and UI specifications. |
-| **`architect-engineer`** | System Designer | `Agent` | **Mandatory via Triage Gate** when tasks touch >= 2 files/modules, alter schemas/contracts, or cross layers. Produces QADs, SEI tactics, ADRs, and interface boundaries. |
-| **`code-implementer`** | TDD Implementer | `Agent` | **MANDATORY worker (1..N parallel fan-out)**: Writes and refactors production code using strict Red-Green-Refactor within assigned `Disjoint Files` or `Git Worktree`. |
-| **`qa-tester`** | Test Engineer | `Agent` | **MANDATORY worker (parallel with audit)**: Executes unit, integration, and regression suites; requires `exit code 0`. |
-| **`critic`** | Senior Code Critic | `Agent` | **Adversarial Committee worker**: Independently reviews code for cyclomatic complexity, DRY, SOLID, and smells without writing fixes. Authors `docs/<feature-name>/critic-review.md`. |
-| **`challenger`** | Hostile Stress Tester | `Agent` | **Adversarial Committee worker**: Fuzzes boundary inputs, injects network/timeout faults, and simulates concurrency/memory races. Authors `docs/<feature-name>/adversarial-report.md`. |
-| **`e2e-blackbox-tester`** | Black-Box Browser QA | `Agent` | **Adversarial Committee worker**: Validates real user browser journeys, interactive GUI forms, responsive layouts, and console errors via Playwright/MCP. Authors `docs/<feature-name>/blackbox-report.md`. |
-| **`compliance-verifier`** | Release Auditor | `Agent` | **MANDATORY worker (parallel with QA)**: Audits linters, OWASP, code smells, and architectural invariants; issues `APPROVED` verdict. |
+Run the orchestrator as the main thread so its alignment gate can ask you questions (`AskUserQuestion` is not available inside subagents):
 
----
+```bash
+claude --agent senior-dev:senior-dev-orchestrator
+```
 
-## 3. Graph Engineering State Machine (DAG) & Topologies
+Then describe the work:
 
-Multi-agent coordination in `senior-dev` follows a deterministic **6-State Directed Acyclic Graph (DAG)** with a **Mandatory Discovery Triage Gate** and **Parallel Fan-Out / Fan-In**:
+```text
+Build a password-reset feature end to end: requirements, implementation with tests, and a final audit.
+```
+
+Call a single specialist from any session by its `subagent_type`:
+
+```text
+Use the senior-dev:code-implementer agent to add the /health endpoint with TDD.
+Ask the senior-dev:compliance-verifier agent for a release-readiness verdict on this branch.
+```
+
+## What's included
+
+### Agents
+
+| Agent | Role | Model |
+| :--- | :--- | :--- |
+| `senior-dev-orchestrator` | Triages the task, writes `PLAN.md`, dispatches and coordinates subagents | `inherit` |
+| `product-analyst` | Clarifies business rules; writes user stories and acceptance criteria | `sonnet` |
+| `ui-ux-designer` | Maintains `DESIGN.md` and feature UI deltas; WCAG AA | `sonnet` |
+| `architect-engineer` | Module boundaries, API/DB contracts, MADR records | `inherit` |
+| `code-implementer` | Writes production code with Red-Green-Refactor TDD | `inherit` |
+| `qa-tester` | Runs unit/integration/E2E suites; writes `test-matrix.md` | `sonnet` |
+| `critic` | Independent review: complexity, DRY, SOLID, maintainability | `inherit` |
+| `challenger` | Stress tests, fuzzing, boundary and concurrency probes | `inherit` |
+| `e2e-blackbox-tester` | Browser journeys via Playwright MCP with screenshot evidence | `sonnet` |
+| `compliance-verifier` | Static analysis, security and NFR audit; final verdict | `sonnet` |
+
+## Bundled Skills
+
+| Skill | Purpose |
+| :--- | :--- |
+| **`senior-dev-orchestrator`** | SDLC orchestration: tier routing, gated dispatch, parallel TDD, memory |
+| **`loop-engineering`** | Tier state machine, worker isolation (disjoint files or git worktree), review loops |
+| **`product-analyst`** | User stories and acceptance criteria for ambiguous requests |
+| **`ui-ux-designer`** | `DESIGN.md` contracts, design tokens, responsive and accessible components |
+| **`senior-architect-engineering`** | MADR decision records and architecture sections |
+| **`code-implementer`** | TDD and clean-code implementation |
+| **`code-smells-expert`** | Code smell and technical debt diagnosis |
+| **`refactoring-code-expert`** | Behavior-preserving refactoring |
+| **`qa-tester`** | Test suites and QA test matrix with exit-code proof |
+| **`compliance-verifier`** | NFR, static analysis, coverage and security checks |
+| **`code-critic`** | Independent code review |
+| **`adversarial-challenger`** | Fuzzing, worst-case inputs, failure-path probes |
+| **`blackbox-tester`** | Browser verification with 4-viewport screenshot evidence |
+| **`context-capture`** | Writes milestone memory to `context/memory/` |
+| **`context-restore`** | Restores `context/memory/MEMORY.md` at session start |
+
+Each agent preloads only its core skills; others load on demand through the `Skill` tool.
+
+### Hooks
+
+| Event | Script | Behavior |
+| :--- | :--- | :--- |
+| `PreToolUse` (`Write\|Edit`) | `hooks/orchestrator-role-gate.js` | Allows docs and plans (`*.md`, `*.txt`, `docs/`, `.agents/`, `context/`, `.claude/`). For code: denies edits on `main`/`master`/`develop`/`dev`, denies edits without a `PLAN.md` (Edits of 10 lines or fewer are exempt), and denies edits when the running agent is an orchestrator. |
+| `Stop` | `hooks/universal-quality-gate.js` | Runs `scripts/verify.sh`, `dart analyze`, `npm test`, `pytest -q`, `cargo test` or `go test ./...` when they apply. Skips when no code changed or the same code state already passed. Blocks at most 3 times per turn. |
+| `SubagentStop` | `hooks/e2e-evidence-gate.js` | Rejects an `e2e-blackbox-tester` `PASSED`/`REJECTED` verdict unless its transcript shows a successful navigate + screenshot (or a `playwright` run) and real PNG files exist. `BLOCKED`/`SKIPPED` always pass. |
+
+Stop-gate caching, retry limits and cross-plugin de-duplication live in `hooks/shared/gate-utils.js`. Gate ids are shared with `python-backend` and `senior-dev-flutter`, so a suite runs once per code state.
+
+### MCP servers
+
+| Server | Command | Purpose |
+| :--- | :--- | :--- |
+| `playwright` | `npx -y @playwright/mcp@latest --isolated` | Headed, isolated browser for `e2e-blackbox-tester` |
+| `cloudrun` | `npx -y @google-cloud/cloud-run-mcp` | Google Cloud Run deployments and logs |
+| `firebase-mcp-server` | `npx -y firebase-tools@latest mcp` | Firebase projects, Firestore, Auth, deploys |
+
+## How it works
 
 ```mermaid
-flowchart TD
-    STATE0["STATE 0: MEMORY RESTORE & TRIAGE GATE<br/>Load context/memory/MEMORY.md + Author PLAN.md with Discovery Triage Table"]
-    STATE0 -->|"New Feature / Ambiguous / Schema or Auth Change"| STATE1["STATE 1: UPFRONT DISCOVERY (Parallel)<br/>product-analyst and architect-engineer"]
-    STATE0 -->|"Pure Bugfix / Localized Refactor (Explicit Justification)"| STATE2
-    STATE1 --> STATE2["STATE 2: PARALLEL BUILD (Mandatory)<br/>Mode A: Disjoint Files or Mode B: Git Worktrees<br/>code-implementer (1..N)"]
-    STATE2 --> VERIFY["STATE 3 & 4: PARALLEL VERIFY & AUDIT (Mandatory)<br/>qa-tester (exit code 0) and compliance-verifier (APPROVED)"]
-    VERIFY -->|"Fail / Reject (Max 3 Loops)"| STATE2
-    VERIFY -->|"Both Pass: Green + Approved"| STATE5["STATE 5: SHIP & MEMORY CAPTURE<br/>Update context/memory/ LLM Wiki + git commit"]
-    VERIFY -->|"3-Loop Cap Exceeded"| ESCALATE["HALT & ESCALATE<br/>Diagnostic report to user"]
+flowchart LR
+    T[Triage + PLAN.md] --> D[Discovery: Tier 2/3 only]
+    D --> B[Build: 1..N code-implementer]
+    T -->|Tier 1| B
+    B --> V[QA + compliance + risk-gated reviewers]
+    V -->|fail, max 3 loops| B
+    V --> S[Ship + memory update]
 ```
 
-### Multi-Agent Topologies Taxonomy
-1. **Manager-Worker Topology (Mode A & Mode B Parallelism)**: `senior-dev-orchestrator` coordinates high-level objectives and delegates atomic tasks to concurrent workers via parallel `Agent` calls using **Mode A: Disjoint File Partitioning** (non-overlapping file sets) or **Mode B: Git Worktree Isolation** (dedicated branches/worktrees when tracks touch shared files).
-2. **Sequential Pipeline with Parallel Fan-Out/Fan-In (DAG)**: Deterministic progression through State 0 (Memory Restore + Triage Gate in `PLAN.md`) &rarr; State 1 (Upfront Discovery) &rarr; State 2 (Parallel Build) &rarr; State 3 & 4 (Concurrent QA & Compliance Audit) &rarr; State 5 (Memory Capture & Ship) with bounded failure loops (max 3 retries).
-3. **Review Committee**: Parallel specialist evaluations where `qa-tester` and `compliance-verifier` audit diffs concurrently and fan-in before completion.
+The orchestrator classifies each task as Tier 1 (fast-track), Tier 2 (standard) or Tier 3 (mission-critical) and invokes only the specialists the task needs.
+Parallel workers run in one message; worktree isolation (`isolation: "worktree"`) is used when tracks share files.
+The full state machine is documented in [AGENTS.md](../../../AGENTS.md) and the [root README](../../../README.md).
 
----
+## Configuration
 
-## 4. The 9-Stage Command Framework
+| Setting | How |
+| :--- | :--- |
+| Orchestrator as default agent | Add `{ "agent": "senior-dev:senior-dev-orchestrator" }` to `.claude/settings.json` |
+| Headless browser (CI, no display) | Add `--headless` to the `playwright` args in `.mcp.json` |
+| Model per agent (maintainers) | Edit `CLAUDE_AGENT_OVERRIDES` in [scripts/claude_sync_config.py](../../../scripts/claude_sync_config.py), then run `python3 scripts/sync_agents.py` |
 
-The subagents and orchestrator execute along the standardized 9-stage engineering cycle:
+## Troubleshooting
 
-| Phase | Command | Key Principle | Responsible Role |
-| :--- | :--- | :--- | :--- |
-| **Define what to build** | `/spec` | Spec before code | `product-analyst` (PRD, user stories, acceptance criteria) |
-| **Plan how to build it** | `/plan` | Small, atomic tasks | `senior-dev-orchestrator` / `architect-engineer` (Discovery Triage, ADR, parallel tracks) |
-| **Build incrementally** | `/build` | One slice at a time | `code-implementer` (1..N parallel fan-out, Red-Green-Refactor, vertical slices) |
-| **Prove it works** | `/test` | Tests are proof | `qa-tester` (unit, integration, regression verification) |
-| **Set the quality bar** | `/constraints` | Decide once, enforce everywhere | `compliance-verifier` (security gates, OWASP, linter rules) |
-| **Review before merge** | `/review` | Improve code health | `compliance-verifier` / peer review (code smells, debt) |
-| **Audit performance** | `/perf` | Measure before you optimize | `code-implementer` / orchestrator (profiling, bottlenecks) |
-| **Simplify the code** | `/code-simplify` | Clarity over cleverness | `code-implementer` (dead code elimination, KISS) |
-| **Ship to production** | `/ship` | Faster is safer | `senior-dev-orchestrator` (conventional commits, `context/memory/` update, release) |
-
----
-
-## 5. Lifecycle Hooks & Deterministic Gates
-
-| Hook Event | Script | Behavior |
+| Symptom | Cause | Fix |
 | :--- | :--- | :--- |
-| **`PreToolUse`** | `hooks/orchestrator-role-gate.js` | Enforces Inviolable Role Boundaries: intercepts file edit tools (`Write`, `Edit`) when called by `senior-dev-orchestrator` on production code files (allowing `PLAN.md`, `ADR-*.md`, `docs/`, `.agents/`, and `context/memory/`), mandating delegation to `code-implementer`. |
-| **`Stop`** | `hooks/universal-quality-gate.js` | Enforces that tests pass (`exit code 0`) and no critical quality defects remain before session termination. |
+| `PLAN FIRST` denial on a code edit | No `PLAN.md` in the root, `docs/` or `.agents/` | Create `PLAN.md`, or keep the change to a small Edit (10 lines or fewer) |
+| `PROTECTED BRANCH` denial | Working on `main`, `master`, `develop` or `dev` | Run `git checkout -b feat/<slug>` |
+| `ORCHESTRATOR CODE PROHIBITION` denial | The orchestrator tried to edit code | Expected: it must delegate to `code-implementer` |
+| Turn will not end; `UNIVERSAL QUALITY GATE VIOLATION` | A detected test suite or linter fails | Fix the failures. After 3 blocks in one turn the gate lets the turn end with a notice |
+| `E2E EVIDENCE GATE - UNPROVEN VERDICT` | Tester claimed `PASSED`/`REJECTED` without browser evidence | Make sure `npx` can start Playwright MCP and the app is running; otherwise the tester must report `BLOCKED`. After 3 blocks the result is shown as `UNVERIFIED` |
+| Orchestrator cannot ask for approval | It runs as a subagent, where `AskUserQuestion` is removed | Start it with `claude --agent senior-dev:senior-dev-orchestrator` |
 
----
+## Related plugins
 
-## 6. Bundled Skills (15 Packaged Modules)
+- [senior-dev-flutter](../senior-dev-flutter/README.md): Flutter layer; depends on `senior-dev`.
+- [python-backend](../python-backend/README.md): Python backend layer; depends on `senior-dev`.
+- [shared-context](../shared-context/README.md), [git-workflow](../git-workflow/README.md), [docs-and-quality](../docs-and-quality/README.md), [multi-agent-ops](../multi-agent-ops/README.md).
 
-1. **`senior-dev-orchestrator`**: Phase breakdown, DAG state machine, Mandatory Discovery Triage Gate, Parallel Fan-Out/Fan-In orchestration, and LLM Wiki memory lifecycle.
-2. **`product-analyst`**: Requirement discovery workflow and PRD template.
-3. **`ui-ux-designer`**: Visual design systems, design tokens, component interaction states, responsive layouts, accessibility (WCAG AA/AAA), and standard `design.md` artifact generation.
-4. **`senior-architect-engineering`**: SEI quality attribute scenarios, tactics, ATAM, ADR template.
-5. **`code-implementer`**: Red-Green-Refactor TDD workflow.
-6. **`code-smells-expert`**: AST-based code smell detection.
-7. **`refactoring-code-expert`**: Safe, test-guarded refactoring steps.
-8. **`qa-tester`**: E2E/integration test-plan construction and RTM template.
-9. **`compliance-verifier`**: Final NFR/security/coverage audit and verdict format.
-10. **`code-critic`**: Independent architectural code review, cyclomatic complexity, DRY, and SOLID auditing.
-11. **`adversarial-challenger`**: Adversarial stress testing, fuzzing, fault injection, and concurrency probing.
-12. **`blackbox-tester`**: Black-box browser verification, interactive GUI forms, responsive layouts, and console error auditing.
-13. **`context-capture`**: Cross-AI LLM Wiki memory persistence (`context/memory/MEMORY.md`, `architecture.md`, `conventions.md`, and `log/YYYY-MM-DD.md`) at milestone completion (`State 5`).
-14. **`context-restore`**: Cross-AI LLM Wiki memory restoration (`context/memory/MEMORY.md` and on-demand topic pages) at task initialization (`State 0`).
-15. **`loop-engineering`**: Parallel Fan-Out/Fan-In execution, Disjoint File Partitioning vs. Git Worktree isolation, and autonomous verification loops.
+## License
 
----
-
-## 7. Installation
-
-**In Claude Code**:
-```bash
-/plugin install senior-dev
-# or local:
-claude plugin install plugins/claude/senior-dev
-```
+Apache-2.0. See [LICENSE](../../../LICENSE).

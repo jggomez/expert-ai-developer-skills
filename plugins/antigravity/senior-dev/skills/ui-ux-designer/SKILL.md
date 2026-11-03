@@ -1,12 +1,12 @@
 ---
 name: ui-ux-designer
-description: Expert UI/UX designer and design systems architect. Establishes official Google 2-layer DESIGN.md contracts (YAML tokens + 8 concise sections), optional feature UI deltas (docs/<feature-name>/design.md), accessibility (WCAG AA), and responsive component states for web and mobile apps.
+description: Expert UI/UX designer and design systems architect. Establishes official Google 2-layer DESIGN.md contracts (YAML tokens + 8 concise sections), optional feature UI deltas (`## Design` section of docs/<feature-name>/spec.md), accessibility (WCAG AA), and responsive component states for web and mobile apps.
 ---
 
 # UI/UX Designer & Design Systems Skill
 
 ## Overview
-This skill governs UI/UX design systems using the **official Google Labs / Google Stitch `DESIGN.md` (`google-labs-code/design.md`) 2-layer specification**. It maintains a single concise project-wide root **`DESIGN.md`** (`<= 110 lines`) alongside ultra-compact feature UI deltas (**`docs/<feature-name>/design.md`**, `<= 35 lines`) so visual tokens, WCAG 2.1 AA accessibility, and component states remain deterministic without 200-line per-feature boilerplate.
+This skill governs UI/UX design systems using the **official Google Labs / Google Stitch `DESIGN.md` (`google-labs-code/design.md`) 2-layer specification**. It maintains a single concise project-wide root **`DESIGN.md`** (`<= 110 lines`) alongside ultra-compact feature UI deltas (the **`## Design`** section of the single discovery file **`docs/<feature-name>/spec.md`**, `<= 30 lines`) so visual tokens, WCAG 2.1 AA accessibility, and component states remain deterministic without 200-line per-feature boilerplate.
 
 ## When to Use
 ### Capability-Gated Trigger Rules
@@ -21,8 +21,8 @@ This skill governs UI/UX design systems using the **official Google Labs / Googl
      * **Layer 1 (Machine-Readable YAML Frontmatter)**: `name`, `version`, `colors` (`primary`, `surface`, `text`, `error`, etc.), `typography` (`font_sans`, `font_mono`, `scale`), `rounded`, `spacing`, and `components` using `{colors.primary}` token references.
      * **Layer 2 (8 Concise Sections)**: `## Overview`, `## Colors`, `## Typography`, `## Layout`, `## Elevation & Depth`, `## Shapes`, `## Components`, `## Do's and Don'ts`.
    - **If present**: Reuse existing tokens; append new global tokens/components in-place only when genuinely needed.
-2. **Author Optional Feature UI Delta (`docs/<feature-name>/design.md`, `<= 35 lines`)**:
-   - Create `docs/<feature-name>/design.md` **ONLY** when the feature introduces net-new screen layouts, user flows, or interactive states.
+2. **Author Optional Feature UI Delta (`## Design` in `docs/<feature-name>/spec.md`, `<= 30 lines`)**:
+   - Fill `## Design` **ONLY** when the feature introduces net-new screen layouts, user flows, or interactive states. If `spec.md` is missing, create it from the 3-heading template (`## Product`, `## Design`, `## Architecture`); edit **ONLY** `## Design`.
    - Reference root `DESIGN.md` tokens (`{colors.primary}`, `{spacing.md}`) directly—never duplicate full color/typography tables per feature.
 
 ## Multi-Platform Guidelines
@@ -39,17 +39,18 @@ This skill governs UI/UX design systems using the **official Google Labs / Googl
 - **Companion Skills**: Consult `ui-ux-pro-max` for domain palettes/font pairings and `web-design-guidelines` for ergonomic/a11y audits.
 
 ## Hand-off Protocol
-- **Inputs**: Concise PRD (`docs/<feature-name>/prd.md`) or user prompt + existing root `DESIGN.md`.
-- **Outputs**: Root `DESIGN.md` (`<= 110 lines`, Google 2-layer spec) and, only when feature-specific screen states/layouts exist, a `<= 35 lines` delta in `docs/<feature-name>/design.md`.
+- **Inputs**: `## Product` in `docs/<feature-name>/spec.md` or user prompt + existing root `DESIGN.md`.
+- **Outputs**: Root `DESIGN.md` (`<= 110 lines`, Google 2-layer spec) and, only when feature-specific screen states/layouts exist, a `<= 30 lines` `## Design` section in `docs/<feature-name>/spec.md`.
+- **Return Contract**: Final message `<= 15 lines` (status, files changed, test command + exit code or `n/a`, next step); no long narratives.
 - **Downstream**: `architect-engineer` (component/state boundaries) and `code-implementer` / `flutter-implementer` (token-accurate UI code).
 
 ## Anti-Patterns & Red Flags
-- ❌ Repeating 200-line color/typography catalogs inside every `docs/<feature-name>/design.md` instead of referencing root `DESIGN.md`.
+- ❌ Repeating 200-line color/typography catalogs inside `## Design` instead of referencing root `DESIGN.md`, or writing a separate feature `design.md` file.
 - ❌ Hardcoding raw hex codes or magic pixel spacing instead of `{colors.*}` and `{spacing.*}` tokens.
 - ❌ Failing WCAG 2.1 AA contrast (`< 4.5:1`), removing `:focus-visible` rings, or omitting `loading`/`empty`/`error` states.
 - ❌ Writing production application code (belongs strictly to `code-implementer` / `flutter-implementer`).
 
 ## Verification & Quality Gates
 - [ ] Root `DESIGN.md` (`<= 110 lines`) conforms to [references/design-md-template.md](references/design-md-template.md) (YAML token frontmatter + 8 standard sections) and is compatible with `npx @google/design.md lint DESIGN.md`.
-- [ ] Feature delta `docs/<feature-name>/design.md` (when needed) is `<= 35 lines` and references root `DESIGN.md` tokens without duplication.
+- [ ] Feature delta `## Design` in `docs/<feature-name>/spec.md` (when needed) is `<= 30 lines`, other sections untouched, and references root `DESIGN.md` tokens without duplication.
 - [ ] WCAG 2.1 AA contrast (`>= 4.5:1`), touch targets (`>= 44x44pt` / `48x48dp`), responsive breakpoints, and all interactive states verified.

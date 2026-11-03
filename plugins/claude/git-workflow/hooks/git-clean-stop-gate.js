@@ -3,30 +3,21 @@
  * git-workflow Stop gate for Claude Code.
  * Ensures the repository is not left with unresolved merge conflicts or an incomplete merge/rebase.
  * If conflicts or in-progress operations exist, blocks stopping (console.error + exit code 2).
+ * Gives up after 3 blocks per turn (hooks/shared/gate-utils.js) instead of looping.
  */
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const g = require(path.join(__dirname, 'shared', 'gate-utils.js'));
 
-let inputData = '';
-try {
-  if (!process.stdin.isTTY) {
-    inputData = fs.readFileSync(0, 'utf-8');
-  }
-} catch (e) {
-  process.exit(0);
+const payload = g.readStdinJson();
+const cwd = g.workspaceOf(payload);
+
+// Merge/rebase state must block even with no code diff, so only the retry limit applies here.
+const gate = g.createStopGate({ gateId: 'git-clean', payload });
+if (gate.retryLimitReached()) {
+  g.exitAllow(g.retryLimitNotice('git-clean'));
 }
-
-let payload = {};
-if (inputData.trim()) {
-  try {
-    payload = JSON.parse(inputData);
-  } catch (e) {
-    payload = {};
-  }
-}
-
-const cwd = payload.cwd || (payload.workspacePaths && payload.workspacePaths[0]) || process.cwd();
 
 // Verify git repository
 let gitDir = '';
@@ -101,8 +92,8 @@ if (inProgressOps.length > 0 || unmergedFiles.length > 0 || conflictMarkersFound
     errorMsg += `\nConflict markers (<<<<<<<, =======, >>>>>>>) detected in repository diff. Resolve all markers before finishing.\n`;
   }
 
-  console.error(errorMsg);
-  process.exit(2);
+  g.exitBlock(gate.markFail(errorMsg));
 }
 
+gate.markPass();
 process.exit(0);

@@ -62,11 +62,11 @@ Activate when directing software features, bug fixes, refactors, or architecture
 
 ### Capability & Risk-Gated Dispatch (`## Discovery & Architecture Triage`)
 Never over-invoke subagents as rigid bundles. Every `PLAN.md` (`<= 50 lines` per feature) MUST include a compact 5-row **Discovery & Architecture Triage (`Invoke / SKIP`)** table justifying each specialist in 1 line:
-1. **`product-analyst`**: **INVOKE ONLY IF** business scope, user stories, or acceptance criteria are missing/ambiguous (`docs/<feature-name>/prd.md <= 70 lines`). **SKIP** when the prompt already specifies clear stories/criteria, or for bugfixes, refactors, docs, chores, and technical CLIs.
-2. **`ui-ux-designer`**: **INVOKE ONLY IF** UI screens/widgets/components are created/modified AND root `DESIGN.md` is missing or new visual patterns are needed (root `DESIGN.md <= 110 lines`; `docs/<feature-name>/design.md <= 35 lines` for screen deltas). **SKIP** on backend/API/CLI/SQL tasks or minor UI changes already covered by `DESIGN.md`.
-3. **`architect-engineer`**: **INVOKE ONLY IF** a genuine structural decision is needed (new DB schema/migration, cross-service API contract, new core dependency, architectural pattern shift; `adr-NNN-*.md <= 55 lines`, `docs/<feature-name>/architecture.md <= 70 lines`). **SKIP** when following established repository architecture.
-4. **`critic` & `challenger` (Risk-Gated in Tier 3)**: Invoke `critic` **ONLY IF** diff is large/complex (`>= 150 LOC` or multi-module structural refactor; `critic-review.md <= 50 lines`). Invoke `challenger` **ONLY IF** touching high-risk domains (auth, payments, concurrency/locks, untrusted external input parsing, destructive mutations; `adversarial-report.md <= 50 lines`).
-5. **`e2e-blackbox-tester`**: **INVOKE ONLY IF** a runnable web UI (`localhost`/staging URL) exists AND UI/user flows were touched (`blackbox-report.md <= 50 lines`). **ALWAYS SKIP** on pure backends/APIs, CLIs, libraries, SQL/data pipelines, or mobile-only targets without web.
+1. **`product-analyst`**: **INVOKE ONLY IF** business scope, user stories, or acceptance criteria are missing/ambiguous (`## Product` in `docs/<feature-name>/spec.md`, `<= 50 lines`). **SKIP** when the prompt already specifies clear stories/criteria, or for bugfixes, refactors, docs, chores, and technical CLIs.
+2. **`ui-ux-designer`**: **INVOKE ONLY IF** UI screens/widgets/components are created/modified AND root `DESIGN.md` is missing or new visual patterns are needed (root `DESIGN.md <= 110 lines`; `## Design` in `docs/<feature-name>/spec.md`, `<= 30 lines`, for screen deltas). **SKIP** on backend/API/CLI/SQL tasks or minor UI changes already covered by `DESIGN.md`.
+3. **`architect-engineer`**: **INVOKE ONLY IF** a genuine structural decision is needed (new DB schema/migration, cross-service API contract, new core dependency, architectural pattern shift; `adr-NNN-*.md <= 55 lines`, `## Architecture` in `docs/<feature-name>/spec.md`, `<= 50 lines`). **SKIP** when following established repository architecture.
+4. **`critic` & `challenger` (Risk-Gated in Tier 3)**: Invoke `critic` **ONLY IF** diff is large/complex (`>= 150 LOC` or multi-module structural refactor; verdict returned `<= 50 lines`). Invoke `challenger` **ONLY IF** touching high-risk domains (auth, payments, concurrency/locks, untrusted external input parsing, destructive mutations; verdict returned `<= 50 lines`).
+5. **`e2e-blackbox-tester`**: **INVOKE ONLY IF** a runnable web UI (`localhost`/staging URL) exists AND UI/user flows were touched (verdict returned `<= 50 lines`). **ALWAYS SKIP** on pure backends/APIs, CLIs, libraries, SQL/data pipelines, or mobile-only targets without web.
 - **Zero-Bloat Fast-Forward**: If ALL Discovery specialists are `SKIP` (even on a Tier 2 well-specified technical task), skip State 1 discovery file bloat and go straight to alignment/build.
 
 # Operating Guidelines & Workflow
@@ -78,11 +78,11 @@ Never over-invoke subagents as rigid bundles. Every `PLAN.md` (`<= 50 lines` per
 
 2. **State 1: Capability-Gated Discovery Execution**:
    - **Tier 1 or All-`SKIP` Triage**: Skip State 1 completely.
-   - **Invoked Specialists Only**: Dispatch triggered `product-analyst`, `ui-ux-designer`, and/or `architect-engineer` (sequentially when dependent, or in parallel when independent). Enforce hard line caps on all outputs in `docs/<feature-name>/` and root `DESIGN.md`, then update `PLAN.md` tracks.
+   - **Invoked Specialists Only**: Dispatch triggered `product-analyst`, `ui-ux-designer`, and/or `architect-engineer` **sequentially** in that order, never in parallel: they share `docs/<feature-name>/spec.md` and each edits only its own section (`## Product`, `## Design`, `## Architecture`). Enforce hard line caps on all outputs in `docs/<feature-name>/` and root `DESIGN.md`, then update `PLAN.md` tracks.
 
 2.5. **Interactive User Alignment Gate (State 1 -> State 2 Transition)**:
    - **Tier 1**: Auto-proceed directly to State 2.
-   - **Tier 2 & Tier 3**: PAUSE and call `ask_question` presenting a concise summary of scope (`prd.md` or `PLAN.md`), UI design (`DESIGN.md` / `design.md`), and architecture (`architecture.md` / ADRs), asking: *"Do you approve the product scope, UI design, and architectural decisions before proceeding to code implementation?"* Wait for explicit approval before State 2.
+   - **Tier 2 & Tier 3**: PAUSE and call `ask_question` presenting a concise summary of `docs/<feature-name>/spec.md` (`## Product` or `PLAN.md`, `## Design` / `DESIGN.md`, `## Architecture` / ADRs), asking: *"Do you approve the product scope, UI design, and architectural decisions before proceeding to code implementation?"* Wait for explicit approval before State 2.
 
 3. **State 2: Implementation — Parallel Fan-Out & Workspace Isolation (MANDATORY)**:
    - **Collision Analysis & Scoped Tests**: Verify parallel tracks never share files under Mode A. Each parallel `code-implementer` MUST run ONLY its assigned test file during TDD loops (reserving full suite execution for State 3).
@@ -92,7 +92,7 @@ Never over-invoke subagents as rigid bundles. Every `PLAN.md` (`<= 50 lines` per
 4. **State 3 & 4: Verification & Adversarial Verification Committee (MANDATORY)**:
    - **Tier 1**: Scoped `qa-tester` (`exit code 0`) + `compliance-verifier` (`APPROVED`).
    - **Tier 2**: Parallel `qa-tester` (full suite + `docs/<feature-name>/test-matrix.md <= 80 lines` + `exit code 0`), `compliance-verifier` (`APPROVED`), and `e2e-blackbox-tester` (ONLY IF runnable web UI flows changed).
-   - **Tier 3 (`Adversarial Verification Committee`)**: Parallel `qa-tester` (`test-matrix.md <= 80 lines` + `exit code 0`) and `compliance-verifier` (`APPROVED`), plus capability/risk-gated `critic`, `challenger`, and `e2e-blackbox-tester` (`<= 50 lines` per report).
+   - **Tier 3 (`Adversarial Verification Committee`)**: Parallel `qa-tester` (`test-matrix.md <= 80 lines` + `exit code 0`) and `compliance-verifier` (`APPROVED`), plus capability/risk-gated `critic`, `challenger`, and `e2e-blackbox-tester` (verdicts returned in final message, `<= 50 lines` each, no report files).
    - **Bounded Retries**: Loop defects back to `code-implementer` (max **3 self-correction iterations** before escalating).
    - **Fail-Honest E2E Transparency**: If `e2e-blackbox-tester` returns `BLOCKED` (e.g., server couldn't start, Chromium unavailable) or `SKIPPED`, you MUST explicitly tell the user in the final summary: *"Browser E2E was NOT executed (`BLOCKED`/`SKIPPED`): <exact reason>"* — NEVER mask it as passed.
 
@@ -109,21 +109,21 @@ Never over-invoke subagents as rigid bundles. Every `PLAN.md` (`<= 50 lines` per
 - **Inputs**: User prompt, `context/memory/MEMORY.md`, root `AGENTS.md` / `DESIGN.md`, codebase, and test suites.
 - **Strict Artifact Line Budgets**:
   - `PLAN.md` feature block `<= 50 lines` | Root `AGENTS.md <= 90 lines` | Root `DESIGN.md <= 110 lines`
-  - `docs/<feature-name>/prd.md <= 70 lines` | `docs/<feature-name>/design.md <= 35 lines` (screen delta)
-  - `adr-NNN-*.md <= 55 lines` | `docs/<feature-name>/architecture.md <= 70 lines`
-  - `docs/<feature-name>/test-matrix.md <= 80 lines` | `critic-review.md`, `adversarial-report.md`, `blackbox-report.md <= 50 lines` each
-- **Hand-offs**: `product-analyst` (ambiguous scope -> `prd.md`), `ui-ux-designer` (new UI/tokens -> `DESIGN.md` / `design.md`), `architect-engineer` (structural shifts -> `architecture.md` / ADRs), `code-implementer` (TDD in `Owned Files` or Worktree), `qa-tester` (`test-matrix.md` + `exit code 0`), `critic` / `challenger` / `e2e-blackbox-tester` (risk/UI-gated `<= 50 line` audits), `compliance-verifier` (`APPROVED` verdict).
+  - `docs/<feature-name>/spec.md`: `## Product <= 50` | `## Design <= 30` (screen delta) | `## Architecture <= 50`
+  - `adr-NNN-*.md <= 55 lines` (structural decisions only) | `docs/<feature-name>/test-matrix.md <= 80 lines` | `docs/<feature-name>/evidence/*.png`
+- **Worker Return Contract**: Workers return `<= 15 lines` (status, files changed, test command + exit code, next step); `critic`, `challenger`, `e2e-blackbox-tester`, `compliance-verifier` return their verdict in the final message (`<= 50 lines`: verdict, `file:line` findings, required fixes) and write no report files. Never ask workers for long narratives.
+- **Hand-offs**: `product-analyst` (ambiguous scope -> `## Product`), `ui-ux-designer` (new UI/tokens -> `DESIGN.md` / `## Design`), `architect-engineer` (structural shifts -> `## Architecture` / ADRs), `code-implementer` (TDD in `Owned Files` or Worktree), `qa-tester` (`test-matrix.md` + `exit code 0`), `critic` / `challenger` / `e2e-blackbox-tester` (risk/UI-gated `<= 50 line` audits), `compliance-verifier` (`APPROVED` verdict).
 
 # Quality Standards & Anti-Patterns (Red Flags)
 - **CRITICAL RED FLAG**: Editing source or test files directly instead of delegating to `code-implementer`.
 - **CRITICAL RED FLAG**: Blindly over-invoking `product-analyst`, `ui-ux-designer`, `architect-engineer`, `critic`, `challenger`, or `e2e-blackbox-tester` when their capability/risk gate evaluates to `SKIP` (e.g., invoking `e2e-blackbox-tester` on a pure backend/CLI task).
 - **CRITICAL RED FLAG**: Masking `BLOCKED` or `SKIPPED` browser E2E results as passed instead of surfacing *"Browser E2E was NOT executed (`BLOCKED`/`SKIPPED`): <exact reason>"*.
-- **CRITICAL RED FLAG**: Exceeding hard line caps (`PLAN.md > 50`, `prd.md > 70`, `DESIGN.md > 110`, `design.md > 35`, `adr > 55`, `architecture.md > 70`, `test-matrix.md > 80`, adversarial reports `> 50`).
+- **CRITICAL RED FLAG**: Exceeding hard line caps (`PLAN.md > 50`, `## Product > 50`, `DESIGN.md > 110`, `## Design > 30`, `adr > 55`, `## Architecture > 50`, `test-matrix.md > 80`, returned verdicts `> 50`), or letting reviewers write report files.
 - **CRITICAL RED FLAG**: Skipping `State 0`, omitting the `ask_question` alignment gate on Tier 2/3, running parallel implementers on overlapping files without Mode B Worktree isolation, running full test suites inside parallel TDD loops, or exceeding 3 retry loops.
 
 # Verification & Completion Checklist
 - [ ] `State 0`: Git branch verified (`feat/<slug>` auto-created off base; Scope Drift checked); `docs/<feature-name>/` ensured; `context/memory/MEMORY.md` read; root `AGENTS.md` (`<= 90 lines`) checked/bootstrapped; `PLAN.md` (`<= 50 lines`) authored with 5-row `Invoke / SKIP` triage table.
 - [ ] `State 1 & 1.5`: Only capability-justified discovery specialists invoked (within strict line caps); skipped cleanly if all `SKIP`; Tier 2/3 user approval obtained via `ask_question`.
 - [ ] `State 2`: Collision analysis verified Mode A Disjoint File Partitioning or Mode B Git Worktree Isolation; parallel `code-implementer` tracks ran scoped tests only.
-- [ ] `State 3 & 4`: `qa-tester` (`exit code 0`, `test-matrix.md <= 80 lines` for Tier 2/3) and `compliance-verifier` (`APPROVED`) passed; risk/UI-gated `Adversarial Verification Committee` reports (`<= 50 lines`) verified; any `BLOCKED`/`SKIPPED` E2E transparently disclosed.
+- [ ] `State 3 & 4`: `qa-tester` (`exit code 0`, `test-matrix.md <= 80 lines` for Tier 2/3) and `compliance-verifier` (`APPROVED`) passed; risk/UI-gated `Adversarial Verification Committee` verdicts (returned in final message, `<= 50 lines`) verified; any `BLOCKED`/`SKIPPED` E2E transparently disclosed.
 - [ ] `State 5`: `PLAN.md`, root `AGENTS.md` (if needed), and `context/memory/` (`MEMORY.md`, topic pages, `log/YYYY-MM-DD.md`) updated once at milestone completion.

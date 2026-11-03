@@ -25,15 +25,15 @@ All multi-agent workflows execute a deterministic 6-state DAG dynamically scaled
 ## 2. State 0 Per-Subagent `Invoke / SKIP` Capability Gating & Line Caps
 
 Never dispatch rigid subagent bundles blindly. Evaluate each specialist at State 0 and enforce strict Zero-Fluff line budgets:
-- **`product-analyst`**: **Invoke** ONLY if business scope, user stories, or acceptance criteria are ambiguous/missing (`docs/<feature-name>/prd.md <= 70 lines`). **SKIP** when prompt scope is explicit or for bugfixes, refactors, chores, docs, and CLIs.
-- **`ui-ux-designer`**: **Invoke** ONLY if UI screens/components change AND root `DESIGN.md` is missing or new visual patterns/tokens are introduced (official Google 2-layer root `DESIGN.md <= 110 lines` + optional `docs/<feature-name>/design.md <= 35 lines` delta). **SKIP** for backend, CLI, data pipelines, or minor UI tweaks covered by `DESIGN.md`.
-- **`architect-engineer`**: **Invoke** ONLY for structural decisions (new DB schema, cross-service contracts, core dependencies, pattern shifts; MADR `docs/<feature-name>/adr-NNN-*.md <= 55 lines`, optional `docs/<feature-name>/architecture.md <= 70 lines`). **SKIP** when following established repo patterns.
+- **`product-analyst`**: **Invoke** ONLY if business scope, user stories, or acceptance criteria are ambiguous/missing (owns `## Product` in `docs/<feature-name>/spec.md`, `<= 50 lines`). **SKIP** when prompt scope is explicit or for bugfixes, refactors, chores, docs, and CLIs.
+- **`ui-ux-designer`**: **Invoke** ONLY if UI screens/components change AND root `DESIGN.md` is missing or new visual patterns/tokens are introduced (official Google 2-layer root `DESIGN.md <= 110 lines` + optional `## Design` delta in `docs/<feature-name>/spec.md`, `<= 30 lines`). **SKIP** for backend, CLI, data pipelines, or minor UI tweaks covered by `DESIGN.md`.
+- **`architect-engineer`**: **Invoke** ONLY for structural decisions (new DB schema, cross-service contracts, core dependencies, pattern shifts; MADR `docs/<feature-name>/adr-NNN-*.md <= 55 lines`, `## Architecture` in `docs/<feature-name>/spec.md`, `<= 50 lines`). **SKIP** when following established repo patterns. Discovery specialists run sequentially (product -> design -> architecture) on the shared `spec.md`, each editing only its own section.
 - **`qa-tester`**: **Invoke** across all tiers — scoped test file in Tier 1; full test suite (`exit code 0`) + `docs/<feature-name>/test-matrix.md` (`<= 80 lines`) in Tier 2 & Tier 3.
-- **`critic`** *(Tier 3)*: **Invoke** ONLY if diff `>= 150 LOC` or multi-module structural refactor (`docs/<feature-name>/critic-review.md <= 50 lines`). Otherwise **SKIP**.
-- **`challenger`** *(Tier 3)*: **Invoke** ONLY for high-risk logic: auth, payments, concurrency, untrusted inputs, or destructive mutations (`docs/<feature-name>/adversarial-report.md <= 50 lines`). Otherwise **SKIP**.
-- **`e2e-blackbox-tester`** *(Tier 3)*: **Invoke** ONLY when a runnable web UI exists (`docs/<feature-name>/blackbox-report.md <= 50 lines` + Playwright `.png` screenshots at `375/768/1280/1920px` in `docs/<feature-name>/evidence/`). Otherwise **SKIP**.
+- **`critic`** *(Tier 3)*: **Invoke** ONLY if diff `>= 150 LOC` or multi-module structural refactor (verdict returned in final message `<= 50 lines`, no report file). Otherwise **SKIP**.
+- **`challenger`** *(Tier 3)*: **Invoke** ONLY for high-risk logic: auth, payments, concurrency, untrusted inputs, or destructive mutations (verdict returned in final message `<= 50 lines`, no report file). Otherwise **SKIP**.
+- **`e2e-blackbox-tester`** *(Tier 3)*: **Invoke** ONLY when a runnable web UI exists (verdict returned in final message `<= 50 lines` + Playwright `.png` screenshots at `375/768/1280/1920px` in `docs/<feature-name>/evidence/`). Otherwise **SKIP**.
 - **`compliance-verifier`**: **Invoke** across all tiers for static analysis, OWASP security audit, physical E2E `.png` evidence verification, and `APPROVED` sign-off.
-- **Root Governance Caps**: Target-project `AGENTS.md <= 90 lines` (commands, conventions, links to `DESIGN.md` & `context/memory/MEMORY.md`); `PLAN.md <= 50 lines`.
+- **Root Governance Caps**: Target-project `AGENTS.md <= 90 lines` (commands, conventions, links to `DESIGN.md` & `context/memory/MEMORY.md`); `PLAN.md <= 50 lines`. **Worker Return Contract**: workers return `<= 15 lines` (status, files changed, test command + exit code, next step); reviewers return `<= 50 lines` (verdict, `file:line` findings, required fixes).
 
 ## 3. Fail-Honest E2E Verification & Finite Self-Correction
 

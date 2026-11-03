@@ -1,51 +1,85 @@
-# Docs and Quality Plugin (Claude Code)
+# docs-and-quality
 
-[![Repository](https://img.shields.io/badge/Repository-expert--ai--developer--skills-blue?style=flat-square&logo=github)](https://github.com/jggomez/expert-ai-developer-skills)
-[![Plugin](https://img.shields.io/badge/Plugin-docs--and--quality-green?style=flat-square)](.)
+> Documentation standards, testing practices, Karpathy guidelines and an anti-lazy code gate for Claude Code.
 
-The `docs-and-quality` plugin packages documentation standards, testing methodologies, and Andrej Karpathy behavioral guidelines for **Claude Code**. It includes deterministic lifecycle stop gates to enforce anti-lazy code policies (blocking placeholder stubs).
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square)](../../../LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Claude%20Code-orange?style=flat-square)](../../../docs/claude-code-installation.md)
 
----
+`docs-and-quality` bundles three stack-agnostic skills: technical documentation, automated testing,
+and behavioral guidelines that keep changes small and verifiable. A `Stop` hook scans added code lines
+for placeholder stubs and keeps Claude working until they are replaced.
 
-## 1. Directory Tree & Architecture
+## Requirements
 
-```
-plugins/claude/docs-and-quality/
-├── README.md                       # This usage manual
-├── .claude-plugin/
-│   └── plugin.json                 # Claude Code plugin manifest
-├── hooks.json                      # Hook registrations
-├── hooks/
-│   └── anti-lazy-code-gate.js      # Stop hook blocking TODO stubs & placeholders
-└── skills/
-    ├── documentation-expert/       # Diátaxis framework & Mermaid diagram standards
-    ├── testing-expert/             # AAA pattern, hermetic tests, Gherkin/BDD syntax
-    └── guidelines-karpathy/        # Behavioral checklist to avoid over-engineering & LLM pitfalls
-```
+- Claude Code with plugin support.
+- `node` on `PATH` (the hook is a Node.js script).
+- `git` (the hook reads `git diff HEAD`). Python 3 to run the skill validator scripts.
 
----
+## Installation
 
-## 2. Bundled Skills (3 Packaged Modules)
-
-1. **`documentation-expert`**: Diátaxis documentation hierarchy, Mermaid.js diagram guides, and `validate_docs.py`.
-2. **`testing-expert`**: Arrange-Act-Assert pattern, hermetic test boundaries, Gherkin BDD syntax, and `validate_gherkin.py`.
-3. **`guidelines-karpathy`**: Behavioral checklist to keep changes surgical, avoid speculative abstractions, prevent common LLM coding pitfalls, and enforce anti-lazy code standards.
-
----
-
-## 3. Lifecycle Hooks & Deterministic Gates
-
-| Hook Event | Script | Behavior |
-| :--- | :--- | :--- |
-| **`Stop`** | `hooks/anti-lazy-code-gate.js` | Inspects git diffs before session termination. Scans for lazy placeholders (`TODO: implement later`, `# ... rest of code`, `pass # placeholder`, `/* unimplemented */`). Blocks exit (exit code 2) if stubs are detected. |
-
----
-
-## 4. Installation
-
-In Claude Code, install from marketplace or local path:
 ```bash
-/plugin install docs-and-quality
-# or local:
-claude plugin install plugins/claude/docs-and-quality
+claude plugin marketplace add jggomez/expert-ai-developer-skills
+claude plugin install docs-and-quality@expert-ai-developer-skills
 ```
+
+Updates, project scope and local development: [docs/claude-code-installation.md](../../../docs/claude-code-installation.md).
+
+## Quick start
+
+```text
+Write a README for this service using the Diátaxis framework, with a Mermaid architecture diagram.
+Write Gherkin scenarios for the password-reset flow, covering the expired-token case.
+Before we add this abstraction, check it against the Karpathy guidelines.
+```
+
+## What's included
+
+## Bundled Skills
+
+| Skill | Purpose |
+| :--- | :--- |
+| **`documentation-expert`** | Concise docs, root `AGENTS.md`, `DESIGN.md` alignment, Diátaxis guides, Mermaid diagrams; `validate_docs.py` checks links and absolute path leaks. |
+| **`testing-expert`** | Arrange-Act-Assert suites, hermetic tests, `TC-XX` test cases, Gherkin BDD; `validate_gherkin.py` checks `.feature` files. |
+| **`guidelines-karpathy`** | Checklist against overcomplication: surgical changes, stated assumptions, verifiable success criteria. |
+
+### Hooks
+
+| Event | Script | Behavior |
+| :--- | :--- | :--- |
+| `Stop` | `hooks/anti-lazy-code-gate.js` | Scans lines added in `git diff HEAD` and blocks the stop when a placeholder stub is found. |
+
+Patterns the gate rejects in added lines:
+
+| Pattern | Example |
+| :--- | :--- |
+| TODO deferral | `TODO: implement later`, `TODO: finish later`, `TODO: add later` |
+| Elided code | `// ... rest of code`, `# ... rest of the code` |
+| Placeholder `pass` | `pass  # placeholder` |
+| Unimplemented marker | `// unimplemented`, `/* unimplemented */`, `# unimplemented` |
+
+## How it works
+
+1. On `Stop`, the gate (30 s timeout) fingerprints the changed code files (HEAD plus file contents).
+2. It does nothing when no code file changed, or when the same code state already passed.
+3. Added lines in `.md`, `.txt`, `.rst`, `.json`, `.yaml` and `.yml` files are never scanned.
+4. On a match it exits 2 and lists each `file: "line"` on stderr, so Claude keeps working.
+5. It blocks at most 3 times per turn, then lets the turn end with a notice.
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+| :--- | :--- | :--- |
+| `[ANTI-LAZY CODE GATE VIOLATION]` | An added code line matches a stub pattern. | Replace the stub with a full implementation. |
+| Notice "still failing after 3 fix attempts" | Gate hit its per-turn limit. | Fix the listed lines, then start a new turn. |
+| A stub in a new file was not caught | Untracked files are not part of `git diff HEAD`. | Stage the file (`git add <file>`) so the gate sees it. |
+| Gate never runs | Folder is not a git repository, or `node` is missing. | Run inside a git repo with Node.js installed. |
+
+## Related plugins
+
+- [senior-dev](../senior-dev/README.md): orchestrated SDLC that relies on these standards.
+- [git-workflow](../git-workflow/README.md): branch safety and Conventional Commits gates.
+- [multi-agent-ops](../multi-agent-ops/README.md): parallel loops and context guard.
+
+## License
+
+Apache-2.0. See [LICENSE](../../../LICENSE).

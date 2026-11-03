@@ -16,7 +16,7 @@ description: Drafts concise Backend / API Design Specifications and Software Des
 ### When NOT to Use
 - **Changes following existing endpoints/models**: **SKIP** SDD/`api-spec.md` creation completely when changes fit established routes, schemas, or localized Tier 1 bugfixes/refactors.
 - **Single architectural pattern trade-off**: Use `senior-architect-engineering` for a concise MADR (`<= 55 lines`).
-- **Product user stories**: Use `product-analyst` (`docs/<feature-name>/prd.md <= 70 lines`).
+- **Product user stories**: Use `product-analyst` (`## Product` in `docs/<feature-name>/spec.md`, `<= 50 lines`).
 
 ## Process
 1. **Check Capability Gate & Context**: Inspect root `AGENTS.md` (`<= 90 lines` wired to `context/memory/MEMORY.md`) and existing routers/models. If the task reuses existing endpoints and models, skip SDD authoring and proceed to TDD.
