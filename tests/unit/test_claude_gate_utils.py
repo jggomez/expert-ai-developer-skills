@@ -9,6 +9,7 @@ import os
 import shutil
 import subprocess
 import textwrap
+import time
 
 import pytest
 
@@ -61,6 +62,21 @@ def _run_harness(repo, cmd, stop_hook_active=False):
     env = dict(os.environ, GATE_LIB=LIB, GATE_CMD=cmd)
     return subprocess.run(["node", str(harness)], input=json.dumps(payload), capture_output=True,
                           text=True, env=env, timeout=60)
+
+
+def _run_parallel(harness, payload, env, count=2):
+    """Starts `count` hooks and hands each its payload at once, as Claude Code does for
+    parallel hooks (a sequential communicate() would feed the second one only after the
+    first has finished)."""
+    procs = [subprocess.Popen(["node", str(harness)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE, text=True, env=env) for _ in range(count)]
+    for proc in procs:
+        proc.stdin.write(payload)
+        proc.stdin.close()
+    outs = [(proc.stdout.read(), proc.stderr.read()) for proc in procs]
+    for proc in procs:
+        proc.wait(timeout=60)
+    return procs, outs
 
 
 def _node_eval(expr):
@@ -150,9 +166,7 @@ def test_parallel_gates_with_same_id_run_check_once(repo):
     payload = json.dumps({"cwd": str(repo), "hook_event_name": "Stop", "stop_hook_active": False})
     env = dict(os.environ, GATE_LIB=LIB, GATE_CMD=cmd)
     # Act
-    procs = [subprocess.Popen(["node", str(harness)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE, text=True, env=env) for _ in range(2)]
-    outs = [p.communicate(payload, timeout=60) for p in procs]
+    procs, outs = _run_parallel(harness, payload, env)
     # Assert
     assert all(p.returncode == 0 for p in procs), outs
     assert counter.read_text().count("run") == 1, outs
@@ -171,9 +185,7 @@ def test_parallel_gates_outside_git_still_run_check_once(tmp_path):
     payload = json.dumps({"cwd": str(workdir), "hook_event_name": "Stop", "stop_hook_active": False})
     env = dict(os.environ, GATE_LIB=LIB, GATE_CMD=f"echo run >> {counter}; sleep 1", TMPDIR=str(tmp_path))
     # Act
-    procs = [subprocess.Popen(["node", str(harness)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE, text=True, env=env) for _ in range(2)]
-    outs = [p.communicate(payload, timeout=60) for p in procs]
+    procs, outs = _run_parallel(harness, payload, env)
     # Assert
     assert all(p.returncode == 0 for p in procs), outs
     assert counter.read_text().count("run") == 1, outs
@@ -249,3 +261,17 @@ def test_python_backend_stop_gate_blocks_failing_code_change(repo):
     # Assert
     assert result.returncode == 2
     assert "block 1/3" in result.stderr
+
+
+def test_read_stdin_json_waits_for_a_late_payload():
+    """Hook stdin may arrive after node starts; touching process.stdin made the pipe
+    non-blocking, so readFileSync(0) threw EAGAIN and the payload was silently empty."""
+    # Arrange
+    script = (f"const g = require({json.dumps(LIB)});"
+              "process.stdout.write(JSON.stringify(g.readStdinJson()));")
+    proc = subprocess.Popen(["node", "-e", script], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+    time.sleep(0.5)
+    # Act
+    out, _ = proc.communicate(json.dumps({"cwd": "/late"}), timeout=30)
+    # Assert
+    assert json.loads(out) == {"cwd": "/late"}

@@ -37,11 +37,41 @@ const NON_CODE_EXTENSIONS = new Set([
 ]);
 const NON_CODE_DIRS = ['docs/', 'doc/', 'context/', '.claude/', '.agents/', 'evidence/', '.github/ISSUE_TEMPLATE/'];
 
+/**
+ * Reads the whole hook payload from stdin (fd 0).
+ * Never touch `process.stdin` here: creating that stream switches a pipe to non-blocking
+ * mode, and readFileSync(0) then throws EAGAIN whenever the payload has not arrived yet.
+ * EAGAIN is still retried in case the parent hands over a non-blocking pipe.
+ */
+function readStdinRaw(timeoutMs = 10000) {
+  if (require('tty').isatty(0)) return '';
+  const chunks = [];
+  const buf = Buffer.alloc(65536);
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    let n;
+    try {
+      n = fs.readSync(0, buf, 0, buf.length, null);
+    } catch (err) {
+      if (err.code === 'EAGAIN' && Date.now() < deadline) {
+        sleep(10);
+        continue;
+      }
+      if (err.code === 'EOF') break;
+      throw err;
+    }
+    if (n === 0) break;
+    chunks.push(Buffer.from(buf.subarray(0, n)));
+  }
+  return Buffer.concat(chunks).toString('utf-8');
+}
+
 function readStdinJson() {
   let raw = '';
   try {
-    if (!process.stdin.isTTY) raw = fs.readFileSync(0, 'utf-8');
+    raw = readStdinRaw();
   } catch (err) {
+    process.stderr.write(`[gate-utils] could not read hook payload from stdin: ${err.message}\n`);
     return {};
   }
   if (!raw.trim()) return {};

@@ -31,7 +31,7 @@ const VERDICT_RE = /\b(PASSED|REJECTED|BLOCKED|SKIPPED)\b/;
 
 function readPayload() {
   try {
-    const raw = process.stdin.isTTY ? '' : fs.readFileSync(0, 'utf-8');
+    const raw = require('tty').isatty(0) ? '' : fs.readFileSync(0, 'utf-8'); // process.stdin would make the pipe non-blocking (EAGAIN)
     return raw.trim() ? JSON.parse(raw) : {};
   } catch (err) {
     return {};
