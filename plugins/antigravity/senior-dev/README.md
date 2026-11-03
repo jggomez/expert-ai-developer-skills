@@ -65,7 +65,7 @@ Reviewers return their verdict in the final message (50 lines or fewer); they do
 
 ### Rules
 
-`rules/senior-dev-rules.md` (`trigger: always_on`) defines the state machine, role boundaries, tier routing and line budgets.
+`rules/senior-dev-rules.md` (`trigger: always_on`, ~400 tokens) holds only invariants: branch safety, scope discipline, plan-first, test proof, fail-honest reporting. The state machine lives in the orchestrator agent and the `loop-engineering` skill.
 
 ## Bundled Skills
 

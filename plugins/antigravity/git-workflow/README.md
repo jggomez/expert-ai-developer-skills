@@ -50,7 +50,7 @@ Audit the last few commits on this branch for Conventional Commits compliance.
 
 | File | Purpose |
 | :--- | :--- |
-| `rules/gitflow-rules.md` | Always-on rule: protected branches, auto-branching, scope drift checks, Conventional Commits, atomic staging, concise PRs. |
+| `rules/gitflow-rules.md` | Short always-on rule (~300 tokens): protected branches, auto-branching, scope drift checks, Conventional Commits, atomic staging, concise PRs. |
 
 ## How it works
 

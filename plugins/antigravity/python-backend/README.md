@@ -106,7 +106,7 @@ Registered in the `python-backend-safety-gates` group of `hooks.json`.
 
 | File | Content |
 | :--- | :--- |
-| [`rules/python-backend-rules.md`](rules/python-backend-rules.md) | `trigger: always_on`. Gitflow safety, plan-first lifecycle, migrations and TDD rules |
+| [`rules/python-backend-rules.md`](rules/python-backend-rules.md) | `trigger: glob` (`*.py`, `pyproject.toml`, requirements, Alembic). Branch safety, TDD, static checks, migrations, deploy and secret guards |
 | [`rules/git-hooks.md`](rules/git-hooks.md) | Reference blueprints for `pre-commit` and `commit-msg` git hooks |
 
 ## How it works

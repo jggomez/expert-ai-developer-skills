@@ -6,7 +6,7 @@
 [![Platform](https://img.shields.io/badge/platform-Antigravity-4285F4?style=flat-square)](.)
 
 `senior-data-engineer` designs and builds data pipelines on Google Cloud: lake/warehouse architecture, CDC through Datastream, SCD modeling in BigQuery and Dataform, and orchestration.
-It ships one subagent, four skills, an always-on rules file, two safety hooks and four MCP servers.
+It ships one subagent, four skills, a rules file (loaded only for SQL, Dataform and DAG files), two safety hooks and four MCP servers.
 The hooks block destructive data operations and stop the session when a Dataform project fails to compile or Python pipeline tests fail.
 
 ## Requirements
@@ -50,7 +50,7 @@ Audit the partitioning and clustering of the analytics dataset and estimate the 
 
 | File | Trigger | Purpose |
 | :--- | :--- | :--- |
-| `rules/data-engineer-rules.md` | `always_on` | Lakehouse workflow, 3-tier triage, memory handling and fail-honest verification |
+| `rules/data-engineer-rules.md` | `glob` (`*.sql`, `*.sqlx`, Dataform config, `dags/`) | Data safety, partitioning, SCD/CDC modeling and fail-honest verification |
 
 ### Hooks
 

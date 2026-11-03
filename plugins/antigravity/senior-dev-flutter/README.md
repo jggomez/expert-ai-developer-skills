@@ -109,7 +109,7 @@ Registered in the `senior-dev-flutter-gates` group of `hooks.json`.
 
 ### Rules
 
-[`rules/flutter-rules.md`](rules/flutter-rules.md) (`trigger: always_on`) holds the Flutter lifecycle, triage rubric and 60/120fps frame budgets.
+[`rules/flutter-rules.md`](rules/flutter-rules.md) (`trigger: glob`, loaded only while touching `*.dart` or `pubspec.yaml`) holds the frame budget, lifecycle, shared-file and secrets constraints. The workflow lives in the orchestrator agent.
 
 ## How it works
 

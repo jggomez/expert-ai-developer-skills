@@ -49,7 +49,7 @@ Audit the open feature branches for quality gate failures.
 
 | File | Purpose |
 | :--- | :--- |
-| `rules/multi-agent-ops-rules.md` | Always-on rule: 6-state DAG, 3-tier SDLC, per-subagent `Invoke / SKIP` triage, artifact caps, Fail-Honest E2E. |
+| `rules/multi-agent-ops-rules.md` | `model_decision` rule, loaded when dispatching parallel subagents or running a multi-phase plan: lean defaults, collision-free parallelism, bounded loops, Fail-Honest checks. |
 
 ## How it works
 
