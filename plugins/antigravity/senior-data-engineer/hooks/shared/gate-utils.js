@@ -150,9 +150,14 @@ function findPlan(dir) {
   return null;
 }
 
-/** Antigravity also fires Stop on errors and step limits; only a normal model stop is verified. */
+/**
+ * Antigravity also fires Stop on errors and step limits; only a normal model stop is verified.
+ * `fullyIdle: false` means background tasks (e.g. parallel subagents) are still running, so the
+ * tree may hold other workers' half-finished edits: verify once everything is idle.
+ */
 function isFinalStop(payload) {
   if (detectHost(payload) !== 'antigravity') return true;
+  if (payload.fullyIdle === false) return false;
   return !payload.terminationReason || payload.terminationReason === 'model_stop';
 }
 
