@@ -38,14 +38,55 @@ by its git commit, so every push to the marketplace branch is a new version. (A 
 cache key and would keep everyone on the old copy forever.)
 
 - **Automatic**: auto-update is **off** by default for third-party marketplaces. Turn it on in
-  `/plugin` → Marketplaces → *Enable auto-update*, or with `"autoUpdate": true` (section 3).
+  `/plugin` → Marketplaces → *Enable auto-update*, or with `"autoUpdate": true` (section 5).
 - **Manual**:
   ```bash
   claude plugin marketplace update expert-ai-developer-skills
   claude plugin update senior-dev-flutter@expert-ai-developer-skills   # restart Claude Code to apply
   ```
 
-## 3. Per project / team (`.claude/settings.json` in the project repo)
+## 3. Install scopes
+
+The plugin does not choose its scope; you do, with `--scope` at install time (default: `user`).
+The scope only decides **which settings file** gets the `enabledPlugins` entry:
+
+| Scope | `enabledPlugins` written to | Active in |
+| :--- | :--- | :--- |
+| `user` (default) | `~/.claude/settings.json` | Every project on your machine |
+| `project` | `<project>/.claude/settings.json` (commit it) | That project, for everyone who clones it |
+| `local` | `<project>/.claude/settings.local.json` (not committed) | That project, only for you |
+
+The plugin files never go into the project: every scope uses the shared copy in
+`~/.claude/plugins/cache/` (section 6). A project whose settings do not enable the plugin does not load it.
+
+To keep a plugin out of every other project, install it with `--scope project` and declare the
+marketplace in the project too, then remove the user-level marketplace:
+
+```bash
+cd <your-project>
+claude plugin marketplace add jggomez/expert-ai-developer-skills --scope project
+claude plugin install senior-dev-flutter@expert-ai-developer-skills --scope project
+claude plugin marketplace remove expert-ai-developer-skills --scope user
+```
+
+## 4. Choose the main agent
+
+By default a session starts with the general Claude agent, which delegates to plugin subagents when a
+task matches their description. To talk to an orchestrator directly, start it as the main agent:
+
+```bash
+claude --agent senior-dev-flutter:flutter-feature-orchestrator
+```
+
+Or make it the default for one project in `<project>/.claude/settings.json`:
+
+```json
+{ "agent": "senior-dev-flutter:flutter-feature-orchestrator" }
+```
+
+Run `/agents` inside a session to list the agents available in that project.
+
+## 5. Per project / team (`.claude/settings.json` in the project repo)
 
 ```json
 {
@@ -68,7 +109,7 @@ installs once at project scope:
 claude plugin install senior-dev-flutter@expert-ai-developer-skills --scope project
 ```
 
-## 4. Where things live
+## 6. Where things live
 
 | Path (under `~/.claude/plugins/`) | Content |
 | :--- | :--- |
@@ -80,7 +121,7 @@ claude plugin install senior-dev-flutter@expert-ai-developer-skills --scope proj
 Installed plugins are copies: files outside a plugin's own folder are not available to it, which is why
 every plugin carries its own `hooks/shared/` and `skills/`.
 
-## 5. Developing the plugins
+## 7. Developing the plugins
 
 Load a working copy without installing (changes apply on restart):
 
@@ -95,7 +136,7 @@ python3 scripts/sync_plugin_skills.py && python3 scripts/sync_agents.py
 claude plugin validate .
 ```
 
-## 6. Limitations
+## 8. Limitations
 
 - **claude.ai/code (cloud sessions)** does not load plugins installed on your machine or enabled by a
   repository's `.claude/settings.json`. Only plugins pushed through server-managed settings (admin
