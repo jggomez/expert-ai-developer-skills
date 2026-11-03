@@ -1,5 +1,4 @@
 {
-  "description": "SQL Query Optimizer gates: blocks destructive DDL/DML and enforces BigQuery dry-runs.",
   "sql-query-optimizer-gates": {
     "enabled": true,
     "PreToolUse": [

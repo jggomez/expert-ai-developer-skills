@@ -11,6 +11,7 @@ const path = require('path');
 const g = require(path.join(__dirname, 'shared', 'gate-utils.js'));
 
 const payload = g.readStdinJson();
+if (!g.isFinalStop(payload)) g.exitAllow();
 const cwd = g.workspaceOf(payload);
 
 // Merge/rebase state must block even with no code diff, so only the retry limit applies here.
@@ -24,7 +25,7 @@ let gitDir = '';
 try {
   gitDir = execSync('git rev-parse --git-dir', { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
 } catch (e) {
-  process.exit(0); // Not a git repo
+  g.exitAllow(); // Not a git repo
 }
 
 const resolvedGitDir = path.isAbsolute(gitDir) ? gitDir : path.join(cwd, gitDir);
@@ -96,4 +97,4 @@ if (inProgressOps.length > 0 || unmergedFiles.length > 0 || conflictMarkersFound
 }
 
 gate.markPass();
-process.exit(0);
+g.exitAllow();

@@ -3,7 +3,7 @@ name: context-keeper
 description: Dedicated maintainer of the shared AI context store. Manages the Cross-AI LLM Wiki at context/memory/ (MEMORY.md, architecture.md, conventions.md, log/) and scripted session store (context/sessions/) while synchronizing pointers with root AGENTS.md and DESIGN.md across Claude Code and Google Antigravity.
 subagent: true
 mainAgent: false
-model: inherit
+model: flash
 commandExecutionPolicy: auto
 tools:
   - run_command
@@ -15,8 +15,8 @@ tools:
   - find_by_name
   - ask_question
 skills:
-  - context-restore
-  - context-capture
+  - skills/context-restore
+  - skills/context-capture
 ---
 
 # Role & Objective

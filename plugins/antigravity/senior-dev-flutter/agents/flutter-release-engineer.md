@@ -3,7 +3,7 @@ name: flutter-release-engineer
 description: Specialized subagent for shipping and maintaining Flutter apps — flavors, --dart-define-from-file config, signing, flutter build matrices, versioning, Shorebird OTA, SDK/package upgrades, and fail-honest release verification.
 subagent: true
 mainAgent: false
-model: inherit
+model: flash
 commandExecutionPolicy: auto
 tools:
   - run_command
@@ -15,8 +15,8 @@ tools:
   - find_by_name
   - ask_question
 skills:
-  - flutter-release-engineering
-  - flutter-upgrade-migration
+  - skills/flutter-release-engineering
+  - skills/flutter-upgrade-migration
 ---
 
 # Role & Objective

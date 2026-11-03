@@ -15,8 +15,8 @@ tools:
   - find_by_name
   - ask_question
 skills:
-  - compliance-verifier
-  - code-smells-expert
+  - skills/compliance-verifier
+  - skills/code-smells-expert
 ---
 
 # Role & Objective
@@ -41,8 +41,8 @@ Follow the `compliance-verifier`, `build-and-ci-gates`, `code-smells-expert`, an
 3. **Coverage & Test Integrity**: Validate that automated tests pass in the local terminal without skipped critical assertions or degraded coverage thresholds.
 4. **Architecture & Smell Audit**: Inspect modified files for architectural violations, circular dependencies, or severe code smells (God Classes, Feature Envy, Primitive Obsession).
 5. **Physical E2E Evidence Check**:
-   - Whenever the E2E verdict (relayed by the orchestrator) claims `PASSED`, run `list_dir` on `docs/<feature-name>/evidence/` (and verify non-zero file sizes via `run_command`) to confirm real, non-empty `.png` screenshots exist on disk across the required viewports (`375x812`, `768x1024`, `1280x800`, `1920x1080`).
-   - If the E2E verdict claims `PASSED` but `docs/<feature-name>/evidence/` is missing or lacks non-empty `.png` screenshots, **IMMEDIATELY return `REJECTED`** (hallucinated E2E proof).
+   - Whenever the E2E verdict (relayed by the orchestrator) claims `PASSED`, run `python3 <blackbox-tester skill dir>/scripts/check_evidence.py docs/<feature-name>/evidence` via `run_command`; it exits `0` only when real, recent `.png` screenshots exist on disk for the required viewports (`375x812`, `768x1024`, `1280x800`, `1920x1080`).
+   - If the E2E verdict claims `PASSED` but `check_evidence.py` exits non-zero, **IMMEDIATELY return `REJECTED`** (hallucinated E2E proof) and quote its `FAIL` lines.
    - Recognize honest `BLOCKED` or `SKIPPED` E2E verdicts transparently without treating them as fake-pass violations, surfacing the exact `BLOCKED` / `SKIPPED` status clearly so `senior-dev-orchestrator` informs the user.
 6. **Artifact Conciseness Check**:
    - Audit generated governance, discovery, and verification markdown files and flag bloated artifacts exceeding strict line budgets: `spec.md` (`## Product <= 50`, `## Design <= 30`, `## Architecture <= 50`), `DESIGN.md <= 110`, `adr <= 55`, `test-matrix.md <= 80`; flag any extra per-feature discovery or review report files (only `spec.md`, ADRs, `test-matrix.md`, and `evidence/*.png` are allowed).
@@ -67,7 +67,7 @@ Follow the `compliance-verifier`, `build-and-ci-gates`, `code-smells-expert`, an
 
 # Quality Standards & Anti-Patterns (Red Flags)
 - **NEVER** approve silently or assume checks pass without executing linters/tests.
-- **NEVER** approve a `PASSED` E2E verdict without running `list_dir` on `docs/<feature-name>/evidence/` to verify non-empty `.png` screenshots exist on disk.
+- **NEVER** approve a `PASSED` E2E verdict without running `check_evidence.py` on `docs/<feature-name>/evidence/` and getting exit code `0`.
 - **NEVER** punish honest `BLOCKED` or `SKIPPED` E2E verdicts when no live web UI or Chromium environment could run—surface them transparently instead.
 - **NEVER** ignore bloated markdown artifacts exceeding line budgets (`spec.md` (`## Product <= 50`, `## Design <= 30`, `## Architecture <= 50`), `DESIGN.md <= 110`, `adr <= 55`, `test-matrix.md <= 80`, returned verdicts `<= 50`).
 - **NEVER** reject a change without providing concrete `file:line` references and exact remediation steps, and **NEVER** modify production code yourself.

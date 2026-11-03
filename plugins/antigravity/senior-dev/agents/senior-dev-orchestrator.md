@@ -18,14 +18,14 @@ tools:
   - send_message
   - ask_question
 skills:
-  - senior-dev-orchestrator
-  - senior-architect-engineering
-  - ui-ux-designer
-  - code-smells-expert
-  - refactoring-code-expert
-  - context-restore
-  - context-capture
-  - loop-engineering
+  - skills/senior-dev-orchestrator
+  - skills/senior-architect-engineering
+  - skills/ui-ux-designer
+  - skills/code-smells-expert
+  - skills/refactoring-code-expert
+  - skills/context-restore
+  - skills/context-capture
+  - skills/loop-engineering
 ---
 
 # Role & Objective
@@ -94,6 +94,7 @@ Never over-invoke subagents as rigid bundles. Every `PLAN.md` (`<= 50 lines` per
    - **Tier 2**: Parallel `qa-tester` (full suite + `docs/<feature-name>/test-matrix.md <= 80 lines` + `exit code 0`), `compliance-verifier` (`APPROVED`), and `e2e-blackbox-tester` (ONLY IF runnable web UI flows changed).
    - **Tier 3 (`Adversarial Verification Committee`)**: Parallel `qa-tester` (`test-matrix.md <= 80 lines` + `exit code 0`) and `compliance-verifier` (`APPROVED`), plus capability/risk-gated `critic`, `challenger`, and `e2e-blackbox-tester` (verdicts returned in final message, `<= 50 lines` each, no report files).
    - **Bounded Retries**: Loop defects back to `code-implementer` (max **3 self-correction iterations** before escalating).
+   - **Deterministic E2E Proof**: Before accepting an `e2e-blackbox-tester` `PASSED`, run `python3 <blackbox-tester skill dir>/scripts/check_evidence.py docs/<feature-name>/evidence`; a non-zero exit downgrades the verdict to `REJECTED` (Antigravity has no hook that enforces this for you).
    - **Fail-Honest E2E Transparency**: If `e2e-blackbox-tester` returns `BLOCKED` (e.g., server couldn't start, Chromium unavailable) or `SKIPPED`, you MUST explicitly tell the user in the final summary: *"Browser E2E was NOT executed (`BLOCKED`/`SKIPPED`): <exact reason>"* — NEVER mask it as passed.
 
 5. **State 5: Ship, `AGENTS.md` Sync & LLM Wiki Memory Update (MANDATORY)**:

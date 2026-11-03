@@ -63,10 +63,10 @@ Patterns the gate rejects in added lines:
 
 ## How it works
 
-1. The `Stop` hook (20 s timeout) runs only when `terminationReason` is `model_stop`.
+1. The `Stop` hook (30 s timeout) runs only when `terminationReason` is `model_stop`.
 2. It skips workspaces without a `.git` entry.
-3. Every added line in the diff is checked, including documentation files.
-4. It returns `{ "decision": "continue", "reason": ... }` with up to 5 offending lines, else `allow`.
+3. Every added line in the diff is checked, including documentation files and new untracked files (up to 200 files, 512 KB each).
+4. It returns `{ "decision": "continue", "reason": ... }` with up to 5 offending lines, else `allow`. A clean result is cached until the code changes, and after 3 blocks per message it lets the agent stop.
 
 ## Troubleshooting
 

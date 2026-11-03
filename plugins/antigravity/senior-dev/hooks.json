@@ -1,10 +1,9 @@
 {
-  "description": "Senior Dev Quality Gates: Enforces Plan-First, blocks orchestrator from direct code implementation, and runs polyglot quality gates before stopping.",
   "senior-dev-gates": {
     "enabled": true,
     "PreToolUse": [
       {
-        "matcher": "write_to_file|replace_file_content",
+        "matcher": "write_to_file|replace_file_content|multi_replace_file_content",
         "hooks": [
           {
             "type": "command",

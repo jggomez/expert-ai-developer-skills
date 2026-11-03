@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: Reference for installing local git hooks (pre-commit, commit-msg, pre-push) that run format, lint, test and branch-policy checks. Load when the user asks to set up or debug git hooks.
+---
+
 # Git Hooks Automation Reference
 
 Git hooks allow you to execute verification scripts automatically during git lifecycle events (like commits or pushes). This enforces code quality gates and branch policies locally before code ever reaches remote repositories.

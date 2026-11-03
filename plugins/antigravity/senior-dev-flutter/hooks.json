@@ -1,35 +1,9 @@
 {
-  "description": "Senior Flutter gates: enforces Plan-First, blocks direct orchestrator Dart editing, guards protected branches, and verifies dart analyze on Stop.",
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash|run_command|write_to_file|replace_file_content",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/flutter-pre-tool-gate.js\"",
-            "timeout": 15
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/flutter-stop-gate.js\"",
-            "timeout": 130
-          }
-        ]
-      }
-    ]
-  },
   "senior-dev-flutter-gates": {
     "enabled": true,
     "PreToolUse": [
       {
-        "matcher": "run_command|write_to_file|replace_file_content",
+        "matcher": "run_command|write_to_file|replace_file_content|multi_replace_file_content",
         "hooks": [
           {
             "type": "command",

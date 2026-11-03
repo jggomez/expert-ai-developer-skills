@@ -177,7 +177,10 @@ def test_stop_blocks_when_dart_analyze_fails_claude_code(tmp_path):
 def test_stop_blocks_when_dart_analyze_fails_antigravity(tmp_path):
     git_init(tmp_path, "main")
     binp = fake_dart(tmp_path, analyze_exit=1)
-    r = run_hook(STOP, {"cwd": str(tmp_path)}, path_prefix=binp)
+    # Documented Antigravity Stop payload: workspacePaths + conversationId + terminationReason
+    payload = {"workspacePaths": [str(tmp_path)], "conversationId": "c1",
+               "terminationReason": "model_stop", "fullyIdle": True}
+    r = run_hook(STOP, payload, path_prefix=binp)
     assert r.returncode == 0
     out = json.loads(r.stdout)
     assert out["decision"] == "continue"

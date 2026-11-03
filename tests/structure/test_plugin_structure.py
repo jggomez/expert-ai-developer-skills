@@ -12,6 +12,13 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "scripts"))
 from claude_sync_config import CLAUDE_AGENT_OVERRIDES, CLAUDE_PLUGIN_DEPENDENCIES  # noqa: E402
 
+# Template/checklist-driven roles run on Antigravity's cheaper 'flash' tier; orchestrators,
+# implementers and reviewers inherit the main model (same split as the Claude overrides).
+AGY_FLASH_AGENTS = {
+    "product-analyst", "ui-ux-designer", "qa-tester", "e2e-blackbox-tester",
+    "flutter-release-engineer", "context-keeper",
+}
+
 
 def _discover_plugins(workspace_root):
     plugins_dir = os.path.join(workspace_root, "plugins", "antigravity")
@@ -74,15 +81,14 @@ def test_plugin_manifest_locations(workspace_root, plugin_dirs):
 
 
 def test_plugin_hooks_json_schema(workspace_root, plugin_dirs):
-    """Verifies every plugin's hooks.json (when present) follows a valid
-    schema for at least one host. A single hooks.json can serve both hosts
-    at once since each reads a different top-level key: Claude Code reads
-    'hooks' (event-name-keyed, no 'enabled' field); Antigravity reads any
-    other top-level key as a named hook group (its own 'enabled' field and
-    event names are valid there) — verified against
-    antigravity.google/docs/hooks."""
-    claude_code_events = {"SessionStart", "PreToolUse", "PostToolUse", "Stop", "UserPromptSubmit", "Notification"}
-    antigravity_events = {"PreToolUse", "PostToolUse", "PreInvocation", "PostInvocation", "Stop"}
+    """Verifies every Antigravity hooks.json only holds named hook groups
+    ({"enabled": bool, EventName: [...]}) with documented events. Antigravity
+    reads EVERY top-level key as a hook group: a stray string such as
+    "description" makes the loader skip the whole file, and a Claude Code
+    "hooks" block runs as an extra group with unresolved paths
+    (antigravity.google/docs/hooks, confirmed with `agy plugin validate`).
+    Claude Code hooks live in plugins/claude/<plugin>/hooks.json."""
+    antigravity_events = {"SessionStart", "PreToolUse", "PostToolUse", "PreInvocation", "PostInvocation", "Stop"}
     errors = []
 
     for plugin in plugin_dirs:
@@ -94,33 +100,11 @@ def test_plugin_hooks_json_schema(workspace_root, plugin_dirs):
             data = json.load(f)
 
         for key, value in data.items():
-            if key == "description":
-                continue
-
-            if key == "hooks":
-                # Claude Code format: {"hooks": {EventName: [{"matcher"?, "hooks": [...]}]}}
-                if not isinstance(value, dict):
-                    errors.append(f"{plugin}: 'hooks' must map event names to hook definitions")
-                    continue
-                for event_name, groups in value.items():
-                    if event_name not in claude_code_events:
-                        errors.append(f"{plugin}: unknown Claude Code hook event '{event_name}' in hooks.json")
-                        continue
-                    for group in groups:
-                        if "enabled" in group:
-                            errors.append(
-                                f"{plugin}: non-standard 'enabled' flag inside the 'hooks' (Claude Code) "
-                                f"'{event_name}' group; Claude Code has no per-hook enabled field"
-                            )
-                        if "hooks" not in group:
-                            errors.append(f"{plugin}: hook group for '{event_name}' is missing its 'hooks' array")
-                continue
-
-            # Any other top-level key is an Antigravity-style named hook
-            # group: {"enabled": bool, EventName: [...]}.
             if not isinstance(value, dict):
-                errors.append(f"{plugin}: hook group '{key}' must be an object")
+                errors.append(f"{plugin}: top-level '{key}' must be a named hook group object")
                 continue
+            if key == "hooks":
+                errors.append(f"{plugin}: Claude Code 'hooks' block does not belong in the Antigravity hooks.json")
             event_keys = [k for k in value.keys() if k != "enabled"]
             if not event_keys:
                 errors.append(f"{plugin}: hook group '{key}' declares no events")
@@ -143,7 +127,7 @@ def test_plugin_mcp_json_schema(workspace_root, plugin_dirs):
     for plugin in plugin_dirs:
         plugin_path = os.path.join(workspace_root, "plugins", "antigravity", plugin)
 
-        claude_mcp_path = os.path.join(plugin_path, ".mcp.json")
+        claude_mcp_path = os.path.join(workspace_root, "plugins", "claude", plugin, ".mcp.json")
         if os.path.isfile(claude_mcp_path):
             with open(claude_mcp_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -181,8 +165,10 @@ def test_plugin_agents_frontmatter(workspace_root, plugin_dirs):
     register the agent at all (it does not fall back to their documented
     defaults). The frontmatter is kept host-neutral so the same file loads in
     both Claude Code and Antigravity: no 'tools' key (its values are
-    host-specific), and 'model' is only ever 'inherit' (the sole value both
-    hosts accept)."""
+    host-specific). 'model' uses Antigravity's documented tiers (template-driven
+    roles run on 'flash', everything else inherits) and 'skills' lists the
+    documented 'skills/<name>' paths, each bundled in the same plugin. The Claude
+    copies get their own model and bare skill names from scripts/sync_agents.py."""
     errors = []
 
     for plugin in plugin_dirs:
@@ -234,11 +220,20 @@ def test_plugin_agents_frontmatter(workspace_root, plugin_dirs):
                     for orch_tool in ("invoke_subagent", "manage_subagents", "send_message"):
                         if orch_tool not in tools:
                             errors.append(f"{plugin}/agents/{fname}: orchestrator 'tools' missing '{orch_tool}'")
-            if data.get("model") not in (None, "inherit"):
+            expected_model = "flash" if agent_name in AGY_FLASH_AGENTS else "inherit"
+            if data.get("model") != expected_model:
                 errors.append(
-                    f"{plugin}/agents/{fname}: 'model' is '{data.get('model')}' — use "
-                    "'inherit' (the only value both Claude Code and Antigravity accept)"
+                    f"{plugin}/agents/{fname}: 'model' is '{data.get('model')}' — expected "
+                    f"'{expected_model}' (Antigravity tiers: inherit, flash, pro)"
                 )
+            for skill in data.get("skills") or []:
+                if not str(skill).startswith("skills/"):
+                    errors.append(
+                        f"{plugin}/agents/{fname}: skill '{skill}' must be a 'skills/<name>' path "
+                        "(antigravity.google/docs/subagents)"
+                    )
+                elif not os.path.isfile(os.path.join(workspace_root, "plugins", "antigravity", plugin, skill, "SKILL.md")):
+                    errors.append(f"{plugin}/agents/{fname}: skill path '{skill}' is not bundled in the plugin")
             cep = data.get("commandExecutionPolicy")
             if cep == "sandbox":
                 errors.append(
@@ -629,7 +624,7 @@ def test_senior_dev_llm_wiki_triage_and_parallel_dag(workspace_root):
     fm = yaml.safe_load(match.group(1))
     orch_skills = fm.get("skills", [])
     for skill in required_new_skills:
-        assert skill in orch_skills, (
+        assert f"skills/{skill}" in orch_skills, (
             f"senior-dev-orchestrator.md frontmatter 'skills' missing '{skill}'"
         )
 
@@ -753,7 +748,7 @@ def test_ui_ux_designer_agent_and_skill_parity(workspace_root):
     assert agy_fm.get("commandExecutionPolicy") == "auto", (
         f"Expected commandExecutionPolicy 'auto', got {agy_fm.get('commandExecutionPolicy')}"
     )
-    assert agy_fm.get("model") == "inherit", f"Expected model 'inherit', got {agy_fm.get('model')}"
+    assert agy_fm.get("model") == "flash", f"Expected model 'flash', got {agy_fm.get('model')}"
 
     expected_agy_tools = [
         "run_command",
@@ -1070,10 +1065,10 @@ def test_track20_track22_adversarial_committee_and_sync_parity(workspace_root):
         agy_fm = yaml.safe_load(agy_match.group(1))
         assert agy_fm.get("name") == agent_name, f"{agy_path} name expected {agent_name}, got {agy_fm.get('name')}"
         assert agy_fm.get("commandExecutionPolicy") == "auto"
-        assert agy_fm.get("model") == "inherit"
+        assert agy_fm.get("model") == ("flash" if agent_name in AGY_FLASH_AGENTS else "inherit")
         assert agy_fm.get("subagent") is True
         assert agy_fm.get("mainAgent") is False
-        assert skill_name in agy_fm.get("skills", []), f"{agy_path} missing skill '{skill_name}'"
+        assert f"skills/{skill_name}" in agy_fm.get("skills", []), f"{agy_path} missing skill '{skill_name}'"
 
         # Claude Code agent check and zero tool bleed
         claude_path = os.path.join(workspace_root, "plugins", "claude", "senior-dev", "agents", agent_file)
@@ -1090,6 +1085,9 @@ def test_track20_track22_adversarial_committee_and_sync_parity(workspace_root):
         assert "subagent" not in claude_fm
         assert "commandExecutionPolicy" not in claude_fm
         assert skill_name in claude_fm.get("skills", []), f"{claude_path} missing skill '{skill_name}'"
+        assert not any(str(sk).startswith("skills/") for sk in claude_fm.get("skills", [])), (
+            f"{claude_path}: Claude Code preloads skills by bare name, not 'skills/<name>' paths"
+        )
 
         for tool in claude_fm.get("tools", []):
             assert _is_claude_tool(tool), f"Invalid Claude tool '{tool}' in {claude_path}"

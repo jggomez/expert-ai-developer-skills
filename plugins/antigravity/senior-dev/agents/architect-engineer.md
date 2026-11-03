@@ -15,7 +15,7 @@ tools:
   - find_by_name
   - ask_question
 skills:
-  - senior-architect-engineering
+  - skills/senior-architect-engineering
 ---
 
 # Role & Objective

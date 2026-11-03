@@ -46,7 +46,7 @@ Ask the compliance-verifier agent for a release-readiness verdict on this branch
 
 ### Agents
 
-All agents use `model: inherit` and `commandExecutionPolicy: auto`.
+`product-analyst`, `ui-ux-designer`, `qa-tester` and `e2e-blackbox-tester` run on `model: flash` (template-driven work); the rest use `model: inherit`. All agents use `commandExecutionPolicy: auto`.
 
 | Agent | Role |
 | :--- | :--- |
@@ -58,7 +58,7 @@ All agents use `model: inherit` and `commandExecutionPolicy: auto`.
 | `qa-tester` | Runs unit/integration/E2E suites; writes `test-matrix.md` |
 | `critic` | Independent review: complexity, DRY, SOLID, maintainability |
 | `challenger` | Stress tests, fuzzing, boundary and concurrency probes |
-| `e2e-blackbox-tester` | Browser journeys with `.png` evidence in `docs/<feature-name>/evidence/` |
+| `e2e-blackbox-tester` | Browser journeys with `.png` evidence in `docs/<feature-name>/evidence/`, proven by `skills/blackbox-tester/scripts/check_evidence.py` |
 | `compliance-verifier` | Static analysis, security and NFR audit; issues `APPROVED` |
 
 Reviewers return their verdict in the final message (50 lines or fewer); they do not write report files.
@@ -93,8 +93,10 @@ Reviewers return their verdict in the final message (50 lines or fewer); they do
 
 | Event | Script | Behavior |
 | :--- | :--- | :--- |
-| `PreToolUse` (`write_to_file\|replace_file_content`) | `hooks/orchestrator-role-gate.js` | Allows docs and plans (`*.md`, `*.txt`, `docs/`, `.agents/`, `context/`, `.gemini/`). For code: denies edits on `main`/`master`/`develop`/`dev`, denies edits without a `PLAN.md`, and denies edits from the main orchestrator session. |
-| `Stop` | `hooks/universal-quality-gate.js` | On `model_stop`, runs `scripts/verify.sh`, `dart analyze`, `npm test`, `pytest -q`, `cargo test` or `go test ./...` when they apply, and asks the agent to continue if one fails. |
+| `PreToolUse` (`write_to_file\|replace_file_content\|multi_replace_file_content`) | `hooks/orchestrator-role-gate.js` | Allows docs and plans (`*.md`, `*.txt`, `docs/`, `.agents/`, `context/`, `.gemini/`). For code: denies edits on `main`/`master`/`develop`/`dev`, denies edits without a `PLAN.md` (edits of 10 lines or fewer are exempt), and denies edits from the main orchestrator session. |
+| `Stop` | `hooks/universal-quality-gate.js` | On `model_stop`, runs `scripts/verify.sh`, `dart analyze`, `npm test`, `pytest -q`, `cargo test` or `go test ./...` when they apply, within a 180 s budget, and asks the agent to continue if one fails. |
+
+Stop gates share one library (`hooks/shared/gate-utils.js`): they act only on `terminationReason: model_stop`, cache a green result until the code changes, never run the same suite twice across plugins, and stop asking to continue after 3 blocks per user message.
 
 ### MCP servers
 
@@ -105,7 +107,7 @@ Declared in `mcp_config.json`:
 | `cloudrun` | `npx -y @google-cloud/cloud-run-mcp` | Google Cloud Run deployments and logs |
 | `firebase-mcp-server` | `npx -y firebase-tools@latest mcp` | Firebase projects, Firestore, Auth, deploys |
 
-The compatibility manifest `.mcp.json` declares the same servers plus `playwright` (`npx -y @playwright/mcp@latest --isolated`).
+The Claude Code build of this plugin also ships the Playwright MCP. The Antigravity build does not, because the docs do not say whether subagents can reach plugin MCP servers: `e2e-blackbox-tester` drives Chromium with scripted Playwright, and `check_evidence.py` must exit 0 before a `PASSED` verdict is accepted.
 
 ## How it works
 

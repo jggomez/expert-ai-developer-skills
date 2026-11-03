@@ -56,8 +56,8 @@ Audit the partitioning and clustering of the analytics dataset and estimate the 
 
 | Event | Script | Behavior |
 | :--- | :--- | :--- |
-| `PreToolUse` (`run_command`, `call_mcp_tool`, `write_to_file`, `replace_file_content`) | `hooks/data-safety-gate.js` | Denies `DROP TABLE/SCHEMA/DATABASE`, `TRUNCATE TABLE`, `DELETE FROM ... WHERE 1=1`, `bq rm -f/-r`, `gsutil rm -r` and `gcloud storage rm --recursive`. Denies MCP `delete_table`, `delete_instance` and `delete_database`. Denies `.sql`, `.sqlx`, `.py` and `workflow_settings.yaml` writes on `main`, `master`, `develop` or `dev`, and without `PLAN.md` or `docs/PLAN.md`. |
-| `Stop` | `hooks/data-quality-gate.js` | On a model stop, runs `dataform compile` in Dataform projects and `pytest -q` in projects with `tests/` (or `test/`) plus `requirements.txt` or `pyproject.toml`. Asks the agent to continue on failure. Skips each check when its CLI is not installed. |
+| `PreToolUse` (`run_command`, `call_mcp_tool`, `write_to_file`, `replace_file_content`, `multi_replace_file_content`) | `hooks/data-safety-gate.js` | Denies `DROP TABLE/SCHEMA/DATABASE`, `TRUNCATE TABLE`, `DELETE FROM ... WHERE 1=1`, `bq rm -f/-r`, `gsutil rm -r` and `gcloud storage rm --recursive`. Denies MCP `delete_table`, `delete_instance` and `delete_database`. Denies `.sql`, `.sqlx`, `.py` and `workflow_settings.yaml` writes on `main`, `master`, `develop` or `dev`, and without `PLAN.md` or `docs/PLAN.md` (edits of 10 lines or fewer are exempt). |
+| `Stop` | `hooks/data-quality-gate.js` | On a model stop, runs `dataform compile` in Dataform projects and `pytest -q` in projects with `tests/` (or `test/`) plus `requirements.txt` or `pyproject.toml`. Asks the agent to continue on failure. Skips each check when its CLI is not installed. Runs within a 180 s budget, caches green results and stops blocking after 3 attempts per message. |
 
 ### MCP servers
 

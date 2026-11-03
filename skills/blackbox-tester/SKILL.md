@@ -83,7 +83,7 @@ Capture real, non-empty `.png` screenshots saved to `docs/<feature-name>/evidenc
 4. **Widescreen (`1920x1080`)**: Max-width container alignment (`widescreen-1920x1080.png`).
 
 ### Phase 4: Zero-Fluff Report Returned in Final Message (`<= 50 lines`)
-Verify that Playwright exited `0` **AND** non-empty `.png` files physically exist in `docs/<feature-name>/evidence/`, then return the report in your final message — do NOT write a report file (`<= 50 lines` max, `<= 20 lines` on clean pass) using [references/blackbox-report-template.md](references/blackbox-report-template.md):
+Verify that Playwright exited `0` **AND** that `python3 scripts/check_evidence.py docs/<feature-name>/evidence` (from this skill's directory) exits `0` — it rejects fake or stale PNGs and missing viewports — then return the report in your final message — do NOT write a report file (`<= 50 lines` max, `<= 20 lines` on clean pass) using [references/blackbox-report-template.md](references/blackbox-report-template.md):
 
 ```markdown
 # Black-Box Browser Verification Report
@@ -152,7 +152,7 @@ uv run pytest tests/e2e/ --browser chromium --headed
 - [ ] Mandatory 2-step Pre-Flight passed (`200 OK` + Chromium launch), or honest `SKIPPED` / `BLOCKED` returned immediately.
 - [ ] Real Playwright E2E suite in `tests/e2e/` exited with code `0`.
 - [ ] Console (`console` / `pageerror`) and HTTP response listeners verified `0` unhandled errors.
-- [ ] Non-empty `.png` screenshots saved in `docs/<feature-name>/evidence/` for `375x812`, `768x1024`, `1280x800`, and `1920x1080`.
+- [ ] Non-empty `.png` screenshots saved in `docs/<feature-name>/evidence/` for `375x812`, `768x1024`, `1280x800`, and `1920x1080`, and `scripts/check_evidence.py` exited `0`.
 - [ ] Concise report (`<= 50 lines`, `<= 20 lines` if clean) returned in the final message; no report file written.
 
 ---

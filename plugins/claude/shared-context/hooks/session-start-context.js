@@ -8,9 +8,9 @@
  * 2. Otherwise, if a legacy `context/sessions/` store exists, tell the agent to
  *    ask the user whether to load it (via the `context-restore` skill).
  *
- * Claude Code: wired to SessionStart. Antigravity: wired to PreInvocation
- * (no SessionStart event there), debounced so it prompts about once per
- * working session, not per turn.
+ * Both hosts wire it to SessionStart. Output: Claude Code `hookSpecificOutput`;
+ * Antigravity `injectSteps` with a system message (hooks there must print JSON).
+ * Debounced so it prompts about once per working session.
  */
 const fs = require('fs');
 const os = require('os');
@@ -112,14 +112,16 @@ function emit(text) {
       hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: text },
     }));
   } else {
-    // Antigravity / other: plain-text context injection.
-    process.stdout.write(text);
+    // Antigravity: SessionStart injects context through injectSteps (docs/hooks).
+    process.stdout.write(JSON.stringify({
+      injectSteps: [{ systemMessage: { systemMessage: text } }],
+    }));
   }
   process.exit(0);
 }
 
 function exitQuiet() {
-  if (isClaudeCode) process.stdout.write('{}');
+  process.stdout.write('{}');
   process.exit(0);
 }
 
