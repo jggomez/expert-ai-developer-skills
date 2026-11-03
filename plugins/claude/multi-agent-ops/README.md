@@ -65,6 +65,7 @@ Audit the open feature branches for quality gate failures.
 | `[CONTEXT GUARD VIOLATION]` "exceeds the 500KB safe context threshold" | Large file read without pagination. | Pass `offset` and `limit`, or search with `Grep` first. |
 | `[CONTEXT GUARD VIOLATION]` on a lockfile | Lockfile or bundle over 200 KB. | Use `Grep` for the package or key you need. |
 | `git worktree add` fails in `run_parallel_agents.py` | The branch is already checked out in another worktree. | Pick a new branch name or `git worktree remove` the old worktree. |
+| A worker's worktree is missing your feature-branch commits | Claude Code branches subagent worktrees from `main` by default. | Set `"worktree": {"baseRef": "head"}` in `.claude/settings.json`, or create the worktrees from `HEAD` with `run_parallel_agents.py`. See [docs/claude-code-installation.md](../../../docs/claude-code-installation.md#parallel-workers-in-their-own-worktree). |
 
 ## Related plugins
 

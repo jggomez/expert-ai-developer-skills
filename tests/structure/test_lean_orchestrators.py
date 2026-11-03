@@ -154,3 +154,25 @@ def test_claude_plan_first_gates_allow_worktree_implementers(repo, gate):
     # Assert
     assert result.returncode == 0, result.stderr
     assert "PLAN" not in (result.stdout + result.stderr), result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("plugin", ["senior-dev", "senior-dev-flutter", "python-backend"])
+def test_claude_readmes_explain_how_to_enable_worktree_workers(plugin):
+    # Arrange: Claude Code subagent worktrees start from the default branch unless baseRef is "head"
+    readme = _read("plugins", "claude", plugin, "README.md")
+    guide = _read("docs", "claude-code-installation.md")
+    # Act / Assert
+    assert '"baseRef": "head"' in readme and "#parallel-workers-in-their-own-worktree" in readme
+    for fact in ('"baseRef": "head"', ".worktreeinclude", ".claude/worktrees/", "flutter pub get"):
+        assert fact in guide, fact
+
+
+@pytest.mark.parametrize("host", ["antigravity", "claude"])
+@pytest.mark.parametrize("plugin,agent", ORCHESTRATORS)
+def test_orchestrators_accept_baseref_from_any_settings_file(host, plugin, agent):
+    # Arrange: worktree.baseRef is valid in any settings file, and each worktree is a fresh checkout
+    body = _read("plugins", host, plugin, "agents", f"{agent}.md")
+    # Act / Assert
+    for path in (".claude/settings.local.json", "~/.claude/settings.json"):
+        assert path in body, path
+    assert "fresh checkout" in body

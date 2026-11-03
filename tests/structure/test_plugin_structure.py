@@ -969,8 +969,8 @@ def test_track17_feature_artifacts_and_user_alignment_gate(workspace_root):
                 assert section in orch_text, f"{orch_path} missing spec.md section '{section}'"
             assert "Return Contract" in orch_text, f"{orch_path} missing Worker Return Contract"
 
-    # 3. Check AGENTS.md and loop-engineering-workflow.md
-    for governance_file in ("AGENTS.md", os.path.join(".agents", "rules", "loop-engineering-workflow.md")):
+    # 3. Check AGENTS.md (.agents/ is gitignored and local-only, so tests never read it)
+    for governance_file in ("AGENTS.md",):
         gov_path = os.path.join(workspace_root, governance_file)
         with open(gov_path, "r", encoding="utf-8") as f:
             gov_text = f.read()
@@ -986,14 +986,13 @@ def test_track18_track19_tiered_sdlc_and_qa_matrix(workspace_root):
     """Verifies Track 18 & Track 19:
     1. Asserts presence and definitions of Tier 1 (Fast-Track), Tier 2 (Standard),
        and Tier 3 (Mission-Critical) in skills/loop-engineering/SKILL.md, AGENTS.md,
-       .agents/rules/loop-engineering-workflow.md, and orchestrators across both ecosystems.
+       and orchestrators across both ecosystems.
     2. Asserts presence of docs/<feature-name>/test-matrix.md in skills/qa-tester/SKILL.md
        and qa-tester.md in both ecosystems."""
     # 1. 3-Tier SDLC definitions in governance and loop-engineering skill
     core_sdlc_files = [
         os.path.join(workspace_root, "skills", "loop-engineering", "SKILL.md"),
         os.path.join(workspace_root, "AGENTS.md"),
-        os.path.join(workspace_root, ".agents", "rules", "loop-engineering-workflow.md"),
     ]
     for file_path in core_sdlc_files:
         assert os.path.isfile(file_path), f"Missing {file_path}"

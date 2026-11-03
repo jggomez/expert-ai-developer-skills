@@ -121,6 +121,8 @@ Registered in the `senior-dev-flutter-gates` group of `hooks.json`.
 
 The full lifecycle is described in the root [README](../../../README.md) and [AGENTS.md](../../../AGENTS.md).
 
+**Worktrees in Antigravity.** No setting is needed: when two tracks must edit the same files, the orchestrator runs each worker with subagent workspace `branch`. The docs do not say which commit that branch starts from, so each worker first runs `git merge-base --is-ancestor <feature HEAD> HEAD` and stops if your feature commits are missing; the orchestrator then sequences the tracks or creates the worktrees from your current `HEAD` with `run_parallel_agents.py` (loop-engineering skill). A worktree is a fresh checkout, so the worker installs dependencies inside it before testing.
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |

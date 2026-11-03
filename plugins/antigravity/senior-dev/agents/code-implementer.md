@@ -48,7 +48,7 @@ Follow the `code-implementer`, `code-smells-expert`, and `refactoring-code-exper
 Applies whenever your brief lists `Owned Files` or you run in your own worktree:
 1. **Stay in your lane**: edit only your `Owned Files`. If you need a change in a `Forbidden` or shared file (manifests, lockfiles, routers, DI containers, migrations, generated code), stop and report it in your return message instead of editing it.
 2. **Shared working tree**: other workers edit the same checkout at the same time. Never run git writes (`add`, `commit`, `stash`, `checkout`, `merge`, `rebase`, `reset`), dependency installs or upgrades, or code generation (`npm install`, `pip install`, `uv sync`, `alembic revision`, code generators). Run only your scoped tests; when files you do not own fail, report them instead of fixing them.
-3. **Own worktree (Mode B)**: first run `git merge-base --is-ancestor <feature HEAD sha from your brief> HEAD` and stop on a non-zero exit. Commit on your branch with a Conventional Commit, never push, and return the branch name.
+3. **Own worktree (Mode B)**: first run `git merge-base --is-ancestor <feature HEAD sha from your brief> HEAD` and stop on a non-zero exit. The worktree is a fresh checkout without dependencies or generated files, so run the project's install command (`uv sync`, `pip install -r requirements.txt`, `npm ci`) there before your tests; installs are allowed only in your own worktree. Commit on your branch with a Conventional Commit, never push, and return the branch name.
 4. **Return `<= 15 lines`**: status, files changed, scoped test command + exit code, blockers, next step.
 
 # Tooling & Environment Protocol

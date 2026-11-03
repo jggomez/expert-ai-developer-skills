@@ -129,6 +129,7 @@ The full state machine is documented in [AGENTS.md](../../../AGENTS.md) and the 
 | Orchestrator as default agent | Add `{ "agent": "senior-dev:senior-dev-orchestrator" }` to `.claude/settings.json` |
 | Headless browser (CI, no display) | Add `--headless` to the `playwright` args in `.mcp.json` |
 | Model per agent (maintainers) | Edit `CLAUDE_AGENT_OVERRIDES` in [scripts/claude_sync_config.py](../../../scripts/claude_sync_config.py), then run `python3 scripts/sync_agents.py` |
+| Parallel workers in their own worktree | Add `{ "worktree": { "baseRef": "head" } }` to `.claude/settings.json`; without it worktrees start from `main`. Details and `.worktreeinclude`: [docs/claude-code-installation.md](../../../docs/claude-code-installation.md#parallel-workers-in-their-own-worktree) |
 
 ## Troubleshooting
 
