@@ -292,10 +292,8 @@ def sync_claude_plugins() -> None:
         if src_hooks_json.is_file() and not dest_hooks_json.exists():
             shutil.copy2(src_hooks_json, dest_hooks_json)
 
-        # 5. .mcp.json & mcp/
-        src_mcp_json = src_plugin / ".mcp.json"
-        if src_mcp_json.is_file():
-            shutil.copy2(src_mcp_json, dest_plugin / ".mcp.json")
+        # 5. mcp/ (plugins/claude/<plugin>/.mcp.json is maintained by hand: Antigravity never
+        #    loads .mcp.json, so its source of truth is the Claude plugin itself, like hooks.json)
 
         src_mcp_dir = src_plugin / "mcp"
         if src_mcp_dir.is_dir():

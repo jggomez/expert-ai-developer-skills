@@ -15,12 +15,12 @@ import pytest
 import yaml
 
 PLUGIN = os.path.abspath("plugins/antigravity/shared-context")
+CLAUDE_PLUGIN = os.path.abspath("plugins/claude/shared-context")
 
 EXPECTED_FILES = [
     ".claude-plugin/plugin.json",
     "plugin.json",
     "README.md",
-    ".mcp.json",
     "mcp_config.json",
     "hooks.json",
     "hooks/session-start-context.js",
@@ -54,36 +54,41 @@ def test_manifests_match_and_name_is_shared_context():
     assert _json("plugin.json").get("name") == "shared-context"
 
 
-def test_hooks_json_serves_both_hosts():
+def test_antigravity_hooks_json_uses_documented_events():
+    """Antigravity reads every top-level key as a named hook group; Claude Code has its own
+    hooks.json in plugins/claude/shared-context."""
     h = _json("hooks.json")
-
-    cc = h["hooks"]
-    assert {"SessionStart", "PostToolUse", "Stop"} <= set(cc)
-    for event, groups in cc.items():
-        for group in groups:
-            assert "hooks" in group and "enabled" not in group
-            for hook in group["hooks"]:
-                assert "${CLAUDE_PLUGIN_ROOT}/hooks/" in hook["command"]
-
+    assert list(h) == ["shared-context-relay"]
     agy = h["shared-context-relay"]
     assert agy.get("enabled") is True
     events = [k for k in agy if k != "enabled"]
-    assert {"PreInvocation", "PostToolUse", "Stop"} <= set(events)
-    assert "SessionStart" not in events  # Antigravity has no SessionStart event
+    assert {"SessionStart", "PostToolUse", "Stop"} <= set(events)
+    assert "PreInvocation" not in events  # it fires before every model call
+    for group in agy["PostToolUse"]:
+        assert group["matcher"] == "write_to_file|replace_file_content|multi_replace_file_content|run_command"
     for event in events:
         for group in agy[event]:
-            hooks = group.get("hooks", [group]) if isinstance(group, dict) else []
-            for hook in hooks:
+            for hook in group.get("hooks", [group]):
                 assert hook["command"].startswith("node ./hooks/")
 
 
+def test_claude_hooks_json_uses_plugin_root_paths():
+    h = json.loads(open(os.path.join(CLAUDE_PLUGIN, "hooks.json"), encoding="utf-8").read())["hooks"]
+    assert {"SessionStart", "PostToolUse", "Stop"} <= set(h)
+    for groups in h.values():
+        for group in groups:
+            for hook in group["hooks"]:
+                assert "${CLAUDE_PLUGIN_ROOT}/hooks/" in hook["command"]
+
+
 def test_mcp_configs_point_at_the_launcher():
-    cc = _json(".mcp.json")["mcpServers"]["shared-context"]
+    cc = json.loads(open(os.path.join(CLAUDE_PLUGIN, ".mcp.json"), encoding="utf-8").read())
+    cc = cc["mcpServers"]["shared-context"]
     assert cc["type"] == "stdio" and cc["command"] == "sh"
     assert cc["args"] == ["${CLAUDE_PLUGIN_ROOT}/mcp/run-server.sh"]
 
     agy = _json("mcp_config.json")["mcpServers"]["shared-context"]
-    assert agy["command"] == "sh" and agy["args"] == ["./mcp/run-server.sh"]
+    assert agy["command"] == "sh" and agy["args"] == ["${PLUGIN_ROOT}/mcp/run-server.sh"]
 
 
 def test_launcher_is_posix_sh_executable_and_pins_mcp_v1():

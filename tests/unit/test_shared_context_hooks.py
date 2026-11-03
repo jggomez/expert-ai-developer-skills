@@ -63,11 +63,23 @@ def test_start_prompts_to_ask_the_user_on_claude_code(tmp_path):
     assert "without the user's explicit OK" in ctx_text
 
 
-def test_start_emits_plain_text_for_antigravity(tmp_path):
+def test_start_injects_a_system_message_for_antigravity(tmp_path):
+    """Antigravity hooks must print a JSON object; SessionStart injects context via injectSteps."""
+    # Arrange
     make_context(tmp_path)
+    # Act
     r = run_hook("session-start-context.js", {"workspacePaths": [str(tmp_path)]})
-    assert r.stdout.strip().startswith("Shared AI context is available")
-    assert not r.stdout.strip().startswith("{")
+    # Assert
+    steps = json.loads(r.stdout)["injectSteps"]
+    assert steps[0]["systemMessage"]["systemMessage"].startswith("Shared AI context is available")
+
+
+def test_start_stays_quiet_with_an_empty_json_object_for_antigravity(tmp_path):
+    # Arrange: no context/ directory
+    # Act
+    r = run_hook("session-start-context.js", {"workspacePaths": [str(tmp_path)]})
+    # Assert
+    assert r.returncode == 0 and json.loads(r.stdout) == {}
 
 
 def test_start_is_debounced_on_the_second_call(tmp_path):

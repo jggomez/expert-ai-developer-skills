@@ -16,12 +16,12 @@ import pytest
 import yaml
 
 PLUGIN = os.path.abspath("plugins/antigravity/senior-dev-flutter")
+CLAUDE_PLUGIN = os.path.abspath("plugins/claude/senior-dev-flutter")
 
 EXPECTED_FILES = [
     ".claude-plugin/plugin.json",
     "plugin.json",
     "README.md",
-    ".mcp.json",
     "mcp_config.json",
     "hooks.json",
     "hooks/flutter-pre-tool-gate.js",
@@ -71,29 +71,29 @@ def test_manifests_match():
 
 
 def test_mcp_points_at_dart_mcp_server():
-    cc = _json(".mcp.json")["mcpServers"]["dart"]
+    cc = json.loads(open(os.path.join(CLAUDE_PLUGIN, ".mcp.json"), encoding="utf-8").read())["mcpServers"]["dart"]
     assert cc["type"] == "stdio" and cc["command"] == "dart" and cc["args"] == ["mcp-server"]
     agy = _json("mcp_config.json")["mcpServers"]["dart"]
     assert agy["command"] == "dart" and agy["args"] == ["mcp-server"]
 
 
-def test_hooks_json_serves_both_hosts():
-    h = _json("hooks.json")
-    cc = h["hooks"]
+def test_hooks_json_per_host():
+    """Antigravity reads every top-level key as a named hook group; Claude has its own copy."""
+    cc = json.loads(open(os.path.join(CLAUDE_PLUGIN, "hooks.json"), encoding="utf-8").read())["hooks"]
     assert {"PreToolUse", "Stop"} <= set(cc)
-    for event, groups in cc.items():
+    for groups in cc.values():
         for g in groups:
-            assert "hooks" in g and "enabled" not in g
             for hook in g["hooks"]:
                 assert "${CLAUDE_PLUGIN_ROOT}/hooks/" in hook["command"]
+    h = _json("hooks.json")
+    assert list(h) == ["senior-dev-flutter-gates"]
     agy = h["senior-dev-flutter-gates"]
     assert agy.get("enabled") is True
     events = [k for k in agy if k != "enabled"]
     assert {"PreToolUse", "Stop"} <= set(events)
     for event in events:
         for g in agy[event]:
-            hooks = g.get("hooks", [g]) if isinstance(g, dict) else []
-            for hook in hooks:
+            for hook in g.get("hooks", [g]):
                 assert hook["command"].startswith("node ./hooks/")
 
 

@@ -74,15 +74,14 @@ def test_plugin_manifest_locations(workspace_root, plugin_dirs):
 
 
 def test_plugin_hooks_json_schema(workspace_root, plugin_dirs):
-    """Verifies every plugin's hooks.json (when present) follows a valid
-    schema for at least one host. A single hooks.json can serve both hosts
-    at once since each reads a different top-level key: Claude Code reads
-    'hooks' (event-name-keyed, no 'enabled' field); Antigravity reads any
-    other top-level key as a named hook group (its own 'enabled' field and
-    event names are valid there) — verified against
-    antigravity.google/docs/hooks."""
-    claude_code_events = {"SessionStart", "PreToolUse", "PostToolUse", "Stop", "UserPromptSubmit", "Notification"}
-    antigravity_events = {"PreToolUse", "PostToolUse", "PreInvocation", "PostInvocation", "Stop"}
+    """Verifies every Antigravity hooks.json only holds named hook groups
+    ({"enabled": bool, EventName: [...]}) with documented events. Antigravity
+    reads EVERY top-level key as a hook group: a stray string such as
+    "description" makes the loader skip the whole file, and a Claude Code
+    "hooks" block runs as an extra group with unresolved paths
+    (antigravity.google/docs/hooks, confirmed with `agy plugin validate`).
+    Claude Code hooks live in plugins/claude/<plugin>/hooks.json."""
+    antigravity_events = {"SessionStart", "PreToolUse", "PostToolUse", "PreInvocation", "PostInvocation", "Stop"}
     errors = []
 
     for plugin in plugin_dirs:
@@ -94,33 +93,11 @@ def test_plugin_hooks_json_schema(workspace_root, plugin_dirs):
             data = json.load(f)
 
         for key, value in data.items():
-            if key == "description":
-                continue
-
-            if key == "hooks":
-                # Claude Code format: {"hooks": {EventName: [{"matcher"?, "hooks": [...]}]}}
-                if not isinstance(value, dict):
-                    errors.append(f"{plugin}: 'hooks' must map event names to hook definitions")
-                    continue
-                for event_name, groups in value.items():
-                    if event_name not in claude_code_events:
-                        errors.append(f"{plugin}: unknown Claude Code hook event '{event_name}' in hooks.json")
-                        continue
-                    for group in groups:
-                        if "enabled" in group:
-                            errors.append(
-                                f"{plugin}: non-standard 'enabled' flag inside the 'hooks' (Claude Code) "
-                                f"'{event_name}' group; Claude Code has no per-hook enabled field"
-                            )
-                        if "hooks" not in group:
-                            errors.append(f"{plugin}: hook group for '{event_name}' is missing its 'hooks' array")
-                continue
-
-            # Any other top-level key is an Antigravity-style named hook
-            # group: {"enabled": bool, EventName: [...]}.
             if not isinstance(value, dict):
-                errors.append(f"{plugin}: hook group '{key}' must be an object")
+                errors.append(f"{plugin}: top-level '{key}' must be a named hook group object")
                 continue
+            if key == "hooks":
+                errors.append(f"{plugin}: Claude Code 'hooks' block does not belong in the Antigravity hooks.json")
             event_keys = [k for k in value.keys() if k != "enabled"]
             if not event_keys:
                 errors.append(f"{plugin}: hook group '{key}' declares no events")
@@ -143,7 +120,7 @@ def test_plugin_mcp_json_schema(workspace_root, plugin_dirs):
     for plugin in plugin_dirs:
         plugin_path = os.path.join(workspace_root, "plugins", "antigravity", plugin)
 
-        claude_mcp_path = os.path.join(plugin_path, ".mcp.json")
+        claude_mcp_path = os.path.join(workspace_root, "plugins", "claude", plugin, ".mcp.json")
         if os.path.isfile(claude_mcp_path):
             with open(claude_mcp_path, "r", encoding="utf-8") as f:
                 data = json.load(f)

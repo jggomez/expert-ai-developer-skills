@@ -2,7 +2,9 @@
   "mcpServers": {
     "shared-context": {
       "command": "sh",
-      "args": ["./mcp/run-server.sh"]
+      "args": [
+        "${PLUGIN_ROOT}/mcp/run-server.sh"
+      ]
     }
   }
 }

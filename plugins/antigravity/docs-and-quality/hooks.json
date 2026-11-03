@@ -1,5 +1,4 @@
 {
-  "description": "Docs and quality gates: blocks session termination if lazy placeholders or incomplete implementations are detected.",
   "docs-and-quality-gates": {
     "enabled": true,
     "Stop": [

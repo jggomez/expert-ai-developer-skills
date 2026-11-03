@@ -1,5 +1,4 @@
 {
-  "description": "Git hygiene: Gitflow branch safety gate, commit message standards, and clean merge resolution.",
   "git-workflow-gates": {
     "enabled": true,
     "PreToolUse": [
