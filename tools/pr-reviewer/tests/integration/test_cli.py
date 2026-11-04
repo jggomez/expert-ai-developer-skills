@@ -147,3 +147,22 @@ def test_setup_claude_prints_the_ids_to_store(monkeypatch: pytest.MonkeyPatch, c
     assert code == 0
     assert "agent_9" in out
     assert "env_9" in out
+
+
+def test_setup_claude_failure_exits_nonzero_and_says_why(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+):
+    # Arrange: setup is run by hand, so a failure must not look like success.
+    def fail() -> tuple[str, str]:
+        raise TypeError("Could not resolve authentication method")
+
+    monkeypatch.setattr(cli, "setup_claude", fail)
+
+    # Act
+    code = cli.main(["setup-claude"])
+
+    # Assert
+    captured = capsys.readouterr()
+    assert code == 1
+    assert "Could not resolve authentication method" in captured.err
+    assert "CLAUDE_AGENT_ID" not in captured.out

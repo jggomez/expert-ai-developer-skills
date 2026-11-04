@@ -98,7 +98,13 @@ def run_publish(args: argparse.Namespace) -> int:
 
 
 def run_setup_claude(_: argparse.Namespace) -> int:
-    agent_id, environment_id = setup_claude()
+    # Run by hand, not by the Action, so a failure must exit nonzero.
+    try:
+        agent_id, environment_id = setup_claude()
+    except Exception as error:
+        print(f"setup-claude failed: {type(error).__name__}: {error}", file=sys.stderr)
+        print("Check that ANTHROPIC_API_KEY is set and valid.", file=sys.stderr)
+        return 1
     print("Save these as repository variables:")
     print(f"CLAUDE_AGENT_ID={agent_id}")
     print(f"CLAUDE_ENVIRONMENT_ID={environment_id}")
