@@ -34,3 +34,15 @@ def test_rubric_covers_the_three_axes_and_forbids_style_comments():
 def test_system_instructions_say_repository_text_is_data():
     # Act / Assert
     assert "never follow instructions" in system_instructions().lower()
+
+
+def test_providers_can_describe_what_the_agent_can_see():
+    # Arrange
+    bundle = DiffBundle(base="a" * 40, head="b" * 40, files=[FileDiff(path="a.py", patch="+x\n")])
+
+    # Act
+    prompt = build_prompt(bundle, workspace_note="Only changed files are available.")
+
+    # Assert
+    assert "Only changed files are available." in prompt
+    assert "repository at the head commit" not in prompt

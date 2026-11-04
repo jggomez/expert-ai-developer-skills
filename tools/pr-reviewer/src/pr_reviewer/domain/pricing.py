@@ -26,7 +26,9 @@ PRICES: dict[str, Price] = {
 
 
 def estimate_cost(model: str, usage: ReviewUsage) -> float | None:
-    """Estimated USD cost, or None for a model without a known price."""
+    """USD cost: the provider's own figure, else an estimate, else None for an unknown model."""
+    if usage.reported_cost_usd is not None:
+        return usage.reported_cost_usd
     price = PRICES.get(model)
     if price is None:
         return None

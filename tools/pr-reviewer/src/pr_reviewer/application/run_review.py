@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from pr_reviewer.application.ports import (
+    DEFAULT_BUDGET_USD,
     DEFAULT_MAX_TOKENS,
     ProviderError,
     ReviewProvider,
@@ -25,6 +26,7 @@ class ReviewSettings:
     provider: str
     model: str | None = None
     max_tokens: int = DEFAULT_MAX_TOKENS
+    budget_usd: str = DEFAULT_BUDGET_USD
 
 
 def run_review(
@@ -48,6 +50,7 @@ def run_review(
             workspace=build_workspace(),
             model=settings.model,
             max_tokens=settings.max_tokens,
+            budget_usd=settings.budget_usd,
         )
         output = provider.review(request)
     except ProviderError as error:

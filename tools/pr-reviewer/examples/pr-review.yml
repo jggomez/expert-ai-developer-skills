@@ -24,3 +24,8 @@ jobs:
       - uses: jggomez/expert-ai-developer-skills/tools/pr-reviewer@<commit-sha>
         with:
           api-key: ${{ secrets.GEMINI_API_KEY }}
+          # To use Claude instead, replace the line above. See the README for the one-time setup.
+          # provider: claude
+          # api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # claude-agent-id: ${{ vars.CLAUDE_AGENT_ID }}
+          # claude-environment-id: ${{ vars.CLAUDE_ENVIRONMENT_ID }}

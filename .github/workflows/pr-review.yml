@@ -26,4 +26,8 @@ jobs:
           persist-credentials: false
       - uses: ./tools/pr-reviewer
         with:
-          api-key: ${{ secrets.GEMINI_API_KEY }}
+          # Set the PR_REVIEW_PROVIDER repository variable to `claude` to switch provider.
+          provider: ${{ vars.PR_REVIEW_PROVIDER || 'antigravity' }}
+          api-key: ${{ vars.PR_REVIEW_PROVIDER == 'claude' && secrets.ANTHROPIC_API_KEY || secrets.GEMINI_API_KEY }}
+          claude-agent-id: ${{ vars.CLAUDE_AGENT_ID }}
+          claude-environment-id: ${{ vars.CLAUDE_ENVIRONMENT_ID }}

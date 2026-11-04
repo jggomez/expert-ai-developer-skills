@@ -16,7 +16,20 @@ más barato de operar. Solo comenta y nunca bloquea el merge.
 Quedan fuera el estilo, los nombres, los tests y la seguridad. Cada hallazgo necesita una línea del diff, un
 impacto y un nivel de confianza. Un PR limpio recibe solo un resumen breve de "sin problemas".
 
+## Proveedores
+
+| | Antigravity | Claude Managed Agents |
+| --- | --- | --- |
+| Dónde corre el agente | Tu runner de GitHub | Un sandbox alojado por Anthropic, sin red |
+| Qué puede leer | Todo el repositorio (copia limpia) | El diff y los archivos cambiados |
+| Modelo por defecto | `gemini-3.8-flash` | `claude-opus-5-5` |
+| Tope de gasto | Tokens, con `max-tokens` | Dólares, con `budget-usd` |
+| Coste en el resumen | Estimado con precios de lista | Informado por la API, con tiempo de sesión |
+| Estado | SDK 0.1.x | API en beta |
+
 ## Instalación
+
+Elige Antigravity (abajo) o [Claude](#usar-claude).
 
 1. Crea una [clave de la API de Gemini](https://aistudio.google.com/apikey) en un proyecto con facturación y
    guárdala como el secreto `GEMINI_API_KEY` del repositorio.
@@ -30,14 +43,33 @@ Para repetir la revisión, un propietario, miembro o colaborador comenta `/revie
 > pueden leerlo. Para código privado usa una clave de pago o Vertex AI. Consulta los
 > [términos de la API de Gemini](https://aistudio.google.com/docs/terms).
 
+### Usar Claude
+
+1. Crea una [clave de API de Anthropic](https://platform.claude.com/settings/keys) y crea el agente una sola vez:
+
+   ```bash
+   export ANTHROPIC_API_KEY=...
+   uv run --project tools/pr-reviewer --extra claude pr-reviewer setup-claude
+   ```
+
+2. Guarda la clave como el secreto `ANTHROPIC_API_KEY`, y los dos ID impresos como las variables
+   `CLAUDE_AGENT_ID` y `CLAUDE_ENVIRONMENT_ID` del repositorio.
+3. Usa las líneas de Claude de [`examples/pr-review.yml`](examples/pr-review.yml).
+
+Los archivos cambiados se envían a Anthropic como subidas que caducan en una hora. Las instrucciones, las
+herramientas y el modelo se envían en cada sesión, así que actualizar la Action no exige repetir la configuración.
+
 ## Entradas
 
 | Entrada | Por defecto | Descripción |
 | --- | --- | --- |
-| `api-key` | | Clave de la API de Gemini |
-| `provider` | `antigravity` | `antigravity`, o `fake` para probar la instalación sin IA ni clave |
-| `model` | `gemini-3.8-flash` | Modelo que se usa |
-| `max-tokens` | `200000` | Tope de tokens por revisión |
+| `api-key` | | Clave de API de Gemini o de Anthropic |
+| `provider` | `antigravity` | `antigravity`, `claude`, o `fake` para probar la instalación sin IA ni clave |
+| `model` | El del proveedor | Modelo que se usa |
+| `max-tokens` | `200000` | Tope de tokens por revisión (Antigravity) |
+| `budget-usd` | `1.00` | Tope de gasto por revisión (Claude) |
+| `claude-agent-id` | | Lo imprime `pr-reviewer setup-claude` |
+| `claude-environment-id` | | Lo imprime `pr-reviewer setup-claude` |
 | `max-findings` | `10` | Máximo de hallazgos publicados |
 | `min-severity` | `low` | Severidad mínima que se publica: `critical`, `high`, `medium` o `low` |
 | `exclude` | | Patrones de rutas que se omiten, separados por comas o saltos de línea |
@@ -50,7 +82,8 @@ repo. En diffs grandes se priorizan los archivos fuente, y el resumen lista todo
 
 Cada revisión está limitada por `max-tokens`, y el resumen informa los tokens y el coste estimado. Como guía
 aproximada y sin medir, una revisión de 40k tokens de entrada y 4k de salida cuesta unos $0.05 con
-`gemini-3.8-flash`. Se ejecuta al abrir un PR o marcarlo como listo, y con `/review`, no en cada push.
+`gemini-3.8-flash`, $0.12 con `claude-sonnet-5-5` y $0.24 con `claude-opus-5-5`, más el tiempo de sesión en
+Claude. Se ejecuta al abrir un PR o marcarlo como listo, y con `/review`, no en cada push.
 
 ## Limitaciones
 
@@ -64,6 +97,7 @@ Quien abre un PR controla el texto que lee el agente, por lo que ese texto se tr
 
 - El agente solo tiene herramientas de lectura: sin shell, red, escritura ni subagentes.
 - Lee una copia limpia del repositorio, sin `AGENTS.md`, `GEMINI.md`, `.agents/`, `.git` ni symlinks.
+- Con Claude no se monta ningún repositorio, porque un repo montado carga su `.claude/skills` sin revisión.
 - El paso de revisión solo tiene la clave de IA y el de publicación solo tiene el token de GitHub.
 - Los hallazgos se validan contra el diff, y se eliminan secretos, menciones, imágenes y HTML antes de publicar.
 - Fija esta Action a un SHA de commit, como hace el ejemplo.
@@ -81,7 +115,7 @@ src/pr_reviewer/
 │   ├── git/          Lee diffs
 │   ├── github/       Cliente REST, renderizado Markdown, gateway del pull request
 │   ├── filesystem/   Crea la copia limpia
-│   └── providers/    Proveedores de revisión Antigravity y fake
+│   └── providers/    Proveedores de revisión Antigravity, Claude y fake
 └── entrypoints/   Línea de comandos y raíz de composición
 ```
 
@@ -92,14 +126,14 @@ Para añadir un proveedor, implementa el puerto `ReviewProvider` en `adapters/pr
 
 ```bash
 cd tools/pr-reviewer
-uv sync --extra dev --extra antigravity
+uv sync --extra dev --extra antigravity --extra claude
 uv run pytest && uv run ruff check . && uv run mypy src
 ```
 
 | Pruebas | Propósito | Requiere |
 | --- | --- | --- |
 | `tests/unit` | Reglas de dominio, casos de uso con puertos en memoria y renderizado Markdown | Nada |
-| `tests/integration` | Adaptadores contra git, el sistema de archivos, una API de GitHub simulada y las clases reales del SDK | git, extra `antigravity` |
+| `tests/integration` | Adaptadores contra git, el sistema de archivos, una API de GitHub simulada y las clases reales del SDK | git, extras `antigravity` y `claude` |
 | `tests/action` | Reglas de seguridad de `action.yml` y de los workflows | Nada |
 | `tests/architecture` | Regla de dependencias entre capas | Nada |
 

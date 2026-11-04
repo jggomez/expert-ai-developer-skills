@@ -31,3 +31,12 @@ def test_estimate_cost_applies_cached_rate():
 
     # Act / Assert
     assert estimate_cost("gemini-3.8-flash", usage) == pytest.approx(0.075)
+
+
+def test_cost_reported_by_the_provider_wins_over_the_estimate():
+    # Arrange
+    usage = ReviewUsage(input_tokens=1_000_000, reported_cost_usd=0.37)
+
+    # Act / Assert
+    assert estimate_cost("gemini-3.8-flash", usage) == pytest.approx(0.37)
+    assert estimate_cost("unknown-model", usage) == pytest.approx(0.37)

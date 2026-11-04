@@ -42,6 +42,16 @@ def test_ai_key_reaches_only_the_review_step():
     assert holders == ["review"]
 
 
+def test_each_provider_only_receives_its_own_key_name():
+    # Act
+    script = step("review")["run"]
+
+    # Assert
+    assert 'export GEMINI_API_KEY="$API_KEY"' in script
+    assert 'export ANTHROPIC_API_KEY="$API_KEY"' in script
+    assert "GEMINI_API_KEY" not in step("review")["env"]
+
+
 def test_review_step_has_no_github_token():
     # Act
     review = step("review")

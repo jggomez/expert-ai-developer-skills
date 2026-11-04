@@ -14,7 +14,7 @@ from typing import cast, get_args
 
 from pr_reviewer.adapters.filesystem.clean_workspace import build_clean_workspace
 from pr_reviewer.adapters.git.diff_reader import GitDiffReader
-from pr_reviewer.application.ports import DEFAULT_MAX_TOKENS
+from pr_reviewer.application.ports import DEFAULT_BUDGET_USD, DEFAULT_MAX_TOKENS
 from pr_reviewer.application.prepare_diff import prepare_diff
 from pr_reviewer.application.publish_review import publish_review
 from pr_reviewer.application.run_review import ReviewSettings, run_review
@@ -26,6 +26,7 @@ from pr_reviewer.entrypoints.composition import (
     github_client,
     load_provider,
     pull_request_gateway,
+    setup_claude,
 )
 
 
@@ -73,7 +74,12 @@ def run_review_command(args: argparse.Namespace) -> int:
     bundle = DiffBundle.model_validate_json(args.bundle.read_text(encoding="utf-8"))
     report = run_review(
         bundle,
-        ReviewSettings(provider=args.provider, model=args.model or None, max_tokens=args.max_tokens),
+        ReviewSettings(
+            provider=args.provider,
+            model=args.model or None,
+            max_tokens=args.max_tokens,
+            budget_usd=args.budget_usd,
+        ),
         load_provider=lambda: load_provider(args.provider, args.fake_findings),
         build_workspace=lambda: build_clean_workspace(args.repo, args.workspace),
     )
@@ -88,6 +94,14 @@ def run_publish(args: argparse.Namespace) -> int:
     options = PublishOptions(max_findings=args.max_findings, min_severity=cast(Severity, args.min_severity))
     result = publish_review(pull_request_gateway(args.repo_name, args.pr), report, bundle, options)
     print(f"Posted {result.inline_posted} inline comment(s); {result.already_posted} already posted")
+    return 0
+
+
+def run_setup_claude(_: argparse.Namespace) -> int:
+    agent_id, environment_id = setup_claude()
+    print("Save these as repository variables:")
+    print(f"CLAUDE_AGENT_ID={agent_id}")
+    print(f"CLAUDE_ENVIRONMENT_ID={environment_id}")
     return 0
 
 
@@ -108,15 +122,19 @@ def build_parser() -> argparse.ArgumentParser:
     diff.set_defaults(func=run_diff)
 
     review = commands.add_parser("review", help="run the provider and write a report")
-    review.add_argument("--provider", required=True, choices=["antigravity", "fake"])
+    review.add_argument("--provider", required=True, choices=["antigravity", "claude", "fake"])
     review.add_argument("--repo", type=Path, required=True)
     review.add_argument("--bundle", type=Path, required=True)
     review.add_argument("--output", type=Path, required=True)
     review.add_argument("--workspace", type=Path, required=True, help="where to create the clean copy")
     review.add_argument("--model", default="")
     review.add_argument("--max-tokens", type=int, default=DEFAULT_MAX_TOKENS)
+    review.add_argument("--budget-usd", default=DEFAULT_BUDGET_USD, help="spend limit for providers that enforce one")
     review.add_argument("--fake-findings", type=Path)
     review.set_defaults(func=run_review_command)
+
+    setup = commands.add_parser("setup-claude", help="create the Claude agent and environment, once")
+    setup.set_defaults(func=run_setup_claude)
 
     post = commands.add_parser("publish", help="post the report to the pull request")
     post.add_argument("--bundle", type=Path, required=True)

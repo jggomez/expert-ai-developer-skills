@@ -14,7 +14,7 @@ ALLOWED_THIRD_PARTY = {
     "adapters/git": set(),
     "adapters/filesystem": set(),
     "adapters/github": {"httpx"},
-    "adapters/providers": {"pydantic", "google"},
+    "adapters/providers": {"pydantic", "google", "anthropic"},
     "entrypoints": set(),
 }
 FORBIDDEN_LAYERS = {

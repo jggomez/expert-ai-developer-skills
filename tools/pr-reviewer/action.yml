@@ -7,10 +7,10 @@ branding:
 
 inputs:
   provider:
-    description: "Review provider: antigravity or fake (no AI, for trying the setup)."
+    description: "Review provider: antigravity, claude or fake (no AI, for trying the setup)."
     default: antigravity
   api-key:
-    description: Provider API key. For antigravity, a Gemini API key.
+    description: Provider API key, either a Gemini or an Anthropic key.
     required: false
     default: ""
   github-token:
@@ -20,8 +20,17 @@ inputs:
     description: Model to use. Empty means the provider default.
     default: ""
   max-tokens:
-    description: Token budget for one review.
+    description: Token budget for one review (antigravity).
     default: "200000"
+  budget-usd:
+    description: Hard spend limit in dollars for one review (claude).
+    default: "1.00"
+  claude-agent-id:
+    description: Agent ID printed by `pr-reviewer setup-claude`.
+    default: ""
+  claude-environment-id:
+    description: Environment ID printed by `pr-reviewer setup-claude`.
+    default: ""
   max-findings:
     description: Maximum findings to publish per review.
     default: "10"
@@ -87,13 +96,20 @@ runs:
       if: steps.context.outputs.should_run == 'true'
       shell: bash
       env:
-        GEMINI_API_KEY: ${{ inputs.api-key }}
+        API_KEY: ${{ inputs.api-key }}
         PROVIDER: ${{ inputs.provider }}
+        CLAUDE_AGENT_ID: ${{ inputs.claude-agent-id }}
+        CLAUDE_ENVIRONMENT_ID: ${{ inputs.claude-environment-id }}
+        BUDGET_USD: ${{ inputs.budget-usd }}
         MODEL: ${{ inputs.model }}
         MAX_TOKENS: ${{ inputs.max-tokens }}
       run: |
         extra=()
-        if [ "$PROVIDER" != "fake" ]; then extra=(--extra "$PROVIDER"); fi
+        case "$PROVIDER" in
+          antigravity) export GEMINI_API_KEY="$API_KEY"; extra=(--extra antigravity) ;;
+          claude) export ANTHROPIC_API_KEY="$API_KEY"; extra=(--extra claude) ;;
+        esac
+        unset API_KEY
         uv run --frozen --project "$GITHUB_ACTION_PATH" "${extra[@]}" pr-reviewer review \
           --provider "$PROVIDER" \
           --repo "$GITHUB_WORKSPACE/.pr-reviewer/pr" \
@@ -101,6 +117,7 @@ runs:
           --workspace "$RUNNER_TEMP/pr-reviewer-workspace" \
           --model "$MODEL" \
           --max-tokens "$MAX_TOKENS" \
+          --budget-usd "$BUDGET_USD" \
           --output "$RUNNER_TEMP/pr-reviewer-report.json"
 
     - name: Publish the review

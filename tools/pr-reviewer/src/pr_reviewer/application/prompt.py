@@ -23,13 +23,17 @@ def system_instructions() -> str:
     )
 
 
-def build_prompt(bundle: DiffBundle) -> str:
+REPOSITORY_NOTE = (
+    "The repository at the head commit is your workspace, so read the surrounding code when you need context."
+)
+
+
+def build_prompt(bundle: DiffBundle, *, workspace_note: str = REPOSITORY_NOTE) -> str:
     """Wrap the diff in a delimiter the pull request author cannot predict."""
     tag = f"untrusted_diff_{secrets.token_hex(8)}"
     diff = "".join(file.patch for file in bundle.files)
     return (
-        "Review this pull request diff. The repository at the head commit is your workspace, so "
-        "read the surrounding code when you need context.\n\n"
+        f"Review this pull request diff. {workspace_note}\n\n"
         f"<{tag}>\n{diff}</{tag}>\n\n"
         "Return your findings using the required structured format."
     )

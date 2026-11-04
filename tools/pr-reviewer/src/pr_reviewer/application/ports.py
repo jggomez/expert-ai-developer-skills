@@ -16,6 +16,7 @@ from pr_reviewer.domain.models import (
 )
 
 DEFAULT_MAX_TOKENS = 200_000
+DEFAULT_BUDGET_USD = "1.00"
 
 
 @dataclass(frozen=True)
@@ -24,6 +25,7 @@ class ReviewRequest:
     workspace: Path
     model: str | None = None
     max_tokens: int = DEFAULT_MAX_TOKENS
+    budget_usd: str = DEFAULT_BUDGET_USD
 
 
 @dataclass(frozen=True)

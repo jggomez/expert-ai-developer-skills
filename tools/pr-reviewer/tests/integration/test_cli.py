@@ -133,3 +133,17 @@ def test_usage_errors_still_fail():
     # Act / Assert
     with pytest.raises(SystemExit):
         cli.main(["publish"])
+
+
+def test_setup_claude_prints_the_ids_to_store(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
+    # Arrange
+    monkeypatch.setattr(cli, "setup_claude", lambda: ("agent_9", "env_9"))
+
+    # Act
+    code = cli.main(["setup-claude"])
+
+    # Assert
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "agent_9" in out
+    assert "env_9" in out
