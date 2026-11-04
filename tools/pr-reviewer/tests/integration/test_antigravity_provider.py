@@ -10,13 +10,13 @@ pytest.importorskip("google.antigravity")
 from google.antigravity import BuiltinTools, LocalAgentConfig
 from google.antigravity.types import StopReason, UsageMetadata
 
-from pr_reviewer.models import DiffBundle, FileDiff
-from pr_reviewer.providers.antigravity import (
+from pr_reviewer.adapters.providers.antigravity import (
     READ_ONLY_TOOLS,
     AntigravityProvider,
     build_config,
 )
-from pr_reviewer.providers.base import ProviderError, ReviewRequest
+from pr_reviewer.application.ports import ProviderError, ReviewRequest
+from pr_reviewer.domain.models import DiffBundle, FileDiff
 
 FINDING = {
     "file": "a.py", "line": 1, "severity": "high", "category": "cost",

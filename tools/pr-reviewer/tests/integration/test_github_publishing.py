@@ -1,64 +1,17 @@
-"""Findings are validated, sanitised and published deterministically."""
+"""Publishing through the real gateway against an in-memory GitHub API."""
 
 import json
 
 import httpx
 import pytest
 
-from pr_reviewer.github import GitHubClient, GitHubError
-from pr_reviewer.models import (
-    DiffBundle,
-    FileDiff,
-    Finding,
-    OmittedFile,
-    ReviewReport,
-    ReviewUsage,
-)
-from pr_reviewer.publish import (
-    MAX_COMMENT_CHARS,
-    SUMMARY_MARKER,
-    PublishOptions,
-    fingerprint,
-    format_inline_comment,
-    publish,
-    sanitize,
-    select_findings,
-)
-
-HEAD = "b" * 40
-
-
-def finding(**overrides) -> Finding:
-    values = {
-        "file": "app.py",
-        "line": 10,
-        "severity": "high",
-        "category": "cost",
-        "confidence": "high",
-        "title": "Query inside a loop",
-        "impact": "One query per order",
-        "proposed_fix": "Use a join",
-    }
-    return Finding(**{**values, **overrides})
-
-
-def bundle(omitted: list[OmittedFile] | None = None) -> DiffBundle:
-    return DiffBundle(
-        base="a" * 40,
-        head=HEAD,
-        files=[FileDiff(path="app.py", commentable_lines=[10, 11, 12])],
-        omitted=omitted or [],
-    )
-
-
-def report(findings: list[Finding] | None = None) -> ReviewReport:
-    return ReviewReport(
-        status="ok",
-        provider="antigravity",
-        model="gemini-3.8-flash",
-        findings=findings if findings is not None else [finding()],
-        usage=ReviewUsage(input_tokens=40_000, output_tokens=4_000),
-    )
+from pr_reviewer.adapters.github.client import GitHubClient, GitHubError
+from pr_reviewer.adapters.github.markdown import MAX_COMMENT_CHARS, SUMMARY_MARKER
+from pr_reviewer.adapters.github.pull_request_gateway import GitHubPullRequestGateway
+from pr_reviewer.application.publish_review import publish_review
+from pr_reviewer.domain.findings import PublishOptions, fingerprint
+from pr_reviewer.domain.models import DiffBundle, OmittedFile, ReviewReport
+from support.builders import HEAD, bundle, finding, report
 
 
 class FakeGitHub:
@@ -104,100 +57,8 @@ class FakeGitHub:
 
 def run(fake: FakeGitHub, rep: ReviewReport, bun: DiffBundle | None = None, **options):
     client = GitHubClient("token", transport=httpx.MockTransport(fake.handler))
-    return publish(client, "o/r", 7, rep, bun or bundle(), PublishOptions(**options))
-
-
-def test_select_drops_findings_outside_the_diff_and_counts_them():
-    # Arrange
-    findings = [finding(), finding(line=99), finding(file="other.py")]
-
-    # Act
-    selected = select_findings(findings, bundle(), PublishOptions())
-
-    # Assert
-    assert [(f.file, f.line) for f in selected.kept] == [("app.py", 10)]
-    assert selected.outside_diff == 2
-
-
-def test_select_applies_confidence_and_severity_filters():
-    # Arrange
-    findings = [
-        finding(confidence="low"),
-        finding(severity="low", title="minor"),
-        finding(severity="critical", title="major"),
-    ]
-
-    # Act
-    selected = select_findings(findings, bundle(), PublishOptions(min_severity="medium"))
-
-    # Assert
-    assert [f.title for f in selected.kept] == ["major"]
-    assert selected.filtered == 2
-
-
-def test_select_orders_by_severity_caps_the_list_and_declares_the_overflow():
-    # Arrange
-    findings = [
-        finding(severity="low", title="c"),
-        finding(severity="critical", title="a"),
-        finding(severity="medium", title="b"),
-    ]
-
-    # Act
-    selected = select_findings(findings, bundle(), PublishOptions(max_findings=2))
-
-    # Assert
-    assert [f.title for f in selected.kept] == ["a", "b"]
-    assert selected.over_limit == 1
-
-
-@pytest.mark.parametrize(
-    ("raw", "forbidden"),
-    [
-        ("leak ghp_" + "a" * 36, "ghp_"),
-        ("leak github_pat_" + "a" * 40, "github_pat_"),
-        ("leak AIza" + "b" * 35, "AIza"),
-        ("leak sk-ant-api03-" + "c" * 40, "sk-ant-"),
-        ("leak AKIA" + "D" * 16, "AKIA"),
-        ("-----BEGIN RSA PRIVATE KEY-----\nabc\n-----END RSA PRIVATE KEY-----", "abc"),
-        ("hello @octocat", "@octocat"),
-        (".@octocat", "@octocat"),
-        ("-@octocat", "@octocat"),
-        ("/@octocat", "@octocat"),
-        ("` @octocat `", "@octocat"),
-        ("\\`<img src=https://evil.example/p.png>\\`", "<img"),
-        ("``` <img src=x> `", "<img"),
-        ("leak ASIA" + "D" * 16, "ASIA"),
-        ("leak glpat-" + "e" * 20, "glpat-"),
-        ("leak xoxb-" + "1" * 20, "xoxb-"),
-        ("![track](https://evil.example/x.png)", "!["),
-        (f"{SUMMARY_MARKER} fake", SUMMARY_MARKER),
-    ],
-)
-def test_sanitize_removes_secrets_mentions_images_and_markers(raw: str, forbidden: str):
-    # Act
-    clean = sanitize(raw)
-
-    # Assert
-    assert forbidden not in clean
-
-
-def test_inline_comment_keeps_fence_intact_when_the_fix_contains_backticks():
-    # Arrange
-    item = finding(proposed_fix="```py\nx = 1\n```")
-
-    # Act
-    body = format_inline_comment(item)
-
-    # Assert
-    assert "````" in body
-    assert fingerprint(item) in body
-
-
-def test_fingerprint_is_stable_across_line_moves_and_whitespace():
-    # Act / Assert
-    assert fingerprint(finding(line=10)) == fingerprint(finding(line=12, title=" Query  inside a LOOP "))
-    assert fingerprint(finding()) != fingerprint(finding(file="b.py"))
+    gateway = GitHubPullRequestGateway(client, "o/r", 7)
+    return publish_review(gateway, rep, bun or bundle(), PublishOptions(**options))
 
 
 def test_publish_posts_inline_review_and_summary_with_cost():
@@ -322,11 +183,6 @@ def test_client_reads_every_page():
 
     # Assert
     assert len(items) == 101
-
-
-def test_email_addresses_are_left_alone():
-    # Act / Assert
-    assert sanitize("write to dev@example.com") == "write to dev@example.com"
 
 
 def test_summary_stays_within_the_github_size_limit_with_many_omitted_files():

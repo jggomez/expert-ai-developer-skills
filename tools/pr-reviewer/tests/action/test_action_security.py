@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-ROOT = Path(__file__).resolve().parent.parent
-REPO_ROOT = ROOT.parent.parent
+ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = ROOT.parents[1]
 ACTION = yaml.safe_load((ROOT / "action.yml").read_text())
 STEPS = ACTION["runs"]["steps"]
 SHA_PIN = re.compile(r"@[0-9a-f]{40}$")

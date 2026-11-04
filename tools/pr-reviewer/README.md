@@ -68,6 +68,26 @@ The author of a pull request controls the text the agent reads, so that text is 
 - Findings are validated against the diff, and secrets, mentions, images and HTML are removed before posting.
 - Pin this Action to a commit SHA, as the example does.
 
+## Architecture
+
+The code follows clean architecture. Dependencies only point inwards, and
+`tests/architecture` fails the build if that rule is broken.
+
+```text
+src/pr_reviewer/
+├── domain/        Rules with no I/O: diff parsing, file selection, findings, triggers, pricing
+├── application/   Use cases (prepare_diff, run_review, publish_review), ports, prompt, criteria
+├── adapters/      Port implementations
+│   ├── git/          Reads diffs
+│   ├── github/       REST client, Markdown rendering, pull request gateway
+│   ├── filesystem/   Builds the clean copy
+│   └── providers/    Antigravity and fake review providers
+└── entrypoints/   Command line and composition root
+```
+
+To add a provider, implement the `ReviewProvider` port in `adapters/providers/` and register it in
+`entrypoints/composition.py`. Nothing else changes.
+
 ## Development
 
 ```bash
@@ -75,5 +95,14 @@ cd tools/pr-reviewer
 uv sync --extra dev --extra antigravity
 uv run pytest && uv run ruff check . && uv run mypy src
 ```
+
+| Tests | Purpose | Needs |
+| --- | --- | --- |
+| `tests/unit` | Domain rules, use cases with in-memory ports, and Markdown rendering | Nothing |
+| `tests/integration` | Adapters against git, the file system, a fake GitHub API and the real SDK classes | git, `antigravity` extra |
+| `tests/action` | Security rules of `action.yml` and the workflows | Nothing |
+| `tests/architecture` | Dependency rule between layers | Nothing |
+
+None of them call a paid API. Shared test data is in `tests/support`.
 
 Licensed under Apache-2.0.

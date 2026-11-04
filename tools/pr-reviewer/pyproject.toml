@@ -18,7 +18,7 @@ antigravity = ["google-antigravity==0.1.23"]
 dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.11", "pyyaml>=6.0"]
 
 [project.scripts]
-pr-reviewer = "pr_reviewer.cli:main"
+pr-reviewer = "pr_reviewer.entrypoints.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/jggomez/expert-ai-developer-skills/tree/main/tools/pr-reviewer"
@@ -30,8 +30,9 @@ packages = ["src/pr_reviewer"]
 
 [tool.pytest.ini_options]
 minversion = "8.0"
-pythonpath = ["src"]
+pythonpath = ["src", "tests"]
 testpaths = ["tests"]
+addopts = "--import-mode=importlib"
 
 [tool.ruff]
 target-version = "py311"

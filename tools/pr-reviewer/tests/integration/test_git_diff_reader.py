@@ -1,118 +1,19 @@
-"""Diff parsing, filtering and size budget."""
+"""Reading real git output, including hostile file content and names."""
 
 import subprocess
 from pathlib import Path
 
 import pytest
 
-from pr_reviewer.diff import build_bundle, git_diff, parse_diff
-
-DIFF = """\
-diff --git a/app/db.py b/app/db.py
-index 111..222 100644
---- a/app/db.py
-+++ b/app/db.py
-@@ -10,3 +10,4 @@ def load():
- keep = 1
--old = 2
-+new = 2
-+++weird = 3
- tail = 4
-\\ No newline at end of file
-diff --git a/uv.lock b/uv.lock
-index 111..222 100644
---- a/uv.lock
-+++ b/uv.lock
-@@ -1 +1 @@
--a
-+b
-diff --git a/gone.py b/gone.py
-deleted file mode 100644
-index 111..000
---- a/gone.py
-+++ /dev/null
-@@ -1 +0,0 @@
--x
-diff --git a/logo.png b/logo.png
-index 111..222 100644
-Binary files a/logo.png and b/logo.png differ
-diff --git a/old name.py b/new name.py
-similarity index 90%
-rename from old name.py
-rename to new name.py
-index 111..222 100644
---- a/old name.py\t
-+++ b/new name.py\t
-@@ -1 +1 @@
--a
-+b
-"""
-
-
-def test_parse_commentable_lines_use_new_file_numbers_and_ignore_plus_content():
-    # Arrange / Act
-    files = {f.path: f for f in parse_diff(DIFF)}
-
-    # Assert: context + added lines; "+++weird" is content, not a header
-    assert files["app/db.py"].commentable_lines == [10, 11, 12, 13]
-    assert len(files) == 5
-
-
-def test_parse_marks_deleted_binary_and_renamed_files():
-    # Arrange / Act
-    files = {f.path: f for f in parse_diff(DIFF)}
-
-    # Assert
-    assert files["gone.py"].deleted is True
-    assert files["logo.png"].binary is True
-    assert files["new name.py"].commentable_lines == [1]
-
-
-def test_bundle_reports_every_omitted_file_with_its_reason():
-    # Arrange / Act
-    bundle = build_bundle(DIFF, base="a" * 40, head="b" * 40, exclude=[], max_chars=10_000)
-
-    # Assert
-    assert sorted(f.path for f in bundle.files) == ["app/db.py", "new name.py"]
-    assert {o.path: o.reason for o in bundle.omitted} == {
-        "uv.lock": "excluded",
-        "gone.py": "deleted",
-        "logo.png": "binary",
-    }
-
-
-def test_user_exclude_supports_directories_and_basenames():
-    # Arrange / Act
-    bundle = build_bundle(DIFF, base="a" * 40, head="b" * 40, exclude=["app/*", "new name.*"], max_chars=10_000)
-
-    # Assert
-    assert bundle.files == []
-    assert {o.path: o.reason for o in bundle.omitted}["app/db.py"] == "excluded"
-
-
-def test_size_budget_keeps_source_before_tests_and_declares_the_rest():
-    # Arrange
-    def file_diff(path: str, lines: int) -> str:
-        body = "\n".join(f"+line{i}" for i in range(lines))
-        return f"diff --git a/{path} b/{path}\n--- a/{path}\n+++ b/{path}\n@@ -0,0 +1,{lines} @@\n{body}\n"
-
-    text = file_diff("tests/test_big.py", 5) + file_diff("src/small.py", 5) + file_diff("src/huge.py", 500)
-
-    # Act
-    bundle = build_bundle(text, base="a" * 40, head="b" * 40, exclude=[], max_chars=250)
-
-    # Assert
-    assert [f.path for f in bundle.files] == ["src/small.py"]
-    assert {o.path: o.reason for o in bundle.omitted} == {
-        "tests/test_big.py": "size-limit",
-        "src/huge.py": "size-limit",
-    }
+from pr_reviewer.adapters.git.diff_reader import GitDiffReader
+from pr_reviewer.domain.diff_parser import parse_diff
+from pr_reviewer.domain.file_selection import build_bundle
 
 
 def test_git_diff_rejects_values_that_are_not_commit_shas(tmp_path: Path):
     # Arrange / Act / Assert
     with pytest.raises(ValueError, match="commit SHA"):
-        git_diff(tmp_path, "--output=/tmp/x", "b" * 40)
+        GitDiffReader(tmp_path).read("--output=/tmp/x", "b" * 40)
 
 
 def test_git_diff_reads_merge_base_changes_and_ignores_textconv(tmp_path: Path):
@@ -134,7 +35,7 @@ def test_git_diff_reads_merge_base_changes_and_ignores_textconv(tmp_path: Path):
     head = git("rev-parse", "HEAD")
 
     # Act
-    text = git_diff(tmp_path, base, head)
+    text = GitDiffReader(tmp_path).read(base, head)
 
     # Assert
     assert "+two" in text
@@ -167,7 +68,7 @@ def test_line_separators_inside_a_file_cannot_forge_diff_structure(tmp_path: Pat
     repo, base, head = commit_change(tmp_path, b"app.py", content)
 
     # Act
-    bundle = build_bundle(git_diff(repo, base, head), base=base, head=head, exclude=[], max_chars=10_000)
+    bundle = build_bundle(GitDiffReader(repo).read(base, head), base=base, head=head, exclude=[], max_chars=10_000)
 
     # Assert
     assert [f.path for f in bundle.files] == ["app.py"]
@@ -181,7 +82,7 @@ def test_crafted_quoted_path_inside_content_does_not_crash(tmp_path: Path):
     repo, base, head = commit_change(tmp_path, b"app.py", 'print(1)\x0cdiff --git x\x0c+++ "☃"\n'.encode())
 
     # Act
-    bundle = build_bundle(git_diff(repo, base, head), base=base, head=head, exclude=[], max_chars=10_000)
+    bundle = build_bundle(GitDiffReader(repo).read(base, head), base=base, head=head, exclude=[], max_chars=10_000)
 
     # Assert
     assert [f.path for f in bundle.files] == ["app.py"]
@@ -196,7 +97,7 @@ def test_quoted_file_names_are_decoded_exactly(tmp_path: Path, name: bytes, expe
     repo, base, head = commit_change(tmp_path, name, b"x = 1\n")
 
     # Act
-    files = parse_diff(git_diff(repo, base, head))
+    files = parse_diff(GitDiffReader(repo).read(base, head))
 
     # Assert
     assert [f.path for f in files] == [expected]
@@ -207,7 +108,7 @@ def test_quoted_binary_file_keeps_its_name(tmp_path: Path):
     repo, base, head = commit_change(tmp_path, b"u\nx.bin", b"\x00\x01\x02")
 
     # Act
-    bundle = build_bundle(git_diff(repo, base, head), base=base, head=head, exclude=[], max_chars=10_000)
+    bundle = build_bundle(GitDiffReader(repo).read(base, head), base=base, head=head, exclude=[], max_chars=10_000)
 
     # Assert
     assert [(o.path, o.reason) for o in bundle.omitted] == [("u\nx.bin", "binary")]

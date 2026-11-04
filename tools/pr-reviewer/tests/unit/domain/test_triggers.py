@@ -2,7 +2,7 @@
 
 import pytest
 
-from pr_reviewer.context import resolve_context
+from pr_reviewer.domain.triggers import resolve_context
 
 BASE, HEAD = "a" * 40, "b" * 40
 

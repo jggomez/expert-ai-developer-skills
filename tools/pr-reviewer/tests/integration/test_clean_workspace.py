@@ -3,7 +3,7 @@
 import os
 from pathlib import Path
 
-from pr_reviewer.workspace import build_clean_workspace
+from pr_reviewer.adapters.filesystem.clean_workspace import build_clean_workspace
 
 
 def test_clean_copy_drops_instruction_files_git_and_symlinks(tmp_path: Path):

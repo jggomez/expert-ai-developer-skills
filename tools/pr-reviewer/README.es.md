@@ -68,6 +68,26 @@ Quien abre un PR controla el texto que lee el agente, por lo que ese texto se tr
 - Los hallazgos se validan contra el diff, y se eliminan secretos, menciones, imágenes y HTML antes de publicar.
 - Fija esta Action a un SHA de commit, como hace el ejemplo.
 
+## Arquitectura
+
+El código sigue clean architecture. Las dependencias solo apuntan hacia dentro, y
+`tests/architecture` hace fallar la build si se rompe esa regla.
+
+```text
+src/pr_reviewer/
+├── domain/        Reglas sin I/O: parseo del diff, selección de archivos, hallazgos, disparadores, precios
+├── application/   Casos de uso (prepare_diff, run_review, publish_review), puertos, prompt, criterios
+├── adapters/      Implementaciones de los puertos
+│   ├── git/          Lee diffs
+│   ├── github/       Cliente REST, renderizado Markdown, gateway del pull request
+│   ├── filesystem/   Crea la copia limpia
+│   └── providers/    Proveedores de revisión Antigravity y fake
+└── entrypoints/   Línea de comandos y raíz de composición
+```
+
+Para añadir un proveedor, implementa el puerto `ReviewProvider` en `adapters/providers/` y regístralo en
+`entrypoints/composition.py`. No cambia nada más.
+
 ## Desarrollo
 
 ```bash
@@ -75,5 +95,14 @@ cd tools/pr-reviewer
 uv sync --extra dev --extra antigravity
 uv run pytest && uv run ruff check . && uv run mypy src
 ```
+
+| Pruebas | Propósito | Requiere |
+| --- | --- | --- |
+| `tests/unit` | Reglas de dominio, casos de uso con puertos en memoria y renderizado Markdown | Nada |
+| `tests/integration` | Adaptadores contra git, el sistema de archivos, una API de GitHub simulada y las clases reales del SDK | git, extra `antigravity` |
+| `tests/action` | Reglas de seguridad de `action.yml` y de los workflows | Nada |
+| `tests/architecture` | Regla de dependencias entre capas | Nada |
+
+Ninguna llama a una API de pago. Los datos compartidos de prueba están en `tests/support`.
 
 Licencia Apache-2.0.

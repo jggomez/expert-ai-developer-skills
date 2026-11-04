@@ -5,11 +5,11 @@ from __future__ import annotations
 import secrets
 from importlib import resources
 
-from pr_reviewer.models import DiffBundle
+from pr_reviewer.domain.models import DiffBundle
 
 
 def load_rubric() -> str:
-    return resources.files("pr_reviewer").joinpath("rubric.md").read_text(encoding="utf-8")
+    return resources.files("pr_reviewer.application").joinpath("rubric.md").read_text(encoding="utf-8")
 
 
 def system_instructions() -> str:

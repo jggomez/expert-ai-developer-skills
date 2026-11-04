@@ -1,76 +1,14 @@
-"""Read a pull request diff and decide what the agent reviews."""
+"""Parse unified diff text into changed files."""
 
 from __future__ import annotations
 
-import fnmatch
 import re
-import subprocess
-from pathlib import Path, PurePosixPath
 
-from pr_reviewer.models import DiffBundle, FileDiff, OmittedFile
+from pr_reviewer.domain.models import FileDiff
 
-DEFAULT_MAX_CHARS = 120_000
-
-DEFAULT_EXCLUDE = (
-    "*.lock",
-    "*.lockb",
-    "package-lock.json",
-    "pnpm-lock.yaml",
-    "go.sum",
-    "*.min.js",
-    "*.min.css",
-    "*.map",
-    "*.snap",
-    "*.svg",
-    "*.g.dart",
-    "*.freezed.dart",
-    "*.pb.go",
-    "*_pb2.py",
-    "*_pb2_grpc.py",
-    "dist/*",
-    "*/dist/*",
-    "build/*",
-    "*/build/*",
-    "vendor/*",
-    "*/vendor/*",
-    "node_modules/*",
-    "*/node_modules/*",
-)
-
-_SHA = re.compile(r"^[0-9a-f]{40}([0-9a-f]{24})?$")
 _HUNK = re.compile(r"^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 _QUOTED_PATH = re.compile(r'"(?:[^"\\]|\\.)*"')
 _ESCAPES = {"a": 7, "b": 8, "t": 9, "n": 10, "v": 11, "f": 12, "r": 13, '"': 34, "\\": 92}
-_TEST_PATH = re.compile(r"(^|/)(tests?|__tests__|spec)(/|$)|(^|/)test_|_test\.|\.test\.|\.spec\.")
-
-
-def git_diff(repo: Path, base: str, head: str) -> str:
-    """Return the three-dot diff between two commits.
-
-    External diff drivers and textconv are disabled because both can be
-    configured to run commands, and the repository content is untrusted.
-    """
-    for sha in (base, head):
-        if not _SHA.fullmatch(sha):
-            raise ValueError(f"Expected a full commit SHA, got {sha!r}")
-    completed = subprocess.run(
-        [
-            "git",
-            "-c",
-            "core.quotePath=false",
-            "diff",
-            "--no-color",
-            "--no-ext-diff",
-            "--no-textconv",
-            "--find-renames",
-            f"{base}...{head}",
-        ],
-        cwd=repo,
-        check=True,
-        capture_output=True,
-    )
-    # Decoded from bytes: text mode would turn a lone CR in a file into a new line.
-    return completed.stdout.decode("utf-8", "replace")
 
 
 def parse_diff(text: str) -> list[FileDiff]:
@@ -190,48 +128,3 @@ def _unquote(value: str) -> str:
             decoded += char.encode("utf-8")
             index += 1
     return decoded.decode("utf-8", "replace")
-
-
-def is_excluded(path: str, patterns: tuple[str, ...] | list[str]) -> bool:
-    """Match a pattern against the whole path or the file name."""
-    name = PurePosixPath(path).name
-    return any(fnmatch.fnmatch(path, p) or fnmatch.fnmatch(name, p) for p in patterns)
-
-
-def _priority(file: FileDiff) -> tuple[bool, int]:
-    return (bool(_TEST_PATH.search(file.path)), len(file.patch))
-
-
-def build_bundle(
-    text: str,
-    *,
-    base: str,
-    head: str,
-    exclude: list[str],
-    max_chars: int = DEFAULT_MAX_CHARS,
-) -> DiffBundle:
-    """Choose the files to review: source first, then smallest, within the size budget."""
-    patterns = [*DEFAULT_EXCLUDE, *exclude]
-    selected: list[FileDiff] = []
-    omitted: list[OmittedFile] = []
-
-    candidates: list[FileDiff] = []
-    for file in parse_diff(text):
-        if file.deleted:
-            omitted.append(OmittedFile(path=file.path, reason="deleted"))
-        elif file.binary:
-            omitted.append(OmittedFile(path=file.path, reason="binary"))
-        elif is_excluded(file.path, patterns):
-            omitted.append(OmittedFile(path=file.path, reason="excluded"))
-        elif file.commentable_lines:
-            candidates.append(file)
-
-    used = 0
-    for file in sorted(candidates, key=_priority):
-        if used + len(file.patch) <= max_chars:
-            selected.append(file)
-            used += len(file.patch)
-        else:
-            omitted.append(OmittedFile(path=file.path, reason="size-limit"))
-
-    return DiffBundle(base=base, head=head, files=selected, omitted=omitted)

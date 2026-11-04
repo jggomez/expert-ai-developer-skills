@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pr_reviewer.models import ReviewResult, ReviewUsage
-from pr_reviewer.providers.base import ProviderOutput, ReviewRequest
+from pr_reviewer.application.ports import ProviderOutput, ReviewRequest
+from pr_reviewer.domain.models import ReviewResult, ReviewUsage
 
 
 class FakeProvider:

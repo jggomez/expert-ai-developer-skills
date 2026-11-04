@@ -17,9 +17,9 @@ from google.antigravity import Agent, BuiltinTools, CapabilitiesConfig, LocalAge
 from google.antigravity.hooks import policy
 from google.antigravity.types import BudgetConfig, StopReason, UsageMetadata
 
-from pr_reviewer.models import ReviewResult, ReviewUsage
-from pr_reviewer.prompt import build_prompt, system_instructions
-from pr_reviewer.providers.base import ProviderError, ProviderOutput, ReviewRequest
+from pr_reviewer.application.ports import ProviderError, ProviderOutput, ReviewRequest
+from pr_reviewer.application.prompt import build_prompt, system_instructions
+from pr_reviewer.domain.models import ReviewResult, ReviewUsage
 
 DEFAULT_MODEL = "gemini-3.8-flash"
 MAX_MODEL_CALLS = 20

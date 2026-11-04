@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import sys
 import traceback
@@ -11,33 +12,21 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import cast, get_args
 
-from pr_reviewer.context import ReviewContext, resolve_context
-from pr_reviewer.diff import DEFAULT_MAX_CHARS, build_bundle, git_diff
-from pr_reviewer.github import GitHubClient
-from pr_reviewer.models import DiffBundle, ReviewReport, Severity
-from pr_reviewer.providers.base import (
-    DEFAULT_MAX_TOKENS,
-    ProviderError,
-    ReviewProvider,
-    ReviewRequest,
+from pr_reviewer.adapters.filesystem.clean_workspace import build_clean_workspace
+from pr_reviewer.adapters.git.diff_reader import GitDiffReader
+from pr_reviewer.application.ports import DEFAULT_MAX_TOKENS
+from pr_reviewer.application.prepare_diff import prepare_diff
+from pr_reviewer.application.publish_review import publish_review
+from pr_reviewer.application.run_review import ReviewSettings, run_review
+from pr_reviewer.domain.file_selection import DEFAULT_MAX_CHARS
+from pr_reviewer.domain.findings import PublishOptions
+from pr_reviewer.domain.models import DiffBundle, ReviewReport, Severity
+from pr_reviewer.domain.triggers import ReviewContext, resolve_context
+from pr_reviewer.entrypoints.composition import (
+    github_client,
+    load_provider,
+    pull_request_gateway,
 )
-from pr_reviewer.publish import PublishOptions, publish
-from pr_reviewer.workspace import build_clean_workspace
-
-MAX_ERROR_CHARS = 300
-
-
-def _load_provider(name: str, fake_findings: Path | None) -> ReviewProvider:
-    """Import lazily: each provider's SDK is an optional dependency."""
-    if name == "fake":
-        from pr_reviewer.providers.fake import FakeProvider
-
-        return FakeProvider(fake_findings)
-    if name == "antigravity":
-        from pr_reviewer.providers.antigravity import AntigravityProvider
-
-        return AntigravityProvider()
-    raise ValueError(f"Unknown provider {name!r}")
 
 
 def _write_output(context: ReviewContext) -> None:
@@ -53,15 +42,11 @@ def _write_output(context: ReviewContext) -> None:
             output.write(f"{key}={value}\n")
 
 
-def _github_client() -> GitHubClient:
-    return GitHubClient(os.environ["GITHUB_TOKEN"])
-
-
 def run_context(_: argparse.Namespace) -> int:
     event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8"))
 
     def fetch_pr(repo: str, number: int) -> dict[str, object]:
-        return _github_client().pull_request(repo, number)
+        return github_client().pull_request(repo, number)
 
     context = resolve_context(os.environ["GITHUB_EVENT_NAME"], event, fetch_pr)
     if not context.should_run:
@@ -71,50 +56,27 @@ def run_context(_: argparse.Namespace) -> int:
 
 
 def run_diff(args: argparse.Namespace) -> int:
-    text = git_diff(args.repo, args.base, args.head)
     patterns = [p.strip() for p in args.exclude.replace(",", "\n").splitlines() if p.strip()]
-    bundle = build_bundle(text, base=args.base, head=args.head, exclude=patterns, max_chars=args.max_chars)
+    bundle = prepare_diff(
+        GitDiffReader(args.repo),
+        base=args.base,
+        head=args.head,
+        exclude=patterns,
+        max_chars=args.max_chars,
+    )
     args.output.write_text(bundle.model_dump_json(indent=2), encoding="utf-8")
     print(f"Reviewing {len(bundle.files)} file(s), omitting {len(bundle.omitted)}")
     return 0
 
 
-def _review(args: argparse.Namespace, bundle: DiffBundle) -> ReviewReport:
-    if not bundle.files:
-        return ReviewReport(status="ok", provider=args.provider)
-    try:
-        provider = _load_provider(args.provider, args.fake_findings)
-        workspace = build_clean_workspace(args.repo, args.workspace)
-        request = ReviewRequest(bundle=bundle, workspace=workspace, model=args.model or None, max_tokens=args.max_tokens)
-        output = provider.review(request)
-    except ProviderError as error:
-        traceback.print_exc()
-        return ReviewReport(
-            status="failed",
-            provider=args.provider,
-            model=error.model,
-            usage=error.usage,
-            error=str(error)[:MAX_ERROR_CHARS],
-        )
-    except Exception as error:  # A failed review must never block the pull request.
-        traceback.print_exc()
-        return ReviewReport(
-            status="failed",
-            provider=args.provider,
-            error=f"{type(error).__name__}: {error}"[:MAX_ERROR_CHARS],
-        )
-    return ReviewReport(
-        status="ok",
-        provider=args.provider,
-        model=output.model,
-        findings=output.result.findings,
-        usage=output.usage,
-    )
-
-
-def run_review(args: argparse.Namespace) -> int:
+def run_review_command(args: argparse.Namespace) -> int:
     bundle = DiffBundle.model_validate_json(args.bundle.read_text(encoding="utf-8"))
-    report = _review(args, bundle)
+    report = run_review(
+        bundle,
+        ReviewSettings(provider=args.provider, model=args.model or None, max_tokens=args.max_tokens),
+        load_provider=lambda: load_provider(args.provider, args.fake_findings),
+        build_workspace=lambda: build_clean_workspace(args.repo, args.workspace),
+    )
     args.output.write_text(report.model_dump_json(indent=2), encoding="utf-8")
     print(f"Review {report.status}: {len(report.findings)} finding(s)")
     return 0
@@ -124,7 +86,7 @@ def run_publish(args: argparse.Namespace) -> int:
     bundle = DiffBundle.model_validate_json(args.bundle.read_text(encoding="utf-8"))
     report = ReviewReport.model_validate_json(args.report.read_text(encoding="utf-8"))
     options = PublishOptions(max_findings=args.max_findings, min_severity=cast(Severity, args.min_severity))
-    result = publish(_github_client(), args.repo_name, args.pr, report, bundle, options)
+    result = publish_review(pull_request_gateway(args.repo_name, args.pr), report, bundle, options)
     print(f"Posted {result.inline_posted} inline comment(s); {result.already_posted} already posted")
     return 0
 
@@ -154,7 +116,7 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument("--model", default="")
     review.add_argument("--max-tokens", type=int, default=DEFAULT_MAX_TOKENS)
     review.add_argument("--fake-findings", type=Path)
-    review.set_defaults(func=run_review)
+    review.set_defaults(func=run_review_command)
 
     post = commands.add_parser("publish", help="post the report to the pull request")
     post.add_argument("--bundle", type=Path, required=True)
@@ -168,6 +130,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    logging.basicConfig(format="%(levelname)s %(name)s: %(message)s")
     args = build_parser().parse_args(argv)
     try:
         code: int = args.func(args)

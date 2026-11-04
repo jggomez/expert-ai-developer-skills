@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import NamedTuple
 
-from pr_reviewer.models import ReviewUsage
+from pr_reviewer.domain.models import ReviewUsage
 
 
 class Price(NamedTuple):
