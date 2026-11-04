@@ -1,0 +1,122 @@
+name: AI PR review for efficiency and cost
+description: Comments on pull requests where the code can be more efficient, simpler and cheaper to run.
+author: jggomez
+branding:
+  icon: trending-down
+  color: green
+
+inputs:
+  provider:
+    description: "Review provider: antigravity or fake (no AI, for trying the setup)."
+    default: antigravity
+  api-key:
+    description: Provider API key. For antigravity, a Gemini API key.
+    required: false
+    default: ""
+  github-token:
+    description: Token that reads the pull request and posts comments. Keep the default, because repeated runs recognize earlier comments by their bot author.
+    default: ${{ github.token }}
+  model:
+    description: Model to use. Empty means the provider default.
+    default: ""
+  max-tokens:
+    description: Token budget for one review.
+    default: "200000"
+  max-findings:
+    description: Maximum findings to publish per review.
+    default: "10"
+  min-severity:
+    description: "Lowest severity to publish: critical, high, medium or low."
+    default: low
+  exclude:
+    description: Extra path patterns to skip, separated by commas or new lines.
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Set up uv
+      continue-on-error: true
+      uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      with:
+        enable-cache: true
+        cache-dependency-glob: ${{ github.action_path }}/uv.lock
+        python-version: "3.12"
+        version: "0.11.6"
+        ignore-empty-workdir: true
+
+    - name: Decide whether to review
+      continue-on-error: true
+      id: context
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: uv run --frozen --project "$GITHUB_ACTION_PATH" pr-reviewer context
+
+    - name: Check out the pull request
+      continue-on-error: true
+      id: checkout
+      if: steps.context.outputs.should_run == 'true'
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ steps.context.outputs.head_sha }}
+        path: .pr-reviewer/pr
+        fetch-depth: 0
+        persist-credentials: false
+        token: ${{ inputs.github-token }}
+
+    - name: Compute the diff
+      continue-on-error: true
+      id: diff
+      if: steps.context.outputs.should_run == 'true'
+      shell: bash
+      env:
+        BASE_SHA: ${{ steps.context.outputs.base_sha }}
+        HEAD_SHA: ${{ steps.context.outputs.head_sha }}
+        EXCLUDE: ${{ inputs.exclude }}
+      run: |
+        uv run --frozen --project "$GITHUB_ACTION_PATH" pr-reviewer diff \
+          --repo "$GITHUB_WORKSPACE/.pr-reviewer/pr" \
+          --base "$BASE_SHA" --head "$HEAD_SHA" \
+          --exclude "$EXCLUDE" \
+          --output "$RUNNER_TEMP/pr-reviewer-diff.json"
+
+    - name: Review with AI
+      continue-on-error: true
+      id: review
+      if: steps.context.outputs.should_run == 'true'
+      shell: bash
+      env:
+        GEMINI_API_KEY: ${{ inputs.api-key }}
+        PROVIDER: ${{ inputs.provider }}
+        MODEL: ${{ inputs.model }}
+        MAX_TOKENS: ${{ inputs.max-tokens }}
+      run: |
+        extra=()
+        if [ "$PROVIDER" != "fake" ]; then extra=(--extra "$PROVIDER"); fi
+        uv run --frozen --project "$GITHUB_ACTION_PATH" "${extra[@]}" pr-reviewer review \
+          --provider "$PROVIDER" \
+          --repo "$GITHUB_WORKSPACE/.pr-reviewer/pr" \
+          --bundle "$RUNNER_TEMP/pr-reviewer-diff.json" \
+          --workspace "$RUNNER_TEMP/pr-reviewer-workspace" \
+          --model "$MODEL" \
+          --max-tokens "$MAX_TOKENS" \
+          --output "$RUNNER_TEMP/pr-reviewer-report.json"
+
+    - name: Publish the review
+      continue-on-error: true
+      id: publish
+      if: steps.context.outputs.should_run == 'true'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        REPO_NAME: ${{ steps.context.outputs.repo }}
+        PR_NUMBER: ${{ steps.context.outputs.pr_number }}
+        MAX_FINDINGS: ${{ inputs.max-findings }}
+        MIN_SEVERITY: ${{ inputs.min-severity }}
+      run: |
+        uv run --frozen --project "$GITHUB_ACTION_PATH" pr-reviewer publish \
+          --bundle "$RUNNER_TEMP/pr-reviewer-diff.json" \
+          --report "$RUNNER_TEMP/pr-reviewer-report.json" \
+          --repo-name "$REPO_NAME" --pr "$PR_NUMBER" \
+          --max-findings "$MAX_FINDINGS" --min-severity "$MIN_SEVERITY"

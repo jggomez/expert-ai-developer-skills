@@ -1,0 +1,29 @@
+# Dogfooding: reviews this repository with the module in tools/pr-reviewer.
+# Unlike the published example, `./` loads the Action from the pull request itself, so the secret
+# reaches code from the PR branch. Only same-repository authors reach this: fork runs get no secrets.
+name: AI PR review
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  issue_comment:
+    types: [created]
+
+jobs:
+  review:
+    if: github.event_name == 'pull_request' || (github.event.issue.pull_request && startsWith(github.event.comment.body, '/review'))
+    concurrency:
+      group: pr-review-${{ github.event.pull_request.number || github.event.issue.number }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./tools/pr-reviewer
+        with:
+          api-key: ${{ secrets.GEMINI_API_KEY }}

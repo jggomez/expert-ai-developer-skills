@@ -1,0 +1,26 @@
+# Copy to .github/workflows/pr-review.yml and add the GEMINI_API_KEY repository secret.
+name: AI PR review
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  issue_comment:
+    types: [created]
+
+jobs:
+  review:
+    # Saves a runner on comments that are not /review. The Action repeats this check with permissions.
+    if: github.event_name == 'pull_request' || (github.event.issue.pull_request && startsWith(github.event.comment.body, '/review'))
+    concurrency:
+      group: pr-review-${{ github.event.pull_request.number || github.event.issue.number }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      # Replace <commit-sha> with a full commit SHA from the repository.
+      - uses: jggomez/expert-ai-developer-skills/tools/pr-reviewer@<commit-sha>
+        with:
+          api-key: ${{ secrets.GEMINI_API_KEY }}
