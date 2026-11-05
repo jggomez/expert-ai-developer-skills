@@ -62,7 +62,17 @@ plan.
 3. Añade la variable del repositorio `PR_REVIEW_PROVIDER` con el valor `claude-code`.
 
 El token pertenece a quien lo creó, así que nunca lo compartas. Cada persona o dueño de repositorio usa el suyo.
-Para un equipo u organización, usa en `api-key` una clave de la [Claude Console](https://platform.claude.com).
+
+## Instalar con una clave de API de Anthropic y Claude Code
+
+Úsalo para un equipo u organización, o si no tienes un plan de Claude. Se paga por tokens y no requiere
+configuración inicial.
+
+1. Crea una clave en la [Claude Console](https://platform.claude.com) y añádela como el secreto `ANTHROPIC_API_KEY`.
+2. Añade la variable del repositorio `PR_REVIEW_PROVIDER` con el valor `claude-code`.
+3. No añadas `CLAUDE_CODE_OAUTH_TOKEN`. Si existe, se usa el token en vez de la clave.
+
+Este camino tiene un límite de 20 turnos, pero no de dólares, así que fija un tope de gasto en la Console.
 
 Este proveedor revisa en una sola pasada, sin grupos, lee toda la copia limpia con herramientas de solo lectura y
 no muestra coste. El token de GitHub también llega a este paso, porque la Action oficial necesita uno.

@@ -61,8 +61,17 @@ Use your subscription instead of paying per token. Reviews use the official
 3. Add the repository variable `PR_REVIEW_PROVIDER` with the value `claude-code`.
 
 The token belongs to the person who created it, so never share it. Each person or repository owner uses their
-own. For a team or organization, use an API key from the [Claude Console](https://platform.claude.com) in
-`api-key` instead.
+own.
+
+## Set up with an Anthropic API key and Claude Code
+
+Use this for a team or organization, or if you have no Claude plan. It pays per token, with no one-time setup.
+
+1. Create a key in the [Claude Console](https://platform.claude.com) and add it as the `ANTHROPIC_API_KEY` secret.
+2. Add the repository variable `PR_REVIEW_PROVIDER` with the value `claude-code`.
+3. Do not add `CLAUDE_CODE_OAUTH_TOKEN`. If it exists, the token is used instead of the key.
+
+This path has a limit of 20 turns but no dollar limit, so set a spend limit in the Console.
 
 This provider reviews in one pass, without groups, reads the whole clean copy with read-only tools, and does not
 show a cost. The GitHub token also reaches this step, because the official Action needs one.

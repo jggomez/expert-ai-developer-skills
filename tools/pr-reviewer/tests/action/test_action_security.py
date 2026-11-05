@@ -166,3 +166,12 @@ def test_rubric_file_is_never_read_from_the_pull_request_checkout():
     # Assert: the base commit comes from the gate, not from a file in the PR.
     assert step["env"]["BASE_SHA"] == "${{ steps.context.outputs.base_sha }}"
     assert '--base "$BASE_SHA"' in step["run"]
+
+
+@pytest.mark.parametrize("path", [ROOT / "examples" / "pr-review.yml", REPO_ROOT / ".github" / "workflows" / "pr-review.yml"])
+def test_every_claude_provider_receives_the_anthropic_key_and_not_the_gemini_key(path: Path):
+    # Arrange
+    text = path.read_text(encoding="utf-8")
+
+    # Assert
+    assert "startsWith(vars.PR_REVIEW_PROVIDER, 'claude') && secrets.ANTHROPIC_API_KEY" in text

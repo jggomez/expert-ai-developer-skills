@@ -32,7 +32,7 @@ jobs:
           fallback-model: ${{ vars.PR_REVIEW_FALLBACK_MODEL }}
           rubric-file: ${{ vars.PR_REVIEW_RUBRIC_FILE }}
           instructions: ${{ vars.PR_REVIEW_INSTRUCTIONS }}
-          api-key: ${{ vars.PR_REVIEW_PROVIDER == 'claude' && secrets.ANTHROPIC_API_KEY || secrets.GEMINI_API_KEY }}
+          api-key: ${{ startsWith(vars.PR_REVIEW_PROVIDER, 'claude') && secrets.ANTHROPIC_API_KEY || secrets.GEMINI_API_KEY }}
           claude-code-oauth-token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           claude-agent-id: ${{ vars.CLAUDE_AGENT_ID }}
           claude-environment-id: ${{ vars.CLAUDE_ENVIRONMENT_ID }}

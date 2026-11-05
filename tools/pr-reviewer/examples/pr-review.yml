@@ -24,7 +24,7 @@ jobs:
       # Replace <commit-sha> with a full commit SHA from the repository.
       - uses: jggomez/expert-ai-developer-skills/tools/pr-reviewer@<commit-sha>
         with:
-          api-key: ${{ vars.PR_REVIEW_PROVIDER == 'claude' && secrets.ANTHROPIC_API_KEY || secrets.GEMINI_API_KEY }}
+          api-key: ${{ startsWith(vars.PR_REVIEW_PROVIDER, 'claude') && secrets.ANTHROPIC_API_KEY || secrets.GEMINI_API_KEY }}
           # Everything below is optional. An unset repository variable uses the default,
           # so you can change these from Settings without editing this file.
           provider: ${{ vars.PR_REVIEW_PROVIDER }}
