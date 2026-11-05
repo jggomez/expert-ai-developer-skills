@@ -253,3 +253,46 @@ def test_a_command_line_flag_wins_over_the_environment(monkeypatch: pytest.Monke
 
     # Assert
     assert parsed.model == "from-flag"
+
+
+def test_prepare_claude_code_leaves_only_a_clean_copy_and_collect_reads_the_output(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    # Arrange
+    repo, base, head = make_repo(tmp_path)
+    (repo / "CLAUDE.md").write_text("hostile instructions")
+    bundle, report, output_file = tmp_path / "bundle.json", tmp_path / "report.json", tmp_path / "out"
+    assert cli.main(["diff", "--repo", str(repo), "--base", base, "--head", head, "--output", str(bundle)]) == 0
+    monkeypatch.setenv("GITHUB_OUTPUT", str(output_file))
+    review_dir = tmp_path / "review"
+
+    # Act
+    cli.main([
+        "prepare-claude-code", "--repo", str(repo), "--bundle", str(bundle),
+        "--review-dir", str(review_dir), "--relative-dir", ".pr-reviewer/review", "--base", base,
+    ])
+    monkeypatch.setenv("PR_REVIEW_STRUCTURED_OUTPUT", '{"findings": []}')
+    cli.main(["collect-claude-code", "--bundle", str(bundle), "--outcome", "success", "--output", str(report)])
+
+    # Assert
+    written = output_file.read_text(encoding="utf-8")
+    assert not repo.exists()
+    assert not (review_dir / "repo" / "CLAUDE.md").exists()
+    assert (review_dir / "repo" / "app.py").exists()
+    assert "for o in orders" in (review_dir / "diff.patch").read_text(encoding="utf-8")
+    assert ".pr-reviewer/review/diff.patch" in written
+    assert "ready<<" in written
+    assert ReviewReport.model_validate_json(report.read_text(encoding="utf-8")).status == "ok"
+
+
+def test_collect_reports_a_run_that_produced_nothing(tmp_path: Path):
+    # Arrange
+    repo, base, head = make_repo(tmp_path)
+    bundle, report = tmp_path / "bundle.json", tmp_path / "report.json"
+    assert cli.main(["diff", "--repo", str(repo), "--base", base, "--head", head, "--output", str(bundle)]) == 0
+
+    # Act
+    cli.main(["collect-claude-code", "--bundle", str(bundle), "--outcome", "failure", "--output", str(report)])
+
+    # Assert
+    assert ReviewReport.model_validate_json(report.read_text(encoding="utf-8")).status == "failed"

@@ -24,14 +24,15 @@ repository its comments are public too, so handle a serious finding before the p
 
 ## Providers
 
-| | Antigravity | Claude Managed Agents |
-| --- | --- | --- |
-| Agent runs in | Your GitHub runner | A sandbox hosted by Anthropic, with no network |
-| Agent can read | The whole repository (clean copy) | The diff and the changed files |
-| Default model | `gemini-3.6-flash` | `claude-opus-5-5` |
-| Spend limit | Tokens, with `max-tokens` | Dollars, with `budget-usd` |
-| Cost in the summary | Estimated from list prices | Reported by the API, including session time |
-| Status | SDK 0.1.x | Beta API |
+| | Antigravity | Claude Managed Agents | Claude Code |
+| --- | --- | --- | --- |
+| Agent runs in | Your GitHub runner | A sandbox hosted by Anthropic, with no network | Your GitHub runner |
+| Pays with | Gemini API key | Anthropic API key | Claude Pro or Max plan, or an API key |
+| Agent can read | The whole repository (clean copy) | The diff and the changed files | The whole repository (clean copy) |
+| Default model | `gemini-3.6-flash` | `claude-opus-5-5` | Claude Code default |
+| Spend limit | Tokens, with `max-tokens` | Dollars, with `budget-usd` | 20 turns, and your plan limits |
+| Cost in the summary | Estimated from list prices | Reported by the API, including session time | Not shown |
+| Status | SDK 0.1.x | Beta API | Official Action |
 
 ## Install
 
@@ -57,12 +58,13 @@ change the model without editing a file.
 | Input | Default | Description |
 | --- | --- | --- |
 | `api-key` | | Gemini or Anthropic API key |
-| `provider` | `antigravity` | `antigravity`, `claude`, or `fake` to try the setup with no AI and no key |
+| `provider` | `antigravity` | `antigravity`, `claude`, `claude-code`, or `fake` to try the setup with no AI and no key |
 | `model` | Provider default | Model to use |
 | `max-shards` | `4` | Most groups a large pull request is split into, reviewed in parallel |
 | `fallback-model` | `gemini-3.8-flash` | Model for the last attempt when the first one is overloaded (Antigravity) |
 | `max-tokens` | `200000` | Token budget per group of files (Antigravity) |
 | `budget-usd` | `1.00` | Hard spend limit for the whole review (Claude) |
+| `claude-code-oauth-token` | | Token from `claude setup-token`, to use a Claude plan with `provider: claude-code` |
 | `claude-agent-id` | | Printed by `pr-reviewer setup-claude` |
 | `claude-environment-id` | | Printed by `pr-reviewer setup-claude` |
 | `max-findings` | `10` | Maximum findings to publish |

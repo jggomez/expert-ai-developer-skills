@@ -48,6 +48,27 @@ queda nada corriendo en tu ordenador.
 
 Borra `PR_REVIEW_PROVIDER` para volver a Gemini.
 
+## Instalar con un plan Claude Pro o Max
+
+Usa tu suscripción en vez de pagar por tokens. Las revisiones usan la
+[Action oficial de Claude Code](https://code.claude.com/docs/en/github-actions) y cuentan contra los límites de tu
+plan.
+
+1. Crea un token en tu ordenador:
+
+   ```bash
+   claude setup-token
+   ```
+
+2. Añádelo como el secreto `CLAUDE_CODE_OAUTH_TOKEN`.
+3. Añade la variable del repositorio `PR_REVIEW_PROVIDER` con el valor `claude-code`.
+
+El token pertenece a quien lo creó, así que nunca lo compartas. Cada persona o dueño de repositorio usa el suyo.
+Para un equipo u organización, usa en `api-key` una clave de la [Claude Console](https://platform.claude.com).
+
+Este proveedor revisa en una sola pasada, sin grupos, lee toda la copia limpia con herramientas de solo lectura y
+no muestra coste. El token de GitHub también llega a este paso, porque la Action oficial necesita uno.
+
 ## Cambiar la configuración
 
 Un valor se puede fijar de tres formas. Gana la primera que se encuentre:
@@ -64,7 +85,7 @@ usan el valor por defecto. Para conectar otro input, añade una línea como
 | Input | Variable de entorno | Por defecto | Uso |
 | --- | --- | --- | --- |
 | `api-key` | | | Clave de Gemini o Anthropic, desde un secreto |
-| `provider` | `PR_REVIEW_PROVIDER` | `antigravity` | `antigravity`, `claude` o `fake` |
+| `provider` | `PR_REVIEW_PROVIDER` | `antigravity` | `antigravity`, `claude`, `claude-code` o `fake` |
 | `model` | `PR_REVIEW_MODEL` | `gemini-3.6-flash` o `claude-opus-5-5` | Modelo que se usa |
 | `max-shards` | `PR_REVIEW_MAX_SHARDS` | `4` | Máximo de grupos de un PR grande, revisados en paralelo |
 | `fallback-model` | `PR_REVIEW_FALLBACK_MODEL` | `gemini-3.8-flash` | Modelo del último intento si el primero está saturado (Antigravity) |
@@ -76,6 +97,7 @@ usan el valor por defecto. Para conectar otro input, añade una línea como
 | `max-diff-chars` | `PR_REVIEW_MAX_DIFF_CHARS` | Límite interno | Tamaño máximo del diff |
 | `rubric-file` | `PR_REVIEW_RUBRIC_FILE` | | Archivo que sustituye los criterios |
 | `instructions` | `PR_REVIEW_INSTRUCTIONS` | | Texto que se añade a los criterios |
+| `claude-code-oauth-token` | `CLAUDE_CODE_OAUTH_TOKEN` | | Token para `provider: claude-code` |
 | `claude-agent-id` | `CLAUDE_AGENT_ID` | | Lo da `setup-claude` |
 | `claude-environment-id` | `CLAUDE_ENVIRONMENT_ID` | | Lo da `setup-claude` |
 | `github-token` | | `github.token` | Mantén el valor por defecto |

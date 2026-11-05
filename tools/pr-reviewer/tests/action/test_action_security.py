@@ -117,6 +117,29 @@ def test_workflows_use_minimal_permissions_and_never_pull_request_target(path: P
     assert permissions == {"contents": "read", "pull-requests": "write"}
 
 
+def test_the_subscription_token_reaches_only_the_official_action():
+    # Act
+    holders = [s.get("id") for s in STEPS if "oauth-token" in str(s.get("env", {})) or "oauth-token" in str(s.get("with", {}))]
+
+    # Assert
+    assert holders == ["claude_code"]
+
+
+def test_claude_code_runs_after_the_raw_checkout_is_replaced_by_a_clean_copy():
+    # Act
+    prepare = step("prepare")
+
+    # Assert
+    assert "prepare-claude-code" in prepare["run"]
+    assert [s.get("id") for s in STEPS].index("prepare") < [s.get("id") for s in STEPS].index("claude_code")
+
+
+def test_only_one_provider_path_writes_the_report():
+    # Act / Assert
+    assert "!= 'claude-code'" in step("review")["if"]
+    assert "== 'claude-code'" in step("collect")["if"]
+
+
 def test_empty_inputs_fall_back_so_unset_repository_variables_are_harmless():
     # Arrange: `${{ vars.X }}` is empty when the variable does not exist, and the CLI owns the defaults.
     inputs = ACTION["inputs"]

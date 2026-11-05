@@ -7,7 +7,7 @@ branding:
 
 inputs:
   provider:
-    description: "Review provider: antigravity, claude or fake (no AI, for trying the setup). Empty means antigravity."
+    description: "Review provider: antigravity, claude, claude-code (Claude subscription) or fake (no AI, for trying the setup). Empty means antigravity."
     default: ""
   api-key:
     description: Provider API key, either a Gemini or an Anthropic key.
@@ -30,6 +30,9 @@ inputs:
     default: ""
   budget-usd:
     description: Hard spend limit in dollars for the whole review, shared between groups (claude). Empty means 1.00.
+    default: ""
+  claude-code-oauth-token:
+    description: Token from `claude setup-token`, to pay with a Claude subscription. Used with provider claude-code.
     default: ""
   claude-agent-id:
     description: Agent ID printed by `pr-reviewer setup-claude`.
@@ -77,6 +80,15 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github-token }}
       run: uv run --frozen --project "$GITHUB_ACTION_PATH" pr-reviewer context
 
+    - name: Check out the base commit for Claude Code
+      continue-on-error: true
+      if: steps.context.outputs.should_run == 'true' && (inputs.provider || env.PR_REVIEW_PROVIDER) == 'claude-code'
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ steps.context.outputs.base_sha }}
+        persist-credentials: false
+        token: ${{ inputs.github-token }}
+
     - name: Check out the pull request
       continue-on-error: true
       id: checkout
@@ -105,10 +117,55 @@ runs:
           --base "$BASE_SHA" --head "$HEAD_SHA" \
           --output "$RUNNER_TEMP/pr-reviewer-diff.json"
 
+    - name: Prepare the Claude Code review
+      continue-on-error: true
+      id: prepare
+      if: steps.context.outputs.should_run == 'true' && (inputs.provider || env.PR_REVIEW_PROVIDER) == 'claude-code'
+      shell: bash
+      env:
+        BASE_SHA: ${{ steps.context.outputs.base_sha }}
+        PR_REVIEW_MODEL: ${{ inputs.model || env.PR_REVIEW_MODEL }}
+        PR_REVIEW_RUBRIC_FILE: ${{ inputs.rubric-file || env.PR_REVIEW_RUBRIC_FILE }}
+        PR_REVIEW_INSTRUCTIONS: ${{ inputs.instructions || env.PR_REVIEW_INSTRUCTIONS }}
+      run: |
+        uv run --frozen --project "$GITHUB_ACTION_PATH" pr-reviewer prepare-claude-code \
+          --repo "$GITHUB_WORKSPACE/.pr-reviewer/pr" \
+          --bundle "$RUNNER_TEMP/pr-reviewer-diff.json" \
+          --review-dir "$GITHUB_WORKSPACE/.pr-reviewer/review" \
+          --relative-dir .pr-reviewer/review \
+          --base "$BASE_SHA"
+
+    - name: Review with Claude Code
+      continue-on-error: true
+      id: claude_code
+      if: steps.context.outputs.should_run == 'true' && steps.prepare.outputs.ready == 'true'
+      uses: anthropics/claude-code-action@c0949c50a78c1ec8ce2647db36629b870e715d0c # v1.0.268
+      with:
+        prompt: ${{ steps.prepare.outputs.prompt }}
+        claude_args: ${{ steps.prepare.outputs.claude_args }}
+        claude_code_oauth_token: ${{ inputs.claude-code-oauth-token || env.CLAUDE_CODE_OAUTH_TOKEN }}
+        anthropic_api_key: ${{ !(inputs.claude-code-oauth-token || env.CLAUDE_CODE_OAUTH_TOKEN) && inputs.api-key || '' }}
+        github_token: ${{ inputs.github-token }}
+
+    - name: Read the Claude Code result
+      continue-on-error: true
+      id: collect
+      if: steps.context.outputs.should_run == 'true' && (inputs.provider || env.PR_REVIEW_PROVIDER) == 'claude-code'
+      shell: bash
+      env:
+        PR_REVIEW_MODEL: ${{ inputs.model || env.PR_REVIEW_MODEL }}
+        PR_REVIEW_STRUCTURED_OUTPUT: ${{ steps.claude_code.outputs.structured_output }}
+        OUTCOME: ${{ steps.claude_code.outcome }}
+      run: |
+        uv run --frozen --project "$GITHUB_ACTION_PATH" pr-reviewer collect-claude-code \
+          --bundle "$RUNNER_TEMP/pr-reviewer-diff.json" \
+          --outcome "$OUTCOME" \
+          --output "$RUNNER_TEMP/pr-reviewer-report.json"
+
     - name: Review with AI
       continue-on-error: true
       id: review
-      if: steps.context.outputs.should_run == 'true'
+      if: steps.context.outputs.should_run == 'true' && (inputs.provider || env.PR_REVIEW_PROVIDER) != 'claude-code'
       shell: bash
       env:
         API_KEY: ${{ inputs.api-key }}
