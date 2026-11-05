@@ -1,7 +1,7 @@
 # pr-reviewer
 
-Una GitHub Action que comenta en los pull requests dónde el código puede ser más eficiente, más simple y
-más barato de operar. Solo comenta y nunca bloquea el merge.
+Una GitHub Action que revisa los pull requests en seguridad, rendimiento, escalabilidad, diseño, buenas
+prácticas y coste. Solo comenta y nunca bloquea el merge.
 
 [Read in English](README.md)
 
@@ -9,12 +9,19 @@ más barato de operar. Solo comenta y nunca bloquea el merge.
 
 | Eje | Ejemplos |
 | --- | --- |
-| Eficiencia | Consultas N+1, I/O en bucles, complejidad evitable, memoria sin límite, bloqueos en código async |
-| Óptimo | Lógica duplicada, abstracciones innecesarias, estructuras de datos que no encajan con el uso |
+| Seguridad | Riesgos del OWASP Top 10: control de acceso roto, inyección, XSS, SSRF, autenticación débil, secretos expuestos |
+| Rendimiento | Consultas N+1, I/O en bucles, complejidad evitable, bloqueos en código async |
+| Escalabilidad | Memoria sin límite, falta de paginación o timeouts, estado en un solo proceso, condiciones de carrera |
+| Diseño | Problemas SOLID con daño concreto, lógica duplicada, abstracciones innecesarias |
+| Buenas prácticas | Errores silenciados, transacciones ausentes, floats para dinero, cambios de API incompatibles |
 | Coste | APIs de pago en bucles, `SELECT *` en almacenes de datos facturados, reintentos sin tope, prompts de LLM enormes, logs excesivos |
 
-Quedan fuera el estilo, los nombres, los tests y la seguridad. Cada hallazgo necesita una línea del diff, un
+Quedan fuera el estilo, los nombres y los tests que falten. Cada hallazgo necesita una línea del diff, un
 impacto y un nivel de confianza. Un PR limpio recibe solo un resumen breve de "sin problemas".
+
+Es una revisión con IA, no una auditoría de seguridad: puede pasar por alto vulnerabilidades, así que mantén
+tus escáneres. En un repo público sus comentarios también son públicos, así que atiende un hallazgo grave antes
+de que el PR se difunda.
 
 ## Proveedores
 

@@ -131,7 +131,7 @@ def test_clean_pr_posts_no_review_and_says_so_in_the_summary():
 
     # Assert
     assert fake.reviews == []
-    assert "No efficiency, optimality or cost problems" in fake.issue_comments[0]["body"]
+    assert "No problems found" in fake.issue_comments[0]["body"]
 
 
 def test_failed_review_is_visible_and_posts_no_inline_comments():
@@ -240,7 +240,7 @@ def test_summary_does_not_claim_a_clean_review_when_nothing_was_reviewed():
 
     # Assert
     body = fake.issue_comments[0]["body"]
-    assert "No efficiency" not in body
+    assert "No problems found" not in body
     assert "Nothing was reviewed" in body
 
 

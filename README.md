@@ -77,7 +77,7 @@ agent-meter setup --local
 
 ### Optional: AI pull request review
 
-[`pr-reviewer`](tools/pr-reviewer/README.md) is a GitHub Action that comments on pull requests where the code can be more efficient, simpler and cheaper to run. It works in any repository, with no plugin installed.
+[`pr-reviewer`](tools/pr-reviewer/README.md) is a GitHub Action that reviews pull requests for security, performance, scalability, design, best practices and cost. It works in any repository, with no plugin installed.
 
 ## Plugins
 

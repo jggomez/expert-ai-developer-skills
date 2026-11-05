@@ -1,7 +1,7 @@
 # pr-reviewer
 
-A GitHub Action that comments on pull requests where the code can be more efficient, simpler and
-cheaper to run. It only comments and never blocks a merge.
+A GitHub Action that reviews pull requests for security, performance, scalability, design, best
+practices and cost. It only comments and never blocks a merge.
 
 [Leer en español](README.es.md)
 
@@ -9,12 +9,18 @@ cheaper to run. It only comments and never blocks a merge.
 
 | Axis | Examples |
 | --- | --- |
-| Efficiency | N+1 queries, I/O in loops, avoidable complexity, unbounded memory, blocking async code |
-| Optimality | Duplicated logic, unnecessary abstractions, a poor data structure for the access pattern |
+| Security | OWASP Top 10 risks: broken access control, injection, XSS, SSRF, weak auth, exposed secrets |
+| Performance | N+1 queries, I/O in loops, avoidable complexity, blocking async code |
+| Scalability | Unbounded memory, missing pagination or timeouts, single-process state, race conditions |
+| Design | SOLID problems with concrete harm, duplicated logic, unnecessary abstractions |
+| Best practice | Swallowed errors, missing transactions, floats for money, breaking API changes |
 | Cost | Paid APIs in loops, `SELECT *` on billed warehouses, unbounded retries, oversized LLM prompts, verbose logs |
 
-Style, naming, tests and security are out of scope. Every finding needs a line in the diff, an impact and
+Style, naming and missing tests are out of scope. Every finding needs a line in the diff, an impact and
 a confidence level, and a clean pull request gets a short "no problems found" summary.
+
+This is an AI review, not a security audit: it can miss vulnerabilities, so keep your scanners. On a public
+repository its comments are public too, so handle a serious finding before the pull request is widely seen.
 
 ## Providers
 

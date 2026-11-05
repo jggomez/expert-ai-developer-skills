@@ -1,5 +1,5 @@
-name: AI PR review for efficiency and cost
-description: Comments on pull requests where the code can be more efficient, simpler and cheaper to run.
+name: AI PR review
+description: Comments on pull requests with security, performance, scalability, design and cost problems.
 author: jggomez
 branding:
   icon: trending-down

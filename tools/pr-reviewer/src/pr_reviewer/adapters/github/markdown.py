@@ -121,14 +121,14 @@ def _omitted_section(bundle: DiffBundle) -> list[str]:
 
 def format_summary(outcome: ReviewOutcome) -> str:
     report, bundle, selection = outcome.report, outcome.bundle, outcome.selection
-    lines = [SUMMARY_MARKER, "## AI review: efficiency, optimality and cost", ""]
+    lines = [SUMMARY_MARKER, "## AI review", ""]
 
     if report.status == "failed":
         lines.append(f"⚠️ The review could not finish: `{_one_line(report.error) or 'unknown error'}`")
     elif not bundle.files:
         lines.append("Nothing was reviewed: no file in this pull request could be included.")
     elif not selection.kept:
-        lines.append("✅ No efficiency, optimality or cost problems found in the reviewed code.")
+        lines.append("✅ No problems found in the reviewed code.")
     else:
         lines += _findings_table(selection.kept)
         lines.append("")

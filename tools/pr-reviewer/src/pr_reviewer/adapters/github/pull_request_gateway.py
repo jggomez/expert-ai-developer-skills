@@ -36,7 +36,7 @@ class GitHubPullRequestGateway:
         payload = {
             "commit_id": commit,
             "event": "COMMENT",
-            "body": f"Found {len(findings)} efficiency, optimality or cost issue(s).",
+            "body": f"Found {len(findings)} issue(s).",
             "comments": [
                 {"path": f.file, "line": f.line, "side": "RIGHT", "body": format_inline_comment(f)} for f in findings
             ],

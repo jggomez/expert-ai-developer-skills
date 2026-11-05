@@ -1,11 +1,13 @@
 """The prompt and the review criteria."""
 
+from typing import get_args
+
 from pr_reviewer.application.prompt import (
     build_prompt,
     load_rubric,
     system_instructions,
 )
-from pr_reviewer.domain.models import DiffBundle, FileDiff
+from pr_reviewer.domain.models import Category, DiffBundle, FileDiff
 
 
 def test_prompt_marks_the_diff_as_untrusted_with_an_unguessable_delimiter():
@@ -22,12 +24,31 @@ def test_prompt_marks_the_diff_as_untrusted_with_an_unguessable_delimiter():
     assert first.index(f"<untrusted_diff_{tag}>") < first.index(evil) < first.index(f"</untrusted_diff_{tag}>")
 
 
-def test_rubric_covers_the_three_axes_and_forbids_style_comments():
+def test_rubric_defines_every_category_the_model_can_return():
+    # Act
+    rubric = load_rubric()
+
+    # Assert
+    assert get_args(Category)
+    for category in get_args(Category):
+        assert f"**{category}**:" in rubric
+
+
+def test_rubric_asks_for_exploitable_security_problems_and_concrete_design_harm():
+    # Act
+    rubric = load_rubric()
+
+    # Assert
+    for term in ("OWASP", "SOLID", "attacker", "Broken access control", "injection"):
+        assert term in rubric
+
+
+def test_rubric_covers_the_axes_and_forbids_style_comments():
     # Act
     rubric = load_rubric().lower()
 
     # Assert
-    for word in ("efficiency", "optimality", "cost", "style"):
+    for word in ("security", "performance", "scalability", "design", "cost", "style"):
         assert word in rubric
 
 
