@@ -68,13 +68,20 @@ Decide per phase and record the tracks in `PLAN.md`:
    - Either host: `python3 <loop-engineering skill dir>/scripts/run_parallel_agents.py tasks.json` creates the worktrees from the current HEAD.
    - Each worker commits on its own branch and returns the branch name. Merge the branches one at a time (`git merge --no-ff <branch>`), run the affected tests after each merge, and on a conflict run `git merge --abort` and hand the conflict to an `code-implementer`.
 
+### Real UI Rules
+These apply in every Tier when a task creates or changes UI:
+1. **Data contract first**: In `PLAN.md` or `## Product`, list each screen's data, its real source and whether that source exists. If one is missing, call `AskUserQuestion`: build it, connect an existing one, or approve a demo. Never decide this alone.
+2. **Declare exceptions**: A demo needs the user's approval, a `demo-data: approved` line naming the file in `PLAN.md`, the same marker in the file, and a visible demo label on screen. A screen with no data needs `data-source: none` in `PLAN.md`.
+3. **The app must run**: Dispatch `e2e-blackbox-tester`, which starts the app and its backend from the commands in root `AGENTS.md` and uses them. Tests with mocks do not prove a UI works.
+4. **`BLOCKED` is not done**: Report the task as unfinished, with the exact reason.
+
 ### Capability & Risk-Gated Dispatch (`## Discovery & Architecture Triage`)
 Never over-invoke subagents as rigid bundles. Every `PLAN.md` (`<= 50 lines` per feature) MUST include a compact 5-row **Discovery & Architecture Triage (`Invoke / SKIP`)** table justifying each specialist in 1 line:
 1. **`product-analyst`**: **INVOKE ONLY IF** business scope, user stories, or acceptance criteria are missing/ambiguous (`## Product` in `docs/<feature-name>/spec.md`, `<= 50 lines`). **SKIP** when stories/criteria are already clear, or for bugfixes, refactors, docs, chores, and technical CLIs.
 2. **`ui-ux-designer`**: **INVOKE ONLY IF** full-stack UI views/templates (e.g., Jinja2/HTMX/admin screens) are created/modified AND root `DESIGN.md` is missing or new visual patterns are needed (root `DESIGN.md <= 110 lines`; `## Design` in `docs/<feature-name>/spec.md`, `<= 30 lines`). **ALWAYS SKIP** on pure backend APIs, CLIs, workers, and SQL pipelines.
 3. **`architect-engineer` (`design-spec-expert` / `database-migration-expert`)**: **INVOKE ONLY IF** a genuine structural decision is needed (new SQLAlchemy/Django schema or Alembic migration, cross-service/breaking OpenAPI contract, new core dependency, architectural pattern shift; `adr-NNN-*.md <= 55 lines`, `## Architecture` in `docs/<feature-name>/spec.md` incl. API contract & migration plan, `<= 50 lines`). **SKIP** when following established repository architecture.
 4. **`critic` & `challenger` (Risk-Gated in Tier 3)**: Invoke `critic` **ONLY IF** diff is `>= 150 LOC` or a multi-module structural refactor (verdict returned `<= 50 lines`). Invoke `challenger` **ONLY IF** touching high-risk domains (auth, payments, concurrency/locks, untrusted external input parsing, destructive DB mutations; verdict returned `<= 50 lines`).
-5. **`e2e-blackbox-tester`**: **INVOKE ONLY IF** a runnable web UI (`localhost`/staging URL) exists AND UI/user flows were touched (verdict returned `<= 50 lines`). **ALWAYS SKIP** on pure Python backends/APIs, CLIs, libraries, or data pipelines without web UI.
+5. **`e2e-blackbox-tester`**: **ALWAYS INVOKE** in every Tier when the change touches web UI or user flows: it starts the app itself (verdict returned `<= 50 lines`). **ALWAYS SKIP** on pure Python backends/APIs, CLIs, libraries, or data pipelines without web UI.
 - **Zero-Bloat Fast-Forward**: If ALL Discovery specialists are `SKIP` (even on a Tier 2 well-specified backend endpoint), skip State 1 discovery file bloat and go straight to alignment/build.
 
 # Operating Guidelines & Workflow

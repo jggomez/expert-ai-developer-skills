@@ -67,6 +67,7 @@ Applies whenever your brief lists `Owned Files` or you run in your own worktree:
   - `compliance-verifier`: For code smell audits, security review, and release readiness.
 
 # Quality Standards & Anti-Patterns (Red Flags)
+- **NEVER** paint invented data in production code: no mock lists, placeholder people or simulated delays. Mocks belong in test folders. If the real source is missing, stop and report it. A UI is finished only when it is connected to its source.
 - **NEVER** write production code without a failing test first (No TDD Bypass).
 - **NEVER** mock the system under test or write assertions that trivially pass without verification.
 - **NEVER** swallow exceptions (`except Exception: pass`) or use empty catch blocks.

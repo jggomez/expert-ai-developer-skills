@@ -7,6 +7,7 @@ not from the model), while honest BLOCKED/SKIPPED verdicts always pass.
 import json
 import os
 import shutil
+import struct
 import subprocess
 
 import pytest
@@ -16,6 +17,7 @@ HOOK = os.path.join(ROOT, "plugins", "claude", "senior-dev", "hooks", "e2e-evide
 NAV = "mcp__plugin_senior-dev_playwright__browser_navigate"
 SHOT = "mcp__plugin_senior-dev_playwright__browser_take_screenshot"
 PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"\x00" * 200
+VIEWPORT_WIDTHS = (375, 768, 1280, 1920)
 
 pytestmark = pytest.mark.skipif(shutil.which("node") is None, reason="node is required")
 
@@ -45,6 +47,25 @@ def _run(tmp_path, entries, last_message, agent_type="senior-dev:e2e-blackbox-te
     env = dict(os.environ, TMPDIR=str(tmp_path))
     return subprocess.run(["node", HOOK], input=json.dumps(payload), capture_output=True, text=True,
                           timeout=30, env=env)
+
+
+def _real_png(width):
+    header = struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", width, 10)
+    return b"\x89PNG\r\n\x1a\n" + header + b"\x00" * 200
+
+
+def _write_evidence(root, requests=None):
+    """Screenshots for every viewport, plus the manifest of a run against a real backend."""
+    evidence = root / "docs" / "checkout" / "evidence"
+    evidence.mkdir(parents=True)
+    for width in VIEWPORT_WIDTHS:
+        (evidence / f"home-{width}.png").write_bytes(_real_png(width))
+    default = [{"method": "GET", "url": "http://localhost:3000/api/items", "status": 200,
+                "resourceType": "fetch", "remote": True}]
+    (evidence / "run-a.json").write_text(json.dumps({
+        "version": 1, "pages": ["http://localhost:3000/"], "requests": default if requests is None else requests,
+        "dataChecks": [{"kind": "source-on-screen", "detail": "item 42 is listed"}]}))
+    return evidence
 
 
 def _real_session(tmp_path, screenshot_path=None):
@@ -90,9 +111,7 @@ def test_passed_without_screenshot_is_blocked(tmp_path):
 
 def test_passed_with_real_navigation_and_screenshot_is_allowed(tmp_path):
     # Arrange
-    shot = tmp_path / "docs" / "checkout" / "evidence" / "375x812.png"
-    shot.parent.mkdir(parents=True)
-    shot.write_bytes(PNG_BYTES)
+    shot = _write_evidence(tmp_path) / "home-375.png"
     # Act
     result = _run(tmp_path, _real_session(tmp_path, shot), "Verdict: PASSED")
     # Assert
@@ -120,11 +139,30 @@ def test_fake_png_is_blocked(tmp_path):
     assert result.returncode == 2
 
 
-def test_playwright_test_run_via_bash_counts_as_evidence(tmp_path):
-    # Arrange: the scripted route (npx playwright test) instead of the MCP
-    shot = tmp_path / "docs" / "checkout" / "evidence" / "1280x800.png"
+def test_rejected_with_a_single_real_screenshot_is_allowed(tmp_path):
+    # Arrange: a failing run does not need the full evidence set
+    shot = tmp_path / "docs" / "checkout" / "evidence" / "375x812.png"
     shot.parent.mkdir(parents=True)
     shot.write_bytes(PNG_BYTES)
+    # Act
+    result = _run(tmp_path, _real_session(tmp_path, shot), "Verdict: REJECTED - empty list")
+    # Assert
+    assert result.returncode == 0, result.stderr
+
+
+def test_passed_with_screenshots_but_no_data_proof_is_blocked(tmp_path):
+    # Arrange: the browser ran, but no request ever reached a server
+    evidence = _write_evidence(tmp_path, requests=[])
+    # Act
+    result = _run(tmp_path, _real_session(tmp_path, evidence / "home-375.png"), "Verdict: PASSED")
+    # Assert
+    assert result.returncode == 2
+    assert "real data request" in result.stderr
+
+
+def test_playwright_test_run_via_bash_counts_as_evidence(tmp_path):
+    # Arrange: the scripted route (npx playwright test) instead of the MCP
+    _write_evidence(tmp_path)
     entries = [_tool_use("t1", "Bash", {"command": "npx playwright test tests/e2e"}),
                _tool_result("t1", text="4 passed (6.1s)")]
     # Act

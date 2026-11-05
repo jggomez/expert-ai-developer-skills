@@ -78,13 +78,20 @@ Decide per phase and record the tracks in `PLAN.md`:
    - Either host: `python3 <loop-engineering skill dir>/scripts/run_parallel_agents.py tasks.json` creates the worktrees from the current HEAD.
    - Each worker commits on its own branch and returns the branch name. Merge the branches one at a time (`git merge --no-ff <branch>`), run the affected tests after each merge, and on a conflict run `git merge --abort` and hand the conflict to an `code-implementer`.
 
+### Real UI Rules
+These apply in every Tier when a task creates or changes UI:
+1. **Data contract first**: In `PLAN.md` or `## Product`, list each screen's data, its real source and whether that source exists. If one is missing, call `ask_question`: build it, connect an existing one, or approve a demo. Never decide this alone.
+2. **Declare exceptions**: A demo needs the user's approval, a `demo-data: approved` line naming the file in `PLAN.md`, the same marker in the file, and a visible demo label on screen. A screen with no data needs `data-source: none` in `PLAN.md`.
+3. **The app must run**: Dispatch `e2e-blackbox-tester`, which starts the app and its backend from the commands in root `AGENTS.md` and uses them. Tests with mocks do not prove a UI works.
+4. **`BLOCKED` is not done**: Report the task as unfinished, with the exact reason.
+
 ### Capability & Risk-Gated Dispatch (`## Discovery & Architecture Triage`)
 Never over-invoke subagents as rigid bundles. Every `PLAN.md` (`<= 50 lines` per feature) MUST include a compact 5-row **Discovery & Architecture Triage (`Invoke / SKIP`)** table justifying each specialist in 1 line:
 1. **`product-analyst`**: **INVOKE ONLY IF** business scope, user stories, or acceptance criteria are missing/ambiguous (`## Product` in `docs/<feature-name>/spec.md`, `<= 50 lines`). **SKIP** when the prompt already specifies clear stories/criteria, or for bugfixes, refactors, docs, chores, and technical CLIs.
 2. **`ui-ux-designer`**: **INVOKE ONLY IF** UI screens/widgets/components are created/modified AND root `DESIGN.md` is missing or new visual patterns are needed (root `DESIGN.md <= 110 lines`; `## Design` in `docs/<feature-name>/spec.md`, `<= 30 lines`, for screen deltas). **SKIP** on backend/API/CLI/SQL tasks or minor UI changes already covered by `DESIGN.md`.
 3. **`architect-engineer`**: **INVOKE ONLY IF** a genuine structural decision is needed (new DB schema/migration, cross-service API contract, new core dependency, architectural pattern shift; `adr-NNN-*.md <= 55 lines`, `## Architecture` in `docs/<feature-name>/spec.md`, `<= 50 lines`). **SKIP** when following established repository architecture.
 4. **`critic` & `challenger` (Risk-Gated in Tier 3)**: Invoke `critic` **ONLY IF** diff is large/complex (`>= 150 LOC` or multi-module structural refactor; verdict returned `<= 50 lines`). Invoke `challenger` **ONLY IF** touching high-risk domains (auth, payments, concurrency/locks, untrusted external input parsing, destructive mutations; verdict returned `<= 50 lines`).
-5. **`e2e-blackbox-tester`**: **INVOKE ONLY IF** a runnable web UI (`localhost`/staging URL) exists AND UI/user flows were touched (verdict returned `<= 50 lines`). **ALWAYS SKIP** on pure backends/APIs, CLIs, libraries, SQL/data pipelines, or mobile-only targets without web.
+5. **`e2e-blackbox-tester`**: **ALWAYS INVOKE** in every Tier when the change touches web UI or user flows: it starts the app itself (verdict returned `<= 50 lines`). **ALWAYS SKIP** on pure backends/APIs, CLIs, libraries, SQL/data pipelines, or mobile-only targets without web.
 - **Zero-Bloat Fast-Forward**: If ALL Discovery specialists are `SKIP` (even on a Tier 2 well-specified technical task), skip State 1 discovery file bloat and go straight to alignment/build.
 
 # Operating Guidelines & Workflow
@@ -106,8 +113,8 @@ Never over-invoke subagents as rigid bundles. Every `PLAN.md` (`<= 50 lines` per
    - Apply **Safe Parallel Dispatch** above: contract-first integration step, then Mode A tracks with disjoint `Owned Files` (Mode B only under its prerequisites). Workers run only their scoped tests; full suites run once at fan-in.
 
 4. **State 3 & 4: Verification & Adversarial Verification Committee (MANDATORY)**:
-   - **Tier 1**: Scoped `qa-tester` (`exit code 0`) + `compliance-verifier` (`APPROVED`).
-   - **Tier 2**: Parallel `qa-tester` (full suite + `docs/<feature-name>/test-matrix.md <= 80 lines` + `exit code 0`), `compliance-verifier` (`APPROVED`), and `e2e-blackbox-tester` (ONLY IF runnable web UI flows changed).
+   - **Tier 1**: Scoped `qa-tester` (`exit code 0`) + `compliance-verifier` (`APPROVED`) + `e2e-blackbox-tester` (when web UI flows changed).
+   - **Tier 2**: Parallel `qa-tester` (full suite + `docs/<feature-name>/test-matrix.md <= 80 lines` + `exit code 0`), `compliance-verifier` (`APPROVED`), and `e2e-blackbox-tester` (when web UI flows changed).
    - **Tier 3 (`Adversarial Verification Committee`)**: Parallel `qa-tester` (`test-matrix.md <= 80 lines` + `exit code 0`) and `compliance-verifier` (`APPROVED`), plus capability/risk-gated `critic`, `challenger`, and `e2e-blackbox-tester` (verdicts returned in final message, `<= 50 lines` each, no report files).
    - **Bounded Retries**: Loop defects back to `code-implementer` (max **3 self-correction iterations** before escalating).
    - **Deterministic E2E Proof**: Before accepting an `e2e-blackbox-tester` `PASSED`, run `python3 <blackbox-tester skill dir>/scripts/check_evidence.py docs/<feature-name>/evidence`; a non-zero exit downgrades the verdict to `REJECTED` (Antigravity has no hook that enforces this for you).

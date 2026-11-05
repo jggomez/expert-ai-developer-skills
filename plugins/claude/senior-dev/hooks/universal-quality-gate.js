@@ -12,6 +12,9 @@
  *   both plugins are installed the suite runs once per code state.
  * - Each suite blocks at most 3 times per user turn (`stop_hook_active`), then lets the turn end
  *   with a notice instead of looping.
+ *
+ * UI reality gate: a changed web or Flutter web UI needs no fake data and fresh evidence that the
+ * real app was opened and used (skills/compliance-verifier and skills/blackbox-tester scripts).
  */
 const { execSync } = require('child_process');
 const fs = require('fs');
@@ -42,6 +45,37 @@ function npmTestDefined() {
     // Invalid package.json: nothing reliable to run
     return false;
   }
+}
+
+const UI_FILE = /\.(tsx|jsx|vue|svelte|html|css|scss|dart)$/i;
+const TEST_FILE = /(^|\/)(tests?|__tests__|e2e|integration_test|test_driver)\/|\.(test|spec|stories)\.|_test\.dart$/;
+const FAKE_DATA_CHECK = path.join(__dirname, '..', 'skills', 'compliance-verifier', 'scripts', 'check_fake_data.py');
+const EVIDENCE_CHECK = path.join(__dirname, '..', 'skills', 'blackbox-tester', 'scripts', 'check_evidence.py');
+
+/** Changed UI files. Dart counts only with a web target: mobile apps are out of scope for browser runs. */
+function changedUiFiles() {
+  const hasWebTarget = exists('web');
+  return g.changedCodeFiles(workspaceRoot).filter(
+    (file) => UI_FILE.test(file) && !TEST_FILE.test(file) && (hasWebTarget || !/\.dart$/i.test(file))
+  );
+}
+
+function latestChangeSeconds(files) {
+  const times = files.map((file) => {
+    try {
+      return fs.statSync(path.join(workspaceRoot, file)).mtimeMs;
+    } catch (err) {
+      return 0; // deleted file
+    }
+  });
+  return Math.floor(Math.max(0, ...times) / 1000);
+}
+
+function uiRealityCommand() {
+  const root = JSON.stringify(workspaceRoot);
+  const since = latestChangeSeconds(changedUiFiles());
+  return `python3 "${FAKE_DATA_CHECK}" --repo ${root} && ` +
+    `python3 "${EVIDENCE_CHECK}" --latest --root ${root} --min-mtime ${since}`;
 }
 
 const isPythonRepo = ['pyproject.toml', 'pytest.ini', 'setup.cfg', 'requirements.txt'].some(exists);
@@ -90,6 +124,17 @@ const SUITES = [
     command: 'go test ./...',
     message: `[UNIVERSAL QUALITY GATE VIOLATION]: 'go test ./...' failed.\nEnsure Go packages pass all tests before finishing.`,
   },
+  {
+    // 7. The real UI: last, so it never asks to open an app whose tests fail
+    gateId: 'ui-reality',
+    applies: () => fs.existsSync(FAKE_DATA_CHECK) && fs.existsSync(EVIDENCE_CHECK) && commandExists('python3') &&
+      changedUiFiles().length > 0,
+    command: uiRealityCommand,
+    message: `[UI REALITY GATE]: This UI was not proven against real data in the running app.\n` +
+      `Delegate to e2e-blackbox-tester: start the app and backend, use it, and record the run. If it cannot run, ` +
+      `tell the user the UI is NOT verified, with the exact error.`,
+    limitNotice: '[UI reality gate] UI NOT verified in the real app after 3 attempts: treat this task as unfinished.',
+  },
 ];
 
 // The host kills the hook at its hooks.json timeout (180 s): share that budget across suites.
@@ -100,7 +145,7 @@ for (const suite of SUITES) {
 
   const gate = g.createStopGate({ gateId: suite.gateId, payload });
   if (gate.retryLimitReached()) {
-    notices.push(g.retryLimitNotice(suite.gateId));
+    notices.push(suite.limitNotice || g.retryLimitNotice(suite.gateId));
     continue;
   }
   if (gate.begin()) continue; // no code change, already green, or verified by a parallel gate
@@ -112,7 +157,8 @@ for (const suite of SUITES) {
     continue;
   }
   try {
-    execSync(suite.command, { cwd: workspaceRoot, stdio: 'pipe', timeout });
+    const command = typeof suite.command === 'function' ? suite.command() : suite.command;
+    execSync(command, { cwd: workspaceRoot, stdio: 'pipe', timeout });
     gate.markPass();
   } catch (error) {
     const out = (error.stdout?.toString() || '') + (error.stderr?.toString() || '') || error.message || '';

@@ -45,6 +45,7 @@ Return the official audit verdict in your final message (`<= 50 lines`: verdict,
 ### Verification Commands
 ```bash
 # Example static analysis and security checks
+python3 scripts/check_fake_data.py --repo . --base main  # when UI changed; non-zero means REJECTED
 ruff check .
 mypy .
 pytest --cov=. --cov-fail-under=80

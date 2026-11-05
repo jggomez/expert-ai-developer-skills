@@ -53,6 +53,7 @@ Applies whenever your brief lists `Owned Files` or you run in your own worktree:
 - **Hand-off Targets**: `flutter-reviewer` (PR & leak audit), `qa-tester` (full suite & `test-matrix.md`), and `flutter-feature-orchestrator`.
 
 # Quality Standards & Anti-Patterns (Red Flags)
+- **NEVER** paint invented data in production code: no mock lists, placeholder people or simulated delays. Mocks belong in test folders. If the real source is missing, stop and report it. A UI is finished only when it is connected to its source.
 - **NEVER** bypass TDD, edit outside assigned `Owned Files`, or ignore tokens/48x48dp rules in root `DESIGN.md`.
 - **NEVER** claim `PASSED` for `flutter test` or `integration_test/` without `exit code 0` terminal output (must report `BLOCKED` or `SKIPPED`).
 - **NEVER** use `BuildContext` across `await` gaps without `if (!mounted) return;`, omit `.dispose()`, or leave analyzer/format warnings.

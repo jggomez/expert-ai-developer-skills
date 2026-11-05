@@ -29,7 +29,7 @@ It enforces a strict **Fail-Honest Anti-Hallucination Protocol**: if no web UI e
 - **Unit test creation during coding**: Route to `test-driven-development` or `code-implementer`.
 - **Static code smell and complexity review**: Route to `code-critic`.
 - **Adversarial stress and concurrency fuzzing**: Route to `adversarial-challenger`.
-- **Flutter native mobile apps**: Route to `flutter-reviewer` and `senior-dev-flutter`.
+- **Flutter native mobile apps**: Return `SKIPPED: mobile target, not in scope`. Flutter web is in scope: follow [references/flutter-web-playwright.md](references/flutter-web-playwright.md).
 
 ---
 
@@ -49,9 +49,10 @@ flowchart TD
 ```
 
 ### Phase 1: Mandatory 2-Step Pre-Flight & Fail-Honest Gate
-1. **Step 1 — Web UI Scope & HTTP `200 OK` Check**:
-   - Confirm a web UI exists in scope. If the task has no web UI, immediately return `SKIPPED: No web UI in scope` without creating fake E2E tests.
-   - Probe the running dev/staging URL to verify it responds with `200 OK`.
+1. **Step 1 — Start the App & HTTP `200 OK` Check**:
+   - If no web UI changed, immediately return `SKIPPED: No web UI in scope` without creating fake E2E tests.
+   - Start the app and its backend yourself, using root `AGENTS.md`, then the project's scripts. Never skip because the app is not already running.
+   - Probe the URL to verify it responds with `200 OK`.
 2. **Step 2 — Auto-Bootstrap by Stack & Chromium Launch Check**:
    - If Playwright is not yet installed, auto-bootstrap via `run_command` / `Bash`:
      * **Python (`pyproject.toml` / `uv`)**:
@@ -74,6 +75,16 @@ flowchart TD
 Write and execute real Playwright E2E tests in `tests/e2e/` running Chromium (headless by default for speed, or `--headed` when live visual observation is requested):
 - **DOM Journeys & GUI Forms**: Exercise real navigation, form input filling (empty, invalid, boundary, and valid payloads), button clicks, disabled in-flight submit states, and deterministic locator assertions.
 - **Console & Network Listeners**: Attach `page.on("console")`, `page.on("pageerror")`, and `page.on("response")` listeners asserting **`0` unhandled JS errors** and **`0` unexpected HTTP `4xx/5xx` responses**.
+
+### Phase 2.5: Prove the Data Is Real
+Use the real backend. A green run against mock data proves nothing.
+- **No stubs**: Never use `page.route`, `route.fulfill`, `routeFromHAR` or MSW. `check_evidence.py` fails on them.
+- **Record the run**: Copy `scripts/e2e_recorder.mjs` or `scripts/e2e_recorder.py` to `tests/e2e/`. It writes a `run-*.json` manifest of pages and network requests to the evidence directory.
+- **`source-on-screen`**: Read a value directly from the source, assert it appears on screen, and record the check.
+- **`persisted-after-reload`**: After any write, reload and assert the data is still there, then record the check.
+- **No data source**: Pass `noDataSource: '<reason>'` to the recorder. The plan must hold `data-source: none`.
+- **Approved demo**: Pass `demo: true`. The plan must hold `demo-data: approved`.
+- **Look at the screens**: Open the screenshots yourself. An empty, broken or error screen is `REJECTED`.
 
 ### Phase 3: Mandatory 4-Viewport Screenshot Evidence (`docs/<feature-name>/evidence/`)
 Capture real, non-empty `.png` screenshots saved to `docs/<feature-name>/evidence/` across all 4 viewports and assert zero horizontal overflow (`document.documentElement.scrollWidth <= window.innerWidth`):
@@ -139,6 +150,8 @@ uv run pytest tests/e2e/ --browser chromium --headed
 ---
 
 ## Red Flags
+- ❌ Reporting `SKIPPED` because the app was not running, instead of starting it.
+- ❌ Passing a screen tested against stubs, or one nobody compared with its data source.
 - Using `curl`, `httpx`, `requests`, FastAPI `TestClient`, `jsdom`, or static HTML/JSX code reading as a substitute for a real Chromium browser.
 - Claiming `PASSED` without Playwright exit code `0` **AND** non-empty `.png` screenshots on disk in `docs/<feature-name>/evidence/`.
 - Fabricating test results instead of returning `SKIPPED` (no web UI) or `BLOCKED` (unreachable server / blocked Chromium binary).

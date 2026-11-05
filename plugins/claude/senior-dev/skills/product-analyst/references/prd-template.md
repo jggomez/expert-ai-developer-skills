@@ -10,6 +10,8 @@
   - <Core capability 2>
 - **Out-of-Scope**:
   - <Explicitly excluded capability or deferred integration>
+- **Data sources** (UI only):
+  - <Screen>: <data> from <real API, database or file>, <exists | missing>
 
 ### User Stories
 - **US-01**: **As a** `<role>`, **I want** `<action>`, **so that** `<outcome>`. *(ES: Como `<rol>`, quiero `<acción>`, para `<beneficio>`.)*

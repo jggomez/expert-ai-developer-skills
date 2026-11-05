@@ -49,6 +49,7 @@ Enforce the strict Red-Green-Refactor loop:
 - **Return Contract**: Final message `<= 15 lines` (status, files changed, test command + exit code, next step); no long narratives.
 
 ## Red Flags
+- **NEVER** paint invented data in production code: no mock lists, placeholder people or simulated delays. Mocks belong in test folders. If the real source is missing, stop and report it. A UI is finished only when it is connected to its source.
 - Writing production code before writing the failing test.
 - Writing superficial assertions (e.g. `assert True` or checking only `status_code == 200` without validating payload).
 - Swallowing exceptions with bare `except:` or silent fallbacks.
