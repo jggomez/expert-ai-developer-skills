@@ -6,6 +6,7 @@
 que esas herramientas ya guardan en tu computador y te entrega:
 
 - un **resumen corto al terminar cada tarea o sesión** (tokens, costo equivalente, tiempo, P50/P95),
+- una **app de escritorio** en inglés o español con gasto en vivo, historial, insights y presupuestos,
 - un **reporte HTML** que se abre en el navegador y funciona sin internet,
 - y, si quieres, un **dataset en BigQuery + tablero en Looker Studio** en tu propio proyecto de Google Cloud.
 
@@ -111,6 +112,9 @@ uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdi
 # Local + soporte para BigQuery (opción B)
 uv tool install "agent-meter[bigquery] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 
+# Con la app de escritorio (agent-meter app)
+uv tool install "agent-meter[app] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+
 # Lo mismo con pipx
 pipx install --python python3.12 "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 ```
@@ -128,6 +132,7 @@ uv tool install "agent-meter[bigquery] @ git+https://github.com/jggomez/expert-a
 cd /ruta/a/expert-ai-developer-skills
 uv tool install "./tools/agent-meter"               # modo local
 uv tool install "./tools/agent-meter[bigquery]"     # con soporte para BigQuery
+uv tool install "./tools/agent-meter[app]"          # con la app de escritorio (agent-meter app)
 ```
 
 ### 4.3 Verificar, actualizar o quitar el programa
@@ -237,6 +242,36 @@ Es un solo archivo, funciona sin internet. Tema claro por defecto; el modo oscur
 (costo por proyecto/mes, Claude Code contra Antigravity), tareas y agentes, rendimiento (P50/P95/P99), eficiencia (caché,
 tamaño del contexto), facturación (si hay tarifas) y avisos (sin precio, estimados, historial no medido). Cada gráfica
 tiene un botón **Table view** para ver los datos en tabla.
+
+### 5.4 La app de escritorio
+
+`agent-meter app` abre una ventana nativa, para cuando prefieres no usar comandos. Muestra los mismos datos que la línea
+de comandos y necesita el extra `app` (ver [§4](#4-instalación)). Está probada en macOS; el soporte para Windows está
+previsto, pero aún no se ha probado.
+
+![Pantalla En vivo con el gasto de hoy, presupuestos y sesiones activas](docs/images/app-live-es.png)
+
+| Pantalla | Qué muestra |
+| :--- | :--- |
+| **En vivo** | Hoy, este mes, previsión de fin de mes, valor del plan, presupuestos y sesiones activas en los últimos 15 minutos |
+| **Historial** | Gasto por día, mes, proyecto y sesión, con filtros de periodo y proyecto |
+| **Insights** | Dónde recortar: hallazgos medidos, ahorros estimados y qué hacer |
+| **Ajustes** | Presupuestos, notificaciones, recolección manual y el diagnóstico de `doctor` |
+
+![Pantalla Historial con gasto por día, mes, proyecto y sesión](docs/images/app-history-es.png)
+
+![Pantalla Insights con hallazgos y ahorros estimados](docs/images/app-insights-es.png)
+
+![Pantalla Ajustes con presupuestos y diagnóstico](docs/images/app-settings-es.png)
+
+- **Idioma:** elige English o Español en la cabecera. La elección se guarda como `language` y también se aplica a los
+  avisos de presupuesto. La línea de comandos y el reporte HTML siguen en inglés.
+- **Actualización en vivo:** la app vigila las carpetas de transcripts y recolecta cuando cambian.
+- **Durante una recolección:** la base queda bloqueada, así que la app sigue mostrando las últimas cifras guardadas, lo
+  indica en la cabecera y se actualiza al terminar. Una recolección grande puede tardar más de un minuto.
+- **Seguridad:** no hay servidor local ni puerto abierto.
+
+Las capturas usan datos ficticios de demostración.
 
 ---
 
@@ -364,6 +399,9 @@ Opciones globales (antes del comando): `--home <carpeta>` (o `$AGENT_METER_HOME`
 | `tag "<nombre>"` | Agrupar tareas en un trabajo (ej. un ticket) | `--last N`, `--project P`, `--clear` |
 | `pricing list\|unpriced\|add\|set\|alias\|remove\|validate` | Tabla de precios (§10) | ver §10 |
 | `config show\|get\|set\|edit` | Configuración (§11) | `config set <clave> <valor>` |
+| `app` | App de escritorio en inglés o español: gasto en vivo, historial por día, mes, proyecto y sesión, insights, presupuestos y diagnóstico (necesita el extra `app`) | — |
+| `insights` | Dónde recortar gasto: reglas fijas, hechos medidos y ahorros estimados | `--days N`, `--as-of AAAA-MM-DD`, `--project P`, `--json` |
+| `budget` | Gasto frente a tus límites, previsión de fin de mes y valor del plan | `--as-of AAAA-MM-DD`, `--json` |
 | `doctor` | Revisión de salud (hooks, timer, formatos, precios, historial no medido) | `--cloud`, `--json` |
 | `verify --reconcile` | Local contra una relectura independiente (o contra BigQuery con `--cloud`) | `--from`, `--to`, `--host`, `--cloud` |
 | `sync` | Subir a BigQuery | `--full-reload`, `--dry-run` |
@@ -476,6 +514,10 @@ Reglas:
 
 ## 11. Referencia de configuración
 
+Los presupuestos avisan con una notificación de escritorio al 80 % y al 100 %, una vez por periodo, y nunca bloquean el
+trabajo: `budget.daily_usd`, `budget.monthly_usd`, `budget.projects.<project_id>` y, para comparar el uso a precio de
+lista con lo que pagas, `budget.plan_monthly_usd`. Los costos son precios de lista de la API, no tu factura.
+
 `agent-meter config show` muestra todo; cambia valores con `agent-meter config set <clave> <valor>`. El archivo es
 `~/.agent-meter/config.toml`.
 
@@ -487,6 +529,7 @@ Reglas:
 | `dev_hours_merge_gap_min` | `30` | Pausas entre tareas mayores a esto no cuentan como horas de trabajo |
 | `show_task_labels` | `true` | Muestra un extracto corto del prompt en `tasks` (solo en la terminal, nunca se guarda) |
 | `notify` | `auto` | Notificaciones: `auto` (fin de sesión + tareas largas), `session`, `long-tasks`, `off` |
+| `language` | `en` | Idioma de la app de escritorio y de sus avisos de presupuesto: `en` o `es`. También se cambia desde la cabecera de la app. La línea de comandos y el reporte HTML siguen en inglés |
 | `notify_min_task_s` | `120` | Duración mínima para avisar de una "tarea larga" |
 | `claude_inline_summary` | `false` | Reservado (los resúmenes dentro del chat de Claude Code están apagados) |
 | `store_agent_descriptions` | `false` | Reservado para v2, hoy se ignora (las descripciones siempre se guardan como hash) |
@@ -552,7 +595,7 @@ nombres y conteos de herramientas, y errores (solo el tipo).
 | `secret` | Sal local para los hash (nunca se sube) |
 | `last-summary.txt` | Último resumen |
 | `report.html` | Último reporte (ubicación por defecto) |
-| `state/`, `outbox/`, `logs/`, `lock` | Estado interno, preparación de subidas a BigQuery, tipos de error, bloqueo de concurrencia |
+| `state/`, `outbox/`, `logs/`, `lock` | Estado interno (incluidas las últimas cifras de la app), preparación de subidas a BigQuery, tipos de error, bloqueo de concurrencia |
 | `install.json`, `backups/` | Lo que cambió `setup`, para deshacerlo con `uninstall` |
 | `.agent-meter-home` | Marca de que agent-meter creó esta carpeta |
 
