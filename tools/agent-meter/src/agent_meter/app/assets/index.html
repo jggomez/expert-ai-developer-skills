@@ -15,6 +15,7 @@
       <button type="button" data-tab="history" data-i18n="nav.history">History</button>
       <button type="button" data-tab="insights" data-i18n="nav.insights">Insights</button>
       <button type="button" data-tab="changes" data-i18n="nav.changes">Changes</button>
+      <button type="button" data-tab="projects" data-i18n="nav.projects">Projects</button>
       <button type="button" data-tab="settings" data-i18n="nav.settings">Settings</button>
     </nav>
     <span id="status" role="status" class="muted" data-i18n="status.loading">Loading…</span>
@@ -106,11 +107,54 @@
           <button type="button" id="change-cancel" data-i18n="changes.cancel">Cancel</button></div>
       </div>
       <p id="change-message" role="status"></p>
+      <h2 data-i18n="rules.title">Automatic rules</h2>
+      <p class="muted" data-i18n="rules.intro">Off by default. A rule acts once per period, shows up in the history below and can be undone.</p>
+      <div id="rule-list"></div>
       <h2 data-i18n="changes.history">History</h2>
       <table id="change-table"><thead><tr><th data-i18n="changes.when">Date</th><th data-i18n="changes.what">Change</th>
         <th data-i18n="changes.values">Values</th><th data-i18n="changes.effect">After the change</th><th></th></tr></thead>
         <tbody id="change-rows"></tbody></table>
       <p id="change-none" class="muted" data-i18n="changes.none" hidden>No changes yet.</p>
+    </section>
+    <section id="projects" hidden>
+      <h2 data-i18n="projects.title">Clients, rates and hours</h2>
+      <p class="muted" data-i18n="projects.intro">These details feed the billing section of the report.</p>
+      <table id="project-table"><thead><tr><th data-i18n="projects.name">Project</th><th data-i18n="projects.client">Client</th>
+        <th data-i18n="projects.billing">Billing</th><th data-i18n="projects.tag">Current tag</th><th data-i18n="common.cost">Cost</th><th></th></tr></thead>
+        <tbody id="project-rows"></tbody></table>
+      <p id="project-none" class="muted" data-i18n="projects.none" hidden>No projects yet. They appear after your first session.</p>
+      <div id="project-editor" class="preview" hidden>
+        <h3 id="project-title"></h3>
+        <form id="project-form">
+          <label><span data-i18n="projects.name">Project</span><input name="name" maxlength="120"></label>
+          <label><span data-i18n="projects.client">Client</span><input name="client" maxlength="120"></label>
+          <label><span data-i18n="projects.billing">Billing</span>
+            <select name="billing">
+              <option value="" data-i18n="projects.no_billing">Not billed</option>
+              <option value="hourly" data-i18n="projects.hourly">By the hour</option>
+              <option value="fixed" data-i18n="projects.fixed">Fixed price</option>
+            </select></label>
+          <label><span data-i18n="projects.rate">Hourly rate</span><input name="rate" inputmode="decimal"></label>
+          <label><span data-i18n="projects.fixed_price">Fixed price</span><input name="fixed_price" inputmode="decimal"></label>
+          <label><span data-i18n="projects.currency">Currency (for example USD)</span><input name="currency" maxlength="3"></label>
+          <div class="actions"><button type="submit" class="primary" data-i18n="projects.save">Save</button></div>
+        </form>
+        <h3 data-i18n="projects.tag">Current tag</h3>
+        <p class="muted" data-i18n="projects.tag_note">A tag marks this project's next tasks. Tasks already done keep theirs.</p>
+        <form id="tag-form">
+          <label><span data-i18n="projects.tag">Current tag</span><input name="tag" maxlength="60"></label>
+          <div class="actions"><button type="submit" data-i18n="projects.save_tag">Save tag</button></div>
+        </form>
+        <h3 data-i18n="projects.hours">Manual hours</h3>
+        <p class="muted" data-i18n="projects.hours_note">Manual hours replace the hours measured for that month.</p>
+        <form id="hours-form">
+          <label><span data-i18n="projects.month">Month</span><input name="period" type="month" required></label>
+          <label><span data-i18n="projects.hours_value">Hours</span><input name="hours" inputmode="decimal" required></label>
+          <div class="actions"><button type="submit" data-i18n="projects.add_hours">Save hours</button></div>
+        </form>
+        <table><tbody id="hours-rows"></tbody></table>
+      </div>
+      <p id="project-message" role="status"></p>
     </section>
     <section id="settings" hidden>
       <h2 data-i18n="settings.budgets">Budgets and alerts</h2>
@@ -130,6 +174,10 @@
           <button type="button" id="collect" data-i18n="settings.collect">Collect now</button>
           <span id="settings-message" role="status"></span></div>
       </form>
+      <h2 data-i18n="settings.updates">Updates</h2>
+      <div class="actions"><button type="button" id="check-update" data-i18n="settings.check_update">Check for updates</button>
+        <button type="button" id="open-release" data-i18n="settings.open_release" hidden>Open the download page</button>
+        <span id="update-message" role="status"></span></div>
       <h2 data-i18n="settings.diagnostics">Diagnostics</h2>
       <ul id="checks" class="checks"></ul>
     </section>

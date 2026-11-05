@@ -246,8 +246,23 @@ tiene un botón **Table view** para ver los datos en tabla.
 ### 5.4 La app de escritorio
 
 `agent-meter app` abre una ventana nativa, para cuando prefieres no usar comandos. Muestra los mismos datos que la línea
-de comandos y necesita el extra `app` (ver [§4](#4-instalación)). Está probada en macOS; el soporte para Windows está
-previsto, pero aún no se ha probado.
+de comandos y necesita el extra `app` (ver [§4](#4-instalación)). Está probada en macOS; en Windows se compila y se prueba
+en GitHub Actions, pero aún no se ha usado en un equipo real.
+
+**Sin instalar Python ni usar comandos:** descarga el instalador de
+[Releases](https://github.com/jggomez/expert-ai-developer-skills/releases), en las versiones `agent-meter-v*`. Solo necesitas
+abrirlo: la app importa tu historial y lee las sesiones nuevas mientras está abierta. Lo que ocurra con la app cerrada entra
+al abrirla de nuevo. Para resúmenes al terminar cada tarea y recolección programada, instala también la línea de comandos.
+
+La app no tiene firma de pago, así que el sistema te avisa la primera vez:
+
+| Sistema | Archivo | Cómo abrirla |
+| :--- | :--- | :--- |
+| Mac con Apple Silicon | `agent-meter-*-mac-arm64.dmg` | Arrastra la app a Aplicaciones y ábrela. Pulsa **Listo** en el aviso, ve a **Ajustes del Sistema → Privacidad y seguridad**, baja hasta el mensaje de agent-meter y pulsa **Abrir igualmente** |
+| Mac con Intel | `agent-meter-*-mac-x64.dmg` | Igual que arriba |
+| Windows 10 u 11 | `agent-meter-*-windows-x64.exe` | Si aparece SmartScreen, pulsa **Más información → Ejecutar de todas formas**. Necesita WebView2, que ya viene en Windows 11 |
+
+Si macOS no muestra **Abrir igualmente**, ejecuta `xattr -dr com.apple.quarantine /Applications/agent-meter.app`.
 
 ![Pantalla En vivo con el gasto de hoy, presupuestos y sesiones activas](docs/images/app-live-es.png)
 
@@ -257,13 +272,16 @@ previsto, pero aún no se ha probado.
 | **Historial** | Gasto por día, mes, proyecto y sesión, con filtros de periodo y proyecto |
 | **Insights** | Dónde recortar: hallazgos medidos, ahorros estimados y qué hacer |
 | **Cambios** | Cambia el modelo, el esfuerzo o la compactación de tus IA, con vista previa, deshacer y cifras de antes y después |
-| **Ajustes** | Presupuestos, notificaciones, recolección manual y el diagnóstico de `doctor` |
+| **Proyectos** | Clientes, facturación, tarifas, etiquetas y horas manuales, sin editar `projects.yaml` |
+| **Ajustes** | Presupuestos, notificaciones, recolección manual, búsqueda de actualizaciones y el diagnóstico de `doctor` |
 
 ![Pantalla Historial con gasto por día, mes, proyecto y sesión](docs/images/app-history-es.png)
 
 ![Pantalla Insights con hallazgos y ahorros estimados](docs/images/app-insights-es.png)
 
 ![Pantalla Cambios con la vista previa de un cambio y su historial](docs/images/app-changes-es.png)
+
+![Pantalla Proyectos con clientes, tarifas, etiquetas y horas](docs/images/app-projects-es.png)
 
 ![Pantalla Ajustes con presupuestos y diagnóstico](docs/images/app-settings-es.png)
 
@@ -274,6 +292,10 @@ previsto, pero aún no se ha probado.
   cambios intermedios entran en la siguiente recolección.
 - **Durante una recolección:** la base queda bloqueada, así que la app sigue mostrando las últimas cifras guardadas, lo
   indica en la cabecera y se actualiza al terminar. Una recolección grande puede tardar más de un minuto.
+- **Junto al reloj:** la barra de menús de Mac muestra el gasto de hoy. En Windows aparece un icono en el área de
+  notificaciones. Su menú incluye el mes, las alertas de presupuesto y las opciones para abrir la app o salir.
+- **Actualizaciones:** **Buscar actualizaciones**, en Ajustes, consulta GitHub solo cuando lo pulsas. Si hay una versión
+  nueva, abre la página de descarga. No instala nada por su cuenta.
 - **Seguridad:** no hay servidor local ni puerto abierto.
 
 #### Qué puede editar la pantalla Cambios
@@ -292,8 +314,20 @@ edita `~/.gemini/settings.json`, que pertenece a Gemini CLI.
 
 Los cambios se aplican a las sesiones nuevas; las abiertas o reanudadas pueden conservar su modelo. Las cifras de antes y
 después comparan hasta 7 días a cada lado, cuando ya terminaron 5 tareas. Muestran correlación, no causa. Un costo menor con
-más reintentos puede no ser un ahorro. La app no cambia ajustes por su cuenta, no pone topes de gasto y no puede compactar
-una sesión abierta.
+más reintentos puede no ser un ahorro. La app no pone topes de gasto y no puede compactar una sesión abierta.
+
+#### Reglas automáticas
+
+Están en la pantalla Cambios y vienen apagadas. Actívalas una a una:
+
+| Regla | Qué hace |
+| :--- | :--- |
+| Presupuesto mensual superado | Pone `sonnet` como modelo por defecto de Claude Code, una vez al mes |
+| Presupuesto diario superado | Pone `sonnet` como modelo por defecto de Claude Code, una vez al día |
+
+Las reglas solo se ejecutan con la app abierta y después de una recolección. Usan las mismas comprobaciones y copias que un
+cambio manual, avisan con una notificación y aparecen en el historial, desde donde puedes deshacerlas. Si deshaces una, no se
+repite hasta el siguiente periodo. Su estado está en `~/.agent-meter/rules.json`.
 
 Las capturas usan datos ficticios de demostración.
 

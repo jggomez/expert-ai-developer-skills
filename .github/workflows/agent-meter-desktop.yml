@@ -1,0 +1,51 @@
+name: agent-meter desktop
+
+# Builds the unsigned desktop app. A tag such as agent-meter-v0.2.0 also creates a draft release.
+on:
+  push:
+    tags: ["agent-meter-v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-15-intel, windows-latest]
+    defaults:
+      run:
+        working-directory: tools/agent-meter
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - run: uv sync --python 3.12 --extra app
+      - run: uv pip install pyinstaller
+      - run: uv run --no-sync python packaging/build_desktop.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.os }}
+          if-no-files-found: error
+          path: |
+            tools/agent-meter/dist/*.dmg
+            tools/agent-meter/dist/*.exe
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/agent-meter-v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - run: gh release create "$GITHUB_REF_NAME" artifacts/* --repo "$GITHUB_REPOSITORY" --draft --generate-notes --title "$GITHUB_REF_NAME"
+        env:
+          GH_TOKEN: ${{ github.token }}

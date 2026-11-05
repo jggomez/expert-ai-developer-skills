@@ -246,7 +246,23 @@ Every chart has a **Table view** toggle.
 ### 5.4 The desktop app
 
 `agent-meter app` opens a native window, for when you would rather not use commands. It shows the same data as the CLI
-and needs the `app` extra (see [§4](#4-install)). Tested on macOS; Windows support is planned but not tested yet.
+and needs the `app` extra (see [§4](#4-install)). Tested on macOS. On Windows it is built and tested in GitHub
+Actions, but it has not been used on a real machine yet.
+
+**No Python and no commands:** download the installer from
+[Releases](https://github.com/jggomez/expert-ai-developer-skills/releases), under the `agent-meter-v*` versions. Just open it: the
+app imports your history and reads new sessions while it is open. Anything that happens while it is closed comes in the next
+time you open it. For summaries after each task and scheduled collection, install the command line too.
+
+The app has no paid signature, so your system warns you the first time:
+
+| System | File | How to open it |
+| :--- | :--- | :--- |
+| Apple Silicon Mac | `agent-meter-*-mac-arm64.dmg` | Drag the app to Applications and open it. Click **Done** on the warning, go to **System Settings → Privacy & Security**, scroll to the agent-meter message and click **Open Anyway** |
+| Intel Mac | `agent-meter-*-mac-x64.dmg` | Same as above |
+| Windows 10 or 11 | `agent-meter-*-windows-x64.exe` | If SmartScreen appears, click **More info → Run anyway**. It needs WebView2, which Windows 11 already includes |
+
+If macOS shows no **Open Anyway**, run `xattr -dr com.apple.quarantine /Applications/agent-meter.app`.
 
 ![Live screen with today's spending, budgets and active sessions](docs/images/app-live.png)
 
@@ -256,13 +272,16 @@ and needs the `app` extra (see [§4](#4-install)). Tested on macOS; Windows supp
 | **History** | Spending by day, month, project and session, filtered by period and project |
 | **Insights** | Where to cut: measured findings, estimated savings and what to do next |
 | **Changes** | Change the model, effort or compaction of your AI tools, with a preview, undo and before and after figures |
-| **Settings** | Budgets, notifications, a manual collect and the `doctor` diagnostics |
+| **Projects** | Clients, billing, rates, tags and manual hours, without editing `projects.yaml` |
+| **Settings** | Budgets, notifications, a manual collect, an update check and the `doctor` diagnostics |
 
 ![History screen with spending by day, month, project and session](docs/images/app-history.png)
 
 ![Insights screen with findings and estimated savings](docs/images/app-insights.png)
 
 ![Changes screen with a preview of a settings change and its history](docs/images/app-changes.png)
+
+![Projects screen with clients, rates, tags and hours](docs/images/app-projects.png)
 
 ![Settings screen with budgets and diagnostics](docs/images/app-settings.png)
 
@@ -272,6 +291,10 @@ and needs the `app` extra (see [§4](#4-install)). Tested on macOS; Windows supp
   after the previous collect ends, so hooks and the CLI can reach the store. Changes in between are picked up by the next one.
 - **While a collect runs:** the store is locked, so the app keeps showing the last saved figures, says so in the header
   and refreshes when the collect ends. A large collect can take over a minute.
+- **Next to the clock:** the Mac menu bar shows today's spending. On Windows, an icon appears in the notification area. Its
+  menu includes the month, budget alerts and options to open the app or quit.
+- **Updates:** **Check for updates**, in Settings, contacts GitHub only when you click it. If there is a new version, it opens
+  the download page. It never installs anything by itself.
 - **Security:** there is no local server and no open port.
 
 #### What the Changes screen can edit
@@ -290,7 +313,20 @@ which belongs to Gemini CLI.
 
 Changes apply to new sessions; open and resumed sessions can keep their model. The before and after figures compare up to
 7 days on each side, once 5 tasks have finished. They show correlation, not cause. A lower cost with more retries may not
-be a saving. The app does not change settings on its own, does not cap spending and cannot compact an open session.
+be a saving. The app does not cap spending and cannot compact an open session.
+
+#### Automatic rules
+
+They are on the Changes screen and start off. Turn them on one at a time:
+
+| Rule | What it does |
+| :--- | :--- |
+| Monthly budget passed | Sets `sonnet` as the Claude Code default model, once a month |
+| Daily budget passed | Sets `sonnet` as the Claude Code default model, once a day |
+
+Rules run only while the app is open, after a collect. They use the same checks and backups as a manual change, send a
+notification and appear in the history, where you can undo them. If you undo one, it does not repeat until the next period.
+Their state is in `~/.agent-meter/rules.json`.
 
 The screenshots use fictional demo data.
 

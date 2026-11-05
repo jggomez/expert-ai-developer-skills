@@ -24,7 +24,7 @@ def self_test(home: AppHome) -> None:
     result = api.collect_now()
     if result["status"] != "ok":
         raise RuntimeError(f"collect failed: {result}")
-    for read in (api.overview, api.history, api.insights, api.settings, api.actions, api.changes, api.texts):
+    for read in (api.overview, api.history, api.insights, api.settings, api.actions, api.changes, api.projects, api.rules, api.texts):
         read()
 
 

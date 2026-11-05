@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import threading
+import webbrowser
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
@@ -16,8 +17,16 @@ from pathlib import Path
 from typing import Any, Final
 from zoneinfo import ZoneInfo
 
-from agent_meter import i18n
+from agent_meter import __version__, i18n
 from agent_meter.app.history import load_history
+from agent_meter.app.projects import (
+    ProjectInputError,
+    load_projects,
+    project_changes,
+    valid_hours,
+    valid_period,
+)
+from agent_meter.app.updates import RELEASES_PAGE, check_for_update
 from agent_meter.budgets import budget_document, budget_status
 from agent_meter.collector import collect
 from agent_meter.config import (
@@ -30,8 +39,11 @@ from agent_meter.config import (
 )
 from agent_meter.insights import Thresholds, build_insights, insights_document
 from agent_meter.locking import LockTimeout
+from agent_meter.notify import notify
 from agent_meter.paths import AppHome, atomic_write_text
-from agent_meter.setup import actuators
+from agent_meter.project_admin import save_project_override
+from agent_meter.project_resolver import ProjectsConfigError
+from agent_meter.setup import actuators, auto_rules
 from agent_meter.setup.actuators import ActuatorError
 from agent_meter.store import Store
 
@@ -41,6 +53,7 @@ ACTIVE_WINDOW: Final = timedelta(minutes=15)
 CACHE_NAME: Final = "app-cache.json"
 READ_LOCK_S: Final = 2.0
 COLLECT_LOCK_S: Final = 1.0
+WRITE_LOCK_S: Final = 5.0
 EDITABLE_KEYS: Final = ("budget.daily_usd", "budget.monthly_usd", "budget.plan_monthly_usd", "notify")
 _ACTIVE_SESSIONS_SQL: Final = """
 WITH recent AS (
@@ -271,6 +284,78 @@ class AppApi:
             return {"cost_per_task": str(cost), "retries_per_task": f"{float(str(row['retries_per_task'])):.2f}"}
 
         return {"enough": True, "tasks_after": tasks, "before": figures(before), "after": figures(after)}
+
+    def projects(self) -> dict[str, Any]:
+        return self._with_store("projects", lambda store, _cfg: load_projects(store))
+
+    def _edit_project(self, project_id: str, edit: Callable[[Store, str], None]) -> dict[str, Any]:
+        try:
+            with Store.open(self._home, read_only=False, lock_timeout_s=WRITE_LOCK_S) as store:
+                if not store.query("SELECT 1 FROM projects WHERE project_id = ?", [str(project_id)]):
+                    raise ProjectInputError("unknown_project")
+                edit(store, str(project_id))
+        except LockTimeout:
+            return {"ok": False, "code": "busy"}
+        except ProjectInputError as exc:
+            return {"ok": False, "code": exc.code}
+        except ProjectsConfigError:
+            return {"ok": False, "code": "projects_file"}
+        return {"ok": True}
+
+    def save_project(self, project_id: str, fields: dict[str, Any]) -> dict[str, Any]:
+        from agent_meter.cli import Ctx, _refresh_reference
+
+        def edit(store: Store, project: str) -> None:
+            save_project_override(self._home.projects, project, project_changes(fields))
+            _refresh_reference(Ctx(self._home, quiet=True), store)
+
+        return self._edit_project(project_id, edit)
+
+    def set_project_tag(self, project_id: str, tag: str) -> dict[str, Any]:
+        """The tag marks the project's tasks from now on; earlier tasks keep theirs."""
+        return self._edit_project(project_id, lambda store, project: store.set_tag(project, str(tag).strip() or None, self._clock()))
+
+    def set_project_hours(self, project_id: str, period: str, hours: str) -> dict[str, Any]:
+        return self._edit_project(project_id, lambda store, project: store.set_manual_hours(project, valid_period(str(period)), valid_hours(hours)))
+
+    def remove_project_hours(self, project_id: str, period: str) -> dict[str, Any]:
+        def edit(store: Store, project: str) -> None:
+            store.unset_manual_hours(project, valid_period(str(period)))
+
+        return self._edit_project(project_id, edit)
+
+    def rules(self) -> dict[str, Any]:
+        enabled = auto_rules.enabled_rules(self._home)
+        return {"rules": [{"id": rule, "enabled": rule in enabled} for rule in auto_rules.RULES]}
+
+    def set_rule(self, rule_id: str, enabled: bool) -> dict[str, Any]:
+        try:
+            auto_rules.set_rule(self._home, str(rule_id), bool(enabled))
+        except ActuatorError as exc:
+            return {"ok": False, "code": exc.code}
+        return {"ok": True}
+
+    def run_rules(self) -> list[str]:
+        """Runs after a collect. Saved figures can be old, so a rule only acts on a fresh read."""
+        if not auto_rules.enabled_rules(self._home):
+            return []
+        document = self._with_store("overview", self._read_overview)
+        if "budgets" not in document or document.get("stale"):
+            return []
+        cfg = self._config()
+        fired = auto_rules.evaluate(self._home, document["budgets"], today=self._today(cfg), now=self._clock())
+        words = i18n.UI[cfg.language]
+        for item in fired:
+            notify("agent-meter", words[f"rule.{item.rule}.fired"])
+        return [item.change_id for item in fired]
+
+    def check_update(self) -> dict[str, Any]:
+        return check_for_update(__version__)
+
+    def open_release(self, url: str) -> dict[str, Any]:
+        if not str(url).startswith(RELEASES_PAGE):
+            return {"ok": False}
+        return {"ok": webbrowser.open(str(url))}
 
     def collect_now(self) -> dict[str, Any]:
         result = collect(self._home, self._config(), lock_timeout_s=COLLECT_LOCK_S)

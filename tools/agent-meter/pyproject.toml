@@ -29,7 +29,11 @@ classifiers = [
 dependencies = ["duckdb>=1.1,<2", "PyYAML>=6.0", "pytz>=2023.3", "tzdata>=2024.1; sys_platform == 'win32'"]
 
 [project.optional-dependencies]
-app = ["pywebview>=5,<7"]
+app = [
+  "pywebview>=5,<7",
+  "pystray>=0.19; sys_platform == 'win32'",
+  "Pillow>=10; sys_platform == 'win32'",
+]
 bigquery = ["google-cloud-bigquery>=3.20"]
 dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.11", "types-PyYAML>=6.0", "types-pytz>=2023.3"]
 
@@ -45,7 +49,7 @@ Issues = "https://github.com/jggomez/expert-ai-developer-skills/issues"
 packages = ["src/agent_meter"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src/agent_meter", "tests", "README.md", "pyproject.toml"]
+include = ["src/agent_meter", "tests", "packaging", "README.md", "pyproject.toml"]
 
 [tool.pytest.ini_options]
 minversion = "8.0"
@@ -81,5 +85,5 @@ module = ["duckdb.*", "google.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["webview"]
+module = ["webview", "AppKit", "PyObjCTools.*", "pystray", "PIL.*"]
 ignore_missing_imports = true

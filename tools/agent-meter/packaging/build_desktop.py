@@ -65,7 +65,7 @@ def build_mac() -> Path:
 
 
 def build_windows() -> Path:
-    build(("--onefile",))
+    build(("--onefile", "--collect-submodules", "pystray"))
     self_test(DIST / f"{NAME}.exe")
     target = DIST / f"{artifact_label()}.exe"
     target.unlink(missing_ok=True)
