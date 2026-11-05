@@ -9,7 +9,7 @@ from typing import Any
 Event = dict[str, Any]
 FetchPullRequest = Callable[[str, int], Event]
 
-REVIEW_ACTIONS = frozenset({"opened", "reopened", "ready_for_review"})
+REVIEW_ACTIONS = frozenset({"opened", "reopened", "ready_for_review", "synchronize"})
 MAINTAINERS = frozenset({"OWNER", "MEMBER", "COLLABORATOR"})
 REVIEW_COMMAND = "/review"
 DEPENDABOT = "dependabot[bot]"
