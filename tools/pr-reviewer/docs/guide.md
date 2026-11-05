@@ -5,31 +5,77 @@ Set up the reviewer in a repository, then change what it reviews.
 ## What you need
 
 - A GitHub repository where you can add secrets and workflows.
-- A [Gemini API key](https://aistudio.google.com/apikey) or an
-  [Anthropic API key](https://platform.claude.com/settings/keys). You need neither to try the setup.
+- One of these: a [Gemini API key](https://aistudio.google.com/apikey), a Claude Pro or Max plan, or an
+  [Anthropic API key](https://platform.claude.com/settings/keys).
 
 Nothing runs on your computer or on a server of yours. Reviews run on GitHub Actions runners.
 
-## Set up with Gemini
+## Install
 
-1. **Save the key.** In your repository, open **Settings → Secrets and variables → Actions → Secrets** and add
-   `GEMINI_API_KEY`.
-2. **Add the workflow.** Copy [`examples/pr-review.yml`](../examples/pr-review.yml) to
-   `.github/workflows/pr-review.yml`.
-3. **Pin the version.** Get a commit SHA and replace `<commit-sha>` with it:
+### 1. Add the workflow
+
+From the root of your repository:
+
+```bash
+mkdir -p .github/workflows
+SHA=$(git ls-remote https://github.com/jggomez/expert-ai-developer-skills refs/heads/main | cut -f1)
+curl -fsSL https://raw.githubusercontent.com/jggomez/expert-ai-developer-skills/main/tools/pr-reviewer/examples/pr-review.yml \
+  | sed "s/<commit-sha>/$SHA/" > .github/workflows/pr-review.yml
+```
+
+This copies [`examples/pr-review.yml`](../examples/pr-review.yml) and pins it to the latest commit of this
+repository. To update later, run it again and read the changes first.
+
+### 2. Connect a provider
+
+Follow one option. Secrets and variables are in your repository, under
+**Settings → Secrets and variables → Actions**, in the **Secrets** and **Variables** tabs.
+
+| Option | Use it when | Secret | Variable `PR_REVIEW_PROVIDER` |
+| --- | --- | --- | --- |
+| [Gemini](#gemini) | You are starting out | `GEMINI_API_KEY` | None |
+| [Claude Pro or Max plan](#claude-pro-or-max-plan) | The repository is yours and you have a plan | `CLAUDE_CODE_OAUTH_TOKEN` | `claude-code` |
+| [Anthropic API key](#anthropic-api-key) | You are a team or have no plan | `ANTHROPIC_API_KEY` | `claude-code` |
+| [Claude Managed Agents](#claude-managed-agents) | You want a hosted sandbox and a dollar limit | `ANTHROPIC_API_KEY` | `claude` |
+
+#### Gemini
+
+Create a [key](https://aistudio.google.com/apikey) and add it as the `GEMINI_API_KEY` secret.
+
+#### Claude Pro or Max plan
+
+Reviews use the official [Claude Code Action](https://code.claude.com/docs/en/github-actions) and count against
+your plan limits.
+
+1. Create a token on your computer:
 
    ```bash
-   git ls-remote https://github.com/jggomez/expert-ai-developer-skills refs/heads/main
+   claude setup-token
    ```
 
-4. **Merge the workflow to your default branch.** `/review` comments only work from there.
-5. **Open a pull request.** After a few minutes it gets inline comments and a summary with the model, tokens
-   and estimated cost.
+2. Add it as the `CLAUDE_CODE_OAUTH_TOKEN` secret.
+3. Add the variable `PR_REVIEW_PROVIDER` with the value `claude-code`.
 
-## Set up with Claude
+The token belongs to the person who created it, so never share it or paste it in a file. Pull requests from anyone
+on the repository use that person's limits. If several people work there, use an API key instead.
 
-Claude needs one extra step, once, because Managed Agents stores the agent in your Anthropic account. Nothing
-stays running on your computer.
+#### Anthropic API key
+
+This also uses the Claude Code Action, and it pays per token.
+
+1. Create a key in the [Claude Console](https://platform.claude.com) and add it as the `ANTHROPIC_API_KEY` secret.
+2. Add the variable `PR_REVIEW_PROVIDER` with the value `claude-code`.
+3. Do not add `CLAUDE_CODE_OAUTH_TOKEN`. If it exists, the token is used instead of the key.
+
+This path has a limit of 20 turns but no dollar limit, so set a spend limit in the Console.
+
+Both Claude Code options review in one pass, without groups, read the whole clean copy with read-only tools, and do
+not show a cost. The GitHub token also reaches this step, because the official Action needs one.
+
+#### Claude Managed Agents
+
+This needs one extra step, once, because Managed Agents stores the agent in your Anthropic account. Nothing stays
+running on your computer.
 
 1. Create the agent, from a clone of this repository:
 
@@ -41,40 +87,40 @@ stays running on your computer.
    ```
 
 2. Add the `ANTHROPIC_API_KEY` secret.
-3. Add three repository variables: `CLAUDE_AGENT_ID` and `CLAUDE_ENVIRONMENT_ID` with the printed IDs, and
-   `PR_REVIEW_PROVIDER` set to `claude`.
+3. Add three variables: `CLAUDE_AGENT_ID` and `CLAUDE_ENVIRONMENT_ID` with the printed IDs, and
+   `PR_REVIEW_PROVIDER` with the value `claude`.
 
-Delete `PR_REVIEW_PROVIDER` to go back to Gemini.
+To go back to Gemini, delete `PR_REVIEW_PROVIDER`.
 
-## Set up with a Claude Pro or Max plan
+### 3. Merge it and try it
 
-Use your subscription instead of paying per token. Reviews use the official
-[Claude Code Action](https://code.claude.com/docs/en/github-actions), and they count against your plan limits.
+1. Commit `.github/workflows/pr-review.yml` and merge it to your default branch. `/review` comments only work
+   from there.
+2. Open a pull request, or close and reopen one created after that merge.
+3. Look at the results as described below.
 
-1. Create a token on your computer:
+## Use it day to day
 
-   ```bash
-   claude setup-token
-   ```
+**When it runs.** When a pull request is opened, reopened or marked ready for review. It does not run on every push.
 
-2. Add it as the `CLAUDE_CODE_OAUTH_TOKEN` secret.
-3. Add the repository variable `PR_REVIEW_PROVIDER` with the value `claude-code`.
+**How to review again.** Write `/review` as a normal comment on the pull request. Only owners, members and
+collaborators can use it. Comments from anyone else are ignored, so strangers cannot spend your budget.
 
-The token belongs to the person who created it, so never share it. Each person or repository owner uses their
-own.
+**Where to see the results.**
 
-## Set up with an Anthropic API key and Claude Code
+- Inline comments appear in the **Files changed** tab.
+- The summary appears in the **Conversation** tab, with the status and, when available, the model, tokens and cost.
+- The run appears in the **Actions** tab, under **AI PR review**.
 
-Use this for a team or organization, or if you have no Claude plan. It pays per token, with no one-time setup.
+Running it again updates the summary and does not repeat comments that were already posted.
 
-1. Create a key in the [Claude Console](https://platform.claude.com) and add it as the `ANTHROPIC_API_KEY` secret.
-2. Add the repository variable `PR_REVIEW_PROVIDER` with the value `claude-code`.
-3. Do not add `CLAUDE_CODE_OAUTH_TOKEN`. If it exists, the token is used instead of the key.
+**Who pays.** The owner of the key or token saved in the repository, whoever opens the pull request.
 
-This path has a limit of 20 turns but no dollar limit, so set a spend limit in the Console.
+**Whose pull requests are reviewed.** Those from branches of the same repository, by any author. Pull requests from
+forks and from Dependabot are skipped, because GitHub gives those runs no access to secrets.
 
-This provider reviews in one pass, without groups, reads the whole clean copy with read-only tools, and does not
-show a cost. The GitHub token also reaches this step, because the official Action needs one.
+**A green job does not mean a clean review.** The job stays green even when the review fails, so it can never block
+a merge. Read the summary.
 
 ## Change the settings
 
@@ -147,6 +193,8 @@ The rubric and the instructions are limited to 20,000 characters each.
 | "No structured output after 3 attempts" | Every attempt failed, probably for the same reason | Reopen the pull request later, or choose another `model` or `fallback-model` |
 | `/review` does nothing | The workflow is not on the default branch, or the author lacks permission | Merge the workflow. Only owners, members and collaborators can use it |
 | A fork's pull request is skipped | Runs from forks have no access to secrets | This is expected |
+| The review ignores your API key | `CLAUDE_CODE_OAUTH_TOKEN` exists and takes priority | Delete that secret |
+| Claude reports an authentication error | The token or key expired, was revoked, or is not in the secret | Create a new one and update the secret |
 | `does not exist in the base commit` | The rubric is not on the target branch yet | Merge the rubric first |
 
 ## Run it on your computer

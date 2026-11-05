@@ -1,4 +1,4 @@
-# Copy to .github/workflows/pr-review.yml and add the GEMINI_API_KEY repository secret.
+# Copy to .github/workflows/pr-review.yml, replace <commit-sha> and add an AI secret: GEMINI_API_KEY by default.
 # Step by step: https://github.com/jggomez/expert-ai-developer-skills/blob/main/tools/pr-reviewer/docs/guide.md
 name: AI PR review
 
