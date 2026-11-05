@@ -75,17 +75,17 @@ UI: Final[Mapping[str, Mapping[str, str]]] = {
         "live.not_set": "Sin definir", "live.no_budgets": "Aún no hay presupuestos. Añade uno en Ajustes.",
         "live.budget_used": "{spent} de {limit}", "live.percent_used": "{percent} % usado",
         "live.tokens": "{count}k tokens", "live.just_now": "Ahora mismo", "live.minutes_ago": "Hace {minutes} min",
-        "common.project": "Proyecto", "common.host": "Host", "common.calls": "Llamadas", "common.cost": "Coste",
+        "common.project": "Proyecto", "common.host": "Host", "common.calls": "Llamadas", "common.cost": "Costo",
         "common.context": "Contexto", "common.last_activity": "Última actividad", "common.sessions": "Sesiones",
         "common.tasks": "Tareas", "common.tokens": "Tokens", "common.share": "Parte", "common.date": "Fecha",
         "common.month": "Mes", "common.started": "Inicio",
-        "common.list_price_note": "Los costes usan precios de lista de la API. No es lo que cobra tu plan.",
+        "common.list_price_note": "Los costos usan precios de lista de la API. No es lo que cobra tu plan.",
         "history.title": "Historial", "history.period": "Periodo", "history.all_time": "Todo",
         "history.last_7": "Últimos 7 días", "history.last_30": "Últimos 30 días", "history.last_90": "Últimos 90 días",
         "history.all_projects": "Todos los proyectos", "history.spent": "Gastado",
         "history.estimated": "{amount} estimados", "history.by_day": "Por día", "history.by_month": "Por mes",
         "history.by_project": "Por proyecto", "history.as_table": "Ver como tabla",
-        "history.chart_label": "Coste por día", "history.hover_hint": "Pasa el cursor por un día para ver sus cifras.",
+        "history.chart_label": "Costo por día", "history.hover_hint": "Pasa el cursor por un día para ver sus cifras.",
         "history.day_detail": "{date}: {cost}, {calls} llamadas, {sessions} sesiones",
         "history.shown": "Se muestran las {shown} sesiones más recientes de {total}.", "history.empty": "Sin actividad en este periodo.",
         "insights.title": "Dónde recortar", "insights.period": "Del {from} al {to}. Los hallazgos son medidos y los ahorros, estimaciones.",
@@ -112,13 +112,13 @@ INSIGHT_TEXT: Final[Mapping[str, tuple[str, str, str]]] = {
     "stale_cache": (
         "{resumes} reanudaciones tras más de {hours} h de inactividad costaron {cost}",
         "Tras una pausa larga, empieza una sesión nueva o ejecuta /compact antes de seguir.",
-        "Cada reanudación se valora al coste promedio de una llamada sin esa pausa.",
+        "Cada reanudación se valora al costo promedio de una llamada sin esa pausa.",
     ),
     "repeated_implementers": (
         "{tasks} tareas volvieron a ejecutar un implementador después de que terminara, por {cost}",
         "Revisa si esas tareas tenían especificaciones o criterios de aceptación poco claros. "
         "Las fases planificadas no son retrabajo.",
-        "El coste completo de cada repetición secuencial. Es un máximo, porque algunas pueden ser fases planificadas.",
+        "El costo completo de cada repetición secuencial. Es un máximo, porque algunas pueden ser fases planificadas.",
     ),
     "expensive_agent": (
         "{agent} cuesta {average} por ejecución, {ratio} veces lo que cuestan los demás",
@@ -126,9 +126,9 @@ INSIGHT_TEXT: Final[Mapping[str, tuple[str, str, str]]] = {
         "Cada ejecución se valora a la mediana de los promedios de los demás tipos de agente.",
     ),
     "outlier_tasks": (
-        "{top} de {tasks} tareas concentraron el {share} % del coste",
+        "{top} de {tasks} tareas concentraron el {share} % del costo",
         "Abre las tareas más caras y divide el trabajo similar en tareas más pequeñas.",
-        "Sin estimación: esto muestra dónde está el coste, no cuánto se puede evitar.",
+        "Sin estimación: esto muestra dónde está el costo, no cuánto se puede evitar.",
     ),
     "model_what_if": (
         "{calls} llamadas a {source} costaron {cost}; con {target} serían {alternative} a precio de lista",
@@ -140,7 +140,7 @@ _SINGULAR_TITLES: Final[Mapping[str, tuple[str, str]]] = {
     "long_session": ("sessions", "1 sesión superó {threshold} llamadas y costó {cost}"),
     "stale_cache": ("resumes", "1 reanudación tras más de {hours} h de inactividad costó {cost}"),
     "repeated_implementers": ("tasks", "1 tarea volvió a ejecutar un implementador después de que terminara, por {cost}"),
-    "outlier_tasks": ("top_tasks", "1 de {tasks} tareas concentró el {share} % del coste"),
+    "outlier_tasks": ("top_tasks", "1 de {tasks} tareas concentró el {share} % del costo"),
 }
 _OVERLAP_NOTE: Final = "Los ahorros son estimaciones y las reglas pueden solaparse, así que no los sumes."
 _MONEY_FIELDS: Final = (("cost", "cost_usd"), ("alternative", "alternative_usd"), ("average", "average_usd"))

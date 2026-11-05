@@ -123,7 +123,7 @@ def _alert_text(line: BudgetLine, language: str) -> tuple[str, str]:
     label, period = i18n.translate(line.label, language), i18n.translate(line.period, language)
     if language == "es":
         state = "presupuesto superado" if line.level == "over" else "cerca del presupuesto"
-        return f"agent-meter: {state}", f"{label}: {spent} de {limit} {period} (coste a precio de lista)"
+        return f"agent-meter: {state}", f"{label}: {spent} de {limit} {period} (costo a precio de lista)"
     state = "over budget" if line.level == "over" else "near budget"
     return f"agent-meter: {state}", f"{label}: {spent} of {limit} {period} (list-price cost)"
 

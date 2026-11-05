@@ -155,7 +155,7 @@ def test_alerts_follow_the_chosen_language(monkeypatch: pytest.MonkeyPatch) -> N
     send_alerts((line,), Config(timezone="UTC", language="es"))
 
     assert sent == [("agent-meter: presupuesto superado",
-                     "Todos los proyectos: $1.250,50 de $1.000,00 este mes (coste a precio de lista)")]
+                     "Todos los proyectos: $1.250,50 de $1.000,00 este mes (costo a precio de lista)")]
 
 
 def test_language_defaults_to_english_and_survives_a_save(tmp_path: Path) -> None:
