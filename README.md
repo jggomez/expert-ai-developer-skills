@@ -136,12 +136,14 @@ These work without installing any plugin.
 
 ### agent-meter
 
-[`agent-meter`](tools/agent-meter/README.md) is a CLI that reports tokens, cost and latency per session, task and subagent, for both hosts:
+[`agent-meter`](tools/agent-meter/README.md) reports tokens, cost and latency per session, task and subagent, for both hosts. It is a CLI and an optional desktop app in English or Spanish:
 
 ```bash
 uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 agent-meter setup --local
 ```
+
+![agent-meter desktop app showing spending history with demo data](tools/agent-meter/docs/images/app-history.png)
 
 ## Rules, workflows and sidecars
 

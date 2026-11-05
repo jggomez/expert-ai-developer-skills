@@ -6,6 +6,7 @@
 transcripts and databases those tools already write on your machine, and turns them into:
 
 - a short **summary after every task or session** (tokens, API-equivalent cost, time, P50/P95),
+- a **desktop app** in English or Spanish with live spending, history, insights and budgets,
 - an **offline HTML report** you open in your browser,
 - and, optionally, a **BigQuery dataset + Looker Studio dashboard** in your own Google Cloud project.
 
@@ -112,6 +113,9 @@ uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdi
 # Local + BigQuery support (Option B)
 uv tool install "agent-meter[bigquery] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 
+# With the desktop app (agent-meter app)
+uv tool install "agent-meter[app] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+
 # Same with pipx
 pipx install --python python3.12 "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 ```
@@ -128,6 +132,7 @@ uv tool install "agent-meter[bigquery] @ git+https://github.com/jggomez/expert-a
 cd /path/to/expert-ai-developer-skills
 uv tool install "./tools/agent-meter"               # local mode
 uv tool install "./tools/agent-meter[bigquery]"     # with BigQuery support
+uv tool install "./tools/agent-meter[app]"          # with the desktop app (agent-meter app)
 ```
 
 ### 4.3 Check, update, remove the tool
@@ -237,6 +242,35 @@ The report is a single self-contained file (works offline, no external assets). 
 follows your system. Sections: overview (cost by project/month, Claude Code vs Antigravity), tasks & agents, performance
 (P50/P95/P99), efficiency (cache hit, context size), billing (when rates are set) and notices (unpriced/estimated/untracked).
 Every chart has a **Table view** toggle.
+
+### 5.4 The desktop app
+
+`agent-meter app` opens a native window, for when you would rather not use commands. It shows the same data as the CLI
+and needs the `app` extra (see [§4](#4-install)). Tested on macOS; Windows support is planned but not tested yet.
+
+![Live screen with today's spending, budgets and active sessions](docs/images/app-live.png)
+
+| Screen | What you get |
+| :--- | :--- |
+| **Live** | Today, this month, month-end forecast, plan value, budgets and the sessions active in the last 15 minutes |
+| **History** | Spending by day, month, project and session, filtered by period and project |
+| **Insights** | Where to cut: measured findings, estimated savings and what to do next |
+| **Settings** | Budgets, notifications, a manual collect and the `doctor` diagnostics |
+
+![History screen with spending by day, month, project and session](docs/images/app-history.png)
+
+![Insights screen with findings and estimated savings](docs/images/app-insights.png)
+
+![Settings screen with budgets and diagnostics](docs/images/app-settings.png)
+
+- **Language:** choose English or Español in the header. The choice is saved as `language` and also applies to budget
+  alerts. The CLI and the HTML report stay in English.
+- **Live updates:** the app watches your transcript folders and collects when they change.
+- **While a collect runs:** the store is locked, so the app keeps showing the last saved figures, says so in the header
+  and refreshes when the collect ends. A large collect can take over a minute.
+- **Security:** there is no local server and no open port.
+
+The screenshots use fictional demo data.
 
 ---
 
@@ -352,6 +386,9 @@ Most read commands accept `--json`.
 | `collect` | Incremental import | `--host H`, `--since YYYY-MM-DD`, `--full` (re-read everything, still idempotent) |
 | `last` | Last session summary | `--project P`, `--json` |
 | `tasks` | Per-task rollups with subagents | `--last [N]`, `--session S`, `--project P`, `--tag T`, `--since D`, `--json` |
+| `app` | Desktop app in English or Spanish: live spending, history by day, month, project and session, insights, budgets and diagnostics (needs the `app` extra) | — |
+| `insights` | Where to cut spending: fixed rules, measured facts and estimated savings | `--days N`, `--as-of YYYY-MM-DD`, `--project P`, `--json` |
+| `budget` | Spending against your limits, month-end forecast and plan value | `--as-of YYYY-MM-DD`, `--json` |
 | `report` | HTML report | `--open`, `--out F`, `--month YYYY-MM`, `--from D --to D`, `--project P`, `--client C` |
 | `projects list` | Projects with sessions and cost | `--json` |
 | `projects set <project>` | Name, client, billing | `--name`, `--client`, `--billing hourly\|fixed`, `--rate`, `--price`, `--currency` |
@@ -471,6 +508,10 @@ Rules:
 
 ## 11. Configuration reference
 
+Budgets warn with a desktop notification at 80% and 100%, once per period, and never block work:
+`budget.daily_usd`, `budget.monthly_usd`, `budget.projects.<project_id>` and, to compare list-price
+usage with what you pay, `budget.plan_monthly_usd`. Costs are API list prices, not your bill.
+
 `agent-meter config show` lists everything; change values with `agent-meter config set <key> <value>`.
 The file is `~/.agent-meter/config.toml`.
 
@@ -482,6 +523,7 @@ The file is `~/.agent-meter/config.toml`.
 | `dev_hours_merge_gap_min` | `30` | Gaps between tasks longer than this are not counted as developer hours |
 | `show_task_labels` | `true` | Show a short prompt excerpt in `tasks` (terminal only, never stored) |
 | `notify` | `auto` | Desktop notifications: `auto` (session end + long tasks), `session`, `long-tasks`, `off` |
+| `language` | `en` | Language of the desktop app and its budget alerts: `en` or `es`. The app header also changes it. The CLI and the HTML report stay in English |
 | `notify_min_task_s` | `120` | Minimum task duration for a "long task" notification |
 | `claude_inline_summary` | `false` | Reserved (inline summaries inside Claude Code are off) |
 | `store_agent_descriptions` | `false` | Reserved for v2, currently ignored (descriptions are always hashed) |
@@ -545,7 +587,7 @@ counts, errors as class names.
 | `secret` | Local salt for hashes (never uploaded) |
 | `last-summary.txt` | Last summary |
 | `report.html` | Last report (default location) |
-| `state/`, `outbox/`, `logs/`, `lock` | Internal state, BigQuery upload staging, error class names, concurrency lock |
+| `state/`, `outbox/`, `logs/`, `lock` | Internal state (including the app's last figures), BigQuery upload staging, error class names, concurrency lock |
 | `install.json`, `backups/` | What `setup` changed, to undo it with `uninstall` |
 | `.agent-meter-home` | Marker proving agent-meter created this folder |
 

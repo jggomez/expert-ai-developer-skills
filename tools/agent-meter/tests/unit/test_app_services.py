@@ -1,0 +1,195 @@
+"""Desktop app services and live watcher (Phase 4), without any GUI."""
+
+from __future__ import annotations
+
+import json
+import os
+from collections.abc import Iterator
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import pytest
+
+from agent_meter.app.services import AppApi
+from agent_meter.app.watcher import TranscriptWatcher, signature, watched_folders
+from agent_meter.config import load_config
+from agent_meter.locking import store_lock
+from agent_meter.model import Host
+from agent_meter.paths import AppHome
+from agent_meter.pricing import load_pricing
+from agent_meter.project_resolver import ProjectsConfig
+from agent_meter.store import Store
+from tests.fixtures.records import make_batch, make_project, ts
+
+NOW = ts(600) + timedelta(minutes=5)
+
+
+@pytest.fixture()
+def home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[AppHome]:
+    monkeypatch.setenv("HOME", str(tmp_path / "user"))
+    meter = AppHome.resolve(str(tmp_path / "h"))
+    with Store.open(meter, read_only=False, lock_timeout_s=1.0) as opened:
+        opened.migrate()
+        opened.load_reference_data(
+            pricing=load_pricing(None), host_defaults={},
+            projects=ProjectsConfig(projects={}, path_aliases={}, ignore=(), merges={}),
+            project_refs=[make_project()], settings={"timezone": "UTC"},
+        )
+        opened.apply_batches([make_batch()])
+    yield meter
+
+
+def api(home: AppHome, now: datetime = NOW) -> AppApi:
+    return AppApi(home, clock=lambda: now)
+
+
+def test_overview_lists_a_recent_session_as_json_safe_data(home: AppHome) -> None:
+    AppApi(home).save_setting("budget.monthly_usd", "100")
+
+    data = api(home).overview()
+
+    assert json.loads(json.dumps(data)) == data
+    (session,) = data["sessions"]
+    assert session["minutes_ago"] == 5
+    assert session["context_tokens"] > 0
+    assert data["budgets"][0]["period"] == "this month"
+
+
+def test_overview_hides_sessions_idle_for_too_long(home: AppHome) -> None:
+    assert api(home, NOW + timedelta(hours=1)).overview()["sessions"] == []
+
+
+def test_a_held_store_reports_busy_instead_of_failing(home: AppHome, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("agent_meter.app.services.READ_LOCK_S", 0.05)
+
+    with store_lock(home.lock, exclusive=True, timeout_s=1.0):
+        assert api(home).overview() == {"busy": True}
+
+
+def test_only_listed_settings_can_change(home: AppHome) -> None:
+    refused = AppApi(home).save_setting("timezone", "UTC")
+    saved = AppApi(home).save_setting("budget.daily_usd", "25")
+    invalid = AppApi(home).save_setting("budget.daily_usd", "not money")
+
+    assert refused["ok"] is False
+    assert saved == {"ok": True}
+    assert invalid["ok"] is False
+    assert str(load_config(home).budget.daily_usd) == "25"
+
+
+def test_settings_return_current_values_and_diagnostics(home: AppHome) -> None:
+    AppApi(home).save_setting("budget.plan_monthly_usd", "20")
+
+    data = AppApi(home).settings()
+
+    assert data["values"]["budget.plan_monthly_usd"] == "20"
+    assert {"status", "check", "message"} <= set(data["checks"][0])
+
+
+def test_watcher_reacts_only_when_a_transcript_changes(tmp_path: Path) -> None:
+    transcript = tmp_path / "projects" / "s.jsonl"
+    transcript.parent.mkdir()
+    transcript.write_text("{}\n", encoding="utf-8")
+    changes: list[int] = []
+    watcher = TranscriptWatcher([tmp_path / "projects"], lambda: changes.append(1))
+
+    idle = watcher.poll_once()
+    (tmp_path / "projects" / "note.txt").write_text("ignored", encoding="utf-8")
+    still_idle = watcher.poll_once()
+    os.utime(transcript, ns=(1, signature([tmp_path / "projects"])[1] + 1))
+    changed = watcher.poll_once()
+
+    assert (idle, still_idle, changed) == (False, False, True)
+    assert changes == [1]
+
+
+def test_a_failed_refresh_does_not_stop_the_watcher(tmp_path: Path) -> None:
+    folder = tmp_path / "projects"
+    folder.mkdir()
+
+    def fail() -> None:
+        raise RuntimeError("boom")
+
+    watcher = TranscriptWatcher([folder], fail)
+    (folder / "s.jsonl").write_text("{}\n", encoding="utf-8")
+
+    assert watcher.poll_once() is True
+
+
+def test_watched_folders_cover_each_host(tmp_path: Path) -> None:
+    roots = {Host.CLAUDE_CODE: tmp_path / "c", Host.ANTIGRAVITY_CLI: tmp_path / "a"}
+
+    assert watched_folders(roots) == [tmp_path / "c" / "projects", tmp_path / "a" / "conversations", tmp_path / "a" / "brain"]
+
+
+def test_brain_folders_watch_only_the_transcript(tmp_path: Path) -> None:
+    logs = tmp_path / "brain" / "c1" / ".system_generated" / "logs"
+    logs.mkdir(parents=True)
+    (logs / "transcript_full.jsonl").write_text("{}\n", encoding="utf-8")
+    (tmp_path / "brain" / "c1" / "notes.jsonl").write_text("{}\n", encoding="utf-8")
+
+    assert signature([tmp_path / "brain"])[0] == 1
+
+
+def test_spanish_reaches_budgets_and_diagnostics(home: AppHome) -> None:
+    app = api(home)
+    app.set_language("es")
+    app.save_setting("budget.monthly_usd", "100")
+
+    overview = app.overview()
+    settings = app.settings()
+
+    assert overview["budgets"][0]["period"] == "este mes"
+    assert overview["budgets"][0]["label"] == "Todos los proyectos"
+    assert {check["check"] for check in settings["checks"]} >= {"configuración", "programador"}
+    assert {"OK", "WARN", "FAIL"} >= {check["status"] for check in settings["checks"]}
+
+
+def test_a_rejected_setting_is_explained_in_spanish(home: AppHome) -> None:
+    app = api(home)
+    app.set_language("es")
+
+    assert "no es un número decimal" in app.save_setting("budget.monthly_usd", "abc")["error"]
+
+
+def test_history_rolls_up_by_day_month_project_and_session(home: AppHome) -> None:
+    data = api(home).history()
+
+    assert json.loads(json.dumps(data)) == data
+    assert data["totals"]["sessions"] == len(data["sessions"]) == 1
+    assert data["by_day"][-1]["calls"] == data["totals"]["calls"]
+    assert data["by_month"][0]["cost_usd"] == data["totals"]["cost_usd"]
+    assert data["projects"][0]["share_pct"] == "100.0"
+
+
+def test_history_filters_by_project_but_keeps_the_project_list(home: AppHome) -> None:
+    data = api(home).history(0, "someone-else")
+
+    assert data["totals"]["calls"] == 0
+    assert data["sessions"] == []
+    assert len(data["projects"]) == 1
+
+
+def test_history_period_excludes_older_days(home: AppHome) -> None:
+    data = api(home, NOW + timedelta(days=30)).history(7)
+
+    assert data["totals"]["calls"] == 0
+    assert len(data["by_day"]) == 7
+
+
+def test_saved_figures_are_shown_while_a_collect_holds_the_store(home: AppHome, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("agent_meter.app.services.READ_LOCK_S", 0.01)
+    first = api(home).overview()
+
+    with store_lock(home.lock, exclusive=True, timeout_s=1.0):
+        again = api(home).overview()  # a new instance: the figures survive a restart of the app
+
+    assert again["stale"] is True
+    assert again["today_usd"] == first["today_usd"]
+
+
+def test_a_broken_saved_file_does_not_stop_the_app(home: AppHome) -> None:
+    home.state_dir.mkdir(parents=True, exist_ok=True)
+    (home.state_dir / "app-cache.json").write_text("not json")
+
+    assert "today_usd" in api(home).overview()

@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import json
 from collections.abc import Iterator
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -444,3 +445,27 @@ def test_hook_dispatch_always_zero(home: AppHome, monkeypatch: pytest.MonkeyPatc
 
 def test_hook_worker_bad_args_is_usage(home: AppHome) -> None:
     assert cli.main(["hook-worker", "--host", "claude-code"]) == 2
+
+
+def test_doctor_warns_when_the_loaded_scheduler_never_succeeds(
+    home: AppHome, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import agent_meter.scheduler as scheduler
+
+    monkeypatch.setattr(scheduler, "status", lambda **_kw: "loaded")
+    collected(capsys)
+
+    _, before, _ = run(capsys, "doctor")
+    run(capsys, "collect", "--scheduled", "--quiet")
+    _, after, _ = run(capsys, "doctor")
+
+    assert "no scheduled collect has succeeded" in before
+    assert "last scheduled collect" in after and "no scheduled collect" not in after
+
+
+def test_doctor_warns_when_scheduled_collects_stopped() -> None:
+    now = datetime(2026, 11, 5, 12, 0, tzinfo=UTC)
+
+    check = cli._scheduler_check("loaded", (now - timedelta(hours=3)).isoformat(), now)
+
+    assert check["status"] == "WARN"

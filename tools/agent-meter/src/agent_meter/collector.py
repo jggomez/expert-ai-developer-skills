@@ -18,6 +18,7 @@ from datetime import time as dtime
 from pathlib import Path
 from typing import Final, Literal
 
+from agent_meter.budgets import due_alerts, send_alerts
 from agent_meter.config import Config, host_defaults, settings_for_store
 from agent_meter.locking import LockTimeout
 from agent_meter.model import (
@@ -237,6 +238,7 @@ def collect(
     full: bool = False,
     only: tuple[Host, str] | None = None,
     lock_timeout_s: float = 60.0,
+    scheduled: bool = False,
     readers: Sequence[HostReader] | None = None,
     now: datetime | None = None,
     signal: Signal | None = None,
@@ -274,6 +276,10 @@ def collect(
                 store.record_untracked(reader.untracked())
         ingest.flush()
         _finish(store, home, cfg, projects, pricing, pricing_error, list(ingest.refs.values()), moment)
+        if scheduled:
+            store.set_meta("last_scheduled_collect_at", moment.isoformat())
+        alerts = due_alerts(store, cfg, moment) if cfg.budget.active else ()
+    send_alerts(alerts, cfg)
     return CollectResult(
         "ok", ingest.stats, _elapsed_ms(started), tuple(ingest.diagnostics), ingest.skipped
     )

@@ -47,6 +47,7 @@ EXIT_DIFF: Final = 5
 
 INTERACTIVE_LOCK_S: float = 30.0
 SCHEDULED_LOCK_S: float = 60.0
+SCHEDULER_STALE_AFTER: Final = timedelta(hours=2)
 REFRESH_LOCK_S: float = 2.0
 SANDBOX_RELOAD_EVERY: Final = timedelta(days=7)
 SINCE_FOREVER: Final = date(2000, 1, 1)
@@ -246,7 +247,8 @@ def _cmd_collect(ctx: Ctx, ns: argparse.Namespace) -> int:
     hosts = _host_list(ns.host)
     since = _date(ns.since, "--since")
     timeout = SCHEDULED_LOCK_S if ns.scheduled else INTERACTIVE_LOCK_S
-    result = collect(ctx.home, ctx.cfg, hosts=hosts, since=since, full=ns.full, lock_timeout_s=timeout)
+    result = collect(ctx.home, ctx.cfg, hosts=hosts, since=since, full=ns.full, lock_timeout_s=timeout,
+                     scheduled=ns.scheduled)
     if result.status == "locked":
         if ns.scheduled:
             ctx.info("store busy; skipping this cycle")
@@ -266,6 +268,49 @@ def _cmd_collect(ctx: Ctx, ns: argparse.Namespace) -> int:
         ctx.info(f"{len(result.diagnostics)} unit(s) had problems: run 'agent-meter doctor'")
     if ns.scheduled and ctx.cfg.bigquery.enabled:
         _scheduled_sync(ctx)
+    return EXIT_OK
+
+
+def _cmd_insights(ctx: Ctx, ns: argparse.Namespace) -> int:
+    from zoneinfo import ZoneInfo
+
+    from agent_meter.insights import (
+        Thresholds,
+        build_insights,
+        insights_document,
+        render_insights,
+    )
+
+    as_of = _date(ns.as_of, "--as-of") or datetime.now(ZoneInfo(ctx.cfg.timezone)).date()
+    with _reader(ctx) as store:
+        project = _resolve_project(store, ns.project) if ns.project else None
+        report = build_insights(store, as_of=as_of, project_id=project, limits=Thresholds(window_days=ns.days))
+    print(json.dumps(insights_document(report), indent=2, sort_keys=True) if ns.json else render_insights(report))
+    return EXIT_OK
+
+
+def _cmd_budget(ctx: Ctx, ns: argparse.Namespace) -> int:
+    from zoneinfo import ZoneInfo
+
+    from agent_meter.budgets import budget_document, budget_status, render_budget
+
+    as_of = _date(ns.as_of, "--as-of") or datetime.now(ZoneInfo(ctx.cfg.timezone)).date()
+    with _reader(ctx) as store:
+        status = budget_status(store, ctx.cfg.budget, as_of)
+    print(json.dumps(budget_document(status), indent=2, sort_keys=True) if ns.json else render_budget(status))
+    return EXIT_OK
+
+
+def _cmd_app(ctx: Ctx, _ns: argparse.Namespace) -> int:
+    try:
+        from agent_meter.app.window import run_app
+
+        run_app(ctx.home)
+    except ModuleNotFoundError as exc:
+        if exc.name != "webview":
+            raise
+        ctx.err("the desktop app needs an extra package: uv tool install 'agent-meter[app]'")
+        return EXIT_ERROR
     return EXIT_OK
 
 
@@ -345,7 +390,12 @@ def _cmd_tasks(ctx: Ctx, ns: argparse.Namespace) -> int:
 
 
 def _cmd_report(ctx: Ctx, ns: argparse.Namespace) -> int:
-    from agent_meter.report import ReportOptions, build_report, write_report
+    from agent_meter.report import (
+        ReportOptions,
+        build_report,
+        report_insights,
+        write_report,
+    )
 
     date_from, date_to = _date(ns.date_from, "--from"), _date(ns.date_to, "--to")
     with _reader(ctx) as store:
@@ -357,7 +407,7 @@ def _cmd_report(ctx: Ctx, ns: argparse.Namespace) -> int:
             )
         except ValueError as exc:
             raise UsageError(str(exc)) from exc
-        html = build_report(store, options)
+        html = build_report(store, options, insights=report_insights(store, options))
     path = write_report(html, Path(ns.out) if ns.out else ctx.home.report)
     print(path)
     if ns.open:
@@ -819,12 +869,24 @@ def _doctor_checks(ctx: Ctx, *, cloud: bool) -> list[dict[str, str]]:
             ))
         if cfg.bigquery.enabled:
             checks += _cloud_checks(ctx, store, now, deep=cloud)
-    state = scheduler.status()
-    checks.append(_check("OK" if state == "loaded" else "WARN", "scheduler", {
-        "loaded": "loaded (every 15 min)", "not_loaded": "not loaded (hooks/manual collect only)",
-        "unsupported": "no supported scheduler on this platform",
-    }[state]))
+        last_scheduled = store.get_meta("last_scheduled_collect_at")
+    checks.append(_scheduler_check(scheduler.status(), last_scheduled, now))
     return checks
+
+
+def _scheduler_check(state: str, last_scheduled: str | None, now: datetime) -> dict[str, str]:
+    """A loaded job proves nothing by itself, so look for the trace left by a successful run."""
+    if state == "not_loaded":
+        return _check("WARN", "scheduler", "not loaded (hooks/manual collect only)")
+    if state == "unsupported":
+        return _check("WARN", "scheduler", "no supported scheduler on this platform")
+    if last_scheduled is None:
+        return _check("WARN", "scheduler", "loaded, but no scheduled collect has succeeded yet")
+    moment = datetime.fromisoformat(last_scheduled)
+    age = _age(moment, now)
+    if now - moment > SCHEDULER_STALE_AFTER:
+        return _check("WARN", "scheduler", f"loaded, but the last scheduled collect succeeded {age}")
+    return _check("OK", "scheduler", f"loaded (every 15 min) · last scheduled collect {age}")
 
 
 def _cloud_checks(ctx: Ctx, store: Store, now: datetime, *, deep: bool) -> list[dict[str, str]]:
@@ -1117,12 +1179,28 @@ def _add_ingest_commands(sub: argparse._SubParsersAction[argparse.ArgumentParser
     p.add_argument("--since", help="only units modified on/after YYYY-MM-DD")
     p.add_argument("--full", action="store_true", help="re-read every unit (still idempotent)")
     p.add_argument("--scheduled", action="store_true", help=argparse.SUPPRESS)
+    p.add_argument("--quiet", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     p.set_defaults(handler=_cmd_collect)
 
     p = sub.add_parser("last", help="print the last session summary")
     p.add_argument("--project")
     _json_flag(p)
     p.set_defaults(handler=_cmd_last)
+
+    p = sub.add_parser("insights", help="where to cut spending, from fixed rules over your data")
+    p.add_argument("--project")
+    p.add_argument("--days", type=int, default=30, help="period length (default 30)")
+    p.add_argument("--as-of", help="last day of the period, YYYY-MM-DD; repeats a past result exactly")
+    _json_flag(p)
+    p.set_defaults(handler=_cmd_insights)
+
+    p = sub.add_parser("app", help="open the desktop app")
+    p.set_defaults(handler=_cmd_app)
+
+    p = sub.add_parser("budget", help="spending against your limits, month-end forecast and plan value")
+    p.add_argument("--as-of", help="day to report on, YYYY-MM-DD")
+    _json_flag(p)
+    p.set_defaults(handler=_cmd_budget)
 
     p = sub.add_parser("tasks", help="per-task rollups with every subagent")
     p.add_argument("--last", nargs="?", type=int, const=1, help="the N most recent tasks (default 1)")

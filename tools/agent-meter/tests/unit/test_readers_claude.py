@@ -673,3 +673,22 @@ def test_read_is_deterministic(home: ClaudeHome) -> None:
     options = make_options(now=datetime(2026, 10, 16, 15, tzinfo=UTC))
 
     assert reader.read_unit(unit, options) == reader.read_unit(unit, options)
+
+
+def test_piped_test_run_counts_a_failure_the_exit_code_hid(home: ClaudeHome) -> None:
+    session = ClaudeSession("s-piped")
+    prompt = session.prompt(0, "p1")
+    bash = session.assistant(
+        1, "r1", parent=prompt, tools=[tool_use("Bash", "tu-1", command="cd app && pytest -q | tail -3")]
+    )
+    session.tool_result(2, "p1", parent=bash, tool_use_id="tu-1", content="== 2 failed, 8 passed in 1.0s ==")
+    home.write(session)
+    reader = ClaudeCodeReader(home.root)
+    (unit,) = list(reader.discover())
+
+    batch = reader.read_unit(unit, make_options(now=ts(1600), description_salt=SALT))
+
+    (run,) = batch.agent_runs
+    (bash_use,) = batch.tool_uses
+    assert (run.test_runs, run.test_failures) == (1, 1)
+    assert bash_use.errors == 0

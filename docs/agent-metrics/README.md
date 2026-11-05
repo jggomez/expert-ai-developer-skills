@@ -17,13 +17,17 @@ It reads the transcripts and databases that the hosts already write in real time
 | AI cost vs billable value per client and month | "AI cost was 4% of what I billed client Z" |
 | Tool-call counts and files touched (counts only) | What the agent did, with no content stored |
 
+The optional desktop app shows the same data with live spending, history, insights and budgets, in English or Spanish:
+
+![agent-meter desktop app showing the Live screen with demo data](../../tools/agent-meter/docs/images/app-live.png)
+
 ## Option A vs Option B
 
 | | **Option A: Local** (default, always on) | **Option B: Cloud** (opt-in, on top of A) |
 | :--- | :--- | :--- |
 | Audience | Anyone, with no cloud account | Developers with a GCP project |
 | Storage | DuckDB at `~/.agent-meter/meter.duckdb` | A + BigQuery dataset `agent_metrics` (load jobs only) |
-| Visualization | Summary after each task or session, `agent-meter last` / `tasks`, offline HTML report (`agent-meter report --open`) | Looker Studio dashboard with drill-down project → session → task → agent run → call |
+| Visualization | Summary after each task or session, `agent-meter last` / `tasks`, desktop app (`agent-meter app`), offline HTML report (`agent-meter report --open`) | Looker Studio dashboard with drill-down project → session → task → agent run → call |
 | Network | None. `setup --local --yes` makes zero network calls | BigQuery load jobs. Offline periods queue in a local outbox and upload later |
 | Cost | $0 | $0 within the BigQuery free tier |
 | Modes | — | `billing` (billing linked, optional $1 budget alert that notifies but **does not cap** spend) or `sandbox` (no billing, 60-day table expiry, weekly full reload) |

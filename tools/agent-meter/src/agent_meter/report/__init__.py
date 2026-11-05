@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from agent_meter.report.build import build_report, write_report
+from agent_meter.report.build import build_report, report_insights, write_report
 from agent_meter.report.data import ViewSource
 from agent_meter.report.options import ReportOptions
 
-__all__ = ["ReportOptions", "ViewSource", "build_report", "write_report"]
+__all__ = ["ReportOptions", "ViewSource", "build_report", "report_insights", "write_report"]

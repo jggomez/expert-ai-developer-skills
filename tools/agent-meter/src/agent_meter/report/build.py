@@ -4,22 +4,36 @@ from __future__ import annotations
 
 import os
 import tempfile
+from dataclasses import replace
 from pathlib import Path
 
+from agent_meter.insights import InsightsReport, Thresholds, build_insights
 from agent_meter.report.data import ViewSource, load_report_data
 from agent_meter.report.options import ReportOptions
 from agent_meter.report.render import render_report
 
-__all__ = ["ReportOptions", "build_report", "write_report"]
+__all__ = ["ReportOptions", "build_report", "report_insights", "write_report"]
 
 
-def build_report(store: ViewSource, options: ReportOptions) -> str:
+def report_insights(store: ViewSource, options: ReportOptions) -> InsightsReport | None:
+    """Insights for the report's period, or the last 30 days when it has no start date."""
+    if options.client is not None:  # the rules work per project at most
+        return None
+    start, end = options.date_range()
+    today = options.generated_at_utc.date()
+    as_of = min(end or today, today)
+    days = (as_of - start).days + 1 if start is not None else Thresholds().window_days
+    limits = Thresholds(window_days=max(days, 1))
+    return build_insights(store, as_of=as_of, project_id=options.project_id, limits=limits)
+
+
+def build_report(store: ViewSource, options: ReportOptions, *, insights: InsightsReport | None = None) -> str:
     """Build the full self-contained HTML report from the §6 views only.
 
     ``store`` is a ``store.Store`` (anything with its ``query`` method). An empty store
     or an empty filter scope yields a valid page with a friendly empty state (SM-03).
     """
-    return render_report(load_report_data(store, options))
+    return render_report(replace(load_report_data(store, options), insights=insights))
 
 
 def write_report(html: str, out: Path) -> Path:

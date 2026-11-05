@@ -17,13 +17,17 @@ Lee los transcripts y bases de datos que las herramientas ya escriben en tiempo 
 | Costo de IA frente al valor facturable por cliente y mes | "El costo de IA fue el 4% de lo facturado al cliente Z" |
 | Conteo de llamadas a herramientas y archivos tocados (solo conteos) | Qué hizo el agente, sin almacenar contenido |
 
+La app de escritorio opcional muestra los mismos datos con gasto en vivo, historial, insights y presupuestos, en inglés o español:
+
+![App de escritorio de agent-meter con la pantalla En vivo y datos de demostración](../../tools/agent-meter/docs/images/app-live-es.png)
+
 ## Opción A frente a Opción B
 
 | | **Opción A: Local** (por defecto, siempre activa) | **Opción B: Nube** (opcional, sobre A) |
 | :--- | :--- | :--- |
 | Audiencia | Cualquier desarrollador, sin cuenta en la nube | Desarrolladores con un proyecto en GCP |
 | Almacenamiento | DuckDB en `~/.agent-meter/meter.duckdb` | A + dataset de BigQuery `agent_metrics` (solo trabajos de carga por lotes) |
-| Visualización | Resumen al final de cada tarea o sesión, `agent-meter last` / `tasks`, reporte HTML sin conexión (`agent-meter report --open`) | Tablero en Looker Studio con desglose proyecto → sesión → tarea → ejecución de agente → llamada |
+| Visualización | Resumen al final de cada tarea o sesión, `agent-meter last` / `tasks`, app de escritorio (`agent-meter app`), reporte HTML sin conexión (`agent-meter report --open`) | Tablero en Looker Studio con desglose proyecto → sesión → tarea → ejecución de agente → llamada |
 | Red | Ninguna. `setup --local --yes` hace cero llamadas de red | Trabajos de carga en BigQuery. Los periodos sin conexión se encolan en un outbox local |
 | Costo | $0 | $0 dentro de la capa gratuita de BigQuery |
 | Modos | — | `billing` (facturación vinculada, alerta de presupuesto opcional de $1 que notifica pero **no limita** el gasto) o `sandbox` (sin tarjeta, expiración de tablas a 60 días, recarga completa semanal) |

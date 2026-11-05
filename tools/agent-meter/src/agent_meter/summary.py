@@ -41,6 +41,7 @@ __all__ = [
     "read_task_label",
     "render_session_summary",
     "render_task_rollup",
+    "session_summaries",
     "session_summary",
     "summary_from_snapshot",
     "task_rollups",
@@ -267,58 +268,108 @@ def _store_timezone(store: Store) -> ZoneInfo:
         return ZoneInfo("UTC")
 
 
-def _period_totals(store: Store, project_id: str, where: str, params: Sequence[object]) -> PeriodTotals:
-    rows = store.query(
-        f"""
-        SELECT host, SUM(cost_usd) AS cost_usd, SUM(unpriced_calls) AS unpriced_calls
-        FROM v_daily_project_cost WHERE project_id = ? AND {where}
-        GROUP BY host ORDER BY host
-        """,
-        [project_id, *params],
-    )
-    unpriced_models = store.query(
-        f"""
-        SELECT DISTINCT model_effective FROM v_calls
-        WHERE project_id = ? AND unpriced AND model_effective IS NOT NULL AND {where}
-        ORDER BY model_effective
-        """,
-        [project_id, *params],
-    )
-    costs = [_dec(r["cost_usd"]) for r in rows]
-    priced = [c for c in costs if c is not None]
-    return PeriodTotals(
-        cost_usd=sum(priced, Decimal(0)) if priced else None,
-        unpriced_calls=sum(_int(r["unpriced_calls"]) for r in rows),
-        unpriced_models=tuple(str(r["model_effective"]) for r in unpriced_models),
-        by_host=tuple(HostCost(Host(str(r["host"])), _dec(r["cost_usd"])) for r in rows),
-    )
+Row = dict[str, object]
 
 
-def session_summary(store: Store, host: Host, session_id: str, *, now: datetime) -> SessionSummary:
-    """Totals for one session plus today / month-to-date for its project across all hosts."""
-    rows = store.query("SELECT * FROM v_sessions WHERE session_id = ? AND host = ?", [session_id, host.value])
-    if not rows:
-        raise SummaryError(f"session {session_id!r} ({host.value}) is not in the store yet")
-    s = rows[0]
+class _MonthTotals:
+    """Month-to-date cost per project, read once so each period lookup stays in memory."""
+
+    def __init__(self, store: Store, today: date) -> None:
+        month = today.strftime("%Y-%m")
+        self._costs: dict[str, list[Row]] = {}
+        self._models: dict[str, list[Row]] = {}
+        for row in store.query(
+            """
+            SELECT project_id, host, local_date, SUM(cost_usd) AS cost_usd, SUM(unpriced_calls) AS unpriced_calls
+            FROM v_daily_project_cost WHERE local_month = ? AND local_date <= ?
+            GROUP BY project_id, host, local_date ORDER BY host
+            """,
+            [month, today],
+        ):
+            self._costs.setdefault(str(row["project_id"]), []).append(row)
+        for row in store.query(
+            """
+            SELECT DISTINCT project_id, local_date, model_effective FROM v_calls
+            WHERE local_month = ? AND local_date <= ? AND unpriced AND model_effective IS NOT NULL
+            """,
+            [month, today],
+        ):
+            self._models.setdefault(str(row["project_id"]), []).append(row)
+
+    def totals(self, project_id: str, *, day: date | None = None) -> PeriodTotals:
+        """The whole month to date, or a single ``day`` of it."""
+        rows = [r for r in self._costs.get(project_id, []) if day is None or r["local_date"] == day]
+        models = [r for r in self._models.get(project_id, []) if day is None or r["local_date"] == day]
+        by_host: dict[str, list[Decimal]] = {}
+        for row in rows:
+            cost = _dec(row["cost_usd"])
+            by_host.setdefault(str(row["host"]), []).extend(() if cost is None else (cost,))
+        hosts = {host: sum(costs, Decimal(0)) if costs else None for host, costs in by_host.items()}
+        priced = [cost for cost in hosts.values() if cost is not None]
+        return PeriodTotals(
+            cost_usd=sum(priced, Decimal(0)) if priced else None,
+            unpriced_calls=sum(_int(r["unpriced_calls"]) for r in rows),
+            unpriced_models=tuple(sorted({str(r["model_effective"]) for r in models})),
+            by_host=tuple(HostCost(Host(host), cost) for host, cost in sorted(hosts.items())),
+        )
+
+
+def _session_facts(store: Store, session_ids: Sequence[str]) -> tuple[list[Row], dict[str, Row], dict[str, list[str]]]:
+    """Session rows, token totals and unpriced models for several sessions in one pass each."""
+    marks = ", ".join("?" for _ in session_ids)
+    ids = list(session_ids)
+    sessions = store.query(f"SELECT * FROM v_sessions WHERE session_id IN ({marks})", ids)
     tokens = store.query(
-        """
-        SELECT SUM(input_tokens) AS input_tokens, SUM(cache_read_tokens) AS cache_read_tokens,
+        f"""
+        SELECT session_id, SUM(input_tokens) AS input_tokens, SUM(cache_read_tokens) AS cache_read_tokens,
                SUM(COALESCE(cache_write_5m_tokens, 0) + COALESCE(cache_write_1h_tokens, 0)) AS cache_write_tokens,
                SUM(output_tokens) AS output_tokens,
                COUNT(*) FILTER (WHERE estimated) AS estimated_calls,
                COUNT(*) FILTER (WHERE model_inferred) AS inferred_calls
-        FROM v_calls WHERE session_id = ?
+        FROM v_calls WHERE session_id IN ({marks}) GROUP BY session_id
         """,
-        [session_id],
-    )[0]
-    unpriced = store.query(
-        "SELECT DISTINCT model_effective FROM v_calls WHERE session_id = ? AND unpriced AND model_effective IS NOT NULL "
-        "ORDER BY 1",
-        [session_id],
+        ids,
     )
-    project_id = str(s["project_id"])
+    unpriced: dict[str, list[str]] = {}
+    for row in store.query(
+        f"""
+        SELECT DISTINCT session_id, model_effective FROM v_calls
+        WHERE session_id IN ({marks}) AND unpriced AND model_effective IS NOT NULL
+        ORDER BY session_id, model_effective
+        """,
+        ids,
+    ):
+        unpriced.setdefault(str(row["session_id"]), []).append(str(row["model_effective"]))
+    return sessions, {str(row["session_id"]): row for row in tokens}, unpriced
+
+
+def session_summary(store: Store, host: Host, session_id: str, *, now: datetime) -> SessionSummary:
+    """Totals for one session plus today / month-to-date for its project across all hosts."""
     today = now.astimezone(_store_timezone(store)).date()
-    month = today.strftime("%Y-%m")
+    return session_summaries(store, [(host, session_id)], today=today)[0]
+
+
+def session_summaries(store: Store, keys: Sequence[tuple[Host, str]], *, today: date) -> list[SessionSummary]:
+    """``session_summary`` for several sessions, sharing every query between them."""
+    month_totals = _MonthTotals(store, today)
+    sessions, tokens, unpriced = _session_facts(store, [session_id for _, session_id in keys])
+    by_key = {(str(row["host"]), str(row["session_id"])): row for row in sessions}
+    summaries = []
+    for host, session_id in keys:
+        row = by_key.get((host.value, session_id))
+        if row is None:
+            raise SummaryError(f"session {session_id!r} ({host.value}) is not in the store yet")
+        totals = tokens.get(session_id, {})
+        summaries.append(_build_summary(row, totals, unpriced.get(session_id, []), month_totals, today))
+    return summaries
+
+
+def _build_summary(
+    s: Row, tokens: Row, unpriced: Sequence[str], month_totals: _MonthTotals, today: date
+) -> SessionSummary:
+    host = Host(str(s["host"]))
+    session_id = str(s["session_id"])
+    project_id = str(s["project_id"])
     p50, p95 = s["task_p50_ms"], s["task_p95_ms"]
     started, ended = s["started_at"], s["ended_at"]
     assert isinstance(started, datetime) and isinstance(ended, datetime)
@@ -334,20 +385,20 @@ def session_summary(store: Store, host: Host, session_id: str, *, now: datetime)
         active_ms=_int(s["active_ms"]),
         tasks=_int(s["tasks"]),
         calls=_int(s["calls"]),
-        input_tokens=_int(tokens["input_tokens"]),
-        cache_read_tokens=_int(tokens["cache_read_tokens"]),
-        cache_write_tokens=_int(tokens["cache_write_tokens"]),
-        output_tokens=_int(tokens["output_tokens"]),
+        input_tokens=_int(tokens.get("input_tokens")),
+        cache_read_tokens=_int(tokens.get("cache_read_tokens")),
+        cache_write_tokens=_int(tokens.get("cache_write_tokens")),
+        output_tokens=_int(tokens.get("output_tokens")),
         cache_hit_ratio=_dec(s["cache_hit_ratio"]),
         cost_usd=_dec(s["cost_usd"]),
         unpriced_calls=_int(s["unpriced_calls"]),
-        unpriced_models=tuple(str(r["model_effective"]) for r in unpriced),
-        estimated_calls=_int(tokens["estimated_calls"]),
-        inferred_calls=_int(tokens["inferred_calls"]),
+        unpriced_models=tuple(unpriced),
+        estimated_calls=_int(tokens.get("estimated_calls")),
+        inferred_calls=_int(tokens.get("inferred_calls")),
         task_p50_ms=None if p50 is None else _int(p50),
         task_p95_ms=None if p95 is None else _int(p95),
-        today=_period_totals(store, project_id, "local_date = ?", [today]),
-        month=_period_totals(store, project_id, "local_month = ? AND local_date <= ?", [month, today]),
+        today=month_totals.totals(project_id, day=today),
+        month=month_totals.totals(project_id),
     )
 
 
@@ -644,21 +695,22 @@ def build_snapshot(store: Store, *, tz: str, now: datetime) -> dict[str, Any]:
     active = store.query(
         "SELECT DISTINCT project_id, display_name FROM v_daily_project_cost WHERE local_month = ? ORDER BY 1", [month]
     )
+    month_totals = _MonthTotals(store, today)
     for row in active:
         pid = str(row["project_id"])
         projects[pid] = {
             "display_name": str(row["display_name"]),
-            "today": _totals_doc(_period_totals(store, pid, "local_date = ?", [today])),
-            "month": _totals_doc(_period_totals(store, pid, "local_month = ? AND local_date <= ?", [month, today])),
+            "today": _totals_doc(month_totals.totals(pid, day=today)),
+            "month": _totals_doc(month_totals.totals(pid)),
         }
-    sessions = []
-    for row in store.query(
+    recent = store.query(
         "SELECT host, session_id FROM sessions ORDER BY ended_at DESC, session_id LIMIT ?", [SNAPSHOT_SESSIONS]
-    ):
-        host = Host(str(row["host"]))
-        sid = str(row["session_id"])
-        text = render_session_summary(session_summary(store, host, sid, now=now), cfg)
-        sessions.append({"host": host.value, "session_id": sid, "text": text})
+    )
+    keys = [(Host(str(row["host"])), str(row["session_id"])) for row in recent]
+    sessions = [
+        {"host": s.host.value, "session_id": s.session_id, "text": render_session_summary(s, cfg)}
+        for s in (session_summaries(store, keys, today=today) if keys else ())
+    ]
     return {
         "generated_at": now.astimezone(UTC).isoformat(),
         "timezone": tz,

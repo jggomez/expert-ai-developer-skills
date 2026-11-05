@@ -25,6 +25,7 @@ from agent_meter.readers._common import (
     load_jsonl,
     parse_iso,
     path_digest,
+    reports_test_failure,
     safe_label,
 )
 from agent_meter.readers._protowire import (
@@ -113,6 +114,7 @@ class Step:
     has_error: bool = False
     tools: tuple[Tool, ...] = ()
     tokens: tuple[int, int, int] | None = None  # transcript (input, cache_read, output)
+    test_failed: bool = False  # non-zero exit or a runner summary reporting failures
 
 
 @dataclass(frozen=True, slots=True)
@@ -245,6 +247,7 @@ def _transcript_step(obj: Mapping[str, Any]) -> Step | None:
         return None
     calls = obj.get("tool_calls")
     error = obj.get("error")
+    exit_code = obj.get("exit_code")
     return Step(
         idx=idx,
         kind=kind,
@@ -255,6 +258,7 @@ def _transcript_step(obj: Mapping[str, Any]) -> Step | None:
         if isinstance(calls, list)
         else (),
         tokens=_planner_tokens(obj) if kind == PLANNER else None,
+        test_failed=(isinstance(exit_code, int) and exit_code != 0) or reports_test_failure(obj.get("content")),
     )
 
 

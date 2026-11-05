@@ -18,6 +18,7 @@ from agent_meter.model import (
     UnitBatch,
     UntrackedReason,
 )
+from agent_meter.readers._agy_decode import _transcript_step
 from agent_meter.readers.antigravity import KNOWN_FORMATS, AntigravityReader
 from tests.fixtures.antigravity import (
     GENERIC,
@@ -563,3 +564,18 @@ def test_known_format_and_determinism(cli: AntigravityReader, batch: UnitBatch) 
 def test_rejects_non_antigravity_host(tmp_path: Path) -> None:
     with pytest.raises(ValueError):
         AntigravityReader(Host.CLAUDE_CODE, tmp_path)
+
+
+@pytest.mark.parametrize(
+    ("result", "expected"),
+    [
+        ({"exit_code": 1, "content": "tail"}, True),
+        ({"exit_code": 0, "content": "== 3 passed in 1s =="}, False),
+        ({"content": "== 1 failed, 3 passed in 1s =="}, True),
+    ],
+)
+def test_result_step_flags_failed_test_runs(result: dict[str, object], expected: bool) -> None:
+    step = _transcript_step({"step_index": 3, "type": "RUN_COMMAND", "status": "DONE", **result})
+
+    assert step is not None
+    assert step.test_failed is expected
