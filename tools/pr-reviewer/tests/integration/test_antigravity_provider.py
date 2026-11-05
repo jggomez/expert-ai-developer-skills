@@ -230,6 +230,18 @@ def test_a_503_stops_a_hung_attempt_and_the_last_attempt_uses_the_fallback_model
     assert len(output.result.findings) == 1
 
 
+def test_the_final_error_quotes_what_the_model_said(tmp_path: Path):
+    # Arrange
+    async def no_wait(_: float) -> None:
+        return None
+
+    provider = AntigravityProvider(agent_factory=OverloadedAgent, sleep=no_wait, timeout_seconds=5)
+
+    # Act
+    with pytest.raises(ProviderError, match=r"HTTP 503.*high demand"):
+        provider.review(request(tmp_path))
+
+
 def test_a_configured_fallback_model_is_used(tmp_path: Path):
     # Arrange
     agents = ScriptedAgents({"data": None})
