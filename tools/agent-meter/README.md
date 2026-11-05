@@ -353,7 +353,7 @@ Most read commands accept `--json`.
 | `collect` | Incremental import | `--host H`, `--since YYYY-MM-DD`, `--full` (re-read everything, still idempotent) |
 | `last` | Last session summary | `--project P`, `--json` |
 | `tasks` | Per-task rollups with subagents | `--last [N]`, `--session S`, `--project P`, `--tag T`, `--since D`, `--json` |
-| `app` | Desktop app with live spending, insights, budgets and diagnostics (needs the `app` extra) | — |
+| `app` | Desktop app in English or Spanish: live spending, history by day, month, project and session, insights, budgets and diagnostics (needs the `app` extra) | — |
 | `insights` | Where to cut spending: fixed rules, measured facts and estimated savings | `--days N`, `--as-of YYYY-MM-DD`, `--project P`, `--json` |
 | `budget` | Spending against your limits, month-end forecast and plan value | `--as-of YYYY-MM-DD`, `--json` |
 | `report` | HTML report | `--open`, `--out F`, `--month YYYY-MM`, `--from D --to D`, `--project P`, `--client C` |
@@ -490,6 +490,7 @@ The file is `~/.agent-meter/config.toml`.
 | `dev_hours_merge_gap_min` | `30` | Gaps between tasks longer than this are not counted as developer hours |
 | `show_task_labels` | `true` | Show a short prompt excerpt in `tasks` (terminal only, never stored) |
 | `notify` | `auto` | Desktop notifications: `auto` (session end + long tasks), `session`, `long-tasks`, `off` |
+| `language` | `en` | Language of the desktop app and its budget alerts: `en` or `es`. The app header also changes it. The CLI and the HTML report stay in English |
 | `notify_min_task_s` | `120` | Minimum task duration for a "long task" notification |
 | `claude_inline_summary` | `false` | Reserved (inline summaries inside Claude Code are off) |
 | `store_agent_descriptions` | `false` | Reserved for v2, currently ignored (descriptions are always hashed) |

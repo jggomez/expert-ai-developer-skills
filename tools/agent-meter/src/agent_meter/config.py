@@ -40,6 +40,8 @@ __all__ = [
 
 NotifyPolicy = Literal["auto", "session", "long-tasks", "off"]
 _NOTIFY_VALUES: Final = ("auto", "session", "long-tasks", "off")
+Language = Literal["en", "es"]
+_LANGUAGES: Final = ("en", "es")
 _BQ_MODES: Final = ("billing", "sandbox")
 _CURRENCY: Final = re.compile(r"^[A-Z]{3}$")
 _TRUE: Final = frozenset({"true", "yes", "on", "1"})
@@ -134,6 +136,7 @@ class Config:
     notify: NotifyPolicy = "auto"
     notify_min_task_s: int = 120
     claude_inline_summary: bool = False
+    language: Language = "en"
     display_currency: str | None = None
     usd_rate: Decimal | None = None  # display units per 1 USD
     hosts: Mapping[Host, HostConfig] = field(default_factory=_default_hosts)
@@ -245,6 +248,7 @@ _GENERAL: Final[dict[str, Coercer]] = {
     "notify": _choice(_NOTIFY_VALUES),
     "notify_min_task_s": _int(0),
     "claude_inline_summary": _bool,
+    "language": _choice(_LANGUAGES),
 }
 _CURRENCY_KEYS: Final[dict[str, tuple[str, Coercer]]] = {
     "display": ("display_currency", _currency),

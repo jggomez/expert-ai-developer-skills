@@ -165,7 +165,8 @@ def _long_sessions(store: ViewSource, scope: _Scope, limits: Thresholds) -> list
         rule="long_session",
         title=f"{len(rows)} session(s) passed {limits.long_session_calls:,} calls and cost {_usd(total)}",
         action="Start a new session for each task, and keep shared decisions in project notes.",
-        evidence={"sessions": len(rows), "cost_usd": str(total), "top_session": str(top["session_id"]),
+        evidence={"sessions": len(rows), "cost_usd": str(total), "threshold_calls": limits.long_session_calls,
+                  "baseline_calls": baseline, "top_session": str(top["session_id"]),
                   "top_session_calls": int(str(top["calls"])), "top_session_cost_usd": str(_money(top["cost_usd"]))},
         saving_usd=saving,
         saving_basis=f"Each call after the first {baseline:,} priced at the average of those first calls.",
@@ -187,7 +188,7 @@ def _stale_cache(store: ViewSource, scope: _Scope, limits: Thresholds) -> list[I
         rule="stale_cache",
         title=f"{resumes} resumes after more than {hours:g} h idle cost {_usd(cost)}",
         action="After a long pause, start a new session or run /compact before continuing.",
-        evidence={"resumes": resumes, "cost_usd": str(cost), "average_resume_usd": str(cost / resumes),
+        evidence={"resumes": resumes, "cost_usd": str(cost), "idle_hours": f"{hours:g}", "average_resume_usd": str(cost / resumes),
                   "average_normal_call_usd": str(normal)},
         saving_usd=max(ZERO, cost - normal * resumes),
         saving_basis="Each resume priced at the average cost of a call without that pause.",
@@ -232,7 +233,8 @@ def _expensive_agents(store: ViewSource, scope: _Scope, limits: Thresholds) -> l
             rule="expensive_agent",
             title=f"{name} costs {_usd(average)} per run, {ratio} times its peers",
             action=f"Review the instructions, model and scope given to {name}.",
-            evidence={"agent_type": name, "runs": runs, "average_usd": str(average), "peer_median_usd": str(peer)},
+            evidence={"agent_type": name, "runs": runs, "average_usd": str(average), "peer_median_usd": str(peer),
+                      "ratio": str(ratio)},
             saving_usd=(average - peer) * runs,
             saving_basis="Each run priced at the median average of the other agent types.",
             query=sql,
@@ -261,15 +263,17 @@ def _outlier_tasks(store: ViewSource, scope: _Scope, limits: Thresholds) -> list
     share = top_cost * 100 / total if total else ZERO
     if share < limits.outlier_share_pct:
         return []
+    share_pct = share.quantize(Decimal("1"))
     shown = [
         {"task_id": str(r["task_id"]), "cost_usd": str(_money(r["cost_usd"])), "reason": _task_reason(r, limits)}
         for r in rows[: limits.outlier_tasks_shown]
     ]
     return [Insight(
         rule="outlier_tasks",
-        title=f"{count} of {len(rows)} tasks made up {share.quantize(Decimal('1'))}% of the cost",
+        title=f"{count} of {len(rows)} tasks made up {share_pct}% of the cost",
         action="Open the costliest tasks and split similar work into smaller tasks.",
-        evidence={"tasks": len(rows), "top_tasks": count, "top_cost_usd": str(top_cost), "costliest": shown},
+        evidence={"tasks": len(rows), "top_tasks": count, "top_cost_usd": str(top_cost), "share_pct": str(share_pct),
+                  "costliest": shown},
         saving_usd=None,
         saving_basis="No estimate: this shows where the cost sits, not how much of it is avoidable.",
         query=sql,

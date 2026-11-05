@@ -9,6 +9,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Final
 from zoneinfo import ZoneInfo
 
+from agent_meter import i18n
 from agent_meter import notify as notifier
 from agent_meter.config import BudgetConfig, Config
 
@@ -114,11 +115,17 @@ def send_alerts(alerts: tuple[BudgetLine, ...], cfg: Config) -> None:
     if cfg.notify == "off":
         return
     for line in alerts:
-        state = "over budget" if line.level == "over" else "near budget"
-        notifier.notify(
-            f"agent-meter: {state}",
-            f"{line.label}: {_usd(line.spent_usd)} of {_usd(line.limit_usd)} {line.period} (list-price cost)",
-        )
+        notifier.notify(*_alert_text(line, cfg.language))
+
+
+def _alert_text(line: BudgetLine, language: str) -> tuple[str, str]:
+    spent, limit = i18n.money(line.spent_usd, language), i18n.money(line.limit_usd, language)
+    label, period = i18n.translate(line.label, language), i18n.translate(line.period, language)
+    if language == "es":
+        state = "presupuesto superado" if line.level == "over" else "cerca del presupuesto"
+        return f"agent-meter: {state}", f"{label}: {spent} de {limit} {period} (coste a precio de lista)"
+    state = "over budget" if line.level == "over" else "near budget"
+    return f"agent-meter: {state}", f"{label}: {spent} of {limit} {period} (list-price cost)"
 
 
 def _line_document(line: BudgetLine) -> dict[str, Any]:

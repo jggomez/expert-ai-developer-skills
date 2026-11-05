@@ -10,56 +10,110 @@
 <body>
   <header class="bar">
     <h1>agent-meter</h1>
-    <nav aria-label="Screens">
-      <button type="button" data-tab="live" aria-current="page">Live</button>
-      <button type="button" data-tab="insights">Insights</button>
-      <button type="button" data-tab="settings">Settings</button>
+    <nav data-i18n-aria="nav.label" aria-label="Screens">
+      <button type="button" data-tab="live" data-i18n="nav.live" aria-current="page">Live</button>
+      <button type="button" data-tab="history" data-i18n="nav.history">History</button>
+      <button type="button" data-tab="insights" data-i18n="nav.insights">Insights</button>
+      <button type="button" data-tab="settings" data-i18n="nav.settings">Settings</button>
     </nav>
-    <span id="status" role="status" class="muted">Loading…</span>
+    <span id="status" role="status" class="muted" data-i18n="status.loading">Loading…</span>
+    <select id="language" data-i18n-aria="language.label" aria-label="Language">
+      <option value="en">English</option>
+      <option value="es">Español</option>
+    </select>
   </header>
   <main>
     <section id="live">
       <div class="tiles">
-        <div class="tile"><span class="label">Today</span><strong id="today">—</strong></div>
-        <div class="tile"><span class="label">This month</span><strong id="month">—</strong></div>
-        <div class="tile"><span class="label">Month-end forecast</span><strong id="forecast">—</strong>
-          <span class="muted">Estimate from the last 7 days</span></div>
-        <div class="tile"><span class="label">Plan value</span><strong id="plan">—</strong>
-          <span class="muted">List-price usage against your plan</span></div>
+        <div class="tile"><span class="label" data-i18n="live.today">Today</span><strong id="today">—</strong></div>
+        <div class="tile"><span class="label" data-i18n="live.month">This month</span><strong id="month">—</strong></div>
+        <div class="tile"><span class="label" data-i18n="live.forecast">Month-end forecast</span><strong id="forecast">—</strong>
+          <span class="muted" data-i18n="live.forecast_note">Estimate from the last 7 days</span></div>
+        <div class="tile"><span class="label" data-i18n="live.plan">Plan value</span><strong id="plan">—</strong>
+          <span class="muted" data-i18n="live.plan_note">List-price usage against your plan</span></div>
       </div>
-      <h2>Budgets</h2>
+      <h2 data-i18n="live.budgets">Budgets</h2>
       <div id="budgets"></div>
-      <h2>Active sessions</h2>
-      <table id="sessions-table"><thead><tr><th>Project</th><th>Host</th><th>Calls</th><th>Cost</th><th>Context</th><th>Last activity</th></tr></thead>
+      <h2 data-i18n="live.sessions">Active sessions</h2>
+      <table id="sessions-table"><thead><tr><th data-i18n="common.project">Project</th><th data-i18n="common.host">Host</th>
+        <th data-i18n="common.calls">Calls</th><th data-i18n="common.cost">Cost</th><th data-i18n="common.context">Context</th>
+        <th data-i18n="common.last_activity">Last activity</th></tr></thead>
         <tbody id="sessions"></tbody></table>
-      <p id="no-sessions" class="muted" hidden>No session has been active in the last 15 minutes.</p>
-      <p class="muted">Costs use API list prices. They are not what your plan charges.</p>
+      <p id="no-sessions" class="muted" data-i18n="live.no_sessions" hidden>No session has been active in the last 15 minutes.</p>
+      <p class="muted" data-i18n="common.list_price_note">Costs use API list prices. They are not what your plan charges.</p>
+    </section>
+    <section id="history" hidden>
+      <div class="filters">
+        <label><span data-i18n="history.period">Period</span>
+          <select id="history-days">
+            <option value="0" data-i18n="history.all_time">All time</option>
+            <option value="7" data-i18n="history.last_7">Last 7 days</option>
+            <option value="30" data-i18n="history.last_30">Last 30 days</option>
+            <option value="90" data-i18n="history.last_90">Last 90 days</option>
+          </select></label>
+        <label><span data-i18n="common.project">Project</span><select id="history-project"></select></label>
+      </div>
+      <div class="tiles">
+        <div class="tile"><span class="label" data-i18n="history.spent">Spent</span><strong id="history-cost">—</strong>
+          <span class="muted" id="history-estimated"></span></div>
+        <div class="tile"><span class="label" data-i18n="common.calls">Calls</span><strong id="history-calls">—</strong></div>
+        <div class="tile"><span class="label" data-i18n="common.sessions">Sessions</span><strong id="history-sessions">—</strong></div>
+        <div class="tile"><span class="label" data-i18n="common.tasks">Tasks</span><strong id="history-tasks">—</strong></div>
+      </div>
+      <h2 data-i18n="history.by_day">By day</h2>
+      <div class="chart-card">
+        <div class="chart-top muted"><span id="history-max"></span></div>
+        <div id="history-chart" class="chart" role="img"></div>
+        <div class="chart-axis muted"><span id="history-first"></span><span id="history-last"></span></div>
+        <p id="history-hover" class="muted" role="status" data-i18n="history.hover_hint">Hover over a day to see its figures.</p>
+        <details><summary data-i18n="history.as_table">View as a table</summary>
+          <table><thead><tr><th data-i18n="common.date">Date</th><th data-i18n="common.cost">Cost</th>
+            <th data-i18n="common.calls">Calls</th><th data-i18n="common.sessions">Sessions</th><th data-i18n="common.tasks">Tasks</th></tr></thead>
+            <tbody id="history-days-table"></tbody></table>
+        </details>
+      </div>
+      <h2 data-i18n="history.by_month">By month</h2>
+      <table><thead><tr><th data-i18n="common.month">Month</th><th data-i18n="common.cost">Cost</th>
+        <th data-i18n="common.calls">Calls</th><th data-i18n="common.sessions">Sessions</th><th data-i18n="common.tasks">Tasks</th></tr></thead>
+        <tbody id="history-months"></tbody></table>
+      <h2 data-i18n="history.by_project">By project</h2>
+      <table><thead><tr><th data-i18n="common.project">Project</th><th data-i18n="common.cost">Cost</th><th data-i18n="common.share">Share</th>
+        <th data-i18n="common.calls">Calls</th><th data-i18n="common.sessions">Sessions</th><th data-i18n="common.tasks">Tasks</th>
+        <th data-i18n="common.tokens">Tokens</th></tr></thead>
+        <tbody id="history-projects"></tbody></table>
+      <h2 data-i18n="common.sessions">Sessions</h2>
+      <table><thead><tr><th data-i18n="common.last_activity">Last activity</th><th data-i18n="common.started">Started</th>
+        <th data-i18n="common.project">Project</th><th data-i18n="common.host">Host</th><th data-i18n="common.calls">Calls</th>
+        <th data-i18n="common.tasks">Tasks</th><th data-i18n="common.cost">Cost</th></tr></thead>
+        <tbody id="history-session-rows"></tbody></table>
+      <p id="history-shown" class="muted"></p>
+      <p class="muted" data-i18n="common.list_price_note">Costs use API list prices. They are not what your plan charges.</p>
     </section>
     <section id="insights" hidden>
-      <h2>Where to cut</h2>
+      <h2 data-i18n="insights.title">Where to cut</h2>
       <p id="insights-period" class="muted"></p>
       <div id="insights-list"></div>
       <p id="insights-note" class="muted"></p>
     </section>
     <section id="settings" hidden>
-      <h2>Budgets and alerts</h2>
+      <h2 data-i18n="settings.budgets">Budgets and alerts</h2>
       <form id="settings-form">
-        <label>Daily budget (USD)<input name="budget.daily_usd" inputmode="decimal" placeholder="No limit"></label>
-        <label>Monthly budget (USD)<input name="budget.monthly_usd" inputmode="decimal" placeholder="No limit"></label>
-        <label>Plan price per month (USD)<input name="budget.plan_monthly_usd" inputmode="decimal" placeholder="Not set"></label>
-        <label>Notifications
+        <label><span data-i18n="settings.daily">Daily budget (USD)</span><input name="budget.daily_usd" inputmode="decimal" data-i18n-placeholder="settings.no_limit" placeholder="No limit"></label>
+        <label><span data-i18n="settings.monthly">Monthly budget (USD)</span><input name="budget.monthly_usd" inputmode="decimal" data-i18n-placeholder="settings.no_limit" placeholder="No limit"></label>
+        <label><span data-i18n="settings.plan">Plan price per month (USD)</span><input name="budget.plan_monthly_usd" inputmode="decimal" data-i18n-placeholder="live.not_set" placeholder="Not set"></label>
+        <label><span data-i18n="settings.notifications">Notifications</span>
           <select name="notify">
-            <option value="auto">Sessions and long tasks</option>
-            <option value="session">Sessions only</option>
-            <option value="long-tasks">Long tasks only</option>
-            <option value="off">Off</option>
+            <option value="auto" data-i18n="settings.notify_auto">Sessions and long tasks</option>
+            <option value="session" data-i18n="settings.notify_session">Sessions only</option>
+            <option value="long-tasks" data-i18n="settings.notify_long">Long tasks only</option>
+            <option value="off" data-i18n="settings.notify_off">Off</option>
           </select>
         </label>
-        <div class="actions"><button type="submit" class="primary">Save</button>
-          <button type="button" id="collect">Collect now</button>
+        <div class="actions"><button type="submit" class="primary" data-i18n="settings.save">Save</button>
+          <button type="button" id="collect" data-i18n="settings.collect">Collect now</button>
           <span id="settings-message" role="status"></span></div>
       </form>
-      <h2>Diagnostics</h2>
+      <h2 data-i18n="settings.diagnostics">Diagnostics</h2>
       <ul id="checks" class="checks"></ul>
     </section>
   </main>

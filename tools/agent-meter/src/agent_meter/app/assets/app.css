@@ -51,3 +51,21 @@ input, select { background: var(--page); border: 1px solid var(--line); padding:
 .checks li { display: flex; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
 .checks li:last-child { border-bottom: 0; }
 .checks .badge { min-width: 44px; }
+#language { padding: 4px 8px; }
+.filters { display: flex; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
+.filters label { min-width: 200px; }
+.chart-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.chart-top, .chart-axis { font-size: 12px; font-variant-numeric: tabular-nums; }
+.chart-axis { display: flex; justify-content: space-between; margin-top: 4px; }
+.chart { display: flex; align-items: flex-end; gap: 2px; height: 160px; border-bottom: 1px solid var(--line); margin-top: 4px; }
+.chart.dense { gap: 1px; }
+.column { flex: 1 1 0; min-width: 0; max-width: 28px; height: 100%; display: flex; align-items: flex-end; }
+.column:hover { background: var(--line); }
+.day-bar { width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; }
+.chart.dense .day-bar { border-radius: 2px 2px 0 0; }
+.chart-card > p { margin: 6px 0 0; font-size: 12px; }
+details { margin-top: 8px; }
+summary { cursor: pointer; color: var(--muted); }
+details table { margin-top: 8px; }
+button.link { border: 0; background: none; padding: 0; color: var(--accent); text-align: left; overflow-wrap: anywhere; }
+button.link:hover { text-decoration: underline; }

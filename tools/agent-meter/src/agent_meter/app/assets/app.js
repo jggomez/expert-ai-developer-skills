@@ -1,99 +1,217 @@
 "use strict";
 
 const FALLBACK_REFRESH_MS = 30000;
-const LEVELS = { ok: "On track", warn: "Near limit", over: "Over limit" };
+const BUSY_RETRY_MS = 3000;
+const DENSE_DAYS = 60;
 const $ = (id) => document.getElementById(id);
-const usd = (value) => (value === null || value === undefined ? "—"
-  : "$" + Number(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+let language = "en";
+let text = {};
+let retry = null;
 
-function cell(text) {
+function t(key, values = {}) {
+  return (text[key] ?? key).replace(/\{(\w+)\}/g, (_, name) => values[name] ?? "");
+}
+
+function localized(formatted) {
+  return language === "es" ? formatted.replace(/[.,]/g, (mark) => (mark === "." ? "," : ".")) : formatted;
+}
+
+function count(value) {
+  return localized(Number(value).toLocaleString("en-US"));
+}
+
+function usd(value) {
+  if (value === null || value === undefined) return "—";
+  const options = { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+  return "$" + localized(Number(value).toLocaleString("en-US", options));
+}
+
+function compact(value) {
+  const number = Number(value);
+  if (number >= 1e9) return `${localized((number / 1e9).toFixed(1))} B`;
+  return number >= 1e6 ? `${localized((number / 1e6).toFixed(1))} M` : count(number);
+}
+
+function dateTime(iso) {
+  return iso ? new Date(iso).toLocaleString(language, { dateStyle: "medium", timeStyle: "short" }) : "—";
+}
+
+function cell(value) {
   const td = document.createElement("td");
-  td.textContent = text;
+  td.textContent = value;
   return td;
 }
 
-function node(tag, className, text) {
+function node(tag, className, content) {
   const element = document.createElement(tag);
   if (className) element.className = className;
-  if (text !== undefined) element.textContent = text;
+  if (content !== undefined) element.textContent = content;
   return element;
 }
 
-function ago(minutes) {
-  return minutes < 1 ? "Just now" : `${minutes} min ago`;
+function row(...cells) {
+  const tr = document.createElement("tr");
+  tr.append(...cells.map((item) => (item instanceof Node ? item : cell(item))));
+  return tr;
 }
 
-function setStatus(text) {
-  $("status").textContent = text;
+function setStatus(message) {
+  $("status").textContent = message;
+}
+
+function applyText() {
+  document.documentElement.lang = language;
+  $("language").value = language;
+  for (const element of document.querySelectorAll("[data-i18n]")) element.textContent = t(element.dataset.i18n);
+  for (const element of document.querySelectorAll("[data-i18n-placeholder]")) element.placeholder = t(element.dataset.i18nPlaceholder);
+  for (const element of document.querySelectorAll("[data-i18n-aria]")) element.setAttribute("aria-label", t(element.dataset.i18nAria));
+}
+
+function ago(minutes) {
+  return minutes < 1 ? t("live.just_now") : t("live.minutes_ago", { minutes });
 }
 
 function renderBudgets(lines) {
   const box = $("budgets");
   box.replaceChildren();
   if (!lines.length) {
-    box.append(node("p", "muted", "No budgets yet. Add one in Settings."));
+    box.append(node("p", "muted", t("live.no_budgets")));
     return;
   }
   for (const line of lines) {
-    const row = node("div", `budget ${line.level}`);
-    row.append(node("span", "", `${line.label}, ${line.period}`));
-    row.append(node("span", "", `${usd(line.spent_usd)} of ${usd(line.limit_usd)}`));
-    row.append(node("span", "badge", LEVELS[line.level]));
+    const item = node("div", `budget ${line.level}`);
+    item.append(node("span", "", `${line.label}, ${line.period}`));
+    item.append(node("span", "", t("live.budget_used", { spent: usd(line.spent_usd), limit: usd(line.limit_usd) })));
+    item.append(node("span", "badge", t(`level.${line.level}`)));
     const meter = node("progress");
     meter.max = 100;
     meter.value = Math.min(Number(line.percent), 100);
-    meter.setAttribute("aria-label", `${line.percent}% used`);
-    row.append(meter);
-    box.append(row);
+    meter.setAttribute("aria-label", t("live.percent_used", { percent: localized(line.percent) }));
+    item.append(meter);
+    box.append(item);
   }
 }
 
 function renderSessions(sessions) {
-  const body = $("sessions");
-  body.replaceChildren();
-  for (const s of sessions) {
-    const row = document.createElement("tr");
-    row.append(cell(s.project), cell(s.host), cell(Number(s.calls).toLocaleString("en-US")), cell(usd(s.cost_usd)),
-      cell(s.context_tokens === null ? "—" : `${Math.round(s.context_tokens / 1000)}k tokens`), cell(ago(s.minutes_ago)));
-    body.append(row);
-  }
+  $("sessions").replaceChildren(...sessions.map((s) => row(s.project, s.host, count(s.calls), usd(s.cost_usd),
+    s.context_tokens === null ? "—" : t("live.tokens", { count: count(Math.round(s.context_tokens / 1000)) }), ago(s.minutes_ago))));
   $("no-sessions").hidden = sessions.length > 0;
   $("sessions-table").hidden = sessions.length === 0;
 }
 
+function settle(data) {
+  window.clearTimeout(retry);
+  if (data.busy || data.stale) {
+    setStatus(t(data.busy ? "status.updating" : "status.updating_saved"));
+    retry = window.setTimeout(refreshCurrent, BUSY_RETRY_MS);
+    return false;
+  }
+  setStatus(t("status.updated", { time: new Date().toLocaleTimeString(language) }));
+  return true;
+}
+
 async function refreshLive() {
   const data = await window.pywebview.api.overview();
-  if (data.busy) {
-    setStatus("Updating data…");
-    return;
-  }
+  settle(data);
+  if (data.busy) return;
   $("today").textContent = usd(data.today_usd);
   $("month").textContent = usd(data.month_usd);
   $("forecast").textContent = usd(data.forecast_usd);
-  $("plan").textContent = data.plan_value_ratio ? `${data.plan_value_ratio}x` : "Not set";
+  $("plan").textContent = data.plan_value_ratio ? `${localized(data.plan_value_ratio)}x` : t("live.not_set");
   renderBudgets(data.budgets);
   renderSessions(data.sessions);
-  setStatus(`Updated ${new Date().toLocaleTimeString()}`);
+}
+
+function dayDetail(day) {
+  return t("history.day_detail", { date: day.date, cost: usd(day.cost_usd), calls: count(day.calls), sessions: count(day.sessions) });
+}
+
+function renderChart(days) {
+  const chart = $("history-chart");
+  const top = Math.max(...days.map((day) => Number(day.cost_usd)), 0);
+  chart.classList.toggle("dense", days.length > DENSE_DAYS);
+  chart.setAttribute("aria-label", t("history.chart_label"));
+  chart.replaceChildren(...days.map((day) => {
+    const column = node("div", "column");
+    const bar = node("div", "day-bar");
+    bar.style.height = top ? `${(Number(day.cost_usd) / top) * 100}%` : "0";
+    column.append(bar);
+    column.addEventListener("mouseenter", () => { $("history-hover").textContent = dayDetail(day); });
+    return column;
+  }));
+  $("history-max").textContent = usd(top);
+  $("history-first").textContent = days[0]?.date ?? "";
+  $("history-last").textContent = days[days.length - 1]?.date ?? "";
+  $("history-hover").textContent = t("history.hover_hint");
+  const used = days.filter((day) => day.calls > 0).reverse();
+  $("history-days-table").replaceChildren(...used.map((day) =>
+    row(day.date, usd(day.cost_usd), count(day.calls), count(day.sessions), count(day.tasks))));
+}
+
+function chooseProject(projectId) {
+  $("history-project").value = projectId;
+  refreshCurrent();
+}
+
+function renderProjectOptions(projects, selected) {
+  const select = $("history-project");
+  const everything = new Option(t("history.all_projects"), "");
+  select.replaceChildren(everything, ...projects.map((project) => new Option(project.name, project.project_id)));
+  select.value = projects.some((project) => project.project_id === selected) ? selected : "";
+}
+
+function projectLink(project) {
+  const td = document.createElement("td");
+  const button = node("button", "link", project.name);
+  button.type = "button";
+  button.addEventListener("click", () => chooseProject(project.project_id));
+  td.append(button);
+  return td;
+}
+
+function renderHistory(data) {
+  $("history-cost").textContent = usd(data.totals.cost_usd);
+  $("history-estimated").textContent = Number(data.totals.estimated_usd) > 0
+    ? t("history.estimated", { amount: usd(data.totals.estimated_usd) }) : "";
+  $("history-calls").textContent = count(data.totals.calls);
+  $("history-sessions").textContent = count(data.totals.sessions);
+  $("history-tasks").textContent = count(data.totals.tasks);
+  renderChart(data.by_day);
+  renderProjectOptions(data.projects, data.project_id ?? "");
+  $("history-months").replaceChildren(...data.by_month.map((m) =>
+    row(m.month, usd(m.cost_usd), count(m.calls), count(m.sessions), count(m.tasks))));
+  $("history-projects").replaceChildren(...data.projects.map((p) => row(projectLink(p), usd(p.cost_usd),
+    `${localized(p.share_pct)} %`, count(p.calls), count(p.sessions), count(p.tasks), compact(p.tokens))));
+  $("history-session-rows").replaceChildren(...data.sessions.map((s) => row(dateTime(s.ended_at), dateTime(s.started_at),
+    s.project, s.host, count(s.calls), count(s.tasks), usd(s.cost_usd))));
+  const shown = data.sessions.length;
+  const total = data.totals.sessions;
+  $("history-shown").textContent = !total ? t("history.empty")
+    : shown < total ? t("history.shown", { shown: count(shown), total: count(total) }) : "";
+}
+
+async function refreshHistory() {
+  const data = await window.pywebview.api.history(Number($("history-days").value), $("history-project").value || null);
+  settle(data);
+  if (!data.busy) renderHistory(data);
 }
 
 function insightCard(item) {
   const card = node("article", "insight");
   card.append(node("h3", "", item.title));
-  const saving = item.saving_usd === null ? "No savings estimate" : `About ${usd(item.saving_usd)} (estimate)`;
+  const saving = item.saving_usd === null ? t("insights.no_saving") : t("insights.saving", { amount: usd(item.saving_usd) });
   card.append(node("p", "saving", saving), node("p", "muted", item.saving_basis), node("p", "", item.action));
   return card;
 }
 
 async function refreshInsights() {
   const data = await window.pywebview.api.insights(30);
-  if (data.busy) {
-    setStatus("Updating data…");
-    return;
-  }
-  $("insights-period").textContent = `${data.from} to ${data.to}. Findings are measured, and savings are estimates.`;
+  settle(data);
+  if (data.busy) return;
+  $("insights-period").textContent = t("insights.period", { from: data.from, to: data.to });
   const list = $("insights-list");
   list.replaceChildren(...data.insights.map(insightCard));
-  if (!data.insights.length) list.append(node("p", "muted", "No rule fired in this period."));
+  if (!data.insights.length) list.append(node("p", "muted", t("insights.none")));
   $("insights-note").textContent = data.note;
 }
 
@@ -101,20 +219,21 @@ async function refreshSettings() {
   const data = await window.pywebview.api.settings();
   const form = $("settings-form");
   for (const [key, value] of Object.entries(data.values)) form.elements[key].value = value;
+  setStatus(data.busy ? t("status.updating") : "");
   const checks = $("checks");
   checks.replaceChildren();
   for (const check of data.checks) {
     const item = node("li", check.status.toLowerCase());
-    item.append(node("span", "badge", check.status), node("span", "", `${check.check}: ${check.message}`));
+    item.append(node("span", "badge", t(`check.${check.status.toLowerCase()}`)), node("span", "", `${check.check}: ${check.message}`));
     checks.append(item);
   }
 }
 
-const REFRESH = { live: refreshLive, insights: refreshInsights, settings: refreshSettings };
+const REFRESH = { live: refreshLive, history: refreshHistory, insights: refreshInsights, settings: refreshSettings };
 let current = "live";
 
 function refreshCurrent() {
-  return REFRESH[current]().catch((error) => setStatus(`Could not load data: ${error.message || error}`));
+  return REFRESH[current]().catch((error) => setStatus(t("status.error", { message: error.message || error })));
 }
 
 function show(tab) {
@@ -138,24 +257,41 @@ async function saveSettings(event) {
       return;
     }
   }
-  message.textContent = "Saved";
+  message.textContent = t("settings.saved");
 }
 
 async function collectNow() {
   const message = $("settings-message");
-  message.textContent = "Collecting…";
+  message.textContent = t("settings.collecting");
   const result = await window.pywebview.api.collect_now();
-  message.textContent = result.status === "ok" ? `Collected in ${(result.duration_ms / 1000).toFixed(1)} s`
-    : result.status === "locked" ? "Busy. Try again in a minute." : result.message || "Collect failed";
+  message.textContent = result.status === "ok" ? t("settings.collected", { seconds: localized((result.duration_ms / 1000).toFixed(1)) })
+    : result.status === "locked" ? t("settings.collect_busy") : result.message || t("settings.collect_failed");
   refreshCurrent();
 }
 
-function start() {
+function useTexts(result) {
+  language = result.language;
+  text = result.text;
+  applyText();
+}
+
+async function changeLanguage(event) {
+  useTexts(await window.pywebview.api.set_language(event.target.value));
+  $("settings-message").textContent = "";
+  refreshCurrent();
+}
+
+async function start() {
+  useTexts(await window.pywebview.api.texts());
+  renderProjectOptions([], "");
   for (const button of document.querySelectorAll("nav button")) {
     button.addEventListener("click", () => show(button.dataset.tab));
   }
   $("settings-form").addEventListener("submit", saveSettings);
   $("collect").addEventListener("click", collectNow);
+  $("language").addEventListener("change", changeLanguage);
+  $("history-days").addEventListener("change", refreshCurrent);
+  $("history-project").addEventListener("change", refreshCurrent);
   window.agentMeterRefresh = () => (current === "settings" ? undefined : refreshCurrent());
   window.setInterval(window.agentMeterRefresh, FALLBACK_REFRESH_MS);
   refreshCurrent();

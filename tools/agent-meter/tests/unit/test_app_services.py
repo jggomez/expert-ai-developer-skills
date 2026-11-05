@@ -129,3 +129,67 @@ def test_brain_folders_watch_only_the_transcript(tmp_path: Path) -> None:
     (tmp_path / "brain" / "c1" / "notes.jsonl").write_text("{}\n", encoding="utf-8")
 
     assert signature([tmp_path / "brain"])[0] == 1
+
+
+def test_spanish_reaches_budgets_and_diagnostics(home: AppHome) -> None:
+    app = api(home)
+    app.set_language("es")
+    app.save_setting("budget.monthly_usd", "100")
+
+    overview = app.overview()
+    settings = app.settings()
+
+    assert overview["budgets"][0]["period"] == "este mes"
+    assert overview["budgets"][0]["label"] == "Todos los proyectos"
+    assert {check["check"] for check in settings["checks"]} >= {"configuración", "programador"}
+    assert {"OK", "WARN", "FAIL"} >= {check["status"] for check in settings["checks"]}
+
+
+def test_a_rejected_setting_is_explained_in_spanish(home: AppHome) -> None:
+    app = api(home)
+    app.set_language("es")
+
+    assert "no es un número decimal" in app.save_setting("budget.monthly_usd", "abc")["error"]
+
+
+def test_history_rolls_up_by_day_month_project_and_session(home: AppHome) -> None:
+    data = api(home).history()
+
+    assert json.loads(json.dumps(data)) == data
+    assert data["totals"]["sessions"] == len(data["sessions"]) == 1
+    assert data["by_day"][-1]["calls"] == data["totals"]["calls"]
+    assert data["by_month"][0]["cost_usd"] == data["totals"]["cost_usd"]
+    assert data["projects"][0]["share_pct"] == "100.0"
+
+
+def test_history_filters_by_project_but_keeps_the_project_list(home: AppHome) -> None:
+    data = api(home).history(0, "someone-else")
+
+    assert data["totals"]["calls"] == 0
+    assert data["sessions"] == []
+    assert len(data["projects"]) == 1
+
+
+def test_history_period_excludes_older_days(home: AppHome) -> None:
+    data = api(home, NOW + timedelta(days=30)).history(7)
+
+    assert data["totals"]["calls"] == 0
+    assert len(data["by_day"]) == 7
+
+
+def test_saved_figures_are_shown_while_a_collect_holds_the_store(home: AppHome, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("agent_meter.app.services.READ_LOCK_S", 0.01)
+    first = api(home).overview()
+
+    with store_lock(home.lock, exclusive=True, timeout_s=1.0):
+        again = api(home).overview()  # a new instance: the figures survive a restart of the app
+
+    assert again["stale"] is True
+    assert again["today_usd"] == first["today_usd"]
+
+
+def test_a_broken_saved_file_does_not_stop_the_app(home: AppHome) -> None:
+    home.state_dir.mkdir(parents=True, exist_ok=True)
+    (home.state_dir / "app-cache.json").write_text("not json")
+
+    assert "today_usd" in api(home).overview()
