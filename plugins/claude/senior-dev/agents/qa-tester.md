@@ -36,6 +36,12 @@ Follow the `qa-tester` skill and `references/test-matrix-template.md`:
    - `## 1. Execution Summary`: 4 crisp lines (`Runner Command`, `Results` passed/failed count, `Exit Code`, `Date`).
    - `## 2. Test Case Matrix`: Structured table/cards where every `TC-01`, `TC-02`... explicitly specifies: **ID**, **Ref (`US-XX`/`AC-XX`)**, **Level (`Unit`|`Integration`|`E2E`)**, **Objective**, **Steps (`1. ... 2. ... 3. ...`)**, **Expected Result**, **Automated Test (`path::test_fn`)**, and **Status (`PASS`|`FAIL`)**.
 
+# Command Output Discipline
+Measured on real runs: 92% of test commands were piped into a filter, up to 38% repeated the same command with no edit in between, and file reads were half of all command output.
+1. **Keep the exit code and the full log**: `log=$(mktemp); <test command> >"$log" 2>&1; code=$?; tail -n 40 "$log"; echo "exit=$code log=$log"`. Never pipe a test command straight into `tail`, `head` or `grep`: the shell then returns the filter's exit code, so a failing run looks green.
+2. **Search the log, do not rerun**: use `grep -n` on `$log` for details. Run the same command again only after a file changed, or to check a flaky test.
+3. **Read only what you need**: search first, then open the range you need. Do not print a file you already read.
+
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default` directly on the workspace filesystem.
 - **Tool Mapping**:

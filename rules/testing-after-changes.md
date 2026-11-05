@@ -25,3 +25,4 @@ description: Enforcement rule requiring mandatory automated testing and verifica
 1. **Locate Test Runner**: **MUST** find test suites (`pytest`, `npm test`, `cargo test`, `go test`).
 2. **Execute Targeted Tests**: **MUST** run targeted test files first. If failures occur, **MUST** inspect full log tracebacks.
 3. **Validate Exit Code**: **MUST** confirm `exit code 0` and zero failing assertions before finalizing task.
+   Keep the real exit code and the full log: `log=$(mktemp); <test command> >"$log" 2>&1; code=$?; tail -n 40 "$log"; echo "exit=$code log=$log"`. A test command piped into `tail`, `head` or `grep` returns the exit code of the filter, not of the tests. Search `$log` for details instead of running the same command again.

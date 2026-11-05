@@ -37,6 +37,8 @@ Enforce the strict Red-Green-Refactor loop:
 2. Run language formatters and linters (e.g., `black`, `ruff`, `eslint`, `dart format`).
 3. Ensure no compiler or static analysis warnings remain.
 
+- **Keep the exit code**: run tests as `log=$(mktemp); <test command> >"$log" 2>&1; code=$?; tail -n 40 "$log"; echo "exit=$code log=$log"`. A test command piped straight into `tail`, `head` or `grep` returns the filter's exit code, so a failing run looks green. Search `$log` for details instead of running the same command again.
+
 ## Usage
 ### Example Prompts
 - *"Implement the user registration endpoint using strict TDD — write the failing unit test first, then the handler."*
