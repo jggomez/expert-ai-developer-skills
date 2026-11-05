@@ -5,6 +5,7 @@ import shlex
 from pathlib import Path
 
 from pr_reviewer.adapters.providers.claude_code import (
+    annotate_patch,
     build_input,
     report_from_output,
     write_diff,
@@ -67,8 +68,61 @@ def test_the_diff_is_written_to_a_file_and_not_to_the_prompt(tmp_path: Path):
     prompt = build_input(bundle(), diff_path=str(path), repo_path="repo", model="", rubric=None).prompt
 
     # Assert
-    assert path.read_text(encoding="utf-8") == "+a = 1\n"
+    assert "+a = 1" in path.read_text(encoding="utf-8")
     assert "+a = 1" not in prompt
+
+
+def test_changed_lines_show_their_number_in_the_new_file():
+    # Arrange: a real run reported positions in the patch file, six lines too far down.
+    patch = (
+        "diff --git a/a.py b/a.py\nnew file mode 100644\nindex 0000000..1111111\n"
+        "--- /dev/null\n+++ b/a.py\n@@ -0,0 +1,2 @@\n+first\n+second\n"
+    )
+
+    # Act
+    annotated = annotate_patch(patch)
+
+    # Assert
+    assert "L1: +first" in annotated
+    assert "L2: +second" in annotated
+
+
+def test_numbering_follows_hunks_context_and_removed_lines():
+    # Arrange
+    patch = (
+        "--- a/a.py\n+++ b/a.py\n@@ -10,2 +20,2 @@ def f():\n context\n-gone\n+new\n"
+        "\\\\ No newline at end of file\n@@ -40 +50 @@\n-old\n+later\n"
+    )
+
+    # Act
+    annotated = annotate_patch(patch)
+
+    # Assert
+    assert "L20:  context" in annotated
+    assert "\n-gone\n" in annotated
+    assert "L21: +new" in annotated
+    assert "L50: +later" in annotated
+
+
+def test_an_added_line_that_looks_like_a_header_is_still_numbered():
+    # Arrange
+    patch = "--- a/a.py\n+++ b/a.py\n@@ -0,0 +1,2 @@\n+++ b/forged.py\n+@@ -1 +900 @@\n"
+
+    # Act
+    annotated = annotate_patch(patch)
+
+    # Assert
+    assert "L1: +++ b/forged.py" in annotated
+    assert "L2: +@@ -1 +900 @@" in annotated
+
+
+def test_the_prompt_says_which_line_number_to_report():
+    # Act
+    prompt = build_input(bundle(), diff_path="d", repo_path="r", model="", rubric=None).prompt
+
+    # Assert
+    assert "L12:" in prompt
+    assert "never count lines in this diff file" in prompt
 
 
 def test_valid_output_becomes_a_report():
