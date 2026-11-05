@@ -132,7 +132,7 @@ def test_manifests_are_named_agent_metrics():
     assert claude["name"] == "agent-metrics"
     assert claude.get("description")
     assert claude.get("hooks") == "./hooks.json", "Claude manifest must point at the root hooks.json"
-    assert _json(AGY_PLUGIN, "plugin.json") == {"name": "agent-metrics"}
+    assert _json(AGY_PLUGIN, "plugin.json") == {"name": "agent-metrics", "version": "1.0.0"}
     assert _json(AGY_PLUGIN, ".claude-plugin/plugin.json") == {"name": "agent-metrics"}
 
 
