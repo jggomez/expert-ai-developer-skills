@@ -56,6 +56,20 @@ el coste se mantiene bajo. Para revisar de nuevo tras subir commits, un owner, m
 Todos los pasos quedan en verde aunque falle la IA, así que el revisor nunca puede bloquear un merge. Si una
 revisión falla, el comentario de resumen explica por qué.
 
+## Cómo se ve una revisión
+
+Estas capturas son de una revisión real de un pull request de prueba, hecha con Gemini.
+
+Cada hallazgo es un comentario en la línea modificada, con su severidad, una explicación y una propuesta de corrección:
+
+![Comentario en línea que señala una inyección SQL y propone una consulta parametrizada](docs/images/inline-comment-sql-injection.png)
+
+![Comentario en línea que señala una inyección de comandos y propone subprocess.run](docs/images/inline-comment-command-injection.png)
+
+Un único comentario de resumen lista los hallazgos por severidad, con el modelo, los tokens y el costo estimado de la ejecución:
+
+![Comentario de resumen con una tabla de hallazgos y el modelo, los tokens y el costo de la revisión](docs/images/summary-comment.png)
+
 ## Qué revisa
 
 | Eje | Ejemplos |

@@ -56,6 +56,20 @@ the pull request.
 Every step is green even if the AI fails, so the reviewer can never block a merge. When a review fails, the
 summary comment says why.
 
+## What a review looks like
+
+These screenshots come from a real review of a test pull request, run with Gemini.
+
+Each finding is an inline comment on the changed line, with its severity, an explanation and a proposed fix:
+
+![Inline comment reporting a SQL injection, with a parameterized query as the proposed fix](docs/images/inline-comment-sql-injection.png)
+
+![Inline comment reporting a command injection, with subprocess.run as the proposed fix](docs/images/inline-comment-command-injection.png)
+
+A single summary comment lists the findings by severity, with the model, tokens and estimated cost of the run:
+
+![Summary comment with a table of findings, and the model, tokens and cost of the review](docs/images/summary-comment.png)
+
 ## What it reviews
 
 | Axis | Examples |
