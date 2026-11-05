@@ -26,6 +26,8 @@ class ReviewRequest:
     model: str | None = None
     max_tokens: int = DEFAULT_MAX_TOKENS
     budget_usd: str = DEFAULT_BUDGET_USD
+    rubric: str | None = None
+    fallback_model: str | None = None
 
 
 @dataclass(frozen=True)

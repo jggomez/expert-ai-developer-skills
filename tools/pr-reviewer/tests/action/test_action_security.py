@@ -115,3 +115,31 @@ def test_workflows_use_minimal_permissions_and_never_pull_request_target(path: P
     assert "pull_request_target" not in text
     permissions = workflow["jobs"]["review"]["permissions"]
     assert permissions == {"contents": "read", "pull-requests": "write"}
+
+
+def test_empty_inputs_fall_back_so_unset_repository_variables_are_harmless():
+    # Arrange: `${{ vars.X }}` is empty when the variable does not exist, and the CLI owns the defaults.
+    inputs = ACTION["inputs"]
+
+    # Assert
+    for name in set(inputs) - {"provider", "github-token"}:
+        assert inputs[name].get("default", "") == "", name
+
+
+@pytest.mark.parametrize("readme", ["README.md", "README.es.md", "docs/guide.md", "docs/guide.es.md"])
+def test_every_input_is_documented(readme: str):
+    # Arrange
+    text = (ROOT / readme).read_text(encoding="utf-8")
+
+    # Assert
+    for name in ACTION["inputs"]:
+        assert f"`{name}`" in text, name
+
+
+def test_rubric_file_is_never_read_from_the_pull_request_checkout():
+    # Arrange
+    step = next(s for s in STEPS if s.get("id") == "review")
+
+    # Assert: the base commit comes from the gate, not from a file in the PR.
+    assert step["env"]["BASE_SHA"] == "${{ steps.context.outputs.base_sha }}"
+    assert '--base "$BASE_SHA"' in step["run"]

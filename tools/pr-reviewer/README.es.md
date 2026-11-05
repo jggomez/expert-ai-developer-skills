@@ -1,7 +1,7 @@
 # pr-reviewer
 
-Una GitHub Action que comenta en los pull requests dónde el código puede ser más eficiente, más simple y
-más barato de operar. Solo comenta y nunca bloquea el merge.
+Una GitHub Action que revisa los pull requests en seguridad, rendimiento, escalabilidad, diseño, buenas
+prácticas y coste. Solo comenta y nunca bloquea el merge.
 
 [Read in English](README.md)
 
@@ -9,12 +9,19 @@ más barato de operar. Solo comenta y nunca bloquea el merge.
 
 | Eje | Ejemplos |
 | --- | --- |
-| Eficiencia | Consultas N+1, I/O en bucles, complejidad evitable, memoria sin límite, bloqueos en código async |
-| Óptimo | Lógica duplicada, abstracciones innecesarias, estructuras de datos que no encajan con el uso |
+| Seguridad | Riesgos del OWASP Top 10: control de acceso roto, inyección, XSS, SSRF, autenticación débil, secretos expuestos |
+| Rendimiento | Consultas N+1, I/O en bucles, complejidad evitable, bloqueos en código async |
+| Escalabilidad | Memoria sin límite, falta de paginación o timeouts, estado en un solo proceso, condiciones de carrera |
+| Diseño | Problemas SOLID con daño concreto, lógica duplicada, abstracciones innecesarias |
+| Buenas prácticas | Errores silenciados, transacciones ausentes, floats para dinero, cambios de API incompatibles |
 | Coste | APIs de pago en bucles, `SELECT *` en almacenes de datos facturados, reintentos sin tope, prompts de LLM enormes, logs excesivos |
 
-Quedan fuera el estilo, los nombres, los tests y la seguridad. Cada hallazgo necesita una línea del diff, un
+Quedan fuera el estilo, los nombres y los tests que falten. Cada hallazgo necesita una línea del diff, un
 impacto y un nivel de confianza. Un PR limpio recibe solo un resumen breve de "sin problemas".
+
+Es una revisión con IA, no una auditoría de seguridad: puede pasar por alto vulnerabilidades, así que mantén
+tus escáneres. En un repo público sus comentarios también son públicos, así que atiende un hallazgo grave antes
+de que el PR se difunda.
 
 ## Proveedores
 
@@ -29,54 +36,47 @@ impacto y un nivel de confianza. Un PR limpio recibe solo un resumen breve de "s
 
 ## Instalación
 
-Elige Antigravity (abajo) o [Claude](#usar-claude).
+1. Guarda una [clave de API de Gemini](https://aistudio.google.com/apikey) como el secreto `GEMINI_API_KEY` del
+   repositorio.
+2. Copia [`examples/pr-review.yml`](examples/pr-review.yml) a `.github/workflows/pr-review.yml`.
+3. Sustituye `<commit-sha>` por un SHA completo de este repositorio y abre un pull request.
 
-1. Crea una [clave de la API de Gemini](https://aistudio.google.com/apikey) en un proyecto con facturación y
-   guárdala como el secreto `GEMINI_API_KEY` del repositorio.
-2. Copia [`examples/pr-review.yml`](examples/pr-review.yml) en `.github/workflows/pr-review.yml`.
-3. Sustituye `<commit-sha>` por el SHA completo de un commit de este repositorio y abre un PR.
+Para repetir la revisión en un PR, un owner, member o collaborator comenta `/review`.
 
-Para repetir la revisión, un propietario, miembro o colaborador comenta `/review` en el PR.
+La **[guía](docs/guide.es.md)** explica cada paso, Claude, toda la configuración, el prompt y la solución de
+problemas.
 
 > [!WARNING]
-> Con la capa gratuita de Gemini, Google puede usar tu código para mejorar sus productos, y revisores humanos
-> pueden leerlo. Para código privado usa una clave de pago o Vertex AI. Consulta los
+> Con la capa gratuita de la API de Gemini, Google puede usar tu código para mejorar sus productos, y revisores
+> humanos pueden leerlo. Usa una clave de pago o Vertex AI para cualquier código privado. Consulta los
 > [términos de la API de Gemini](https://aistudio.google.com/docs/terms).
 
-### Usar Claude
-
-1. Crea una [clave de API de Anthropic](https://platform.claude.com/settings/keys) y crea el agente una sola vez:
-
-   ```bash
-   export ANTHROPIC_API_KEY=...
-   uv run --project tools/pr-reviewer --extra claude pr-reviewer setup-claude
-   ```
-
-2. Guarda la clave como el secreto `ANTHROPIC_API_KEY`, y los dos ID impresos como las variables
-   `CLAUDE_AGENT_ID` y `CLAUDE_ENVIRONMENT_ID` del repositorio.
-3. Usa las líneas de Claude de [`examples/pr-review.yml`](examples/pr-review.yml).
-
-Los archivos cambiados se envían a Anthropic como subidas que caducan en una hora. Las instrucciones, las
-herramientas y el modelo se envían en cada sesión, así que actualizar la Action no exige repetir la configuración.
-
 ## Entradas
+
+Todas son opcionales excepto la clave. Cada una acepta también una variable `PR_REVIEW_*`, listadas en la
+[guía](docs/guide.es.md#cambiar-la-configuración), y el workflow de ejemplo lee variables del repositorio, así que
+puedes cambiar el modelo sin editar ningún archivo.
 
 | Entrada | Por defecto | Descripción |
 | --- | --- | --- |
 | `api-key` | | Clave de API de Gemini o de Anthropic |
 | `provider` | `antigravity` | `antigravity`, `claude`, o `fake` para probar la instalación sin IA ni clave |
 | `model` | El del proveedor | Modelo que se usa |
+| `fallback-model` | `gemini-3.6-flash` | Modelo del último intento si el primero está saturado (Antigravity) |
 | `max-tokens` | `200000` | Tope de tokens por revisión (Antigravity) |
 | `budget-usd` | `1.00` | Tope de gasto por revisión (Claude) |
 | `claude-agent-id` | | Lo imprime `pr-reviewer setup-claude` |
 | `claude-environment-id` | | Lo imprime `pr-reviewer setup-claude` |
 | `max-findings` | `10` | Máximo de hallazgos publicados |
 | `min-severity` | `low` | Severidad mínima que se publica: `critical`, `high`, `medium` o `low` |
-| `exclude` | | Patrones de rutas que se omiten, separados por comas o saltos de línea |
-| `github-token` | `github.token` | Token para leer el PR y publicar comentarios. Mantén el valor por defecto: las repeticiones reconocen comentarios anteriores por su autor bot |
+| `exclude` | | Patrones de rutas adicionales que se omiten, separados por comas o saltos de línea |
+| `max-diff-chars` | Límite interno | Tamaño máximo del diff |
+| `rubric-file` | | Archivo Markdown que sustituye los criterios, leído del commit base. Consulta [Cambiar el prompt](docs/guide.es.md#cambiar-el-prompt) |
+| `instructions` | | Texto que se añade a los criterios |
+| `github-token` | `github.token` | Token que lee el PR y publica comentarios. Mantén el valor por defecto: las ejecuciones repetidas reconocen los comentarios anteriores por su autor bot |
 
-Por defecto se omiten lockfiles, código generado, artefactos de compilación y dependencias incluidas en el
-repo. En diffs grandes se priorizan los archivos fuente, y el resumen lista todo lo que no se revisó.
+Se omiten por defecto los lockfiles, el código generado, los artefactos de compilación y el código vendorizado.
+En diffs grandes se priorizan los archivos fuente, y el resumen lista todo lo que no se revisó.
 
 ## Coste
 
@@ -100,6 +100,7 @@ Quien abre un PR controla el texto que lee el agente, por lo que ese texto se tr
 - Con Claude no se monta ningún repositorio, porque un repo montado carga su `.claude/skills` sin revisión.
 - El paso de revisión solo tiene la clave de IA y el de publicación solo tiene el token de GitHub.
 - Los hallazgos se validan contra el diff, y se eliminan secretos, menciones, imágenes y HTML antes de publicar.
+- Un `rubric-file` personalizado se lee del commit base, así que un PR no puede reescribir su propia revisión.
 - Fija esta Action a un SHA de commit, como hace el ejemplo.
 
 ## Arquitectura

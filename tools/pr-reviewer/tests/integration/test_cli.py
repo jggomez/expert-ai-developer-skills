@@ -6,7 +6,13 @@ from pathlib import Path
 
 import pytest
 
-from pr_reviewer.domain.models import DiffBundle, ReviewReport
+from pr_reviewer.application.ports import DEFAULT_BUDGET_USD, ProviderOutput
+from pr_reviewer.domain.models import (
+    DiffBundle,
+    ReviewReport,
+    ReviewResult,
+    ReviewUsage,
+)
 from pr_reviewer.entrypoints import cli
 
 
@@ -166,3 +172,84 @@ def test_setup_claude_failure_exits_nonzero_and_says_why(
     assert code == 1
     assert "Could not resolve authentication method" in captured.err
     assert "CLAUDE_AGENT_ID" not in captured.out
+
+
+def test_review_uses_the_rubric_from_the_base_commit_and_the_extra_instructions(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    # Arrange
+    repo, base, head = make_repo(tmp_path)
+    bundle = tmp_path / "bundle.json"
+    assert cli.main(["diff", "--repo", str(repo), "--base", base, "--head", head, "--output", str(bundle)]) == 0
+    seen: dict[str, object] = {}
+
+    class SpyProvider:
+        name = "fake"
+
+        def review(self, request):
+            seen["rubric"] = request.rubric
+            return ProviderOutput(ReviewResult(findings=[]), ReviewUsage(), "spy")
+
+    monkeypatch.setattr(cli, "load_provider", lambda *_: SpyProvider())
+    monkeypatch.setenv("PR_REVIEW_INSTRUCTIONS", "All money uses Decimal.")
+
+    # Act
+    code = cli.main([
+        "review", "--provider", "fake", "--repo", str(repo), "--bundle", str(bundle),
+        "--workspace", str(tmp_path / "ws"), "--output", str(tmp_path / "report.json"),
+        "--base", base, "--rubric-file", "app.py",
+    ])
+
+    # Assert
+    assert code == 0
+    assert seen["rubric"].startswith("a = 1")
+    assert "for o in orders" not in seen["rubric"]
+    assert seen["rubric"].endswith("All money uses Decimal.")
+
+
+def test_a_missing_rubric_is_a_failed_review_not_a_silent_default(tmp_path: Path):
+    # Arrange
+    repo, base, head = make_repo(tmp_path)
+    bundle, report = tmp_path / "bundle.json", tmp_path / "report.json"
+    assert cli.main(["diff", "--repo", str(repo), "--base", base, "--head", head, "--output", str(bundle)]) == 0
+
+    # Act
+    code = cli.main([
+        "review", "--provider", "fake", "--repo", str(repo), "--bundle", str(bundle),
+        "--workspace", str(tmp_path / "ws"), "--output", str(report),
+        "--base", base, "--rubric-file", "missing.md",
+    ])
+
+    # Assert
+    result = ReviewReport.model_validate_json(report.read_text(encoding="utf-8"))
+    assert code == 0
+    assert result.status == "failed"
+    assert "missing.md" in result.error
+
+
+def test_settings_come_from_the_environment_and_empty_means_default(monkeypatch: pytest.MonkeyPatch):
+    # Arrange
+    monkeypatch.setenv("PR_REVIEW_MAX_TOKENS", "1234")
+    monkeypatch.setenv("PR_REVIEW_MODEL", "my-model")
+    monkeypatch.setenv("PR_REVIEW_BUDGET_USD", "")
+    arguments = ["review", "--provider", "fake", "--repo", "r", "--bundle", "b", "--output", "o", "--workspace", "w"]
+
+    # Act
+    parsed = cli.build_parser().parse_args(arguments)
+
+    # Assert
+    assert parsed.max_tokens == 1234
+    assert parsed.model == "my-model"
+    assert parsed.budget_usd == DEFAULT_BUDGET_USD
+
+
+def test_a_command_line_flag_wins_over_the_environment(monkeypatch: pytest.MonkeyPatch):
+    # Arrange
+    monkeypatch.setenv("PR_REVIEW_MODEL", "from-env")
+    arguments = ["review", "--provider", "fake", "--repo", "r", "--bundle", "b", "--output", "o", "--workspace", "w"]
+
+    # Act
+    parsed = cli.build_parser().parse_args([*arguments, "--model", "from-flag"])
+
+    # Assert
+    assert parsed.model == "from-flag"

@@ -7,7 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 Severity = Literal["critical", "high", "medium", "low"]
-Category = Literal["efficiency", "optimality", "cost"]
+Category = Literal["security", "performance", "scalability", "design", "best_practice", "cost"]
 Confidence = Literal["high", "medium", "low"]
 OmitReason = Literal["excluded", "deleted", "binary", "size-limit"]
 

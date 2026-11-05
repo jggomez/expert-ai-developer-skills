@@ -7,10 +7,12 @@ from dataclasses import dataclass
 
 from pr_reviewer.domain.models import SEVERITY_RANK, DiffBundle, Finding, Severity
 
+DEFAULT_MAX_FINDINGS = 10
+
 
 @dataclass(frozen=True)
 class PublishOptions:
-    max_findings: int = 10
+    max_findings: int = DEFAULT_MAX_FINDINGS
     min_severity: Severity = "low"
 
 

@@ -1,5 +1,5 @@
-name: AI PR review for efficiency and cost
-description: Comments on pull requests where the code can be more efficient, simpler and cheaper to run.
+name: AI PR review
+description: Comments on pull requests with security, performance, scalability, design and cost problems.
 author: jggomez
 branding:
   icon: trending-down
@@ -7,8 +7,8 @@ branding:
 
 inputs:
   provider:
-    description: "Review provider: antigravity, claude or fake (no AI, for trying the setup)."
-    default: antigravity
+    description: "Review provider: antigravity, claude or fake (no AI, for trying the setup). Empty means antigravity."
+    default: ""
   api-key:
     description: Provider API key, either a Gemini or an Anthropic key.
     required: false
@@ -19,12 +19,15 @@ inputs:
   model:
     description: Model to use. Empty means the provider default.
     default: ""
+  fallback-model:
+    description: Model for the last attempt when the first one is overloaded (antigravity). Empty means gemini-3.6-flash.
+    default: ""
   max-tokens:
-    description: Token budget for one review (antigravity).
-    default: "200000"
+    description: Token budget for one review (antigravity). Empty means 200000.
+    default: ""
   budget-usd:
-    description: Hard spend limit in dollars for one review (claude).
-    default: "1.00"
+    description: Hard spend limit in dollars for one review (claude). Empty means 1.00.
+    default: ""
   claude-agent-id:
     description: Agent ID printed by `pr-reviewer setup-claude`.
     default: ""
@@ -32,13 +35,22 @@ inputs:
     description: Environment ID printed by `pr-reviewer setup-claude`.
     default: ""
   max-findings:
-    description: Maximum findings to publish per review.
-    default: "10"
+    description: Maximum findings to publish per review. Empty means 10.
+    default: ""
   min-severity:
-    description: "Lowest severity to publish: critical, high, medium or low."
-    default: low
+    description: "Lowest severity to publish: critical, high, medium or low. Empty means low."
+    default: ""
   exclude:
     description: Extra path patterns to skip, separated by commas or new lines.
+    default: ""
+  max-diff-chars:
+    description: Largest diff to review, in characters. Files beyond it are listed as omitted. Empty means the built-in limit.
+    default: ""
+  rubric-file:
+    description: Repository path of a Markdown file that replaces the review criteria. It is read from the base commit, never from the pull request.
+    default: ""
+  instructions:
+    description: Text added to the review criteria, such as project conventions.
     default: ""
 
 runs:
@@ -82,12 +94,12 @@ runs:
       env:
         BASE_SHA: ${{ steps.context.outputs.base_sha }}
         HEAD_SHA: ${{ steps.context.outputs.head_sha }}
-        EXCLUDE: ${{ inputs.exclude }}
+        PR_REVIEW_EXCLUDE: ${{ inputs.exclude || env.PR_REVIEW_EXCLUDE }}
+        PR_REVIEW_MAX_DIFF_CHARS: ${{ inputs.max-diff-chars || env.PR_REVIEW_MAX_DIFF_CHARS }}
       run: |
         uv run --frozen --project "$GITHUB_ACTION_PATH" pr-reviewer diff \
           --repo "$GITHUB_WORKSPACE/.pr-reviewer/pr" \
           --base "$BASE_SHA" --head "$HEAD_SHA" \
-          --exclude "$EXCLUDE" \
           --output "$RUNNER_TEMP/pr-reviewer-diff.json"
 
     - name: Review with AI
@@ -97,12 +109,16 @@ runs:
       shell: bash
       env:
         API_KEY: ${{ inputs.api-key }}
-        PROVIDER: ${{ inputs.provider }}
-        CLAUDE_AGENT_ID: ${{ inputs.claude-agent-id }}
-        CLAUDE_ENVIRONMENT_ID: ${{ inputs.claude-environment-id }}
-        BUDGET_USD: ${{ inputs.budget-usd }}
-        MODEL: ${{ inputs.model }}
-        MAX_TOKENS: ${{ inputs.max-tokens }}
+        PROVIDER: ${{ inputs.provider || env.PR_REVIEW_PROVIDER || 'antigravity' }}
+        BASE_SHA: ${{ steps.context.outputs.base_sha }}
+        CLAUDE_AGENT_ID: ${{ inputs.claude-agent-id || env.CLAUDE_AGENT_ID }}
+        CLAUDE_ENVIRONMENT_ID: ${{ inputs.claude-environment-id || env.CLAUDE_ENVIRONMENT_ID }}
+        PR_REVIEW_MODEL: ${{ inputs.model || env.PR_REVIEW_MODEL }}
+        PR_REVIEW_FALLBACK_MODEL: ${{ inputs.fallback-model || env.PR_REVIEW_FALLBACK_MODEL }}
+        PR_REVIEW_MAX_TOKENS: ${{ inputs.max-tokens || env.PR_REVIEW_MAX_TOKENS }}
+        PR_REVIEW_BUDGET_USD: ${{ inputs.budget-usd || env.PR_REVIEW_BUDGET_USD }}
+        PR_REVIEW_RUBRIC_FILE: ${{ inputs.rubric-file || env.PR_REVIEW_RUBRIC_FILE }}
+        PR_REVIEW_INSTRUCTIONS: ${{ inputs.instructions || env.PR_REVIEW_INSTRUCTIONS }}
       run: |
         extra=()
         case "$PROVIDER" in
@@ -115,9 +131,7 @@ runs:
           --repo "$GITHUB_WORKSPACE/.pr-reviewer/pr" \
           --bundle "$RUNNER_TEMP/pr-reviewer-diff.json" \
           --workspace "$RUNNER_TEMP/pr-reviewer-workspace" \
-          --model "$MODEL" \
-          --max-tokens "$MAX_TOKENS" \
-          --budget-usd "$BUDGET_USD" \
+          --base "$BASE_SHA" \
           --output "$RUNNER_TEMP/pr-reviewer-report.json"
 
     - name: Publish the review
@@ -129,11 +143,10 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         REPO_NAME: ${{ steps.context.outputs.repo }}
         PR_NUMBER: ${{ steps.context.outputs.pr_number }}
-        MAX_FINDINGS: ${{ inputs.max-findings }}
-        MIN_SEVERITY: ${{ inputs.min-severity }}
+        PR_REVIEW_MAX_FINDINGS: ${{ inputs.max-findings || env.PR_REVIEW_MAX_FINDINGS }}
+        PR_REVIEW_MIN_SEVERITY: ${{ inputs.min-severity || env.PR_REVIEW_MIN_SEVERITY }}
       run: |
         uv run --frozen --project "$GITHUB_ACTION_PATH" pr-reviewer publish \
           --bundle "$RUNNER_TEMP/pr-reviewer-diff.json" \
           --report "$RUNNER_TEMP/pr-reviewer-report.json" \
-          --repo-name "$REPO_NAME" --pr "$PR_NUMBER" \
-          --max-findings "$MAX_FINDINGS" --min-severity "$MIN_SEVERITY"
+          --repo-name "$REPO_NAME" --pr "$PR_NUMBER"

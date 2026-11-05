@@ -1,6 +1,8 @@
 """Antigravity provider: read-only agent, budget and result handling."""
 
 import asyncio
+import logging
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -11,9 +13,12 @@ from google.antigravity import BuiltinTools, LocalAgentConfig
 from google.antigravity.types import StopReason, UsageMetadata
 
 from pr_reviewer.adapters.providers.antigravity import (
+    DEFAULT_FALLBACK_MODEL,
+    DEFAULT_MODEL,
     READ_ONLY_TOOLS,
     AntigravityProvider,
     build_config,
+    is_overload,
 )
 from pr_reviewer.application.ports import ProviderError, ReviewRequest
 from pr_reviewer.domain.models import DiffBundle, FileDiff
@@ -69,7 +74,10 @@ def request(tmp_path: Path) -> ReviewRequest:
 
 
 def provider(**script) -> AntigravityProvider:
-    return AntigravityProvider(agent_factory=lambda config: FakeAgent(config, **script))
+    async def no_wait(_: float) -> None:
+        return None
+
+    return AntigravityProvider(agent_factory=lambda config: FakeAgent(config, **script), sleep=no_wait)
 
 
 @pytest.fixture(autouse=True)
@@ -140,6 +148,136 @@ def test_missing_structured_output_is_an_error_not_a_clean_review(tmp_path: Path
     # Act / Assert
     with pytest.raises(ProviderError, match="structured output"):
         provider(data=None).review(request(tmp_path))
+
+
+class ScriptedAgents:
+    """Hands out one fake agent per attempt and records the waits between them."""
+
+    def __init__(self, *attempts: dict):
+        self.attempts = list(attempts)
+        self.calls = 0
+        self.waits: list[float] = []
+
+    def __call__(self, config) -> FakeAgent:
+        script = self.attempts[min(self.calls, len(self.attempts) - 1)]
+        self.calls += 1
+        return FakeAgent(config, **script)
+
+    async def sleep(self, seconds: float) -> None:
+        self.waits.append(seconds)
+
+    def provider(self) -> AntigravityProvider:
+        return AntigravityProvider(agent_factory=self, sleep=self.sleep)
+
+
+def test_an_empty_answer_is_retried_with_a_new_agent_and_tokens_add_up(tmp_path: Path):
+    # Arrange: a model 503 only logs a warning in the SDK and ends with no output.
+    agents = ScriptedAgents({"data": None}, {"data": {"findings": [FINDING]}})
+
+    # Act
+    output = agents.provider().review(request(tmp_path))
+
+    # Assert
+    assert agents.calls == 2
+    assert len(agents.waits) == 1
+    assert len(output.result.findings) == 1
+    assert output.usage.input_tokens == 2 * 1000
+
+
+def test_retries_stop_and_the_error_names_the_likely_cause(tmp_path: Path):
+    # Arrange
+    agents = ScriptedAgents({"data": None})
+
+    # Act
+    with pytest.raises(ProviderError, match=r"3 attempts.*overloaded") as caught:
+        agents.provider().review(request(tmp_path))
+
+    # Assert
+    assert agents.calls == 3
+    assert len(agents.waits) == 2
+    assert caught.value.usage.input_tokens == 3 * 1000
+
+
+class OverloadedAgent(FakeAgent):
+    """The real failure: the SDK logs a 503 and the turn then never ends."""
+
+    async def chat(self, prompt):
+        logging.warning("System step error (HTTP %s): %s", 503, "high demand")
+        await asyncio.Event().wait()
+
+
+def test_a_503_stops_a_hung_attempt_and_the_last_attempt_uses_the_fallback_model(tmp_path: Path):
+    # Arrange
+    agents: list[LocalAgentConfig] = []
+
+    def factory(config: LocalAgentConfig) -> FakeAgent:
+        agents.append(config)
+        if len(agents) < 3:
+            return OverloadedAgent(config)
+        return FakeAgent(config, data={"findings": [FINDING]})
+
+    async def no_wait(_: float) -> None:
+        return None
+
+    provider = AntigravityProvider(agent_factory=factory, sleep=no_wait, timeout_seconds=5)
+
+    # Act
+    output = provider.review(request(tmp_path))
+
+    # Assert
+    assert [config.model for config in agents] == [DEFAULT_MODEL, DEFAULT_MODEL, DEFAULT_FALLBACK_MODEL]
+    assert output.model == DEFAULT_FALLBACK_MODEL
+    assert len(output.result.findings) == 1
+
+
+def test_a_configured_fallback_model_is_used(tmp_path: Path):
+    # Arrange
+    agents = ScriptedAgents({"data": None})
+    configured = replace(request(tmp_path), fallback_model="gemini-custom")
+    seen: list[str] = []
+    original = agents.__call__
+
+    def factory(config: LocalAgentConfig) -> FakeAgent:
+        seen.append(config.model)
+        return original(config)
+
+    # Act
+    with pytest.raises(ProviderError):
+        AntigravityProvider(agent_factory=factory, sleep=agents.sleep).review(configured)
+
+    # Assert
+    assert seen[-1] == "gemini-custom"
+
+
+@pytest.mark.parametrize("message", ["System step error (HTTP 500): boom", "Something else (HTTP 503)"])
+def test_the_overload_watch_ignores_other_log_lines_and_keeps_only_transient_codes(message: str):
+    # Arrange
+    record = logging.LogRecord("root", logging.WARNING, __file__, 1, message, None, None)
+    expected = message.startswith("System step error")
+
+    # Act / Assert
+    assert is_overload(record) is expected
+
+
+def test_the_overload_watch_ignores_client_errors():
+    # Arrange
+    record = logging.LogRecord("root", logging.WARNING, __file__, 1, "System step error (HTTP 404): x", None, None)
+
+    # Act / Assert
+    assert is_overload(record) is False
+
+
+def test_a_budget_stop_is_never_retried(tmp_path: Path):
+    # Arrange
+    agents = ScriptedAgents({"data": None, "stop": StopReason.MAX_TOTAL_TOKENS_EXCEEDED})
+
+    # Act
+    with pytest.raises(ProviderError, match="stopped early"):
+        agents.provider().review(request(tmp_path))
+
+    # Assert
+    assert agents.calls == 1
+    assert agents.waits == []
 
 
 def test_invalid_structured_output_is_an_error(tmp_path: Path):
