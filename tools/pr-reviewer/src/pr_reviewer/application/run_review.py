@@ -35,6 +35,7 @@ def run_review(
     *,
     load_provider: Callable[[], ReviewProvider],
     build_workspace: Callable[[], Path],
+    load_rubric: Callable[[], str | None] = lambda: None,
 ) -> ReviewReport:
     """A failed review becomes a report, because it must never block the pull request.
 
@@ -51,6 +52,7 @@ def run_review(
             model=settings.model,
             max_tokens=settings.max_tokens,
             budget_usd=settings.budget_usd,
+            rubric=load_rubric(),
         )
         output = provider.review(request)
     except ProviderError as error:

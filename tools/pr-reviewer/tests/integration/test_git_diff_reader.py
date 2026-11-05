@@ -112,3 +112,44 @@ def test_quoted_binary_file_keeps_its_name(tmp_path: Path):
 
     # Assert
     assert [(o.path, o.reason) for o in bundle.omitted] == [("u\nx.bin", "binary")]
+
+
+def _commit(repo: Path, name: str, text: str) -> str:
+    def git(*args: str) -> str:
+        identity = ["-c", "user.name=t", "-c", "user.email=t@example.com"]
+        return subprocess.run(["git", *identity, *args], cwd=repo, check=True, capture_output=True, text=True).stdout.strip()
+
+    (repo / name).write_text(text, encoding="utf-8")
+    git("add", ".")
+    git("commit", "-qm", "change")
+    return git("rev-parse", "HEAD")
+
+
+def test_read_file_returns_the_version_in_the_given_commit_not_the_checkout(tmp_path: Path):
+    # Arrange: the pull request rewrites the rubric after the base commit.
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    base = _commit(tmp_path, "rubric.md", "trusted")
+    _commit(tmp_path, "rubric.md", "written by the pull request")
+
+    # Act
+    text = GitDiffReader(tmp_path).read_file(base, "rubric.md")
+
+    # Assert
+    assert text == "trusted"
+
+
+def test_read_file_ignores_a_file_that_only_the_pull_request_adds(tmp_path: Path):
+    # Arrange
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    base = _commit(tmp_path, "a.py", "a = 1")
+    _commit(tmp_path, "rubric.md", "written by the pull request")
+
+    # Act / Assert
+    with pytest.raises(ValueError, match=r"rubric\.md"):
+        GitDiffReader(tmp_path).read_file(base, "rubric.md")
+
+
+def test_read_file_requires_a_full_sha(tmp_path: Path):
+    # Act / Assert
+    with pytest.raises(ValueError, match="full commit SHA"):
+        GitDiffReader(tmp_path).read_file("main", "rubric.md")

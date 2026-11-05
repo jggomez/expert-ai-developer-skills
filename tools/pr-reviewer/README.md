@@ -35,37 +35,24 @@ repository its comments are public too, so handle a serious finding before the p
 
 ## Install
 
-Choose Antigravity (below) or [Claude](#use-claude).
-
-1. Create a [Gemini API key](https://aistudio.google.com/apikey) on a project with billing enabled and save
-   it as the `GEMINI_API_KEY` repository secret.
+1. Save a [Gemini API key](https://aistudio.google.com/apikey) as the `GEMINI_API_KEY` repository secret.
 2. Copy [`examples/pr-review.yml`](examples/pr-review.yml) to `.github/workflows/pr-review.yml`.
 3. Replace `<commit-sha>` with a full commit SHA of this repository, then open a pull request.
 
 To run it again on a pull request, an owner, member or collaborator comments `/review`.
+
+The **[guide](docs/guide.md)** covers each step, Claude, every setting, the prompt and troubleshooting.
 
 > [!WARNING]
 > With the free Gemini API tier, Google may use your code to improve its products, and human reviewers may
 > read it. Use a paid key or Vertex AI for anything private. See the
 > [Gemini API terms](https://aistudio.google.com/docs/terms).
 
-### Use Claude
-
-1. Create an [Anthropic API key](https://platform.claude.com/settings/keys) and create the agent once:
-
-   ```bash
-   export ANTHROPIC_API_KEY=...
-   uv run --project tools/pr-reviewer --extra claude pr-reviewer setup-claude
-   ```
-
-2. Save the key as the `ANTHROPIC_API_KEY` secret, and the two printed IDs as the `CLAUDE_AGENT_ID` and
-   `CLAUDE_ENVIRONMENT_ID` repository variables.
-3. Use the Claude lines in [`examples/pr-review.yml`](examples/pr-review.yml).
-
-Changed files are sent to Anthropic as uploads that expire after one hour. Instructions, tools and model are
-sent with each session, so updating the Action never requires running the setup again.
-
 ## Inputs
+
+Every input is optional except the key. Each one also accepts a `PR_REVIEW_*` variable, listed in the
+[guide](docs/guide.md#change-the-settings), and the example workflow reads repository variables, so you can
+change the model without editing a file.
 
 | Input | Default | Description |
 | --- | --- | --- |
@@ -79,6 +66,9 @@ sent with each session, so updating the Action never requires running the setup 
 | `max-findings` | `10` | Maximum findings to publish |
 | `min-severity` | `low` | Lowest severity to publish: `critical`, `high`, `medium` or `low` |
 | `exclude` | | Extra path patterns to skip, separated by commas or new lines |
+| `max-diff-chars` | Built-in limit | Largest diff to review |
+| `rubric-file` | | Markdown file that replaces the review criteria, read from the base commit. See [Change the prompt](docs/guide.md#change-the-prompt) |
+| `instructions` | | Text added to the review criteria |
 | `github-token` | `github.token` | Token that reads the pull request and posts comments. Keep the default: repeated runs recognize earlier comments by their bot author |
 
 Lockfiles, generated code, build output and vendored code are skipped by default. Large diffs keep source
@@ -106,6 +96,7 @@ The author of a pull request controls the text the agent reads, so that text is 
 - With Claude, no repository is mounted, because a mounted repository loads its `.claude/skills` unreviewed.
 - The review step holds only the AI key and the publish step holds only the GitHub token.
 - Findings are validated against the diff, and secrets, mentions, images and HTML are removed before posting.
+- A custom `rubric-file` is read from the base commit, so a pull request cannot rewrite its own review.
 - Pin this Action to a commit SHA, as the example does.
 
 ## Architecture

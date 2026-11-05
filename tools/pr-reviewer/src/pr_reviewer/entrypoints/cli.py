@@ -16,10 +16,11 @@ from pr_reviewer.adapters.filesystem.clean_workspace import build_clean_workspac
 from pr_reviewer.adapters.git.diff_reader import GitDiffReader
 from pr_reviewer.application.ports import DEFAULT_BUDGET_USD, DEFAULT_MAX_TOKENS
 from pr_reviewer.application.prepare_diff import prepare_diff
+from pr_reviewer.application.prompt import compose_rubric
 from pr_reviewer.application.publish_review import publish_review
 from pr_reviewer.application.run_review import ReviewSettings, run_review
 from pr_reviewer.domain.file_selection import DEFAULT_MAX_CHARS
-from pr_reviewer.domain.findings import PublishOptions
+from pr_reviewer.domain.findings import DEFAULT_MAX_FINDINGS, PublishOptions
 from pr_reviewer.domain.models import DiffBundle, ReviewReport, Severity
 from pr_reviewer.domain.triggers import ReviewContext, resolve_context
 from pr_reviewer.entrypoints.composition import (
@@ -28,6 +29,11 @@ from pr_reviewer.entrypoints.composition import (
     pull_request_gateway,
     setup_claude,
 )
+
+
+def _setting(name: str, default: str | int = "") -> str | int:
+    """Settings fall back to PR_REVIEW_* variables. Empty means unset, as with `${{ vars.X }}`."""
+    return os.environ.get(f"PR_REVIEW_{name}") or default
 
 
 def _write_output(context: ReviewContext) -> None:
@@ -70,6 +76,15 @@ def run_diff(args: argparse.Namespace) -> int:
     return 0
 
 
+def _load_rubric(args: argparse.Namespace) -> str | None:
+    """Read a custom rubric from the base commit, so that a pull request cannot rewrite its own review."""
+    if not args.rubric_file:
+        return compose_rubric(extra=args.instructions) if args.instructions else None
+    if not args.base:
+        raise ValueError("--rubric-file needs --base")
+    return compose_rubric(GitDiffReader(args.repo).read_file(args.base, args.rubric_file), args.instructions)
+
+
 def run_review_command(args: argparse.Namespace) -> int:
     bundle = DiffBundle.model_validate_json(args.bundle.read_text(encoding="utf-8"))
     report = run_review(
@@ -82,6 +97,7 @@ def run_review_command(args: argparse.Namespace) -> int:
         ),
         load_provider=lambda: load_provider(args.provider, args.fake_findings),
         build_workspace=lambda: build_clean_workspace(args.repo, args.workspace),
+        load_rubric=lambda: _load_rubric(args),
     )
     args.output.write_text(report.model_dump_json(indent=2), encoding="utf-8")
     print(f"Review {report.status}: {len(report.findings)} finding(s)")
@@ -123,8 +139,8 @@ def build_parser() -> argparse.ArgumentParser:
     diff.add_argument("--base", required=True)
     diff.add_argument("--head", required=True)
     diff.add_argument("--output", type=Path, required=True)
-    diff.add_argument("--exclude", default="", help="extra patterns, separated by commas or new lines")
-    diff.add_argument("--max-chars", type=int, default=DEFAULT_MAX_CHARS)
+    diff.add_argument("--exclude", default=_setting("EXCLUDE"), help="extra patterns, separated by commas or new lines")
+    diff.add_argument("--max-chars", type=int, default=_setting("MAX_DIFF_CHARS", DEFAULT_MAX_CHARS))
     diff.set_defaults(func=run_diff)
 
     review = commands.add_parser("review", help="run the provider and write a report")
@@ -133,9 +149,14 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument("--bundle", type=Path, required=True)
     review.add_argument("--output", type=Path, required=True)
     review.add_argument("--workspace", type=Path, required=True, help="where to create the clean copy")
-    review.add_argument("--model", default="")
-    review.add_argument("--max-tokens", type=int, default=DEFAULT_MAX_TOKENS)
-    review.add_argument("--budget-usd", default=DEFAULT_BUDGET_USD, help="spend limit for providers that enforce one")
+    review.add_argument("--model", default=_setting("MODEL"))
+    review.add_argument("--max-tokens", type=int, default=_setting("MAX_TOKENS", DEFAULT_MAX_TOKENS))
+    review.add_argument(
+        "--budget-usd", default=_setting("BUDGET_USD", DEFAULT_BUDGET_USD), help="spend limit for providers that enforce one"
+    )
+    review.add_argument("--base", default="", help="trusted commit to read --rubric-file from")
+    review.add_argument("--rubric-file", default=_setting("RUBRIC_FILE"), help="repository path that replaces the rubric")
+    review.add_argument("--instructions", default=_setting("INSTRUCTIONS"), help="text added to the rubric")
     review.add_argument("--fake-findings", type=Path)
     review.set_defaults(func=run_review_command)
 
@@ -147,8 +168,8 @@ def build_parser() -> argparse.ArgumentParser:
     post.add_argument("--report", type=Path, required=True)
     post.add_argument("--repo-name", required=True)
     post.add_argument("--pr", type=int, required=True)
-    post.add_argument("--max-findings", type=int, default=10)
-    post.add_argument("--min-severity", choices=get_args(Severity), default="low")
+    post.add_argument("--max-findings", type=int, default=_setting("MAX_FINDINGS", DEFAULT_MAX_FINDINGS))
+    post.add_argument("--min-severity", choices=get_args(Severity), default=_setting("MIN_SEVERITY", "low"))
     post.set_defaults(func=run_publish)
     return parser
 

@@ -1,4 +1,5 @@
 # Copy to .github/workflows/pr-review.yml and add the GEMINI_API_KEY repository secret.
+# Step by step: https://github.com/jggomez/expert-ai-developer-skills/blob/main/tools/pr-reviewer/docs/guide.md
 name: AI PR review
 
 on:
@@ -23,9 +24,15 @@ jobs:
       # Replace <commit-sha> with a full commit SHA from the repository.
       - uses: jggomez/expert-ai-developer-skills/tools/pr-reviewer@<commit-sha>
         with:
-          api-key: ${{ secrets.GEMINI_API_KEY }}
-          # To use Claude instead, replace the line above. See the README for the one-time setup.
-          # provider: claude
-          # api-key: ${{ secrets.ANTHROPIC_API_KEY }}
-          # claude-agent-id: ${{ vars.CLAUDE_AGENT_ID }}
-          # claude-environment-id: ${{ vars.CLAUDE_ENVIRONMENT_ID }}
+          api-key: ${{ vars.PR_REVIEW_PROVIDER == 'claude' && secrets.ANTHROPIC_API_KEY || secrets.GEMINI_API_KEY }}
+          # Everything below is optional. An unset repository variable uses the default,
+          # so you can change these from Settings without editing this file.
+          provider: ${{ vars.PR_REVIEW_PROVIDER }}
+          model: ${{ vars.PR_REVIEW_MODEL }}
+          max-findings: ${{ vars.PR_REVIEW_MAX_FINDINGS }}
+          min-severity: ${{ vars.PR_REVIEW_MIN_SEVERITY }}
+          exclude: ${{ vars.PR_REVIEW_EXCLUDE }}
+          rubric-file: ${{ vars.PR_REVIEW_RUBRIC_FILE }}
+          instructions: ${{ vars.PR_REVIEW_INSTRUCTIONS }}
+          claude-agent-id: ${{ vars.CLAUDE_AGENT_ID }}
+          claude-environment-id: ${{ vars.CLAUDE_ENVIRONMENT_ID }}
