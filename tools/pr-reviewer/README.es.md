@@ -12,7 +12,7 @@ prácticas y coste. Solo comenta y nunca bloquea el merge.
 | Seguridad | Riesgos del OWASP Top 10: control de acceso roto, inyección, XSS, SSRF, autenticación débil, secretos expuestos |
 | Rendimiento | Consultas N+1, I/O en bucles, complejidad evitable, bloqueos en código async |
 | Escalabilidad | Memoria sin límite, falta de paginación o timeouts, estado en un solo proceso, condiciones de carrera |
-| Diseño | Problemas SOLID con daño concreto, lógica duplicada, abstracciones innecesarias |
+| Diseño | Problemas SOLID y code smells con daño concreto, lógica duplicada, abstracciones innecesarias |
 | Buenas prácticas | Errores silenciados, transacciones ausentes, floats para dinero, cambios de API incompatibles |
 | Coste | APIs de pago en bucles, `SELECT *` en almacenes de datos facturados, reintentos sin tope, prompts de LLM enormes, logs excesivos |
 

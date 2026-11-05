@@ -12,7 +12,7 @@ practices and cost. It only comments and never blocks a merge.
 | Security | OWASP Top 10 risks: broken access control, injection, XSS, SSRF, weak auth, exposed secrets |
 | Performance | N+1 queries, I/O in loops, avoidable complexity, blocking async code |
 | Scalability | Unbounded memory, missing pagination or timeouts, single-process state, race conditions |
-| Design | SOLID problems with concrete harm, duplicated logic, unnecessary abstractions |
+| Design | SOLID problems and code smells with concrete harm, duplicated logic, unnecessary abstractions |
 | Best practice | Swallowed errors, missing transactions, floats for money, breaking API changes |
 | Cost | Paid APIs in loops, `SELECT *` on billed warehouses, unbounded retries, oversized LLM prompts, verbose logs |
 
