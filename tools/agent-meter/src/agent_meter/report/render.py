@@ -25,6 +25,7 @@ from agent_meter.report.sections import (
     overview,
     performance,
     records,
+    savings,
     tasks,
 )
 
@@ -33,6 +34,7 @@ __all__ = ["FLAG_FOOTNOTE", "render_report"]
 REPORT_FORMAT_VERSION: Final = 1
 FLAG_FOOTNOTE: Final = overview.FLAG_FOOTNOTE
 _NAV: Final = (
+    ("where-to-cut", "Where to cut"),
     ("overview", "Overview"),
     ("tasks", "Tasks & agents"),
     ("performance", "Performance"),
@@ -162,6 +164,7 @@ def _body(data: ReportData) -> list[str]:
         return body
     return [
         _notices(data),
+        savings.render(data),
         overview.render(data, display),
         tasks.render(data, display),
         performance.render(data),

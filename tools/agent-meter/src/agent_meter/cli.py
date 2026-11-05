@@ -271,6 +271,24 @@ def _cmd_collect(ctx: Ctx, ns: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _cmd_insights(ctx: Ctx, ns: argparse.Namespace) -> int:
+    from zoneinfo import ZoneInfo
+
+    from agent_meter.insights import (
+        Thresholds,
+        build_insights,
+        insights_document,
+        render_insights,
+    )
+
+    as_of = _date(ns.as_of, "--as-of") or datetime.now(ZoneInfo(ctx.cfg.timezone)).date()
+    with _reader(ctx) as store:
+        project = _resolve_project(store, ns.project) if ns.project else None
+        report = build_insights(store, as_of=as_of, project_id=project, limits=Thresholds(window_days=ns.days))
+    print(json.dumps(insights_document(report), indent=2, sort_keys=True) if ns.json else render_insights(report))
+    return EXIT_OK
+
+
 def _scheduled_sync(ctx: Ctx) -> None:
     """``collect --scheduled`` also syncs the cloud sink; failures never fail the local collect."""
     try:
@@ -347,7 +365,12 @@ def _cmd_tasks(ctx: Ctx, ns: argparse.Namespace) -> int:
 
 
 def _cmd_report(ctx: Ctx, ns: argparse.Namespace) -> int:
-    from agent_meter.report import ReportOptions, build_report, write_report
+    from agent_meter.report import (
+        ReportOptions,
+        build_report,
+        report_insights,
+        write_report,
+    )
 
     date_from, date_to = _date(ns.date_from, "--from"), _date(ns.date_to, "--to")
     with _reader(ctx) as store:
@@ -359,7 +382,7 @@ def _cmd_report(ctx: Ctx, ns: argparse.Namespace) -> int:
             )
         except ValueError as exc:
             raise UsageError(str(exc)) from exc
-        html = build_report(store, options)
+        html = build_report(store, options, insights=report_insights(store, options))
     path = write_report(html, Path(ns.out) if ns.out else ctx.home.report)
     print(path)
     if ns.open:
@@ -1138,6 +1161,13 @@ def _add_ingest_commands(sub: argparse._SubParsersAction[argparse.ArgumentParser
     p.add_argument("--project")
     _json_flag(p)
     p.set_defaults(handler=_cmd_last)
+
+    p = sub.add_parser("insights", help="where to cut spending, from fixed rules over your data")
+    p.add_argument("--project")
+    p.add_argument("--days", type=int, default=30, help="period length (default 30)")
+    p.add_argument("--as-of", help="last day of the period, YYYY-MM-DD; repeats a past result exactly")
+    _json_flag(p)
+    p.set_defaults(handler=_cmd_insights)
 
     p = sub.add_parser("tasks", help="per-task rollups with every subagent")
     p.add_argument("--last", nargs="?", type=int, const=1, help="the N most recent tasks (default 1)")

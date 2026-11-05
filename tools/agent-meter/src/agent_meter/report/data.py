@@ -14,6 +14,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Final, Protocol
 
+from agent_meter.insights import InsightsReport
 from agent_meter.report.options import ReportOptions
 from agent_meter.report.stats import LatencyStats, latency_stats
 from agent_meter.report.values import CostTotal
@@ -316,6 +317,7 @@ class ReportData:
     unpriced_models: tuple[UnpricedModelRow, ...]
     untracked: tuple[UntrackedRow, ...]
     health: tuple[HealthRow, ...]
+    insights: InsightsReport | None = None
 
     @property
     def scope_empty(self) -> bool:
