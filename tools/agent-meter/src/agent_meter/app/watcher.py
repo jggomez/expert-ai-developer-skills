@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import os
 import threading
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator
 from pathlib import Path
 from typing import Final
 
 from agent_meter.model import Host
+from agent_meter.readers.antigravity import TRANSCRIPT_REL
 from agent_meter.readers.base import default_roots
 
 __all__ = ["TranscriptWatcher", "signature", "watched_folders"]
@@ -30,18 +32,26 @@ def watched_folders(roots: dict[Host, Path] | None = None) -> list[Path]:
 
 def signature(folders: Iterable[Path]) -> tuple[int, int]:
     """File count and newest modification time: cheap, and either one changes on new activity."""
-    count = 0
-    newest = 0
+    stamps = [stamp for path in _candidates(folders) if (stamp := _modified_ns(path)) is not None]
+    return len(stamps), max(stamps, default=0)
+
+
+def _candidates(folders: Iterable[Path]) -> Iterator[str]:
     for folder in folders:
+        if folder.name == "brain":  # each conversation holds thousands of unrelated working files
+            with contextlib.suppress(OSError):
+                for entry in os.scandir(folder):
+                    yield os.path.join(entry.path, TRANSCRIPT_REL)
+            continue
         for current, _dirs, names in os.walk(folder):
-            for name in names:
-                if name.endswith(_SUFFIXES):
-                    try:
-                        newest = max(newest, os.stat(os.path.join(current, name)).st_mtime_ns)
-                    except OSError:  # removed between listing and stat; the next pass sees it
-                        continue
-                    count += 1
-    return count, newest
+            yield from (os.path.join(current, name) for name in names if name.endswith(_SUFFIXES))
+
+
+def _modified_ns(path: str) -> int | None:
+    try:
+        return os.stat(path).st_mtime_ns
+    except OSError:  # missing, or removed since it was listed; the next pass sees it
+        return None
 
 
 class TranscriptWatcher(threading.Thread):

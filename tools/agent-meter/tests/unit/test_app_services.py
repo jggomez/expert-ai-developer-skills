@@ -120,3 +120,12 @@ def test_watched_folders_cover_each_host(tmp_path: Path) -> None:
     roots = {Host.CLAUDE_CODE: tmp_path / "c", Host.ANTIGRAVITY_CLI: tmp_path / "a"}
 
     assert watched_folders(roots) == [tmp_path / "c" / "projects", tmp_path / "a" / "conversations", tmp_path / "a" / "brain"]
+
+
+def test_brain_folders_watch_only_the_transcript(tmp_path: Path) -> None:
+    logs = tmp_path / "brain" / "c1" / ".system_generated" / "logs"
+    logs.mkdir(parents=True)
+    (logs / "transcript_full.jsonl").write_text("{}\n", encoding="utf-8")
+    (tmp_path / "brain" / "c1" / "notes.jsonl").write_text("{}\n", encoding="utf-8")
+
+    assert signature([tmp_path / "brain"])[0] == 1

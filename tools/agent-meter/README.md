@@ -128,6 +128,7 @@ uv tool install "agent-meter[bigquery] @ git+https://github.com/jggomez/expert-a
 cd /path/to/expert-ai-developer-skills
 uv tool install "./tools/agent-meter"               # local mode
 uv tool install "./tools/agent-meter[bigquery]"     # with BigQuery support
+uv tool install "./tools/agent-meter[app]"          # with the desktop app (agent-meter app)
 ```
 
 ### 4.3 Check, update, remove the tool
@@ -352,6 +353,9 @@ Most read commands accept `--json`.
 | `collect` | Incremental import | `--host H`, `--since YYYY-MM-DD`, `--full` (re-read everything, still idempotent) |
 | `last` | Last session summary | `--project P`, `--json` |
 | `tasks` | Per-task rollups with subagents | `--last [N]`, `--session S`, `--project P`, `--tag T`, `--since D`, `--json` |
+| `app` | Desktop app with live spending, insights, budgets and diagnostics (needs the `app` extra) | — |
+| `insights` | Where to cut spending: fixed rules, measured facts and estimated savings | `--days N`, `--as-of YYYY-MM-DD`, `--project P`, `--json` |
+| `budget` | Spending against your limits, month-end forecast and plan value | `--as-of YYYY-MM-DD`, `--json` |
 | `report` | HTML report | `--open`, `--out F`, `--month YYYY-MM`, `--from D --to D`, `--project P`, `--client C` |
 | `projects list` | Projects with sessions and cost | `--json` |
 | `projects set <project>` | Name, client, billing | `--name`, `--client`, `--billing hourly\|fixed`, `--rate`, `--price`, `--currency` |
@@ -470,6 +474,10 @@ Rules:
 ---
 
 ## 11. Configuration reference
+
+Budgets warn with a desktop notification at 80% and 100%, once per period, and never block work:
+`budget.daily_usd`, `budget.monthly_usd`, `budget.projects.<project_id>` and, to compare list-price
+usage with what you pay, `budget.plan_monthly_usd`. Costs are API list prices, not your bill.
 
 `agent-meter config show` lists everything; change values with `agent-meter config set <key> <value>`.
 The file is `~/.agent-meter/config.toml`.
