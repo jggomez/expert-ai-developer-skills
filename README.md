@@ -1,4 +1,4 @@
-# Expert AI Developer Skills
+# Senior AI Dev Kit
 
 > Plugins, subagents and skills that make AI coding agents work like a senior engineering team: plan first, test-driven, verified with evidence.
 
@@ -7,13 +7,30 @@
 [![Google Antigravity](https://img.shields.io/badge/Google%20Antigravity-plugins-4285F4.svg)](plugins/README.md)
 [![Agent Skills](https://img.shields.io/badge/skills-agentskills.io-6E40C9.svg)](skills/README.md)
 
-Expert AI Developer Skills ships the same engineering workflow for two hosts, **Claude Code** and **Google Antigravity**. An orchestrator agent triages each task by risk, delegates to specialist subagents (product, design, architecture, implementation, QA, review), and only ships when tests pass and reviewers approve. Lifecycle hooks enforce the rules, so they do not depend on the model remembering them.
+Senior AI Dev Kit ships the same engineering workflow for two hosts, **Claude Code** and **Google Antigravity**. An orchestrator agent triages each task by risk, delegates to specialist subagents (product, design, architecture, implementation, QA, review), and only ships when tests pass and reviewers approve. Lifecycle hooks enforce the rules, so they do not depend on the model remembering them.
+
+## What's inside
+
+| Part | What it gives you | Count | Catalog |
+| :--- | :--- | :---: | :--- |
+| **Plugins** | Installable bundles of agents, skills, hooks and MCP servers, for each host | 10 | [Plugins](#plugins) |
+| **Subagents** | Specialists that an orchestrator delegates to | 19 | [Subagents](#subagents) |
+| **Skills** | Expert instructions in the open Agent Skills format | 40 | [Skills](#skills) |
+| **Standalone tools** | A pull request reviewer and a cost meter that need no plugin | 2 | [Standalone tools](#standalone-tools) |
+| **Rules** | Short, strict rules that agents must follow | 11 | [rules/](rules/README.md) |
+| **Workflows** | Step-by-step playbooks, such as `/spec`, `/plan`, `/review` and `/ship` | 16 | [workflows/](workflows/README.md) |
+| **Sidecars** | Background and scheduled tasks for Antigravity | 3 | [sidecars/](sidecars/README.md) |
 
 ## Contents
 
+- [What's inside](#whats-inside)
 - [Features](#features)
 - [Quick start](#quick-start)
 - [Plugins](#plugins)
+- [Subagents](#subagents)
+- [Skills](#skills)
+- [Standalone tools](#standalone-tools)
+- [Rules, workflows and sidecars](#rules-workflows-and-sidecars)
 - [How it works](#how-it-works)
 - [Repository layout](#repository-layout)
 - [Documentation](#documentation)
@@ -28,7 +45,9 @@ Expert AI Developer Skills ships the same engineering workflow for two hosts, **
 - **Enforced guardrails.** Hooks block code edits without a `PLAN.md`, block commits to protected branches, and run the test suite before a turn can end.
 - **Honest verification.** The E2E tester drives a real browser through the Playwright MCP server; in Claude Code a hook rejects a `PASSED` verdict that has no screenshots on disk.
 - **Shared memory.** A `context/memory/` directory lets Claude Code and Antigravity sessions hand work to each other.
-- **Portable skills.** 39 skills follow the open [Agent Skills](https://agentskills.io) format and install on their own in any project.
+- **Portable skills.** 40 skills follow the open [Agent Skills](https://agentskills.io) format and install on their own in any project.
+- **Pull request review.** A GitHub Action comments on security, performance, design and cost, in any repository.
+- **Cost visibility.** A CLI reports tokens, cost and latency per session, task and subagent.
 
 ## Quick start
 
@@ -66,19 +85,6 @@ npx skills add jggomez/expert-ai-developer-skills --list
 npx skills add jggomez/expert-ai-developer-skills --skill python-expert
 ```
 
-### Optional: token and cost metrics
-
-[`agent-meter`](tools/agent-meter/README.md) is a separate CLI that reports tokens, cost and latency per session, task and subagent for both hosts:
-
-```bash
-uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
-agent-meter setup --local
-```
-
-### Optional: AI pull request review
-
-[`pr-reviewer`](tools/pr-reviewer/README.md) is a GitHub Action that reviews pull requests for security, performance, scalability, design, best practices and cost. It works in any repository, with no plugin installed.
-
 ## Plugins
 
 | Plugin | What it does | MCP servers | Docs |
@@ -93,6 +99,55 @@ agent-meter setup --local
 | `docs-and-quality` | Documentation standards, TDD, anti-placeholder code gate. | — | [Claude](plugins/claude/docs-and-quality/README.md) · [Antigravity](plugins/antigravity/docs-and-quality/README.md) |
 | `multi-agent-ops` | Loop engineering for parallel agents and repository research. | — | [Claude](plugins/claude/multi-agent-ops/README.md) · [Antigravity](plugins/antigravity/multi-agent-ops/README.md) |
 | `agent-metrics` *(optional)* | Hooks that record sessions for `agent-meter`. | — | [Claude](plugins/claude/agent-metrics/README.md) · [Antigravity](plugins/antigravity/agent-metrics/README.md) |
+
+## Subagents
+
+| Role | Subagents |
+| :--- | :--- |
+| Orchestrators | `senior-dev-orchestrator`, `flutter-feature-orchestrator`, `python-backend-orchestrator` |
+| Discovery | `product-analyst`, `ui-ux-designer`, `architect-engineer`, `flutter-architect` |
+| Implementation | `code-implementer`, `flutter-implementer` |
+| Verification | `qa-tester`, `critic`, `challenger`, `e2e-blackbox-tester`, `compliance-verifier`, `flutter-reviewer` |
+| Specialists | `senior-data-engineer`, `sql-query-optimizer` |
+| Operations | `context-keeper`, `flutter-release-engineer` |
+
+## Skills
+
+| Area | Skills |
+| :--- | :--- |
+| Engineering roles | `senior-dev-orchestrator`, `product-analyst`, `ui-ux-designer`, `senior-architect-engineering`, `code-implementer`, `qa-tester`, `code-critic`, `adversarial-challenger`, `blackbox-tester`, `compliance-verifier` |
+| Code quality | `code-smells-expert`, `refactoring-code-expert`, `guidelines-karpathy`, `performance-scalability`, `security-audit`, `design-spec-expert` |
+| Testing and docs | `test-driven-development`, `testing-expert`, `documentation-expert` |
+| Git and delivery | `commit-expert`, `pull-request-expert`, `build-and-ci-gates`, `database-migration-expert` |
+| Python | `python-expert` |
+| Flutter | `flutter-senior-orchestration`, `flutter-architecture-decisions`, `flutter-review-checklist`, `flutter-test-strategy`, `flutter-performance-profiling`, `flutter-release-engineering`, `flutter-upgrade-migration` |
+| Data | `gcp-data-engineering`, `cdc-scd-patterns`, `bigquery-query-optimization`, `sql-query-optimization` |
+| Agent operations | `context-capture`, `context-restore`, `loop-engineering`, `repo-research`, `agent-metrics` |
+
+Details and the skills in each plugin: [skills/README.md](skills/README.md).
+
+## Standalone tools
+
+These work without installing any plugin.
+
+### pr-reviewer
+
+[`pr-reviewer`](tools/pr-reviewer/README.md) is a GitHub Action that reviews pull requests for security, performance, scalability, design, best practices and cost. It only comments and never blocks a merge. It works with Gemini, a Claude Pro or Max plan, or an Anthropic API key. To install it, follow its [quick start](tools/pr-reviewer/README.md#quick-start).
+
+### agent-meter
+
+[`agent-meter`](tools/agent-meter/README.md) is a CLI that reports tokens, cost and latency per session, task and subagent, for both hosts:
+
+```bash
+uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+agent-meter setup --local
+```
+
+## Rules, workflows and sidecars
+
+- **[Rules](rules/README.md)** set limits for agents on clean code, secrets, commits, testing, pull requests and deployment.
+- **[Workflows](workflows/README.md)** are playbooks for each stage of the work: define, plan, build, test, review and ship.
+- **[Sidecars](sidecars/README.md)** run alongside Antigravity: an hourly pull request check, a 30-minute review alert and a file watcher.
 
 ## How it works
 
@@ -117,9 +172,10 @@ Every task starts with a `PLAN.md`. Discovery writes a single `docs/<feature-nam
 │   └── antigravity/     # Google Antigravity plugins (source of truth for agents)
 ├── skills/              # Canonical skills, copied into each plugin
 ├── scripts/             # Sync and validation scripts
-├── tools/agent-meter/   # Optional metrics CLI (standalone Python package)
-├── tools/pr-reviewer/   # Optional AI pull request review (GitHub Action)
+├── tools/agent-meter/   # Metrics CLI (standalone Python package)
+├── tools/pr-reviewer/   # AI pull request review (GitHub Action)
 ├── rules/ workflows/    # Reusable agent rules and task workflows
+├── sidecars/            # Background and scheduled tasks for Antigravity
 ├── docs/                # Installation, architecture and feature docs
 └── tests/               # Structure, unit and behavioral tests
 ```
@@ -133,6 +189,9 @@ Every task starts with a `PLAN.md`. Discovery writes a single `docs/<feature-nam
 | Architecture of the multi-agent workflow | [docs/architecture.md](docs/architecture.md) |
 | Skills catalog | [skills/README.md](skills/README.md) |
 | Agent operating rules | [AGENTS.md](AGENTS.md) |
+| Rules catalog | [rules/README.md](rules/README.md) |
+| Workflows catalog | [workflows/README.md](workflows/README.md) |
+| Sidecars catalog | [sidecars/README.md](sidecars/README.md) |
 | Test suite | [tests/README.md](tests/README.md) |
 | Metrics CLI | [tools/agent-meter/README.md](tools/agent-meter/README.md) |
 | Pull request reviewer | [tools/pr-reviewer/README.md](tools/pr-reviewer/README.md) |
