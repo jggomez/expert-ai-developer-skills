@@ -6,6 +6,7 @@ import contextlib
 import logging
 import os
 import threading
+import time
 from collections.abc import Callable, Iterable, Iterator
 from pathlib import Path
 from typing import Final
@@ -14,9 +15,10 @@ from agent_meter.model import Host
 from agent_meter.readers.antigravity import TRANSCRIPT_REL
 from agent_meter.readers.base import default_roots
 
-__all__ = ["TranscriptWatcher", "signature", "watched_folders"]
+__all__ = ["MIN_COLLECT_GAP_S", "TranscriptWatcher", "signature", "watched_folders"]
 
 POLL_INTERVAL_S: Final = 1.0
+MIN_COLLECT_GAP_S: Final = 30.0  # an active session writes constantly, and each collect locks out hooks and the CLI
 _SUFFIXES: Final = (".jsonl", ".db", ".db-wal", ".pb")
 _LOG = logging.getLogger(__name__)
 
@@ -55,14 +57,27 @@ def _modified_ns(path: str) -> int | None:
 
 
 class TranscriptWatcher(threading.Thread):
-    def __init__(self, folders: list[Path], on_change: Callable[[], None]) -> None:
+    def __init__(
+        self,
+        folders: list[Path],
+        on_change: Callable[[], None],
+        *,
+        min_gap_s: float = MIN_COLLECT_GAP_S,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
         super().__init__(daemon=True, name="agent-meter-watcher")
         self._folders = folders
         self._on_change = on_change
+        self._min_gap_s = min_gap_s
+        self._clock = clock
         self._stop_event = threading.Event()
         self._last = signature(folders)
+        self._next_allowed = clock()
 
     def poll_once(self) -> bool:
+        """Changes seen during the gap stay pending, because ``_last`` only moves when a collect runs."""
+        if self._clock() < self._next_allowed:
+            return False
         current = signature(self._folders)
         if current == self._last:
             return False
@@ -71,6 +86,7 @@ class TranscriptWatcher(threading.Thread):
             self._on_change()
         except Exception:
             _LOG.exception("live refresh failed")
+        self._next_allowed = self._clock() + self._min_gap_s
         return True
 
     def run(self) -> None:

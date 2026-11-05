@@ -266,7 +266,9 @@ previsto, pero aún no se ha probado.
 
 - **Idioma:** elige English o Español en la cabecera. La elección se guarda como `language` y también se aplica a los
   avisos de presupuesto. La línea de comandos y el reporte HTML siguen en inglés.
-- **Actualización en vivo:** la app vigila las carpetas de transcripts y recolecta cuando cambian.
+- **Actualización en vivo:** la app vigila las carpetas de transcripts y recolecta cuando cambian, como máximo una vez
+  cada 30 segundos desde que termina la anterior, para que los hooks y la línea de comandos puedan acceder a la base. Los
+  cambios intermedios entran en la siguiente recolección.
 - **Durante una recolección:** la base queda bloqueada, así que la app sigue mostrando las últimas cifras guardadas, lo
   indica en la cabecera y se actualiza al terminar. Una recolección grande puede tardar más de un minuto.
 - **Seguridad:** no hay servidor local ni puerto abierto.
