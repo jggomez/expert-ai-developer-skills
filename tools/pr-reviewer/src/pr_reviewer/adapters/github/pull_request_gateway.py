@@ -6,6 +6,7 @@ from typing import Any
 
 from pr_reviewer.adapters.github.client import GitHubClient, GitHubError
 from pr_reviewer.adapters.github.markdown import (
+    CATEGORY_PATTERN,
     FINGERPRINT_PATTERN,
     SUMMARY_MARKER,
     format_inline_comment,
@@ -31,6 +32,17 @@ class GitHubPullRequestGateway:
     def posted_fingerprints(self) -> set[str]:
         comments = self._client.list_all(f"/repos/{self._repo}/pulls/{self._number}/comments")
         return {match for c in comments if _is_bot(c) for match in FINGERPRINT_PATTERN.findall(c.get("body", ""))}
+
+    def posted_places(self) -> set[tuple[str, int, str]]:
+        """Path, line and category of each comment this bot already posted."""
+        comments = self._client.list_all(f"/repos/{self._repo}/pulls/{self._number}/comments")
+        places = set()
+        for comment in comments:
+            line = comment.get("line") or comment.get("original_line")
+            category = CATEGORY_PATTERN.search(comment.get("body", ""))
+            if _is_bot(comment) and line and category:
+                places.add((comment.get("path", ""), line, category[1]))
+        return places
 
     def post_inline_review(self, commit: str, findings: list[Finding]) -> bool:
         payload = {

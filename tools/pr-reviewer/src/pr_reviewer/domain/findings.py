@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pr_reviewer.domain.models import SEVERITY_RANK, DiffBundle, Finding, Severity
 
 DEFAULT_MAX_FINDINGS = 10
+SAME_PLACE_LINES = 3
 
 
 @dataclass(frozen=True)
@@ -28,6 +29,14 @@ def fingerprint(finding: Finding) -> str:
     """Identify a finding across runs. Excludes the line, which moves between commits."""
     title = " ".join(finding.title.lower().split())
     return hashlib.sha256(f"{finding.file}|{finding.category}|{title}".encode()).hexdigest()[:16]
+
+
+def is_already_posted(finding: Finding, posted: set[tuple[str, int, str]]) -> bool:
+    """The model rewords a finding between runs, so also match the same problem by place."""
+    return any(
+        path == finding.file and category == finding.category and abs(line - finding.line) <= SAME_PLACE_LINES
+        for path, line, category in posted
+    )
 
 
 def select_findings(findings: list[Finding], bundle: DiffBundle, options: PublishOptions) -> Selection:

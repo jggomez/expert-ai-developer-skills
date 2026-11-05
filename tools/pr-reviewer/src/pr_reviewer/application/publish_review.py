@@ -5,7 +5,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from pr_reviewer.application.ports import PullRequestGateway, ReviewOutcome
-from pr_reviewer.domain.findings import PublishOptions, fingerprint, select_findings
+from pr_reviewer.domain.findings import (
+    PublishOptions,
+    fingerprint,
+    is_already_posted,
+    select_findings,
+)
 from pr_reviewer.domain.models import DiffBundle, ReviewReport
 
 
@@ -24,7 +29,8 @@ def publish_review(
     """Post the findings not published yet, then create or update the summary."""
     selection = select_findings(report.findings, bundle, options)
     posted = gateway.posted_fingerprints()
-    new = [f for f in selection.kept if fingerprint(f) not in posted]
+    places = gateway.posted_places()
+    new = [f for f in selection.kept if fingerprint(f) not in posted and not is_already_posted(f, places)]
 
     accepted = gateway.post_inline_review(bundle.head, new) if new else True
 

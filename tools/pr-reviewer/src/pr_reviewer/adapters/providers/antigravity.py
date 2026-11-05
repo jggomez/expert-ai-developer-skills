@@ -27,8 +27,9 @@ DEFAULT_MODEL = "gemini-3.6-flash"
 DEFAULT_FALLBACK_MODEL = "gemini-3.8-flash"
 MAX_MODEL_CALLS = 20
 MAX_TOOL_CALLS = 40
-REVIEW_TIMEOUT_SECONDS = 600.0
+REVIEW_TIMEOUT_SECONDS = 420.0  # Four groups, two at a time, must fit in the 20 minute job.
 RETRY_DELAYS_SECONDS = (10.0, 30.0)
+QUOTA_RETRY_SECONDS = 60.0  # Per-minute quotas refill within this wait.
 CANCEL_GRACE_SECONDS = 30.0
 _SYSTEM_ERROR = re.compile(r"^System step error \(HTTP (\d+)\)")
 _OVERLOAD_CODES = {"429", "500", "502", "503", "504"}
@@ -173,6 +174,8 @@ class AntigravityProvider:
         for attempt, current in enumerate(models):
             if attempt:
                 delay = RETRY_DELAYS_SECONDS[attempt - 1]
+                if errors and "(HTTP 429)" in errors[-1]:
+                    delay = QUOTA_RETRY_SECONDS
                 logger.warning("No answer from %s. Retrying with %s in %gs", model, current, delay)
                 await self._sleep(delay)
             model = current

@@ -44,6 +44,10 @@ def share_budget(budget_usd: str, shards: int) -> str:
     return str((Decimal(budget_usd) / shards).quantize(Decimal("0.01"), rounding=ROUND_DOWN))
 
 
+# Two at a time: more than this exhausted the per-minute quota of a Gemini key in a real run.
+MAX_PARALLEL_GROUPS = 2
+
+
 def _process_pool(workers: int) -> Executor:
     # Spawn, because the agent SDK starts threads and subprocesses that do not survive a fork.
     return ProcessPoolExecutor(max_workers=workers, mp_context=multiprocessing.get_context("spawn"))
@@ -58,7 +62,7 @@ def review_shards(
     """A group that crashes becomes a failed report, so the other groups still count."""
     jobs = [replace(job, settings=replace(job.settings, budget_usd=share_budget(job.settings.budget_usd, len(jobs)))) for job in jobs]
     reports = []
-    with executor(len(jobs)) as pool:
+    with executor(min(len(jobs), MAX_PARALLEL_GROUPS)) as pool:
         futures = [pool.submit(worker, job) for job in jobs]
         for job, future in zip(jobs, futures, strict=True):
             try:
