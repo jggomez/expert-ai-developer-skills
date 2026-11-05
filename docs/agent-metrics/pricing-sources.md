@@ -1,7 +1,7 @@
-# agent-meter — Pricing Sources (fetched 2026-10-16)
+# agent-meter — Pricing Sources (fetched 2026-11-05)
 
 > Seed data for `tools/agent-meter/src/agent_meter/pricing.yaml`. All prices are **USD per 1M tokens**, standard (non-batch, non-priority, global routing) first-party API rates.
-> These values were fetched from the official pages on 2026-10-16 by the orchestrator. They must never be "corrected" from memory; refresh by re-fetching the source URLs.
+> These values were fetched from the official pages on 2026-11-05 by the orchestrator. They must never be "corrected" from memory; refresh by re-fetching the source URLs.
 > agent-meter reports **API-equivalent cost** (PRD OQ-2): subscription users (Claude Max, Google AI plans) do not actually pay these amounts.
 
 ## 1. Anthropic — https://platform.claude.com/docs/en/about-claude/pricing
@@ -25,7 +25,7 @@ Rules from the page that affect computation:
 - Batch: 50% off (not applicable to interactive coding agents).
 - `<synthetic>` model entries are not billable.
 
-## 2. Google Gemini API — https://ai.google.dev/gemini-api/docs/pricing (paid tier, Standard)
+## 2. Google Gemini API — https://aistudio.google.com/docs/pricing (paid tier, Standard)
 | Model id | Input | Cache read | Output | effective window |
 | :--- | ---: | ---: | ---: | :--- |
 | `gemini-3.8-flash` | 0.75 | 0.075 | 3.75 | through 2026-12-31 |
