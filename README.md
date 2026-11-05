@@ -75,6 +75,10 @@ uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdi
 agent-meter setup --local
 ```
 
+### Optional: AI pull request review
+
+[`pr-reviewer`](tools/pr-reviewer/README.md) is a GitHub Action that reviews pull requests for security, performance, scalability, design, best practices and cost. It works in any repository, with no plugin installed.
+
 ## Plugins
 
 | Plugin | What it does | MCP servers | Docs |
@@ -114,6 +118,7 @@ Every task starts with a `PLAN.md`. Discovery writes a single `docs/<feature-nam
 ├── skills/              # Canonical skills, copied into each plugin
 ├── scripts/             # Sync and validation scripts
 ├── tools/agent-meter/   # Optional metrics CLI (standalone Python package)
+├── tools/pr-reviewer/   # Optional AI pull request review (GitHub Action)
 ├── rules/ workflows/    # Reusable agent rules and task workflows
 ├── docs/                # Installation, architecture and feature docs
 └── tests/               # Structure, unit and behavioral tests
@@ -130,6 +135,7 @@ Every task starts with a `PLAN.md`. Discovery writes a single `docs/<feature-nam
 | Agent operating rules | [AGENTS.md](AGENTS.md) |
 | Test suite | [tests/README.md](tests/README.md) |
 | Metrics CLI | [tools/agent-meter/README.md](tools/agent-meter/README.md) |
+| Pull request reviewer | [tools/pr-reviewer/README.md](tools/pr-reviewer/README.md) |
 
 ## Development
 

@@ -1,0 +1,41 @@
+# Copy to .github/workflows/pr-review.yml, replace <commit-sha> and add an AI secret: GEMINI_API_KEY by default.
+# Step by step: https://github.com/jggomez/expert-ai-developer-skills/blob/main/tools/pr-reviewer/docs/guide.md
+name: AI PR review
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  issue_comment:
+    types: [created]
+
+jobs:
+  review:
+    # Saves a runner on comments that are not /review. The Action repeats this check with permissions.
+    if: github.event_name == 'pull_request' || (github.event.issue.pull_request && startsWith(github.event.comment.body, '/review'))
+    concurrency:
+      group: pr-review-${{ github.event.pull_request.number || github.event.issue.number }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      # Replace <commit-sha> with a full commit SHA from the repository.
+      - uses: jggomez/expert-ai-developer-skills/tools/pr-reviewer@<commit-sha>
+        with:
+          api-key: ${{ startsWith(vars.PR_REVIEW_PROVIDER, 'claude') && secrets.ANTHROPIC_API_KEY || secrets.GEMINI_API_KEY }}
+          # Everything below is optional. An unset repository variable uses the default,
+          # so you can change these from Settings without editing this file.
+          provider: ${{ vars.PR_REVIEW_PROVIDER }}
+          model: ${{ vars.PR_REVIEW_MODEL }}
+          fallback-model: ${{ vars.PR_REVIEW_FALLBACK_MODEL }}
+          max-findings: ${{ vars.PR_REVIEW_MAX_FINDINGS }}
+          min-severity: ${{ vars.PR_REVIEW_MIN_SEVERITY }}
+          exclude: ${{ vars.PR_REVIEW_EXCLUDE }}
+          rubric-file: ${{ vars.PR_REVIEW_RUBRIC_FILE }}
+          instructions: ${{ vars.PR_REVIEW_INSTRUCTIONS }}
+          # With a Claude Pro or Max plan, set PR_REVIEW_PROVIDER to claude-code and add this secret.
+          claude-code-oauth-token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude-agent-id: ${{ vars.CLAUDE_AGENT_ID }}
+          claude-environment-id: ${{ vars.CLAUDE_ENVIRONMENT_ID }}

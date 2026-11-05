@@ -1,0 +1,213 @@
+name: AI PR review
+description: Comments on pull requests with security, performance, scalability, design and cost problems.
+author: jggomez
+branding:
+  icon: trending-down
+  color: green
+
+inputs:
+  provider:
+    description: "Review provider: antigravity, claude or claude-code (Claude subscription). Empty means antigravity."
+    default: ""
+  api-key:
+    description: Provider API key, either a Gemini or an Anthropic key.
+    required: false
+    default: ""
+  github-token:
+    description: Token that reads the pull request and posts comments. Keep the default, because repeated runs recognize earlier comments by their bot author.
+    default: ${{ github.token }}
+  model:
+    description: Model to use. Empty means the provider default.
+    default: ""
+  max-shards:
+    description: Most groups of files a large pull request is split into, reviewed in parallel. Empty means 4.
+    default: ""
+  fallback-model:
+    description: Model for the last attempt when the first one is overloaded (antigravity). Empty means gemini-3.8-flash.
+    default: ""
+  max-tokens:
+    description: Token budget per group of files (antigravity). Empty means 200000.
+    default: ""
+  budget-usd:
+    description: Hard spend limit in dollars for the whole review, shared between groups (claude). Empty means 1.00.
+    default: ""
+  claude-code-oauth-token:
+    description: Token from `claude setup-token`, to pay with a Claude subscription. Used with provider claude-code.
+    default: ""
+  claude-agent-id:
+    description: Agent ID printed by `pr-reviewer setup-claude`.
+    default: ""
+  claude-environment-id:
+    description: Environment ID printed by `pr-reviewer setup-claude`.
+    default: ""
+  max-findings:
+    description: Maximum findings to publish per review. Empty means 10.
+    default: ""
+  min-severity:
+    description: "Lowest severity to publish: critical, high, medium or low. Empty means low."
+    default: ""
+  exclude:
+    description: Extra path patterns to skip, separated by commas or new lines.
+    default: ""
+  max-diff-chars:
+    description: Largest diff to review, in characters. Files beyond it are listed as omitted. Empty means the built-in limit.
+    default: ""
+  rubric-file:
+    description: Repository path of a Markdown file that replaces the review criteria. It is read from the base commit, never from the pull request.
+    default: ""
+  instructions:
+    description: Text added to the review criteria, such as project conventions.
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Set up uv
+      continue-on-error: true
+      uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      with:
+        enable-cache: true
+        cache-dependency-glob: ${{ github.action_path }}/uv.lock
+        python-version: "3.12"
+        version: "0.11.6"
+        ignore-empty-workdir: true
+
+    - name: Decide whether to review
+      continue-on-error: true
+      id: context
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: uv run --frozen --project "$GITHUB_ACTION_PATH" pr-reviewer context
+
+    - name: Check out the base commit for Claude Code
+      continue-on-error: true
+      if: steps.context.outputs.should_run == 'true' && (inputs.provider || env.PR_REVIEW_PROVIDER) == 'claude-code'
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ steps.context.outputs.base_sha }}
+        persist-credentials: false
+        token: ${{ inputs.github-token }}
+
+    - name: Check out the pull request
+      continue-on-error: true
+      id: checkout
+      if: steps.context.outputs.should_run == 'true'
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ steps.context.outputs.head_sha }}
+        path: .pr-reviewer/pr
+        fetch-depth: 0
+        persist-credentials: false
+        token: ${{ inputs.github-token }}
+
+    - name: Compute the diff
+      continue-on-error: true
+      id: diff
+      if: steps.context.outputs.should_run == 'true'
+      shell: bash
+      env:
+        BASE_SHA: ${{ steps.context.outputs.base_sha }}
+        HEAD_SHA: ${{ steps.context.outputs.head_sha }}
+        PR_REVIEW_EXCLUDE: ${{ inputs.exclude || env.PR_REVIEW_EXCLUDE }}
+        PR_REVIEW_MAX_DIFF_CHARS: ${{ inputs.max-diff-chars || env.PR_REVIEW_MAX_DIFF_CHARS }}
+      run: |
+        uv run --frozen --project "$GITHUB_ACTION_PATH" pr-reviewer diff \
+          --repo "$GITHUB_WORKSPACE/.pr-reviewer/pr" \
+          --base "$BASE_SHA" --head "$HEAD_SHA" \
+          --output "$RUNNER_TEMP/pr-reviewer-diff.json"
+
+    - name: Prepare the Claude Code review
+      continue-on-error: true
+      id: prepare
+      if: steps.context.outputs.should_run == 'true' && (inputs.provider || env.PR_REVIEW_PROVIDER) == 'claude-code'
+      shell: bash
+      env:
+        BASE_SHA: ${{ steps.context.outputs.base_sha }}
+        PR_REVIEW_MODEL: ${{ inputs.model || env.PR_REVIEW_MODEL }}
+        PR_REVIEW_RUBRIC_FILE: ${{ inputs.rubric-file || env.PR_REVIEW_RUBRIC_FILE }}
+        PR_REVIEW_INSTRUCTIONS: ${{ inputs.instructions || env.PR_REVIEW_INSTRUCTIONS }}
+      run: |
+        uv run --frozen --project "$GITHUB_ACTION_PATH" pr-reviewer prepare-claude-code \
+          --repo "$GITHUB_WORKSPACE/.pr-reviewer/pr" \
+          --bundle "$RUNNER_TEMP/pr-reviewer-diff.json" \
+          --review-dir "$GITHUB_WORKSPACE/.pr-reviewer/review" \
+          --relative-dir .pr-reviewer/review \
+          --base "$BASE_SHA"
+
+    - name: Review with Claude Code
+      continue-on-error: true
+      id: claude_code
+      if: steps.context.outputs.should_run == 'true' && steps.prepare.outputs.ready == 'true'
+      uses: anthropics/claude-code-action@c0949c50a78c1ec8ce2647db36629b870e715d0c # v1.0.268
+      with:
+        prompt: ${{ steps.prepare.outputs.prompt }}
+        claude_args: ${{ steps.prepare.outputs.claude_args }}
+        claude_code_oauth_token: ${{ inputs.claude-code-oauth-token || env.CLAUDE_CODE_OAUTH_TOKEN }}
+        anthropic_api_key: ${{ !(inputs.claude-code-oauth-token || env.CLAUDE_CODE_OAUTH_TOKEN) && inputs.api-key || '' }}
+        github_token: ${{ inputs.github-token }}
+
+    - name: Read the Claude Code result
+      continue-on-error: true
+      id: collect
+      if: steps.context.outputs.should_run == 'true' && (inputs.provider || env.PR_REVIEW_PROVIDER) == 'claude-code'
+      shell: bash
+      env:
+        PR_REVIEW_MODEL: ${{ inputs.model || env.PR_REVIEW_MODEL }}
+        PR_REVIEW_STRUCTURED_OUTPUT: ${{ steps.claude_code.outputs.structured_output }}
+        OUTCOME: ${{ steps.claude_code.outcome }}
+      run: |
+        uv run --frozen --project "$GITHUB_ACTION_PATH" pr-reviewer collect-claude-code \
+          --bundle "$RUNNER_TEMP/pr-reviewer-diff.json" \
+          --outcome "$OUTCOME" \
+          --output "$RUNNER_TEMP/pr-reviewer-report.json"
+
+    - name: Review with AI
+      continue-on-error: true
+      id: review
+      if: steps.context.outputs.should_run == 'true' && (inputs.provider || env.PR_REVIEW_PROVIDER) != 'claude-code'
+      shell: bash
+      env:
+        API_KEY: ${{ inputs.api-key }}
+        PROVIDER: ${{ inputs.provider || env.PR_REVIEW_PROVIDER || 'antigravity' }}
+        BASE_SHA: ${{ steps.context.outputs.base_sha }}
+        CLAUDE_AGENT_ID: ${{ inputs.claude-agent-id || env.CLAUDE_AGENT_ID }}
+        CLAUDE_ENVIRONMENT_ID: ${{ inputs.claude-environment-id || env.CLAUDE_ENVIRONMENT_ID }}
+        PR_REVIEW_MODEL: ${{ inputs.model || env.PR_REVIEW_MODEL }}
+        PR_REVIEW_MAX_SHARDS: ${{ inputs.max-shards || env.PR_REVIEW_MAX_SHARDS }}
+        PR_REVIEW_FALLBACK_MODEL: ${{ inputs.fallback-model || env.PR_REVIEW_FALLBACK_MODEL }}
+        PR_REVIEW_MAX_TOKENS: ${{ inputs.max-tokens || env.PR_REVIEW_MAX_TOKENS }}
+        PR_REVIEW_BUDGET_USD: ${{ inputs.budget-usd || env.PR_REVIEW_BUDGET_USD }}
+        PR_REVIEW_RUBRIC_FILE: ${{ inputs.rubric-file || env.PR_REVIEW_RUBRIC_FILE }}
+        PR_REVIEW_INSTRUCTIONS: ${{ inputs.instructions || env.PR_REVIEW_INSTRUCTIONS }}
+      run: |
+        extra=()
+        case "$PROVIDER" in
+          antigravity) export GEMINI_API_KEY="$API_KEY"; extra=(--extra antigravity) ;;
+          claude) export ANTHROPIC_API_KEY="$API_KEY"; extra=(--extra claude) ;;
+        esac
+        unset API_KEY
+        uv run --frozen --project "$GITHUB_ACTION_PATH" "${extra[@]}" pr-reviewer review \
+          --provider "$PROVIDER" \
+          --repo "$GITHUB_WORKSPACE/.pr-reviewer/pr" \
+          --bundle "$RUNNER_TEMP/pr-reviewer-diff.json" \
+          --workspace "$RUNNER_TEMP/pr-reviewer-workspace" \
+          --base "$BASE_SHA" \
+          --output "$RUNNER_TEMP/pr-reviewer-report.json"
+
+    - name: Publish the review
+      continue-on-error: true
+      id: publish
+      if: steps.context.outputs.should_run == 'true'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        REPO_NAME: ${{ steps.context.outputs.repo }}
+        PR_NUMBER: ${{ steps.context.outputs.pr_number }}
+        PR_REVIEW_MAX_FINDINGS: ${{ inputs.max-findings || env.PR_REVIEW_MAX_FINDINGS }}
+        PR_REVIEW_MIN_SEVERITY: ${{ inputs.min-severity || env.PR_REVIEW_MIN_SEVERITY }}
+      run: |
+        uv run --frozen --project "$GITHUB_ACTION_PATH" pr-reviewer publish \
+          --bundle "$RUNNER_TEMP/pr-reviewer-diff.json" \
+          --report "$RUNNER_TEMP/pr-reviewer-report.json" \
+          --repo-name "$REPO_NAME" --pr "$PR_NUMBER"

@@ -1,0 +1,38 @@
+# Dogfooding: reviews this repository with the module in tools/pr-reviewer.
+# Unlike the published example, `./` loads the Action from the pull request itself, so the secret
+# reaches code from the PR branch. Only same-repository authors reach this: fork runs get no secrets.
+name: AI PR review
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  issue_comment:
+    types: [created]
+
+jobs:
+  review:
+    if: github.event_name == 'pull_request' || (github.event.issue.pull_request && startsWith(github.event.comment.body, '/review'))
+    concurrency:
+      group: pr-review-${{ github.event.pull_request.number || github.event.issue.number }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./tools/pr-reviewer
+        with:
+          # Set the PR_REVIEW_PROVIDER repository variable to `claude` to switch provider.
+          provider: ${{ vars.PR_REVIEW_PROVIDER }}
+          model: ${{ vars.PR_REVIEW_MODEL }}
+          fallback-model: ${{ vars.PR_REVIEW_FALLBACK_MODEL }}
+          rubric-file: ${{ vars.PR_REVIEW_RUBRIC_FILE }}
+          instructions: ${{ vars.PR_REVIEW_INSTRUCTIONS }}
+          api-key: ${{ startsWith(vars.PR_REVIEW_PROVIDER, 'claude') && secrets.ANTHROPIC_API_KEY || secrets.GEMINI_API_KEY }}
+          claude-code-oauth-token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude-agent-id: ${{ vars.CLAUDE_AGENT_ID }}
+          claude-environment-id: ${{ vars.CLAUDE_ENVIRONMENT_ID }}
