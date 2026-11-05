@@ -116,7 +116,7 @@ lugar. La rúbrica y las instrucciones tienen un límite de 20.000 caracteres ca
 | --- | --- | --- |
 | El job está en verde, pero no hay comentarios | El job sigue en verde aunque la revisión falle | Lee el comentario de resumen y el log del job |
 | `HTTP 503` o `high demand` en el log | El modelo de Gemini está saturado. El revisor corta ese intento, reintenta y luego usa `fallback-model` | Nada, si la revisión termina. El resumen muestra el modelo usado |
-| "no structured output after 3 attempts" | Fallaron todos los intentos, probablemente por la misma causa | Reabre el PR más tarde o elige otro `model` o `fallback-model` |
+| "No structured output after 3 attempts" | Fallaron todos los intentos, probablemente por la misma causa | Reabre el PR más tarde o elige otro `model` o `fallback-model` |
 | `/review` no hace nada | El workflow no está en la rama por defecto, o el autor no tiene permiso | Haz merge del workflow. Solo pueden usarlo owners, members y collaborators |
 | Se omite el PR de un fork | Las ejecuciones desde forks no acceden a secretos | Es lo esperado |
 | `does not exist in the base commit` | La rúbrica aún no está en la rama destino | Haz merge de la rúbrica primero |

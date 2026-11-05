@@ -87,12 +87,15 @@ class _OverloadWatch(logging.Handler):
     is the only sign that the attempt will not finish.
     """
 
-    def __init__(self, loop: asyncio.AbstractEventLoop, overloaded: asyncio.Event):
+    def __init__(self, loop: asyncio.AbstractEventLoop, overloaded: asyncio.Event, errors: list[str]):
         super().__init__(level=logging.WARNING)
         self._loop = loop
         self._overloaded = overloaded
+        self._errors = errors
 
     def emit(self, record: logging.LogRecord) -> None:
+        if _SYSTEM_ERROR.match(record.getMessage()):
+            self._errors.append(record.getMessage())
         if is_overload(record):
             self._loop.call_soon_threadsafe(self._overloaded.set)
 
@@ -142,11 +145,11 @@ class AntigravityProvider:
             return data, _usage(response.usage_metadata), response.stop_reason
 
     async def _attempt(
-        self, config: LocalAgentConfig, request: ReviewRequest
+        self, config: LocalAgentConfig, request: ReviewRequest, errors: list[str]
     ) -> tuple[Any, ReviewUsage, StopReason] | None:
         """Run one agent, or return None as soon as the model reports it is overloaded."""
         overloaded = asyncio.Event()
-        watch = _OverloadWatch(asyncio.get_running_loop(), overloaded)
+        watch = _OverloadWatch(asyncio.get_running_loop(), overloaded, errors)
         root = logging.getLogger()
         root.addHandler(watch)
         chat = asyncio.create_task(self._chat(config, request))
@@ -165,6 +168,7 @@ class AntigravityProvider:
 
     async def _run(self, request: ReviewRequest, model: str) -> ProviderOutput:
         usage = ReviewUsage()
+        errors: list[str] = []
         models = (model, model, request.fallback_model or DEFAULT_FALLBACK_MODEL)
         for attempt, current in enumerate(models):
             if attempt:
@@ -172,7 +176,7 @@ class AntigravityProvider:
                 logger.warning("No answer from %s. Retrying with %s in %gs", model, current, delay)
                 await self._sleep(delay)
             model = current
-            outcome = await self._attempt(build_config(request, model=model), request)
+            outcome = await self._attempt(build_config(request, model=model), request, errors)
             if outcome is None:
                 continue
             data, spent, stop_reason = outcome
@@ -182,8 +186,8 @@ class AntigravityProvider:
             if data is not None:
                 break
         else:
-            attempts = len(models)
-            message = f"The agent returned no structured output after {attempts} attempts. The model may be overloaded"
+            detail = errors[-1] if errors else "The model may be overloaded"
+            message = f"No structured output after {len(models)} attempts. {detail}"
             raise ProviderError(message, usage=usage, model=model)
         try:
             result = ReviewResult.model_validate(data)
