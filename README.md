@@ -43,7 +43,7 @@ Senior AI Dev Kit ships the same engineering workflow for two hosts, **Claude Co
 - **Risk-based workflow.** Tasks are triaged into three tiers: small fixes skip discovery and review committees; risky changes get full discovery, user sign-off and adversarial review.
 - **Specialist subagents.** Orchestrators delegate to product analyst, UI/UX designer, architect, implementer, QA tester, critic, challenger, E2E black-box tester and compliance verifier.
 - **Enforced guardrails.** Hooks block code edits without a `PLAN.md`, block commits to protected branches, and run the test suite before a turn can end.
-- **Honest verification.** The E2E tester drives a real browser through the Playwright MCP server; in Claude Code a hook rejects a `PASSED` verdict that has no screenshots on disk.
+- **Honest verification.** The E2E tester starts the app and uses it in a real browser, against the real backend. Hooks reject fake data, network stubs and any `PASSED` verdict without fresh proof. Flutter web is included; mobile-only apps are not run.
 - **Shared memory.** A `context/memory/` directory lets Claude Code and Antigravity sessions hand work to each other.
 - **Portable skills.** 40 skills follow the open [Agent Skills](https://agentskills.io) format and install on their own in any project.
 - **Pull request review.** A GitHub Action comments on security, performance, design and cost, in any repository.

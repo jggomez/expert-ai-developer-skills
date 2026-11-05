@@ -45,9 +45,16 @@ Every `PLAN.md` (`<= 50 lines`) MUST include a compact 5-row table justifying ea
 | **`ui-ux-designer`** | Flutter screens/widgets/components are created/modified AND root `DESIGN.md` is missing or new mobile visual patterns/48x48dp touch tokens are needed (`DESIGN.md <= 110`, `spec.md` `## Design <= 30`). | Non-visual data/repository/state tasks, or minor UI changes already covered by root `DESIGN.md`. |
 | **`flutter-architect`** | Genuine structural decision needed: state management pattern/contract shift, `GoRouter`/deep-link topology change, new native plugin/FFI/platform channel (`adr <= 55`, `spec.md` `## Architecture <= 50`). | Changes follow established repository architecture (even across `>= 2` files). |
 | **`flutter-release-engineer` & Risk Gates** | `flutter-release-engineer` ONLY IF `pubspec.yaml`, flavors, `--dart-define-from-file`, signing, native configs, or store bundles change (and Tier 3); Tier 3 `critic` ONLY IF diff `>= 150 LOC` / structural refactor; `challenger` ONLY IF auth, payments, concurrency/isolates, untrusted input, or destructive mutations (`<= 50 lines`). | Pure Dart widget/domain changes without pubspec/signing impact or high-risk security/concurrency surfaces. |
-| **`e2e-blackbox-tester`** | Runnable Flutter Web UI (`localhost`/staging URL) exists AND UI/user flows were touched (verdict returned in final message `<= 50 lines`). | **ALWAYS SKIP** on mobile-only targets without web (`iOS`/`Android`-only) or pure data/logic layers. |
+| **`e2e-blackbox-tester`** | **ALWAYS** in every Tier when the project has a `web/` target and UI or user flows changed: it builds and starts the app itself (verdict returned in final message `<= 50 lines`). | **ALWAYS SKIP** on mobile-only targets without web (`iOS`/`Android`-only) or pure data/logic layers. |
 
 > **Zero-Bloat Fast-Forward**: When ALL Discovery rows evaluate to `SKIP`, skip State 1 discovery file bloat completely and proceed directly to the `AskUserQuestion` alignment modal and State 2 build.
+
+## Real UI Rules
+These apply in every Tier when a task creates or changes UI on a project with a `web/` target. Mobile-only projects still follow rules 1 and 2, and the final report must say the app was not run:
+1. **Data contract first**: In `PLAN.md` or `## Product`, list each screen's data, its real source and whether that source exists. If one is missing, call `AskUserQuestion`: build it, connect an existing one, or approve a demo. Never decide this alone.
+2. **Declare exceptions**: A demo needs the user's approval, a `demo-data: approved` line naming the file in `PLAN.md`, the same marker in the file, and a visible demo label on screen. A screen with no data needs `data-source: none` in `PLAN.md`.
+3. **The app must run**: Dispatch `e2e-blackbox-tester`, which starts the app and its backend from the commands in root `AGENTS.md` and uses them. Tests with mocks do not prove a UI works.
+4. **`BLOCKED` is not done**: Report the task as unfinished, with the exact reason.
 
 ## Process
 

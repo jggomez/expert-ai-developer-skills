@@ -46,9 +46,16 @@ Every `PLAN.md` (`<= 50 lines`) MUST include a compact 5-row table justifying ea
 | **`ui-ux-designer`** | UI screens/widgets/components are created/modified AND root `DESIGN.md` is missing or new visual patterns are needed (`DESIGN.md <= 110`, `spec.md` `## Design <= 30`). | Pure backend/API/CLI/SQL tasks, or minor UI changes already covered by root `DESIGN.md`. |
 | **`architect-engineer`** | Genuine structural decision needed: new DB schema/migration, cross-service API contract, new core dependency, pattern shift (`adr <= 55`, `spec.md` `## Architecture <= 50`). | Changes follow established repository architecture (even across `>= 2` files). |
 | **`critic` & `challenger`** | Tier 3 risk gates: `critic` ONLY IF diff `>= 150 LOC` or multi-module structural refactor; `challenger` ONLY IF touching auth, payments, concurrency/locks, untrusted input parsing, or destructive mutations (`<= 50 lines`). | Small/localized diffs without structural risk (`critic`), or standard CRUD/UI without high-risk security/concurrency surfaces (`challenger`). |
-| **`e2e-blackbox-tester`** | Runnable web UI (`localhost`/staging URL) exists AND UI/user flows were touched (verdict returned in final message `<= 50 lines`). | **ALWAYS SKIP** on pure backends/APIs, CLIs, libraries, SQL/data pipelines, or mobile-only targets without web. |
+| **`e2e-blackbox-tester`** | **ALWAYS** in every Tier when the change touches web UI or user flows: it starts the app itself (verdict returned in final message `<= 50 lines`). | **ALWAYS SKIP** on pure backends/APIs, CLIs, libraries, SQL/data pipelines, or mobile-only targets without web. |
 
 > **Zero-Bloat Fast-Forward**: When ALL Discovery rows evaluate to `SKIP` (e.g., a well-specified Tier 2 backend task following existing patterns), skip State 1 discovery files completely and proceed directly to the `ask_question` alignment modal and State 2 build.
+
+## Real UI Rules
+These apply in every Tier when a task creates or changes UI:
+1. **Data contract first**: In `PLAN.md` or `## Product`, list each screen's data, its real source and whether that source exists. If one is missing, call `ask_question`: build it, connect an existing one, or approve a demo. Never decide this alone.
+2. **Declare exceptions**: A demo needs the user's approval, a `demo-data: approved` line naming the file in `PLAN.md`, the same marker in the file, and a visible demo label on screen. A screen with no data needs `data-source: none` in `PLAN.md`.
+3. **The app must run**: Dispatch `e2e-blackbox-tester`, which starts the app and its backend from the commands in root `AGENTS.md` and uses them. Tests with mocks do not prove a UI works.
+4. **`BLOCKED` is not done**: Report the task as unfinished, with the exact reason.
 
 ## Process
 

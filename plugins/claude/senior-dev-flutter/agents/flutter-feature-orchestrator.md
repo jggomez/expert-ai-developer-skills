@@ -71,13 +71,20 @@ Decide per phase and record the tracks in `PLAN.md`:
    - Either host: `python3 <loop-engineering skill dir>/scripts/run_parallel_agents.py tasks.json` creates the worktrees from the current HEAD.
    - Each worker commits on its own branch and returns the branch name. Merge the branches one at a time (`git merge --no-ff <branch>`), run the affected tests after each merge, and on a conflict run `git merge --abort` and hand the conflict to an `flutter-implementer`.
 
+### Real UI Rules
+These apply in every Tier when a task creates or changes UI on a project with a `web/` target. Mobile-only projects still follow rules 1 and 2, and the final report must say the app was not run:
+1. **Data contract first**: In `PLAN.md` or `## Product`, list each screen's data, its real source and whether that source exists. If one is missing, call `AskUserQuestion`: build it, connect an existing one, or approve a demo. Never decide this alone.
+2. **Declare exceptions**: A demo needs the user's approval, a `demo-data: approved` line naming the file in `PLAN.md`, the same marker in the file, and a visible demo label on screen. A screen with no data needs `data-source: none` in `PLAN.md`.
+3. **The app must run**: Dispatch `e2e-blackbox-tester`, which starts the app and its backend from the commands in root `AGENTS.md` and uses them. Tests with mocks do not prove a UI works.
+4. **`BLOCKED` is not done**: Report the task as unfinished, with the exact reason.
+
 ### Capability & Risk-Gated Dispatch (`## Discovery & Architecture Triage`)
 Never over-invoke subagents blindly. Every `PLAN.md` (`<= 50 lines` per feature) MUST include a compact 5-row **Discovery & Architecture Triage (`Invoke / SKIP`)** table justifying each specialist in 1 line:
 1. **`product-analyst`**: **INVOKE ONLY IF** business scope, user stories, or acceptance criteria are missing/ambiguous (`## Product` in `docs/<feature-name>/spec.md`, `<= 50 lines`). **SKIP** when stories/criteria are already explicit, or for bugfixes, refactors, docs, and chores.
 2. **`ui-ux-designer`**: **INVOKE ONLY IF** Flutter screens/widgets/components are created/modified AND root `DESIGN.md` is missing or new visual patterns/48x48dp touch tokens are needed (root `DESIGN.md <= 110 lines`; `## Design` in `docs/<feature-name>/spec.md`, `<= 30 lines`, for screen deltas). **SKIP** on non-visual data/logic tasks or minor UI tweaks already covered by `DESIGN.md`.
 3. **`flutter-architect`**: **INVOKE ONLY IF** a genuine structural decision is needed (new state management pattern/contract, `GoRouter`/deep-link topology shift, new native plugin/FFI/platform channel, or cross-layer schema change; `adr-NNN-*.md <= 55 lines`, `## Architecture` in `docs/<feature-name>/spec.md`, `<= 50 lines`). **SKIP** when changes follow established repository architecture.
 4. **`flutter-release-engineer` & Risk Gates (`critic` / `challenger`)**: Invoke `flutter-release-engineer` **ONLY IF** `pubspec.yaml`, flavors, `--dart-define-from-file`, signing, native configs, or store bundles change (or in Tier 3 releases); in Tier 3, invoke `critic` ONLY IF diff `>= 150 LOC` / multi-module refactor and `challenger` ONLY IF touching auth, payments, concurrency/isolates, untrusted input parsing, or destructive mutations (`<= 50 lines` each).
-5. **`e2e-blackbox-tester` (Web Target Gate)**: **INVOKE ONLY IF** a runnable Flutter Web UI (`localhost`/staging URL) exists AND UI/user flows were touched (verdict returned `<= 50 lines`). **ALWAYS SKIP** on mobile-only targets without web (`iOS`/`Android`-only) or pure data/repository tasks.
+5. **`e2e-blackbox-tester` (Web Target Gate)**: **ALWAYS INVOKE** in every Tier when the project has a `web/` target and UI or user flows changed: it builds and starts the app itself (verdict returned `<= 50 lines`). **ALWAYS SKIP** on mobile-only targets without web (`iOS`/`Android`-only) or pure data/repository tasks.
 - **Zero-Bloat Fast-Forward**: If ALL Discovery specialists are `SKIP` (even on a Tier 2 well-specified task), skip State 1 discovery file bloat and go straight to alignment/build.
 
 # Operating Guidelines & Workflow

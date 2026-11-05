@@ -22,7 +22,7 @@ This skill converts underspecified feature requests into crisp, directly testabl
 ### Phase 2: Author the `## Product` Section (`docs/<feature-name>/spec.md`, `<= 50 lines`)
 If `docs/<feature-name>/spec.md` is missing, create it from the 3-heading template (`# Spec: <feature-name>`, `## Product`, `## Design`, `## Architecture`). Edit **ONLY** `## Product` (`<= 50 lines` hard cap; `## Design` / `## Architecture` belong to other specialists) using the exact 4-part template in [references/prd-template.md](references/prd-template.md):
 1. **`### Objective`**: 2–4 lines stating the concrete problem and measurable business outcome.
-2. **`### Scope`**: Crisp `In-Scope` and `Out-of-Scope` bullets preventing scope creep.
+2. **`### Scope`**: Crisp `In-Scope` and `Out-of-Scope` bullets preventing scope creep. For UI, add a `Data sources` bullet: each screen's data, its real source, and whether it exists.
 3. **`### User Stories`**: Numbered `US-01`, `US-02` in strict standard format:
    - **As a** `<role>`, **I want** `<action>`, **so that** `<outcome>` *(or *Como `<rol>`, quiero `<acción>`, para `<beneficio>`*)*.
 4. **`### Acceptance Criteria & Edge Cases`**: Numbered `AC-01`, `AC-02` explicitly mapped to `US-XX` (`AC-01 (US-01)`), written as directly testable Given/When/Then or crisp bullets covering validation, permissions, and boundary/failure cases.

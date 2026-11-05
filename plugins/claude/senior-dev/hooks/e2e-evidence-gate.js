@@ -13,11 +13,13 @@
  *           must exist on disk with a real PNG signature, OR
  *       (b) scripted Playwright: a successful Bash command running `playwright` AND
  *           >= 1 real PNG under a `docs/<feature-name>/evidence/` directory written during the run.
+ *   - PASSED also requires `check_evidence.py` to pass: every viewport, plus proof of real data.
  *   - BLOCKED / SKIPPED (honest negative verdicts) always pass.
  *   - No verdict at all is blocked.
  * Exit 2 sends the reason back to the subagent so it keeps working. After MAX_BLOCKS blocks
  * the subagent may finish, and the user sees an UNVERIFIED notice instead of a fake PASSED.
  */
+const { spawnSync } = require('child_process');
 const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
@@ -28,6 +30,7 @@ const MAX_BLOCKS = 3;
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const MIN_PNG_BYTES = 100;
 const VERDICT_RE = /\b(PASSED|REJECTED|BLOCKED|SKIPPED)\b/;
+const EVIDENCE_CHECK = path.join(__dirname, '..', 'skills', 'blackbox-tester', 'scripts', 'check_evidence.py');
 
 function readPayload() {
   try {
@@ -174,16 +177,27 @@ function evidencePngs(root, notBefore) {
   return found;
 }
 
+/** Ends the run for PASSED only after the evidence check confirms every viewport and real data. */
+function finish() {
+  if (verdict === 'PASSED') {
+    const run = spawnSync('python3', [EVIDENCE_CHECK, '--latest', '--root', cwd], { encoding: 'utf8', timeout: 30000 });
+    if (run.error) {
+      writeBlocks(0);
+      allow(`[E2E evidence gate] Could not run check_evidence.py (${run.error.message}). Treat PASSED as UNVERIFIED.`);
+    }
+    if (run.status !== 0) block([`check_evidence.py rejected PASSED:\n${run.stdout}${run.stderr}`]);
+  }
+  writeBlocks(0);
+  allow();
+}
+
 const isPlaywrightMcp = (name, tool) => /playwright/i.test(name) && name.endsWith(`__${tool}`);
 const navigations = succeeded((u) => isPlaywrightMcp(u.name, 'browser_navigate'));
 const screenshots = succeeded((u) => isPlaywrightMcp(u.name, 'browser_take_screenshot'));
 const scriptedRuns = succeeded((u) => u.name === 'Bash' && /\bplaywright\b/.test(String(u.input.command || '')));
 
 // Route (b): scripted Playwright run with fresh PNG evidence on disk.
-if (scriptedRuns.length > 0 && evidencePngs(cwd, firstTimestamp).length > 0) {
-  writeBlocks(0);
-  allow();
-}
+if (scriptedRuns.length > 0 && evidencePngs(cwd, firstTimestamp).length > 0) finish();
 
 // Route (a): Playwright MCP.
 const problems = [];
@@ -204,5 +218,4 @@ if (problems.length > 0 && scriptedRuns.length > 0) {
 }
 
 if (problems.length > 0) block(problems);
-writeBlocks(0);
-allow();
+finish();

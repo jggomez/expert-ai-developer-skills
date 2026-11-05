@@ -119,6 +119,15 @@ def test_green_state_is_cached_until_code_changes(repo):
     assert counter.read_text().count("run") == 1
 
 
+def test_a_real_antigravity_final_answer_runs_verification(repo):
+    # Arrange: the reason agy 1.x really sends when the model finishes, captured from a live run
+    (repo / "app.py").write_text("x = 2\n")
+    # Act
+    _, out = _stop(repo, "exit 1", reason="NO_TOOL_CALL")
+    # Assert
+    assert out["decision"] == "continue"
+
+
 def test_only_a_model_stop_runs_verification(repo):
     # Arrange
     (repo / "app.py").write_text("x = 2\n")

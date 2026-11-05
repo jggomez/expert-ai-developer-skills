@@ -11,7 +11,7 @@
  * - Antigravity (antigravity.google/docs/hooks): always exit 0 with JSON on stdout
  *   (`{"decision":"continue","reason"}` keeps a Stop going; non-zero exits are ignored);
  *   no retry flag, so a turn is keyed by conversationId + lastUserInput; the workspace is
- *   `workspacePaths[0]` resolved to its git root; Stop only verifies on `model_stop`.
+ *   `workspacePaths[0]` resolved to its git root; Stop only verifies a normal finish.
  *
  * 1. Stop-gate state (createStopGate):
  *    - Bounded retries: a gate blocks at most MAX_BLOCKS consecutive times inside one user
@@ -32,6 +32,7 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 
 const MAX_BLOCKS = 3;
+const FINAL_STOP_REASONS = new Set(['NO_TOOL_CALL', 'model_stop']);
 const SMALL_EDIT_MAX_LINES = 10;
 const LOCK_STALE_MS = 10 * 60 * 1000;
 const LOCK_POLL_MS = 250;
@@ -151,14 +152,15 @@ function findPlan(dir) {
 }
 
 /**
- * Antigravity also fires Stop on errors and step limits; only a normal model stop is verified.
+ * Antigravity also fires Stop on errors, cancellations and step limits; only a normal finish is
+ * verified. Live `agy` runs send `NO_TOOL_CALL` when the model finishes.
  * `fullyIdle: false` means background tasks (e.g. parallel subagents) are still running, so the
  * tree may hold other workers' half-finished edits: verify once everything is idle.
  */
 function isFinalStop(payload) {
   if (detectHost(payload) !== 'antigravity') return true;
   if (payload.fullyIdle === false) return false;
-  return !payload.terminationReason || payload.terminationReason === 'model_stop';
+  return !payload.terminationReason || FINAL_STOP_REASONS.has(payload.terminationReason);
 }
 
 function resolveGitDir(cwd) {

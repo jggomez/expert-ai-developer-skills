@@ -24,6 +24,7 @@ description: Mandatory SOLID, DRY, KISS, and YAGNI architectural rules and negat
 
 * **NEVER** swallow exceptions or mask errors using silent `try/except: pass` or empty catch blocks.
 * **NEVER** return dummy fallback data (e.g. `{}` or `0`) on API/DB failures; raise explicit errors.
+* **NEVER** invent data in production code: mocks belong in test folders. If a real source is missing, stop and ask.
 * **NEVER** edit or delete existing test assertions just to make a failing implementation pass.
 * **MUST NOT** create God Classes (>300 lines) or methods with nesting depth > 3.
 * **MUST** run workspace linters/formatters (`ruff`, `black`, `eslint`, `prettier`) before finalizing code.

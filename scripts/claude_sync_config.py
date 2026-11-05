@@ -172,8 +172,9 @@ def orchestrator_appendix(name: str, plugin: str, own_agents: list[str], depende
 E2E_APPENDIX = """
 
 # Claude Code Runtime Notes
-- **Drive the real browser with the Playwright MCP tools** (`mcp__plugin_senior-dev_playwright__*`): `browser_navigate` -> `browser_snapshot` -> interactions -> `browser_console_messages` / `browser_network_requests` -> `browser_resize` per viewport -> `browser_take_screenshot` with an **absolute** `filename` under `docs/<feature-name>/evidence/`. Scripted `npx playwright test` is the fallback when the MCP is unavailable.
-- **Evidence gate (SubagentStop hook)**: a `PASSED` or `REJECTED` verdict is rejected unless your own transcript shows a successful `browser_navigate` and `browser_take_screenshot` (or a successful Bash `playwright` run) and the screenshots exist on disk as real PNGs. If the browser or server cannot start, end with `Verdict: BLOCKED - <exact error>`; with no web UI, `Verdict: SKIPPED - <reason>`.
+- **Explore with the Playwright MCP tools** (`mcp__plugin_senior-dev_playwright__*`) when useful: `browser_navigate` -> `browser_snapshot` -> interactions -> `browser_console_messages` / `browser_network_requests` -> `browser_take_screenshot` with an **absolute** `filename` under `docs/<feature-name>/evidence/`.
+- **`PASSED` needs a scripted run**: only `npx playwright test` or `pytest` with the `e2e_recorder` helper writes the `run-*.json` manifest that `check_evidence.py` requires.
+- **Evidence gate (SubagentStop hook)**: a `PASSED` or `REJECTED` verdict is rejected unless your own transcript shows a successful `browser_navigate` and `browser_take_screenshot` (or a successful Bash `playwright` run) and the screenshots exist on disk as real PNGs. `PASSED` must also pass `check_evidence.py`. If the browser or server cannot start, end with `Verdict: BLOCKED - <exact error>`; with no web UI, `Verdict: SKIPPED - <reason>`.
 - End your final message with exactly one verdict line: `Verdict: PASSED|REJECTED|BLOCKED|SKIPPED - <one-line reason>`.
 """
 
