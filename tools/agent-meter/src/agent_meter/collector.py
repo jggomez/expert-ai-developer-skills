@@ -237,6 +237,7 @@ def collect(
     full: bool = False,
     only: tuple[Host, str] | None = None,
     lock_timeout_s: float = 60.0,
+    scheduled: bool = False,
     readers: Sequence[HostReader] | None = None,
     now: datetime | None = None,
     signal: Signal | None = None,
@@ -274,6 +275,8 @@ def collect(
                 store.record_untracked(reader.untracked())
         ingest.flush()
         _finish(store, home, cfg, projects, pricing, pricing_error, list(ingest.refs.values()), moment)
+        if scheduled:
+            store.set_meta("last_scheduled_collect_at", moment.isoformat())
     return CollectResult(
         "ok", ingest.stats, _elapsed_ms(started), tuple(ingest.diagnostics), ingest.skipped
     )

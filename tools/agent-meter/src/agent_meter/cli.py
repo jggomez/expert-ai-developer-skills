@@ -47,6 +47,7 @@ EXIT_DIFF: Final = 5
 
 INTERACTIVE_LOCK_S: float = 30.0
 SCHEDULED_LOCK_S: float = 60.0
+SCHEDULER_STALE_AFTER: Final = timedelta(hours=2)
 REFRESH_LOCK_S: float = 2.0
 SANDBOX_RELOAD_EVERY: Final = timedelta(days=7)
 SINCE_FOREVER: Final = date(2000, 1, 1)
@@ -246,7 +247,8 @@ def _cmd_collect(ctx: Ctx, ns: argparse.Namespace) -> int:
     hosts = _host_list(ns.host)
     since = _date(ns.since, "--since")
     timeout = SCHEDULED_LOCK_S if ns.scheduled else INTERACTIVE_LOCK_S
-    result = collect(ctx.home, ctx.cfg, hosts=hosts, since=since, full=ns.full, lock_timeout_s=timeout)
+    result = collect(ctx.home, ctx.cfg, hosts=hosts, since=since, full=ns.full, lock_timeout_s=timeout,
+                     scheduled=ns.scheduled)
     if result.status == "locked":
         if ns.scheduled:
             ctx.info("store busy; skipping this cycle")
@@ -819,12 +821,24 @@ def _doctor_checks(ctx: Ctx, *, cloud: bool) -> list[dict[str, str]]:
             ))
         if cfg.bigquery.enabled:
             checks += _cloud_checks(ctx, store, now, deep=cloud)
-    state = scheduler.status()
-    checks.append(_check("OK" if state == "loaded" else "WARN", "scheduler", {
-        "loaded": "loaded (every 15 min)", "not_loaded": "not loaded (hooks/manual collect only)",
-        "unsupported": "no supported scheduler on this platform",
-    }[state]))
+        last_scheduled = store.get_meta("last_scheduled_collect_at")
+    checks.append(_scheduler_check(scheduler.status(), last_scheduled, now))
     return checks
+
+
+def _scheduler_check(state: str, last_scheduled: str | None, now: datetime) -> dict[str, str]:
+    """A loaded job proves nothing by itself, so look for the trace left by a successful run."""
+    if state == "not_loaded":
+        return _check("WARN", "scheduler", "not loaded (hooks/manual collect only)")
+    if state == "unsupported":
+        return _check("WARN", "scheduler", "no supported scheduler on this platform")
+    if last_scheduled is None:
+        return _check("WARN", "scheduler", "loaded, but no scheduled collect has succeeded yet")
+    moment = datetime.fromisoformat(last_scheduled)
+    age = _age(moment, now)
+    if now - moment > SCHEDULER_STALE_AFTER:
+        return _check("WARN", "scheduler", f"loaded, but the last scheduled collect succeeded {age}")
+    return _check("OK", "scheduler", f"loaded (every 15 min) · last scheduled collect {age}")
 
 
 def _cloud_checks(ctx: Ctx, store: Store, now: datetime, *, deep: bool) -> list[dict[str, str]]:
@@ -1117,6 +1131,7 @@ def _add_ingest_commands(sub: argparse._SubParsersAction[argparse.ArgumentParser
     p.add_argument("--since", help="only units modified on/after YYYY-MM-DD")
     p.add_argument("--full", action="store_true", help="re-read every unit (still idempotent)")
     p.add_argument("--scheduled", action="store_true", help=argparse.SUPPRESS)
+    p.add_argument("--quiet", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     p.set_defaults(handler=_cmd_collect)
 
     p = sub.add_parser("last", help="print the last session summary")

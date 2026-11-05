@@ -182,6 +182,7 @@ class LineWriter:
         parent: str,
         tool_use_id: str,
         is_error: bool = False,
+        content: str = f"result {CANARY}",
     ) -> str:
         line = self._base("user", ts, parent, None)
         if prompt_id is not None:
@@ -195,7 +196,7 @@ class LineWriter:
                     "type": "tool_result",
                     "tool_use_id": tool_use_id,
                     "is_error": is_error,
-                    "content": f"result {CANARY}",
+                    "content": content,
                 }
             ],
         }

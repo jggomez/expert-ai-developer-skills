@@ -5,12 +5,13 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import shlex
 import sqlite3
 from collections import Counter
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Any, Final
 
 from agent_meter.model import (
@@ -51,6 +52,7 @@ __all__ = [
     "load_jsonl",
     "parse_iso",
     "read_complete_lines",
+    "reports_test_failure",
     "safe_label",
     "shape_fingerprint",
     "unit_hash",
@@ -64,12 +66,42 @@ _TEST_PREFIXES: Final = (
     ("python", "-m", "pytest"),
     ("python3", "-m", "pytest"),
     ("uv", "run", "pytest"),
+    ("poetry", "run", "pytest"),
+    ("tox",),
+    ("nox",),
     ("npm", "test"),
+    ("npm", "t"),
+    ("pnpm", "test"),
+    ("yarn", "test"),
+    ("bun", "test"),
+    ("jest",),
+    ("vitest",),
+    ("mocha",),
     ("npx", "jest"),
+    ("npx", "vitest"),
+    ("npx", "mocha"),
+    ("npx", "playwright", "test"),
+    ("playwright", "test"),
     ("flutter", "test"),
     ("dart", "test"),
     ("go", "test"),
     ("cargo", "test"),
+    ("make", "test"),
+    ("gradle", "test"),
+    ("gradlew", "test"),
+    ("mvn", "test"),
+)
+_SCRIPT_RUNNERS: Final = (("npm", "run"), ("pnpm", "run"), ("yarn", "run"), ("bun", "run"), ("yarn",))
+_COMMAND_WRAPPERS: Final = frozenset({"command", "env", "exec", "nice", "sudo", "time"})
+_SHELL_SEPARATORS: Final = frozenset(";&|()\n")
+_FAILURE_TAIL_CHARS: Final = 16_384
+_TEST_FAILURE: Final = re.compile(
+    r"(?<!Found )\b[1-9]\d* (?:failed|failing|errors?)\b"  # "Found N errors" is ruff, mypy or tsc
+    r"|Some tests failed"
+    r"|test result: FAILED"
+    r"|^--- FAIL:"
+    r"|^FAIL\b",
+    re.MULTILINE,
 )
 
 # Errors that mean "this input is unreadable or malformed" (never programming errors we hide:
@@ -108,12 +140,62 @@ def path_digest(path: str) -> str:
     return hashlib.sha256(path.encode("utf-8", "surrogatepass")).hexdigest()
 
 
+def _shell_segments(command: str) -> list[list[str]]:
+    """Tokens of each simple command in ``command``; unparseable input is one naive segment."""
+    lexer = shlex.shlex(command, posix=True, punctuation_chars=";&|()\n")
+    lexer.whitespace = " \t\r"
+    lexer.whitespace_split = True
+    lexer.commenters = ""
+    segments: list[list[str]] = [[]]
+    try:
+        for token in lexer:
+            if set(token) <= _SHELL_SEPARATORS:
+                segments.append([])
+            else:
+                segments[-1].append(token)
+    except ValueError:
+        return [command.split()]
+    return [segment for segment in segments if segment]
+
+
+def _strip_wrappers(tokens: list[str]) -> list[str]:
+    """Drop ``VAR=value`` prefixes and wrappers such as ``time`` or ``timeout 120``."""
+    rest = list(tokens)
+    while rest:
+        if _ENV_ASSIGNMENT.match(rest[0]) or rest[0] in _COMMAND_WRAPPERS:
+            rest.pop(0)
+        elif rest[0] == "timeout" and len(rest) > 1:
+            rest = rest[2:]
+        else:
+            break
+    return rest
+
+
+def _runs_tests(tokens: list[str]) -> bool:
+    words = _strip_wrappers(tokens)
+    if not words:
+        return False
+    words[0] = PurePath(words[0]).name
+    for runner in _SCRIPT_RUNNERS:
+        script = words[len(runner)] if len(words) > len(runner) else ""
+        if tuple(words[: len(runner)]) == runner and (script == "test" or script.startswith("test:")):
+            return True
+    return any(tuple(words[: len(prefix)]) == prefix for prefix in _TEST_PREFIXES)
+
+
 def is_test_command(command: str) -> bool:
-    """True when the command's first tokens (after ``VAR=value`` prefixes) match the allowlist."""
-    tokens = command.split()
-    while tokens and _ENV_ASSIGNMENT.match(tokens[0]):
-        tokens.pop(0)
-    return any(tuple(tokens[: len(prefix)]) == prefix for prefix in _TEST_PREFIXES)
+    """True when any simple command of a shell line starts with a known test runner."""
+    return any(_runs_tests(segment) for segment in _shell_segments(command))
+
+
+def reports_test_failure(output: object) -> bool:
+    """True when a test runner's summary reports failures, even if a pipe hid its exit code.
+
+    The output is only inspected here. Nothing from it is kept, in line with the privacy rule.
+    """
+    if isinstance(output, list):
+        return any(isinstance(b, Mapping) and reports_test_failure(b.get("text")) for b in output)
+    return isinstance(output, str) and _TEST_FAILURE.search(output[-_FAILURE_TAIL_CHARS:]) is not None
 
 
 def read_complete_lines(path: Path) -> list[bytes]:

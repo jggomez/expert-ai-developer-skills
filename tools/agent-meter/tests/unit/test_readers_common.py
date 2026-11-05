@@ -20,6 +20,7 @@ from agent_meter.readers._common import (
     load_jsonl,
     parse_iso,
     read_complete_lines,
+    reports_test_failure,
     safe_label,
     unit_hash,
 )
@@ -71,6 +72,20 @@ def test_unit_and_description_hashes() -> None:
         ("dart test", True),
         ("go test ./...", True),
         ("cargo test", True),
+        ("cd tools/agent-meter && pytest -q", True),
+        ("cd app; npm run test -- --ci", True),
+        (".venv/bin/pytest tests/unit", True),
+        ("./node_modules/.bin/vitest run", True),
+        ("timeout 120 uv run pytest", True),
+        ("make test", True),
+        ("npx playwright test", True),
+        ("pnpm test", True),
+        ("yarn test:unit", True),
+        ("(cd web && flutter test) | tail -5", True),
+        ("git status && echo done", False),
+        ("git commit -m 'run pytest && npm test'", False),
+        ("cat pytest.ini", False),
+        ("unbalanced 'quote", False),
         ("echo pytest", False),
         ("npm install", False),
         ("", False),
@@ -80,6 +95,29 @@ def test_is_test_command_matches_first_tokens_only(
     command: str, expected: bool
 ) -> None:
     assert is_test_command(command) is expected
+
+
+@pytest.mark.parametrize(
+    ("output", "expected"),
+    [
+        ("===== 2 failed, 40 passed in 1.20s =====", True),
+        ("Tests:       1 failed, 9 passed, 10 total", True),
+        ("00:05 +3 -1: Some tests failed.", True),
+        ("test result: FAILED. 3 passed; 1 failed", True),
+        ("--- FAIL: TestLogin (0.00s)\nFAIL\tdemo\t0.1s", True),
+        ("  2 failing", True),
+        ([{"type": "text", "text": "== 1 failed in 0.1s =="}], True),
+        ("===== 40 passed, 0 failed in 1.20s =====", False),
+        ("00:05 +3: All tests passed!", False),
+        ("===== 40 passed in 1.20s =====", False),
+        ("===== 1 error in 1.19s =====", True),
+        ("Found 30 errors (30 fixed, 0 remaining).", False),
+        (None, False),
+        ([{"type": "image"}], False),
+    ],
+)
+def test_reports_test_failure_reads_runner_summaries(output: object, expected: bool) -> None:
+    assert reports_test_failure(output) is expected
 
 
 def test_read_complete_lines_ignores_partial_trailing_line(tmp_path: Path) -> None:

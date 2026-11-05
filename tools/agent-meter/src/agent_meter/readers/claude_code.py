@@ -41,6 +41,7 @@ from agent_meter.readers._common import (
     load_jsonl,
     parse_iso,
     path_digest,
+    reports_test_failure,
     safe_label,
     shape_fingerprint,
 )
@@ -125,7 +126,7 @@ class _Line:
     usage: _Usage | None
     is_api_error: bool
     tool_uses: tuple[_ToolUse, ...]
-    tool_results: tuple[tuple[str, bool], ...]
+    tool_results: tuple[tuple[str, bool, bool], ...]  # (tool_use_id, is_error, reports_test_failure)
     turn_duration_ms: int | None
 
 
@@ -226,7 +227,7 @@ def _extract(obj: Mapping[str, Any]) -> _Line:
             if kind == "assistant" and b.get("type") == "tool_use"
         ),
         tool_results=tuple(
-            (b["tool_use_id"], b.get("is_error") is True)
+            (b["tool_use_id"], b.get("is_error") is True, reports_test_failure(b.get("content")))
             for b in blocks
             if kind == "user"
             and b.get("type") == "tool_result"
@@ -595,13 +596,14 @@ class ClaudeCodeReader:
                 run.test_runs += 1
             if tool.tool_id is not None:
                 tool_index[tool.tool_id] = (run, tool)
-        for tool_use_id, is_error in line.tool_results:
+        for tool_use_id, is_error, failure_reported in line.tool_results:
             owner = tool_index.get(tool_use_id)
-            if owner is None or not is_error:
+            if owner is None:
                 continue
             owner_run, tool = owner
-            owner_run.record_tool_error(tool.label)
-            if tool.is_test:
+            if is_error:
+                owner_run.record_tool_error(tool.label)
+            if tool.is_test and (is_error or failure_reported):
                 owner_run.test_failures += 1
 
     @staticmethod

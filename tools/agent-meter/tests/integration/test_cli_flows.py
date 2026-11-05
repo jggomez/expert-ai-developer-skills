@@ -13,6 +13,7 @@ import os
 import subprocess
 import sys
 import time
+from datetime import datetime, tzinfo
 from pathlib import Path
 
 import pytest
@@ -92,13 +93,21 @@ def test_full_local_flow_never_leaks_the_canary(world: World, capsys: pytest.Cap
     assert transcript_digests(world) == before  # PV-03: hosts are read-only
 
 
-def test_us02_cross_host_project_totals(world: World, capsys: pytest.CaptureFixture[str]) -> None:
+def test_us02_cross_host_project_totals(
+    world: World, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class FixtureMonth(datetime):
+        @classmethod
+        def now(cls, tz: tzinfo | None = None) -> datetime:
+            return datetime(2026, 10, 20, 12, 0, tzinfo=tz)
+
+    monkeypatch.setattr("agent_meter.cli.datetime", FixtureMonth)
     run(capsys, "collect")
 
     code, out = run(capsys, "last", "--json", "--project", "demo-repo")
     summary = json.loads(out)
 
-    month = summary["month"]  # fixtures are dated 2026-10-16; month-to-date holds them on any later day
+    month = summary["month"]  # fixtures are dated 2026-10-16, inside the frozen month
     hosts = {entry["host"] for entry in month["by_host"]}
     assert code == 0
     assert hosts == {"claude-code", "antigravity-cli"}

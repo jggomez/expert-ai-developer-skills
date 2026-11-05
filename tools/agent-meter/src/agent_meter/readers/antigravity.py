@@ -750,4 +750,4 @@ def _apply_tools(conv: _Conversation, run_for: Callable[[int], RunDraft]) -> Non
             owner, tool = pending.popleft()
             if step.has_error:
                 owner.record_tool_error(tool.label)
-                owner.test_failures += int(tool.is_test)
+            owner.test_failures += int(tool.is_test and (step.has_error or step.test_failed))
