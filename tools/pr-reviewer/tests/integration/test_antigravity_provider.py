@@ -69,7 +69,10 @@ def request(tmp_path: Path) -> ReviewRequest:
 
 
 def provider(**script) -> AntigravityProvider:
-    return AntigravityProvider(agent_factory=lambda config: FakeAgent(config, **script))
+    async def no_wait(_: float) -> None:
+        return None
+
+    return AntigravityProvider(agent_factory=lambda config: FakeAgent(config, **script), sleep=no_wait)
 
 
 @pytest.fixture(autouse=True)
@@ -140,6 +143,67 @@ def test_missing_structured_output_is_an_error_not_a_clean_review(tmp_path: Path
     # Act / Assert
     with pytest.raises(ProviderError, match="structured output"):
         provider(data=None).review(request(tmp_path))
+
+
+class ScriptedAgents:
+    """Hands out one fake agent per attempt and records the waits between them."""
+
+    def __init__(self, *attempts: dict):
+        self.attempts = list(attempts)
+        self.calls = 0
+        self.waits: list[float] = []
+
+    def __call__(self, config) -> FakeAgent:
+        script = self.attempts[min(self.calls, len(self.attempts) - 1)]
+        self.calls += 1
+        return FakeAgent(config, **script)
+
+    async def sleep(self, seconds: float) -> None:
+        self.waits.append(seconds)
+
+    def provider(self) -> AntigravityProvider:
+        return AntigravityProvider(agent_factory=self, sleep=self.sleep)
+
+
+def test_an_empty_answer_is_retried_with_a_new_agent_and_tokens_add_up(tmp_path: Path):
+    # Arrange: a model 503 only logs a warning in the SDK and ends with no output.
+    agents = ScriptedAgents({"data": None}, {"data": {"findings": [FINDING]}})
+
+    # Act
+    output = agents.provider().review(request(tmp_path))
+
+    # Assert
+    assert agents.calls == 2
+    assert len(agents.waits) == 1
+    assert len(output.result.findings) == 1
+    assert output.usage.input_tokens == 2 * 1000
+
+
+def test_retries_stop_and_the_error_names_the_likely_cause(tmp_path: Path):
+    # Arrange
+    agents = ScriptedAgents({"data": None})
+
+    # Act
+    with pytest.raises(ProviderError, match=r"3 attempts.*overloaded") as caught:
+        agents.provider().review(request(tmp_path))
+
+    # Assert
+    assert agents.calls == 3
+    assert len(agents.waits) == 2
+    assert caught.value.usage.input_tokens == 3 * 1000
+
+
+def test_a_budget_stop_is_never_retried(tmp_path: Path):
+    # Arrange
+    agents = ScriptedAgents({"data": None, "stop": StopReason.MAX_TOTAL_TOKENS_EXCEEDED})
+
+    # Act
+    with pytest.raises(ProviderError, match="stopped early"):
+        agents.provider().review(request(tmp_path))
+
+    # Assert
+    assert agents.calls == 1
+    assert agents.waits == []
 
 
 def test_invalid_structured_output_is_an_error(tmp_path: Path):

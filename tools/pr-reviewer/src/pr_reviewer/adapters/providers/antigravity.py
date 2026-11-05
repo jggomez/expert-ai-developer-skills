@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import logging
 import os
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 import pydantic
@@ -25,6 +26,8 @@ DEFAULT_MODEL = "gemini-3.8-flash"
 MAX_MODEL_CALLS = 20
 MAX_TOOL_CALLS = 40
 REVIEW_TIMEOUT_SECONDS = 600.0
+# The SDK only logs a model 503 and ends the turn with no output, so an empty answer is the only signal.
+RETRY_DELAYS_SECONDS = (20.0, 60.0)
 
 READ_ONLY_TOOLS = (
     BuiltinTools.VIEW_FILE,
@@ -35,6 +38,9 @@ READ_ONLY_TOOLS = (
 )
 
 AgentFactory = Callable[[LocalAgentConfig], Any]
+Sleep = Callable[[float], Awaitable[None]]
+
+logger = logging.getLogger(__name__)
 
 
 def build_config(request: ReviewRequest, *, model: str) -> LocalAgentConfig:
@@ -65,6 +71,14 @@ def _usage(metadata: UsageMetadata | None) -> ReviewUsage:
     )
 
 
+def _add_usage(total: ReviewUsage, spent: ReviewUsage) -> ReviewUsage:
+    return ReviewUsage(
+        input_tokens=total.input_tokens + spent.input_tokens,
+        cached_input_tokens=total.cached_input_tokens + spent.cached_input_tokens,
+        output_tokens=total.output_tokens + spent.output_tokens,
+    )
+
+
 def _has_credentials() -> bool:
     vertex = os.environ.get("GOOGLE_GENAI_USE_VERTEXAI", "").lower() in ("true", "1")
     return bool(os.environ.get("GEMINI_API_KEY")) or vertex
@@ -73,9 +87,15 @@ def _has_credentials() -> bool:
 class AntigravityProvider:
     name = "antigravity"
 
-    def __init__(self, agent_factory: AgentFactory = Agent, timeout_seconds: float = REVIEW_TIMEOUT_SECONDS):
+    def __init__(
+        self,
+        agent_factory: AgentFactory = Agent,
+        timeout_seconds: float = REVIEW_TIMEOUT_SECONDS,
+        sleep: Sleep = asyncio.sleep,
+    ):
         self._agent_factory = agent_factory
         self._timeout_seconds = timeout_seconds
+        self._sleep = sleep
 
     def review(self, request: ReviewRequest) -> ProviderOutput:
         if not _has_credentials():
@@ -91,16 +111,25 @@ class AntigravityProvider:
                 raise ProviderError(f"The agent exceeded the {limit} time limit", model=model) from error
 
     async def _run(self, config: LocalAgentConfig, request: ReviewRequest, model: str) -> ProviderOutput:
-        async with self._agent_factory(config) as agent:
-            response = await agent.chat(build_prompt(request.bundle))
-            data = await response.structured_output()
-            usage = _usage(response.usage_metadata)
-            stop_reason = response.stop_reason
-
-        if stop_reason is not StopReason.UNSPECIFIED:
-            raise ProviderError(f"The agent stopped early: {stop_reason.value}", usage=usage, model=model)
-        if data is None:
-            raise ProviderError("The agent returned no structured output", usage=usage, model=model)
+        usage = ReviewUsage()
+        attempts = len(RETRY_DELAYS_SECONDS) + 1
+        for attempt in range(attempts):
+            if attempt:
+                delay = RETRY_DELAYS_SECONDS[attempt - 1]
+                logger.warning("No answer from the agent. Retrying in %gs (%d/%d)", delay, attempt + 1, attempts)
+                await self._sleep(delay)
+            async with self._agent_factory(config) as agent:
+                response = await agent.chat(build_prompt(request.bundle))
+                data = await response.structured_output()
+                usage = _add_usage(usage, _usage(response.usage_metadata))
+                stop_reason = response.stop_reason
+            if stop_reason is not StopReason.UNSPECIFIED:
+                raise ProviderError(f"The agent stopped early: {stop_reason.value}", usage=usage, model=model)
+            if data is not None:
+                break
+        else:
+            message = f"The agent returned no structured output after {attempts} attempts. The model may be overloaded"
+            raise ProviderError(message, usage=usage, model=model)
         try:
             result = ReviewResult.model_validate(data)
         except pydantic.ValidationError as error:
