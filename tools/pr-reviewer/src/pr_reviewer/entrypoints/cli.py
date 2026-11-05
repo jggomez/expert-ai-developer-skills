@@ -111,7 +111,7 @@ def run_review_command(args: argparse.Namespace) -> int:
         report = run_review(
             bundle,
             settings,
-            load_provider=lambda: load_provider(args.provider, args.fake_findings),
+            load_provider=lambda: load_provider(args.provider),
             build_workspace=lambda: build_clean_workspace(args.repo, args.workspace),
             load_rubric=lambda: _load_rubric(args),
         )
@@ -128,7 +128,7 @@ def _review_large_diff(
         rubric = _load_rubric(args)
     except Exception as error:
         return ReviewReport(status="failed", provider=settings.provider, error=f"{type(error).__name__}: {error}"[:300])
-    jobs = [ShardJob(shard, settings, workspace, rubric, args.fake_findings) for shard in shards]
+    jobs = [ShardJob(shard, settings, workspace, rubric) for shard in shards]
     return merge_reports(review_shards(jobs), shards)
 
 
@@ -212,7 +212,7 @@ def build_parser() -> argparse.ArgumentParser:
     diff.set_defaults(func=run_diff)
 
     review = commands.add_parser("review", help="run the provider and write a report")
-    review.add_argument("--provider", required=True, choices=["antigravity", "claude", "fake"])
+    review.add_argument("--provider", required=True, choices=["antigravity", "claude"])
     review.add_argument("--repo", type=Path, required=True)
     review.add_argument("--bundle", type=Path, required=True)
     review.add_argument("--output", type=Path, required=True)
@@ -227,7 +227,6 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument("--base", default="", help="trusted commit to read --rubric-file from")
     review.add_argument("--rubric-file", default=_setting("RUBRIC_FILE"), help="repository path that replaces the rubric")
     review.add_argument("--instructions", default=_setting("INSTRUCTIONS"), help="text added to the rubric")
-    review.add_argument("--fake-findings", type=Path)
     review.set_defaults(func=run_review_command)
 
     prepare = commands.add_parser("prepare-claude-code", help="prepare the input of the official Claude Code Action")

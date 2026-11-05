@@ -58,7 +58,7 @@ change the model without editing a file.
 | Input | Default | Description |
 | --- | --- | --- |
 | `api-key` | | Gemini or Anthropic API key |
-| `provider` | `antigravity` | `antigravity`, `claude`, `claude-code`, or `fake` to try the setup with no AI and no key |
+| `provider` | `antigravity` | `antigravity`, `claude` or `claude-code` |
 | `model` | Provider default | Model to use |
 | `max-shards` | `4` | Most groups a large pull request is split into, reviewed in parallel |
 | `fallback-model` | `gemini-3.8-flash` | Model for the last attempt when the first one is overloaded (Antigravity) |
@@ -119,7 +119,7 @@ src/pr_reviewer/
 │   ├── git/          Reads diffs
 │   ├── github/       REST client, Markdown rendering, pull request gateway
 │   ├── filesystem/   Builds the clean copy
-│   └── providers/    Antigravity, Claude and fake review providers
+│   └── providers/    Antigravity and Claude review providers
 └── entrypoints/   Command line and composition root
 ```
 
@@ -137,7 +137,7 @@ uv run pytest && uv run ruff check . && uv run mypy src
 | Tests | Purpose | Needs |
 | --- | --- | --- |
 | `tests/unit` | Domain rules, use cases with in-memory ports, and Markdown rendering | Nothing |
-| `tests/integration` | Adapters against git, the file system, a fake GitHub API and the real SDK classes | git, `antigravity` and `claude` extras |
+| `tests/integration` | Adapters against git, the file system, a simulated GitHub API and the real SDK classes | git, `antigravity` and `claude` extras |
 | `tests/action` | Security rules of `action.yml` and the workflows | Nothing |
 | `tests/architecture` | Dependency rule between layers | Nothing |
 

@@ -7,7 +7,7 @@ branding:
 
 inputs:
   provider:
-    description: "Review provider: antigravity, claude, claude-code (Claude subscription) or fake (no AI, for trying the setup). Empty means antigravity."
+    description: "Review provider: antigravity, claude or claude-code (Claude subscription). Empty means antigravity."
     default: ""
   api-key:
     description: Provider API key, either a Gemini or an Anthropic key.

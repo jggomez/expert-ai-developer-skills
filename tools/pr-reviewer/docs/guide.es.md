@@ -26,8 +26,6 @@ No se ejecuta nada en tu ordenador ni en un servidor tuyo. Las revisiones corren
 5. **Abre un pull request.** En unos minutos recibe comentarios en línea y un resumen con el modelo, los tokens y
    el coste estimado.
 
-Para probar la instalación sin IA ni clave, añade `provider: fake` bajo `with:` durante una ejecución.
-
 ## Instalar con Claude
 
 Claude necesita un paso más, una sola vez, porque Managed Agents guarda el agente en tu cuenta de Anthropic. No
@@ -85,7 +83,7 @@ usan el valor por defecto. Para conectar otro input, añade una línea como
 | Input | Variable de entorno | Por defecto | Uso |
 | --- | --- | --- | --- |
 | `api-key` | | | Clave de Gemini o Anthropic, desde un secreto |
-| `provider` | `PR_REVIEW_PROVIDER` | `antigravity` | `antigravity`, `claude`, `claude-code` o `fake` |
+| `provider` | `PR_REVIEW_PROVIDER` | `antigravity` | `antigravity`, `claude` o `claude-code` |
 | `model` | `PR_REVIEW_MODEL` | `gemini-3.6-flash` o `claude-opus-5-5` | Modelo que se usa |
 | `max-shards` | `PR_REVIEW_MAX_SHARDS` | `4` | Máximo de grupos de un PR grande, revisados en paralelo |
 | `fallback-model` | `PR_REVIEW_FALLBACK_MODEL` | `gemini-3.8-flash` | Modelo del último intento si el primero está saturado (Antigravity) |

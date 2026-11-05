@@ -26,8 +26,6 @@ Nothing runs on your computer or on a server of yours. Reviews run on GitHub Act
 5. **Open a pull request.** After a few minutes it gets inline comments and a summary with the model, tokens
    and estimated cost.
 
-To try the setup with no AI and no key, add `provider: fake` under `with:` for one run.
-
 ## Set up with Claude
 
 Claude needs one extra step, once, because Managed Agents stores the agent in your Anthropic account. Nothing
@@ -85,7 +83,7 @@ use the default. To set another input from a variable, add a line such as
 | Input | Environment variable | Default | Use |
 | --- | --- | --- | --- |
 | `api-key` | | | Gemini or Anthropic key, from a secret |
-| `provider` | `PR_REVIEW_PROVIDER` | `antigravity` | `antigravity`, `claude`, `claude-code` or `fake` |
+| `provider` | `PR_REVIEW_PROVIDER` | `antigravity` | `antigravity`, `claude` or `claude-code` |
 | `model` | `PR_REVIEW_MODEL` | `gemini-3.6-flash` or `claude-opus-5-5` | Model to use |
 | `max-shards` | `PR_REVIEW_MAX_SHARDS` | `4` | Most groups for a large pull request, reviewed in parallel |
 | `fallback-model` | `PR_REVIEW_FALLBACK_MODEL` | `gemini-3.8-flash` | Model for the last attempt when the first one is overloaded (Antigravity) |

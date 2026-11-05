@@ -61,7 +61,7 @@ puedes cambiar el modelo sin editar ningún archivo.
 | Entrada | Por defecto | Descripción |
 | --- | --- | --- |
 | `api-key` | | Clave de API de Gemini o de Anthropic |
-| `provider` | `antigravity` | `antigravity`, `claude`, `claude-code`, o `fake` para probar la instalación sin IA ni clave |
+| `provider` | `antigravity` | `antigravity`, `claude` o `claude-code` |
 | `model` | El del proveedor | Modelo que se usa |
 | `max-shards` | `4` | Máximo de grupos en que se divide un PR grande, revisados en paralelo |
 | `fallback-model` | `gemini-3.8-flash` | Modelo del último intento si el primero está saturado (Antigravity) |
@@ -121,7 +121,7 @@ src/pr_reviewer/
 │   ├── git/          Lee diffs
 │   ├── github/       Cliente REST, renderizado Markdown, gateway del pull request
 │   ├── filesystem/   Crea la copia limpia
-│   └── providers/    Proveedores de revisión Antigravity, Claude y fake
+│   └── providers/    Proveedores de revisión Antigravity y Claude
 └── entrypoints/   Línea de comandos y raíz de composición
 ```
 

@@ -16,15 +16,19 @@ from pr_reviewer.entrypoints.parallel_review import (
 
 def job(tmp_path: Path, path: str, budget: str = "1.00") -> ShardJob:
     shard = DiffBundle(base="a" * 40, head="b" * 40, files=[FileDiff(path=path, patch="+a\n")])
-    return ShardJob(shard, ReviewSettings(provider="fake", budget_usd=budget), tmp_path, None)
+    return ShardJob(shard, ReviewSettings(provider="unknown", budget_usd=budget), tmp_path, None)
 
 
-def test_real_processes_review_each_group(tmp_path: Path):
+def test_real_processes_return_a_report_for_each_group(tmp_path: Path):
+    # Arrange: an unknown provider fails inside the worker, so no AI is needed to cross the process boundary.
+    jobs = [job(tmp_path, "a.py"), job(tmp_path, "b.py")]
+
     # Act
-    reports = review_shards([job(tmp_path, "a.py"), job(tmp_path, "b.py")])
+    reports = review_shards(jobs)
 
     # Assert
-    assert [report.status for report in reports] == ["ok", "ok"]
+    assert [report.status for report in reports] == ["failed", "failed"]
+    assert all("Unknown provider" in report.error for report in reports)
 
 
 def test_a_crashed_group_is_reported_and_the_other_survives(tmp_path: Path):
@@ -32,7 +36,7 @@ def test_a_crashed_group_is_reported_and_the_other_survives(tmp_path: Path):
     def worker(item: ShardJob) -> ReviewReport:
         if item.shard.files[0].path == "bad.py":
             raise RuntimeError("worker died")
-        return ReviewReport(status="ok", provider="fake")
+        return ReviewReport(status="ok", provider="unknown")
 
     # Act
     reports = review_shards(
@@ -52,7 +56,7 @@ def test_each_group_receives_a_share_of_the_dollar_budget(tmp_path: Path):
 
     def worker(item: ShardJob) -> ReviewReport:
         seen.append(item.settings.budget_usd)
-        return ReviewReport(status="ok", provider="fake")
+        return ReviewReport(status="ok", provider="unknown")
 
     # Act
     review_shards(
@@ -82,7 +86,7 @@ def test_groups_run_two_at_a_time_to_respect_the_model_quota(tmp_path: Path):
     # Act
     review_shards(
         [job(tmp_path, f"{name}.py") for name in "abcd"],
-        worker=lambda item: ReviewReport(status="ok", provider="fake"),
+        worker=lambda item: ReviewReport(status="ok", provider="unknown"),
         executor=executor,
     )
 
