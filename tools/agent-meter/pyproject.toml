@@ -29,6 +29,7 @@ classifiers = [
 dependencies = ["duckdb>=1.1,<2", "PyYAML>=6.0", "pytz>=2023.3"]
 
 [project.optional-dependencies]
+app = ["pywebview>=5,<7"]
 bigquery = ["google-cloud-bigquery>=3.20"]
 dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.11", "types-PyYAML>=6.0", "types-pytz>=2023.3"]
 
@@ -77,4 +78,8 @@ warn_unused_ignores = true
 
 [[tool.mypy.overrides]]
 module = ["duckdb.*", "google.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["webview"]
 ignore_missing_imports = true

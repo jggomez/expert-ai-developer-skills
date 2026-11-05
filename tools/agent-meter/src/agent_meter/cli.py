@@ -301,6 +301,19 @@ def _cmd_budget(ctx: Ctx, ns: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _cmd_app(ctx: Ctx, _ns: argparse.Namespace) -> int:
+    try:
+        from agent_meter.app.window import run_app
+
+        run_app(ctx.home)
+    except ModuleNotFoundError as exc:
+        if exc.name != "webview":
+            raise
+        ctx.err("the desktop app needs an extra package: uv tool install 'agent-meter[app]'")
+        return EXIT_ERROR
+    return EXIT_OK
+
+
 def _scheduled_sync(ctx: Ctx) -> None:
     """``collect --scheduled`` also syncs the cloud sink; failures never fail the local collect."""
     try:
@@ -1180,6 +1193,9 @@ def _add_ingest_commands(sub: argparse._SubParsersAction[argparse.ArgumentParser
     p.add_argument("--as-of", help="last day of the period, YYYY-MM-DD; repeats a past result exactly")
     _json_flag(p)
     p.set_defaults(handler=_cmd_insights)
+
+    p = sub.add_parser("app", help="open the desktop app")
+    p.set_defaults(handler=_cmd_app)
 
     p = sub.add_parser("budget", help="spending against your limits, month-end forecast and plan value")
     p.add_argument("--as-of", help="day to report on, YYYY-MM-DD")

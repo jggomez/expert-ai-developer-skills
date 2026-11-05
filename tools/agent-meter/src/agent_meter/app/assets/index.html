@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'">
+  <title>agent-meter</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header class="bar">
+    <h1>agent-meter</h1>
+    <nav aria-label="Screens">
+      <button type="button" data-tab="live" aria-current="page">Live</button>
+      <button type="button" data-tab="insights">Insights</button>
+      <button type="button" data-tab="settings">Settings</button>
+    </nav>
+    <span id="status" role="status" class="muted">Loading…</span>
+  </header>
+  <main>
+    <section id="live">
+      <div class="tiles">
+        <div class="tile"><span class="label">Today</span><strong id="today">—</strong></div>
+        <div class="tile"><span class="label">This month</span><strong id="month">—</strong></div>
+        <div class="tile"><span class="label">Month-end forecast</span><strong id="forecast">—</strong>
+          <span class="muted">Estimate from the last 7 days</span></div>
+        <div class="tile"><span class="label">Plan value</span><strong id="plan">—</strong>
+          <span class="muted">List-price usage against your plan</span></div>
+      </div>
+      <h2>Budgets</h2>
+      <div id="budgets"></div>
+      <h2>Active sessions</h2>
+      <table id="sessions-table"><thead><tr><th>Project</th><th>Host</th><th>Calls</th><th>Cost</th><th>Context</th><th>Last activity</th></tr></thead>
+        <tbody id="sessions"></tbody></table>
+      <p id="no-sessions" class="muted" hidden>No session has been active in the last 15 minutes.</p>
+      <p class="muted">Costs use API list prices. They are not what your plan charges.</p>
+    </section>
+    <section id="insights" hidden>
+      <h2>Where to cut</h2>
+      <p id="insights-period" class="muted"></p>
+      <div id="insights-list"></div>
+      <p id="insights-note" class="muted"></p>
+    </section>
+    <section id="settings" hidden>
+      <h2>Budgets and alerts</h2>
+      <form id="settings-form">
+        <label>Daily budget (USD)<input name="budget.daily_usd" inputmode="decimal" placeholder="No limit"></label>
+        <label>Monthly budget (USD)<input name="budget.monthly_usd" inputmode="decimal" placeholder="No limit"></label>
+        <label>Plan price per month (USD)<input name="budget.plan_monthly_usd" inputmode="decimal" placeholder="Not set"></label>
+        <label>Notifications
+          <select name="notify">
+            <option value="auto">Sessions and long tasks</option>
+            <option value="session">Sessions only</option>
+            <option value="long-tasks">Long tasks only</option>
+            <option value="off">Off</option>
+          </select>
+        </label>
+        <div class="actions"><button type="submit" class="primary">Save</button>
+          <button type="button" id="collect">Collect now</button>
+          <span id="settings-message" role="status"></span></div>
+      </form>
+      <h2>Diagnostics</h2>
+      <ul id="checks" class="checks"></ul>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
