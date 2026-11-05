@@ -255,11 +255,14 @@ and needs the `app` extra (see [§4](#4-install)). Tested on macOS; Windows supp
 | **Live** | Today, this month, month-end forecast, plan value, budgets and the sessions active in the last 15 minutes |
 | **History** | Spending by day, month, project and session, filtered by period and project |
 | **Insights** | Where to cut: measured findings, estimated savings and what to do next |
+| **Changes** | Change the model, effort or compaction of your AI tools, with a preview, undo and before and after figures |
 | **Settings** | Budgets, notifications, a manual collect and the `doctor` diagnostics |
 
 ![History screen with spending by day, month, project and session](docs/images/app-history.png)
 
 ![Insights screen with findings and estimated savings](docs/images/app-insights.png)
+
+![Changes screen with a preview of a settings change and its history](docs/images/app-changes.png)
 
 ![Settings screen with budgets and diagnostics](docs/images/app-settings.png)
 
@@ -270,6 +273,24 @@ and needs the `app` extra (see [§4](#4-install)). Tested on macOS; Windows supp
 - **While a collect runs:** the store is locked, so the app keeps showing the last saved figures, says so in the header
   and refreshes when the collect ends. A large collect can take over a minute.
 - **Security:** there is no local server and no open port.
+
+#### What the Changes screen can edit
+
+| Setting | File and key |
+| :--- | :--- |
+| Claude Code default model (`opus`, `sonnet`, `haiku`) | `~/.claude/settings.json`: `model` |
+| Claude Code effort for Opus 5.5 and Sonnet 5.5 | `~/.claude/settings.json`: `modelSettings.<model>.effortLevel` |
+| Claude Code compaction threshold (60, 70 or 80%) | `~/.claude/settings.json`: `env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` |
+| Antigravity CLI default model, from those you used in the last 30 days | `~/.gemini/antigravity-cli/settings.json`: `model` |
+
+Nothing is written until you confirm the preview. Each change keeps a backup and is listed in `~/.agent-meter/changes.json`.
+Undo restores the file byte for byte, or only that key if you edited the file afterwards. The app refuses invalid JSON,
+a file that changed after the preview and settings managed by your organization. It never edits `~/.gemini/settings.json`,
+which belongs to Gemini CLI.
+
+Changes apply to new sessions; open and resumed sessions can keep their model. The before and after figures compare up to
+7 days on each side, once 5 tasks have finished. They show correlation, not cause. A lower cost with more retries may not
+be a saving. The app does not change settings on its own, does not cap spending and cannot compact an open session.
 
 The screenshots use fictional demo data.
 
@@ -588,6 +609,7 @@ counts, errors as class names.
 | `secret` | Local salt for hashes (never uploaded) |
 | `last-summary.txt` | Last summary |
 | `report.html` | Last report (default location) |
+| `changes.json` | Settings changed from the app, with their previous values |
 | `state/`, `outbox/`, `logs/`, `lock` | Internal state (including the app's last figures), BigQuery upload staging, error class names, concurrency lock |
 | `install.json`, `backups/` | What `setup` changed, to undo it with `uninstall` |
 | `.agent-meter-home` | Marker proving agent-meter created this folder |

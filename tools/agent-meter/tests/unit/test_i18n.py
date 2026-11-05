@@ -14,6 +14,7 @@ from agent_meter.app.services import AppApi
 from agent_meter.budgets import BudgetLine, send_alerts
 from agent_meter.config import Config, ConfigError, load_config, save_config, set_key
 from agent_meter.paths import AppHome
+from agent_meter.setup import actuators
 
 ASSETS = files("agent_meter.app") / "assets"
 ALL_RULES = ("long_session", "stale_cache", "repeated_implementers", "expensive_agent", "outlier_tasks", "model_what_if")
@@ -197,3 +198,18 @@ def test_spanish_budget_lines_in_the_document() -> None:
     assert i18n.localize_budget_line(line, "es") == {"label": "Todos los proyectos", "period": "este mes"}
 
 
+
+
+def test_every_actuator_and_refusal_has_text() -> None:
+    for action in actuators.ACTIONS:
+        assert f"action.{action}" in i18n.UI["es"]
+        assert f"action.{action}.note" in i18n.UI["es"]
+    for code in actuators.ERROR_CODES:
+        assert f"error.{code}" in i18n.UI["es"]
+
+
+def test_every_refusal_raised_in_the_code_is_listed() -> None:
+    source = (files("agent_meter.setup") / "actuators.py").read_text(encoding="utf-8")
+    services = (files("agent_meter.app") / "services.py").read_text(encoding="utf-8")
+
+    assert set(re.findall(r'ActuatorError\("(\w+)"', source + services)) <= set(actuators.ERROR_CODES)
