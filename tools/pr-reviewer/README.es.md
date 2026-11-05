@@ -29,7 +29,7 @@ de que el PR se difunda.
 | --- | --- | --- |
 | Dónde corre el agente | Tu runner de GitHub | Un sandbox alojado por Anthropic, sin red |
 | Qué puede leer | Todo el repositorio (copia limpia) | El diff y los archivos cambiados |
-| Modelo por defecto | `gemini-3.8-flash` | `claude-opus-5-5` |
+| Modelo por defecto | `gemini-3.6-flash` | `claude-opus-5-5` |
 | Tope de gasto | Tokens, con `max-tokens` | Dólares, con `budget-usd` |
 | Coste en el resumen | Estimado con precios de lista | Informado por la API, con tiempo de sesión |
 | Estado | SDK 0.1.x | API en beta |
@@ -62,9 +62,10 @@ puedes cambiar el modelo sin editar ningún archivo.
 | `api-key` | | Clave de API de Gemini o de Anthropic |
 | `provider` | `antigravity` | `antigravity`, `claude`, o `fake` para probar la instalación sin IA ni clave |
 | `model` | El del proveedor | Modelo que se usa |
-| `fallback-model` | `gemini-3.6-flash` | Modelo del último intento si el primero está saturado (Antigravity) |
-| `max-tokens` | `200000` | Tope de tokens por revisión (Antigravity) |
-| `budget-usd` | `1.00` | Tope de gasto por revisión (Claude) |
+| `max-shards` | `4` | Máximo de grupos en que se divide un PR grande, revisados en paralelo |
+| `fallback-model` | `gemini-3.8-flash` | Modelo del último intento si el primero está saturado (Antigravity) |
+| `max-tokens` | `200000` | Tope de tokens por grupo de archivos (Antigravity) |
+| `budget-usd` | `1.00` | Tope de gasto de toda la revisión (Claude) |
 | `claude-agent-id` | | Lo imprime `pr-reviewer setup-claude` |
 | `claude-environment-id` | | Lo imprime `pr-reviewer setup-claude` |
 | `max-findings` | `10` | Máximo de hallazgos publicados |
@@ -76,13 +77,15 @@ puedes cambiar el modelo sin editar ningún archivo.
 | `github-token` | `github.token` | Token que lee el PR y publica comentarios. Mantén el valor por defecto: las ejecuciones repetidas reconocen los comentarios anteriores por su autor bot |
 
 Se omiten por defecto los lockfiles, el código generado, los artefactos de compilación y el código vendorizado.
-En diffs grandes se priorizan los archivos fuente, y el resumen lista todo lo que no se revisó.
+Los PR de más de 60.000 caracteres
+de diff se dividen en grupos de archivos cercanos, revisados en paralelo, y los hallazgos se unen. Si un grupo
+falla, se publican los demás y el resumen lista los archivos sin revisar.
 
 ## Coste
 
 Cada revisión está limitada por `max-tokens`, y el resumen informa los tokens y el coste estimado. Como guía
 aproximada y sin medir, una revisión de 40k tokens de entrada y 4k de salida cuesta unos $0.05 con
-`gemini-3.8-flash`, $0.12 con `claude-sonnet-5-5` y $0.24 con `claude-opus-5-5`, más el tiempo de sesión en
+`gemini-3.6-flash`, $0.12 con `claude-sonnet-5-5` y $0.24 con `claude-opus-5-5`, más el tiempo de sesión en
 Claude. Se ejecuta al abrir un PR o marcarlo como listo, y con `/review`, no en cada push.
 
 ## Limitaciones

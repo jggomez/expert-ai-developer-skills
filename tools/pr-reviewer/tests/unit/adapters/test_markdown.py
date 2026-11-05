@@ -5,10 +5,13 @@ import pytest
 from pr_reviewer.adapters.github.markdown import (
     SUMMARY_MARKER,
     format_inline_comment,
+    format_summary,
     sanitize,
 )
-from pr_reviewer.domain.findings import fingerprint
-from support.builders import finding
+from pr_reviewer.application.ports import ReviewOutcome
+from pr_reviewer.domain.findings import Selection, fingerprint
+from pr_reviewer.domain.models import ReviewReport
+from support.builders import bundle, finding
 
 
 @pytest.mark.parametrize(
@@ -57,3 +60,33 @@ def test_inline_comment_keeps_fence_intact_when_the_fix_contains_backticks():
     # Assert
     assert "````" in body
     assert fingerprint(item) in body
+
+
+def test_a_partial_review_shows_the_findings_and_lists_the_files_it_missed():
+    # Arrange
+    selected = finding(file="a.py", line=1)
+    report = ReviewReport(
+        status="partial", provider="p", findings=[selected], error="model overloaded", unreviewed=["payments/charge.py"]
+    )
+    data = bundle()
+    selection = Selection(kept=[selected], outside_diff=0, filtered=0, over_limit=0)
+
+    # Act
+    text = format_summary(ReviewOutcome(report, data, selection, inline_posted=1, already_posted=0, inline_rejected=False))
+
+    # Assert
+    assert "1 file(s) could not be reviewed" in text
+    assert "payments/charge.py" in text
+    assert "1 new inline comment(s) posted" in text
+
+
+def test_a_partial_review_with_no_findings_never_claims_the_code_is_clean():
+    # Arrange
+    report = ReviewReport(status="partial", provider="p", error="x", unreviewed=["a.py"])
+    selection = Selection(kept=[], outside_diff=0, filtered=0, over_limit=0)
+
+    # Act
+    text = format_summary(ReviewOutcome(report, bundle(), selection, inline_posted=0, already_posted=0, inline_rejected=False))
+
+    # Assert
+    assert "✅" not in text

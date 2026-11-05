@@ -65,8 +65,9 @@ use the default. To set another input from a variable, add a line such as
 | --- | --- | --- | --- |
 | `api-key` | | | Gemini or Anthropic key, from a secret |
 | `provider` | `PR_REVIEW_PROVIDER` | `antigravity` | `antigravity`, `claude` or `fake` |
-| `model` | `PR_REVIEW_MODEL` | `gemini-3.8-flash` or `claude-opus-5-5` | Model to use |
-| `fallback-model` | `PR_REVIEW_FALLBACK_MODEL` | `gemini-3.6-flash` | Model for the last attempt when the first one is overloaded (Antigravity) |
+| `model` | `PR_REVIEW_MODEL` | `gemini-3.6-flash` or `claude-opus-5-5` | Model to use |
+| `max-shards` | `PR_REVIEW_MAX_SHARDS` | `4` | Most groups for a large pull request, reviewed in parallel |
+| `fallback-model` | `PR_REVIEW_FALLBACK_MODEL` | `gemini-3.8-flash` | Model for the last attempt when the first one is overloaded (Antigravity) |
 | `max-tokens` | `PR_REVIEW_MAX_TOKENS` | `200000` | Token budget per review (Antigravity) |
 | `budget-usd` | `PR_REVIEW_BUDGET_USD` | `1.00` | Spend limit per review (Claude) |
 | `max-findings` | `PR_REVIEW_MAX_FINDINGS` | `10` | Most comments per review |

@@ -65,8 +65,9 @@ usan el valor por defecto. Para conectar otro input, añade una línea como
 | --- | --- | --- | --- |
 | `api-key` | | | Clave de Gemini o Anthropic, desde un secreto |
 | `provider` | `PR_REVIEW_PROVIDER` | `antigravity` | `antigravity`, `claude` o `fake` |
-| `model` | `PR_REVIEW_MODEL` | `gemini-3.8-flash` o `claude-opus-5-5` | Modelo que se usa |
-| `fallback-model` | `PR_REVIEW_FALLBACK_MODEL` | `gemini-3.6-flash` | Modelo del último intento si el primero está saturado (Antigravity) |
+| `model` | `PR_REVIEW_MODEL` | `gemini-3.6-flash` o `claude-opus-5-5` | Modelo que se usa |
+| `max-shards` | `PR_REVIEW_MAX_SHARDS` | `4` | Máximo de grupos de un PR grande, revisados en paralelo |
+| `fallback-model` | `PR_REVIEW_FALLBACK_MODEL` | `gemini-3.8-flash` | Modelo del último intento si el primero está saturado (Antigravity) |
 | `max-tokens` | `PR_REVIEW_MAX_TOKENS` | `200000` | Tope de tokens por revisión (Antigravity) |
 | `budget-usd` | `PR_REVIEW_BUDGET_USD` | `1.00` | Tope de gasto por revisión (Claude) |
 | `max-findings` | `PR_REVIEW_MAX_FINDINGS` | `10` | Máximo de comentarios por revisión |

@@ -54,7 +54,9 @@ change safely. Silence is a good result: return no findings when nothing matters
 
 ## Rules
 
-- Search the repository before claiming something is duplicated, unused or unprotected.
+- Start from the diff. Open another file only when a finding depends on it, and stop when you can
+  answer. Do not explore the repository, because every file you read adds to the cost of the review.
+- Search before claiming something is duplicated, unused or unprotected.
 - For security, trace the input from where an attacker controls it to where it does harm. If an
   existing check blocks the path, do not report it. Name the risk, not only a generic OWASP label.
 - For design, report concrete harm in this change. Never report a principle just because it was bent.

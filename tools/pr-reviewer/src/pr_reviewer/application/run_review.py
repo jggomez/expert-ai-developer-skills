@@ -14,7 +14,9 @@ from pr_reviewer.application.ports import (
     ReviewProvider,
     ReviewRequest,
 )
-from pr_reviewer.domain.models import DiffBundle, ReviewReport
+from pr_reviewer.domain.findings import fingerprint
+from pr_reviewer.domain.models import DiffBundle, Finding, ReviewReport, ReviewUsage
+from pr_reviewer.domain.pricing import estimate_cost
 
 logger = logging.getLogger(__name__)
 
@@ -79,4 +81,35 @@ def run_review(
         model=output.model,
         findings=output.result.findings,
         usage=output.usage,
+    )
+
+
+def _total_cost(reports: list[ReviewReport]) -> float | None:
+    costs = [estimate_cost(report.model, report.usage) for report in reports]
+    return None if any(cost is None for cost in costs) else sum(c for c in costs if c is not None)
+
+
+def merge_reports(reports: list[ReviewReport], shards: list[DiffBundle]) -> ReviewReport:
+    """Combine one report per group. Each model's cost is computed here, while the model is known."""
+    if len(reports) == 1:
+        return reports[0]
+    failed = [(report, shard) for report, shard in zip(reports, shards, strict=True) if report.status != "ok"]
+    unique: dict[str, Finding] = {}
+    for report in reports:
+        for finding in report.findings:
+            unique.setdefault(fingerprint(finding), finding)
+    usage = ReviewUsage(
+        input_tokens=sum(r.usage.input_tokens for r in reports),
+        cached_input_tokens=sum(r.usage.cached_input_tokens for r in reports),
+        output_tokens=sum(r.usage.output_tokens for r in reports),
+        reported_cost_usd=_total_cost(reports),
+    )
+    return ReviewReport(
+        status="failed" if len(failed) == len(reports) else "partial" if failed else "ok",
+        provider=reports[0].provider,
+        model=", ".join(dict.fromkeys(r.model for r in reports if r.model)),
+        findings=list(unique.values()),
+        usage=usage,
+        error=failed[0][0].error if failed else "",
+        unreviewed=[file.path for _, shard in failed for file in shard.files],
     )

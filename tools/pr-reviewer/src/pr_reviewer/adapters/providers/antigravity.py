@@ -23,12 +23,12 @@ from pr_reviewer.application.ports import ProviderError, ProviderOutput, ReviewR
 from pr_reviewer.application.prompt import build_prompt, system_instructions
 from pr_reviewer.domain.models import ReviewResult, ReviewUsage
 
-DEFAULT_MODEL = "gemini-3.8-flash"
-DEFAULT_FALLBACK_MODEL = "gemini-3.6-flash"
+DEFAULT_MODEL = "gemini-3.6-flash"
+DEFAULT_FALLBACK_MODEL = "gemini-3.8-flash"
 MAX_MODEL_CALLS = 20
 MAX_TOOL_CALLS = 40
 REVIEW_TIMEOUT_SECONDS = 600.0
-RETRY_DELAYS_SECONDS = (20.0, 60.0)
+RETRY_DELAYS_SECONDS = (10.0, 30.0)
 CANCEL_GRACE_SECONDS = 30.0
 _SYSTEM_ERROR = re.compile(r"^System step error \(HTTP (\d+)\)")
 _OVERLOAD_CODES = {"429", "500", "502", "503", "504"}
