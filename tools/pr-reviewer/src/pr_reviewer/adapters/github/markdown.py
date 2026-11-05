@@ -102,6 +102,13 @@ def _findings_table(findings: list[Finding]) -> list[str]:
     return rows
 
 
+def _file_list(paths: list[str], reason: str) -> list[str]:
+    rows = [f"- {_path(path)} ({reason})" for path in paths[:MAX_OMITTED_ROWS]]
+    if len(paths) > len(rows):
+        rows.append(f"- and {len(paths) - len(rows)} more")
+    return ["", f"<details><summary>{len(paths)} file(s) failed</summary>", "", *rows, "", "</details>"]
+
+
 def _omitted_section(bundle: DiffBundle) -> list[str]:
     if not bundle.omitted:
         return []
@@ -123,12 +130,15 @@ def format_summary(outcome: ReviewOutcome) -> str:
     report, bundle, selection = outcome.report, outcome.bundle, outcome.selection
     lines = [SUMMARY_MARKER, "## AI review", ""]
 
+    if report.status == "partial":
+        reason = _one_line(report.error) or "unknown error"
+        lines += [f"⚠️ {len(report.unreviewed)} file(s) could not be reviewed: `{reason}`", ""]
     if report.status == "failed":
         lines.append(f"⚠️ The review could not finish: `{_one_line(report.error) or 'unknown error'}`")
     elif not bundle.files:
         lines.append("Nothing was reviewed: no file in this pull request could be included.")
     elif not selection.kept:
-        lines.append("✅ No problems found in the reviewed code.")
+        lines.append("✅ No problems found in the reviewed code." if report.status == "ok" else "No problems found in the files that were reviewed.")
     else:
         lines += _findings_table(selection.kept)
         lines.append("")
@@ -146,6 +156,7 @@ def format_summary(outcome: ReviewOutcome) -> str:
             f"{hidden} finding(s) not shown: {selection.outside_diff} outside the diff, "
             f"{selection.filtered} below the thresholds, {selection.over_limit} over the limit.",
         ]
+    lines += _file_list(report.unreviewed, "failed") if report.status == "partial" else []
     lines += _omitted_section(bundle)
     lines += ["", f"<sub>{_usage_line(report)} · commit {bundle.head[:7]} · comment `/review` to run again</sub>"]
     return _clip("\n".join(lines), MAX_COMMENT_CHARS)

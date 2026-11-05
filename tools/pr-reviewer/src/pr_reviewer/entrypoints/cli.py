@@ -18,10 +18,11 @@ from pr_reviewer.application.ports import DEFAULT_BUDGET_USD, DEFAULT_MAX_TOKENS
 from pr_reviewer.application.prepare_diff import prepare_diff
 from pr_reviewer.application.prompt import compose_rubric
 from pr_reviewer.application.publish_review import publish_review
-from pr_reviewer.application.run_review import ReviewSettings, run_review
+from pr_reviewer.application.run_review import ReviewSettings, merge_reports, run_review
 from pr_reviewer.domain.file_selection import DEFAULT_MAX_CHARS
 from pr_reviewer.domain.findings import DEFAULT_MAX_FINDINGS, PublishOptions
 from pr_reviewer.domain.models import DiffBundle, ReviewReport, Severity
+from pr_reviewer.domain.sharding import DEFAULT_MAX_SHARDS, split_into_shards
 from pr_reviewer.domain.triggers import ReviewContext, resolve_context
 from pr_reviewer.entrypoints.composition import (
     github_client,
@@ -29,6 +30,7 @@ from pr_reviewer.entrypoints.composition import (
     pull_request_gateway,
     setup_claude,
 )
+from pr_reviewer.entrypoints.parallel_review import ShardJob, review_shards
 
 
 def _setting(name: str, default: str | int = "") -> str | int:
@@ -87,22 +89,40 @@ def _load_rubric(args: argparse.Namespace) -> str | None:
 
 def run_review_command(args: argparse.Namespace) -> int:
     bundle = DiffBundle.model_validate_json(args.bundle.read_text(encoding="utf-8"))
-    report = run_review(
-        bundle,
-        ReviewSettings(
-            provider=args.provider,
-            model=args.model or None,
-            max_tokens=args.max_tokens,
-            budget_usd=args.budget_usd,
-            fallback_model=args.fallback_model or None,
-        ),
-        load_provider=lambda: load_provider(args.provider, args.fake_findings),
-        build_workspace=lambda: build_clean_workspace(args.repo, args.workspace),
-        load_rubric=lambda: _load_rubric(args),
+    settings = ReviewSettings(
+        provider=args.provider,
+        model=args.model or None,
+        max_tokens=args.max_tokens,
+        budget_usd=args.budget_usd,
+        fallback_model=args.fallback_model or None,
     )
+    shards = split_into_shards(bundle, args.max_shards)
+    if len(shards) > 1:
+        print(f"Reviewing {len(bundle.files)} file(s) in {len(shards)} parallel groups")
+        report = _review_large_diff(args, settings, shards)
+    else:
+        report = run_review(
+            bundle,
+            settings,
+            load_provider=lambda: load_provider(args.provider, args.fake_findings),
+            build_workspace=lambda: build_clean_workspace(args.repo, args.workspace),
+            load_rubric=lambda: _load_rubric(args),
+        )
     args.output.write_text(report.model_dump_json(indent=2), encoding="utf-8")
     print(f"Review {report.status}: {len(report.findings)} finding(s)")
     return 0
+
+
+def _review_large_diff(
+    args: argparse.Namespace, settings: ReviewSettings, shards: list[DiffBundle]
+) -> ReviewReport:
+    try:
+        workspace = build_clean_workspace(args.repo, args.workspace)
+        rubric = _load_rubric(args)
+    except Exception as error:
+        return ReviewReport(status="failed", provider=settings.provider, error=f"{type(error).__name__}: {error}"[:300])
+    jobs = [ShardJob(shard, settings, workspace, rubric, args.fake_findings) for shard in shards]
+    return merge_reports(review_shards(jobs), shards)
 
 
 def run_publish(args: argparse.Namespace) -> int:
@@ -151,6 +171,7 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument("--output", type=Path, required=True)
     review.add_argument("--workspace", type=Path, required=True, help="where to create the clean copy")
     review.add_argument("--model", default=_setting("MODEL"))
+    review.add_argument("--max-shards", type=int, default=_setting("MAX_SHARDS", DEFAULT_MAX_SHARDS), help="most parallel groups")
     review.add_argument("--fallback-model", default=_setting("FALLBACK_MODEL"), help="model for the last attempt")
     review.add_argument("--max-tokens", type=int, default=_setting("MAX_TOKENS", DEFAULT_MAX_TOKENS))
     review.add_argument(

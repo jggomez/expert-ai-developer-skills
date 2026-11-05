@@ -9,7 +9,7 @@ from pathlib import PurePosixPath
 from pr_reviewer.domain.diff_parser import parse_diff
 from pr_reviewer.domain.models import DiffBundle, FileDiff, OmittedFile
 
-DEFAULT_MAX_CHARS = 120_000
+DEFAULT_MAX_CHARS = 240_000
 
 DEFAULT_EXCLUDE = (
     "*.lock",

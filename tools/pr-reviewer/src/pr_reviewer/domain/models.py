@@ -73,9 +73,10 @@ class DiffBundle(BaseModel):
 class ReviewReport(BaseModel):
     """Output of the review step. A failed review is reported, never raised to the job."""
 
-    status: Literal["ok", "failed"]
+    status: Literal["ok", "partial", "failed"]
     provider: str
     model: str = ""
     findings: list[Finding] = Field(default_factory=list)
     usage: ReviewUsage = Field(default_factory=ReviewUsage)
     error: str = ""
+    unreviewed: list[str] = Field(default_factory=list, description="Files of the groups that failed.")

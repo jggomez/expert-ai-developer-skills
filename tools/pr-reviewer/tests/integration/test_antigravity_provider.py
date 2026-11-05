@@ -122,7 +122,7 @@ def test_review_returns_findings_and_counts_thinking_as_output(tmp_path: Path):
     # Assert
     assert output.result.findings[0].title == "N+1"
     assert (output.usage.input_tokens, output.usage.cached_input_tokens, output.usage.output_tokens) == (1000, 400, 150)
-    assert output.model == "gemini-3.8-flash"
+    assert output.model == DEFAULT_MODEL
 
 
 def test_agent_runs_from_the_clean_workspace_and_receives_the_diff(tmp_path: Path):
@@ -141,7 +141,7 @@ def test_budget_stop_is_reported_with_the_tokens_spent(tmp_path: Path):
 
     # Assert
     assert caught.value.usage.input_tokens == 1000
-    assert caught.value.model == "gemini-3.8-flash"
+    assert caught.value.model == DEFAULT_MODEL
 
 
 def test_missing_structured_output_is_an_error_not_a_clean_review(tmp_path: Path):

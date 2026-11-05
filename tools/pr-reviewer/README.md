@@ -28,7 +28,7 @@ repository its comments are public too, so handle a serious finding before the p
 | --- | --- | --- |
 | Agent runs in | Your GitHub runner | A sandbox hosted by Anthropic, with no network |
 | Agent can read | The whole repository (clean copy) | The diff and the changed files |
-| Default model | `gemini-3.8-flash` | `claude-opus-5-5` |
+| Default model | `gemini-3.6-flash` | `claude-opus-5-5` |
 | Spend limit | Tokens, with `max-tokens` | Dollars, with `budget-usd` |
 | Cost in the summary | Estimated from list prices | Reported by the API, including session time |
 | Status | SDK 0.1.x | Beta API |
@@ -59,9 +59,10 @@ change the model without editing a file.
 | `api-key` | | Gemini or Anthropic API key |
 | `provider` | `antigravity` | `antigravity`, `claude`, or `fake` to try the setup with no AI and no key |
 | `model` | Provider default | Model to use |
-| `fallback-model` | `gemini-3.6-flash` | Model for the last attempt when the first one is overloaded (Antigravity) |
-| `max-tokens` | `200000` | Token budget for one review (Antigravity) |
-| `budget-usd` | `1.00` | Hard spend limit for one review (Claude) |
+| `max-shards` | `4` | Most groups a large pull request is split into, reviewed in parallel |
+| `fallback-model` | `gemini-3.8-flash` | Model for the last attempt when the first one is overloaded (Antigravity) |
+| `max-tokens` | `200000` | Token budget per group of files (Antigravity) |
+| `budget-usd` | `1.00` | Hard spend limit for the whole review (Claude) |
 | `claude-agent-id` | | Printed by `pr-reviewer setup-claude` |
 | `claude-environment-id` | | Printed by `pr-reviewer setup-claude` |
 | `max-findings` | `10` | Maximum findings to publish |
@@ -72,20 +73,23 @@ change the model without editing a file.
 | `instructions` | | Text added to the review criteria |
 | `github-token` | `github.token` | Token that reads the pull request and posts comments. Keep the default: repeated runs recognize earlier comments by their bot author |
 
-Lockfiles, generated code, build output and vendored code are skipped by default. Large diffs keep source
-files first, and the summary lists every file that was not reviewed.
+Lockfiles, generated code, build output and vendored code are skipped by default. Pull requests over 60,000 diff
+characters are split into groups of neighboring files, reviewed in parallel, and the findings are merged. If a
+group fails, the others are still published and the summary lists the files that were not reviewed.
 
 ## Cost
 
 Each review is limited by `max-tokens`, and the summary reports tokens and the estimated cost. As a rough,
-unmeasured guide, a review of 40k input and 4k output tokens costs about $0.05 on `gemini-3.8-flash`,
+unmeasured guide, a review of 40k input and 4k output tokens costs about $0.05 on `gemini-3.6-flash`,
 $0.12 on `claude-sonnet-5-5` and $0.24 on `claude-opus-5-5`, plus session time on Claude.
 Reviews run when a pull request is opened or marked ready, and on `/review`, not on every push.
 
 ## Limits
 
 - Pull requests from forks and from Dependabot are skipped, because their runs have no access to secrets.
-- If the AI fails, the summary says so and the job stays green.
+- If the AI fails, the summary says so and the job stays green. If only part fails, the rest is published.
+- Reviewing in groups costs more than one agent, because each group runs its own agent. A real multi-group
+  review is the measure to trust, not the estimate above.
 - The SDK is at version 0.1.x, so the version is pinned and may need updating.
 
 ## Security

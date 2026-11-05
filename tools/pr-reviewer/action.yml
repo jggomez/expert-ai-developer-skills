@@ -19,14 +19,17 @@ inputs:
   model:
     description: Model to use. Empty means the provider default.
     default: ""
+  max-shards:
+    description: Most groups of files a large pull request is split into, reviewed in parallel. Empty means 4.
+    default: ""
   fallback-model:
-    description: Model for the last attempt when the first one is overloaded (antigravity). Empty means gemini-3.6-flash.
+    description: Model for the last attempt when the first one is overloaded (antigravity). Empty means gemini-3.8-flash.
     default: ""
   max-tokens:
-    description: Token budget for one review (antigravity). Empty means 200000.
+    description: Token budget per group of files (antigravity). Empty means 200000.
     default: ""
   budget-usd:
-    description: Hard spend limit in dollars for one review (claude). Empty means 1.00.
+    description: Hard spend limit in dollars for the whole review, shared between groups (claude). Empty means 1.00.
     default: ""
   claude-agent-id:
     description: Agent ID printed by `pr-reviewer setup-claude`.
@@ -114,6 +117,7 @@ runs:
         CLAUDE_AGENT_ID: ${{ inputs.claude-agent-id || env.CLAUDE_AGENT_ID }}
         CLAUDE_ENVIRONMENT_ID: ${{ inputs.claude-environment-id || env.CLAUDE_ENVIRONMENT_ID }}
         PR_REVIEW_MODEL: ${{ inputs.model || env.PR_REVIEW_MODEL }}
+        PR_REVIEW_MAX_SHARDS: ${{ inputs.max-shards || env.PR_REVIEW_MAX_SHARDS }}
         PR_REVIEW_FALLBACK_MODEL: ${{ inputs.fallback-model || env.PR_REVIEW_FALLBACK_MODEL }}
         PR_REVIEW_MAX_TOKENS: ${{ inputs.max-tokens || env.PR_REVIEW_MAX_TOKENS }}
         PR_REVIEW_BUDGET_USD: ${{ inputs.budget-usd || env.PR_REVIEW_BUDGET_USD }}
