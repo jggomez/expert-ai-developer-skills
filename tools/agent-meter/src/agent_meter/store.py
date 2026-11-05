@@ -12,8 +12,10 @@
 
 from __future__ import annotations
 
+import csv
 import os
 import re
+import tempfile
 from collections.abc import Iterator, Mapping, Sequence
 from contextlib import ExitStack
 from dataclasses import dataclass
@@ -56,6 +58,8 @@ TARGET_SCHEMA_VERSION: int = SCHEMA_VERSION
 MIGRATIONS: dict[int, tuple[str, ...]] = {}
 
 _CHUNK_ROWS: Final = 500
+_BULK_ROWS: Final = 200  # binding parameters costs about 1 ms per row, while a CSV load is near instant
+_BULK_NULL: Final = "\x1fagent-meter-null\x1f"
 _DIAGNOSTICS_RETENTION: Final = timedelta(days=30)
 _PERIOD_DAY: Final = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _PERIOD_MONTH: Final = re.compile(r"^\d{4}-\d{2}$")
@@ -235,8 +239,31 @@ class Store:
     def _transaction(self) -> _Transaction:
         return _Transaction(self._con)
 
+    def _bulk_insert(self, table: str, columns: Sequence[str], rows: Sequence[Sequence[object]]) -> None:
+        """Load through a private temporary CSV, casting to the column types so values match row inserts."""
+        types = {str(row[0]): str(row[1]) for row in self._con.execute(f"DESCRIBE {table}").fetchall()}
+        self._home.state_dir.mkdir(parents=True, exist_ok=True)
+        descriptor, name = tempfile.mkstemp(prefix="bulk-", suffix=".csv", dir=self._home.state_dir)
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8", newline="") as handle:
+                writer = csv.writer(handle, quoting=csv.QUOTE_ALL, lineterminator="\n")
+                writer.writerows([_BULK_NULL if value is None else value for value in row] for row in rows)
+            names = ", ".join(columns)
+            cast = ", ".join(f'CAST("{column}" AS {types[column]})' for column in columns)
+            read_columns = "{" + ", ".join(f"'{column}': 'VARCHAR'" for column in columns) + "}"
+            self._con.execute(
+                f"INSERT INTO {table} ({names}) SELECT {cast} FROM read_csv(?, header = false, auto_detect = false, "
+                f"delim = ',', quote = '\"', escape = '\"', nullstr = ?, parallel = false, columns = {read_columns})",
+                [name, _BULK_NULL],
+            )
+        finally:
+            os.unlink(name)
+
     def _insert_rows(self, table: str, columns: Sequence[str], rows: Sequence[Sequence[object]]) -> None:
         if not rows:
+            return
+        if len(rows) >= _BULK_ROWS:
+            self._bulk_insert(table, columns, rows)
             return
         placeholders = "(" + ", ".join("?" for _ in columns) + ")"
         names = ", ".join(columns)
