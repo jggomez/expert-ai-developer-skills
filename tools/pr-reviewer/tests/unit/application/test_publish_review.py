@@ -14,6 +14,11 @@ class FakeGateway:
         self.inline_calls: list[tuple[str, list[Finding]]] = []
         self.summaries: list[ReviewOutcome] = []
 
+    places: set[tuple[str, int, str]] = frozenset()
+
+    def posted_places(self) -> set[tuple[str, int, str]]:
+        return self.places
+
     def posted_fingerprints(self) -> set[str]:
         return self.posted
 
@@ -72,3 +77,29 @@ def test_summary_is_always_updated_even_with_no_findings():
     # Assert
     assert gateway.inline_calls == []
     assert len(gateway.summaries) == 1
+
+
+def test_a_reworded_finding_in_the_same_place_is_not_posted_twice():
+    # Arrange
+    gateway = FakeGateway()
+    item = finding(line=12, category="performance", title="Reworded by the model")
+    gateway.places = {("app.py", 10, "performance")}
+
+    # Act
+    result = publish_review(gateway, report([item]), bundle(), PublishOptions())
+
+    # Assert
+    assert result.inline_posted == 0
+
+
+def test_another_problem_nearby_is_still_posted():
+    # Arrange
+    gateway = FakeGateway()
+    item = finding(line=12, category="security", title="A different problem")
+    gateway.places = {("app.py", 12, "performance")}
+
+    # Act
+    result = publish_review(gateway, report([item]), bundle(), PublishOptions())
+
+    # Assert
+    assert result.inline_posted == 1

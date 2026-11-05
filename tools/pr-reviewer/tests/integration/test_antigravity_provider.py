@@ -15,6 +15,7 @@ from google.antigravity.types import StopReason, UsageMetadata
 from pr_reviewer.adapters.providers.antigravity import (
     DEFAULT_FALLBACK_MODEL,
     DEFAULT_MODEL,
+    QUOTA_RETRY_SECONDS,
     READ_ONLY_TOOLS,
     AntigravityProvider,
     build_config,
@@ -228,6 +229,29 @@ def test_a_503_stops_a_hung_attempt_and_the_last_attempt_uses_the_fallback_model
     assert [config.model for config in agents] == [DEFAULT_MODEL, DEFAULT_MODEL, DEFAULT_FALLBACK_MODEL]
     assert output.model == DEFAULT_FALLBACK_MODEL
     assert len(output.result.findings) == 1
+
+
+class QuotaAgent(FakeAgent):
+    async def chat(self, prompt):
+        logging.warning("System step error (HTTP %s): %s", 429, "exceeded your current quota")
+        await asyncio.Event().wait()
+
+
+def test_a_quota_error_waits_for_the_quota_to_refill(tmp_path: Path):
+    # Arrange
+    waits: list[float] = []
+
+    async def record(seconds: float) -> None:
+        waits.append(seconds)
+
+    provider = AntigravityProvider(agent_factory=QuotaAgent, sleep=record, timeout_seconds=5)
+
+    # Act
+    with pytest.raises(ProviderError, match="quota"):
+        provider.review(request(tmp_path))
+
+    # Assert
+    assert waits == [QUOTA_RETRY_SECONDS, QUOTA_RETRY_SECONDS]
 
 
 def test_the_final_error_quotes_what_the_model_said(tmp_path: Path):

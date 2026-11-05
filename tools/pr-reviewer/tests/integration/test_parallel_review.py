@@ -69,3 +69,22 @@ def test_each_group_receives_a_share_of_the_dollar_budget(tmp_path: Path):
 def test_budget_shares_never_add_up_to_more_than_the_limit(budget: str, shards: int, expected: str):
     # Act / Assert
     assert share_budget(budget, shards) == expected
+
+
+def test_groups_run_two_at_a_time_to_respect_the_model_quota(tmp_path: Path):
+    # Arrange
+    workers: list[int] = []
+
+    def executor(count: int) -> ThreadPoolExecutor:
+        workers.append(count)
+        return ThreadPoolExecutor(count)
+
+    # Act
+    review_shards(
+        [job(tmp_path, f"{name}.py") for name in "abcd"],
+        worker=lambda item: ReviewReport(status="ok", provider="fake"),
+        executor=executor,
+    )
+
+    # Assert
+    assert workers == [2]

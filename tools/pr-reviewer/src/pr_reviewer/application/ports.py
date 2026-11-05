@@ -73,6 +73,8 @@ class ReviewOutcome:
 
 
 class PullRequestGateway(Protocol):
+    def posted_places(self) -> set[tuple[str, int, str]]: ...
+
     def posted_fingerprints(self) -> set[str]:
         """Fingerprints of the findings already published on this pull request."""
         ...

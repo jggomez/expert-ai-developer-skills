@@ -19,6 +19,7 @@ MAX_TITLE_CHARS = 200
 MAX_IMPACT_CHARS = 2_000
 MAX_FIX_CHARS = 4_000
 MAX_OMITTED_ROWS = 100
+CATEGORY_PATTERN = re.compile(r"· (\w+)\*\*:")
 FINGERPRINT_PATTERN = re.compile(r"<!-- pr-reviewer:finding=([0-9a-f]{16}) -->")
 
 _SECRETS = (
