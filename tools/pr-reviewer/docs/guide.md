@@ -66,6 +66,7 @@ use the default. To set another input from a variable, add a line such as
 | `api-key` | | | Gemini or Anthropic key, from a secret |
 | `provider` | `PR_REVIEW_PROVIDER` | `antigravity` | `antigravity`, `claude` or `fake` |
 | `model` | `PR_REVIEW_MODEL` | `gemini-3.8-flash` or `claude-opus-5-5` | Model to use |
+| `fallback-model` | `PR_REVIEW_FALLBACK_MODEL` | `gemini-3.6-flash` | Model for the last attempt when the first one is overloaded (Antigravity) |
 | `max-tokens` | `PR_REVIEW_MAX_TOKENS` | `200000` | Token budget per review (Antigravity) |
 | `budget-usd` | `PR_REVIEW_BUDGET_USD` | `1.00` | Spend limit per review (Claude) |
 | `max-findings` | `PR_REVIEW_MAX_FINDINGS` | `10` | Most comments per review |
@@ -112,8 +113,8 @@ The rubric and the instructions are limited to 20,000 characters each.
 | What you see | What it means | What to do |
 | --- | --- | --- |
 | The job is green but there are no comments | The job stays green even when the review fails | Read the summary comment and the job log |
-| `HTTP 503` or `high demand` in the log | The Gemini model is overloaded. The reviewer retries twice | If it still fails, reopen the pull request later |
-| "no structured output after 3 attempts" | Every attempt failed, probably for the same reason | Reopen the pull request later, or try another `model` |
+| `HTTP 503` or `high demand` in the log | The Gemini model is overloaded. The reviewer stops that attempt, retries, then uses `fallback-model` | Nothing, if the review finishes. The summary shows the model used |
+| "no structured output after 3 attempts" | Every attempt failed, probably for the same reason | Reopen the pull request later, or choose another `model` or `fallback-model` |
 | `/review` does nothing | The workflow is not on the default branch, or the author lacks permission | Merge the workflow. Only owners, members and collaborators can use it |
 | A fork's pull request is skipped | Runs from forks have no access to secrets | This is expected |
 | `does not exist in the base commit` | The rubric is not on the target branch yet | Merge the rubric first |

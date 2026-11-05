@@ -29,6 +29,7 @@ jobs:
           # Set the PR_REVIEW_PROVIDER repository variable to `claude` to switch provider.
           provider: ${{ vars.PR_REVIEW_PROVIDER }}
           model: ${{ vars.PR_REVIEW_MODEL }}
+          fallback-model: ${{ vars.PR_REVIEW_FALLBACK_MODEL }}
           rubric-file: ${{ vars.PR_REVIEW_RUBRIC_FILE }}
           instructions: ${{ vars.PR_REVIEW_INSTRUCTIONS }}
           api-key: ${{ vars.PR_REVIEW_PROVIDER == 'claude' && secrets.ANTHROPIC_API_KEY || secrets.GEMINI_API_KEY }}

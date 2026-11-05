@@ -59,6 +59,7 @@ change the model without editing a file.
 | `api-key` | | Gemini or Anthropic API key |
 | `provider` | `antigravity` | `antigravity`, `claude`, or `fake` to try the setup with no AI and no key |
 | `model` | Provider default | Model to use |
+| `fallback-model` | `gemini-3.6-flash` | Model for the last attempt when the first one is overloaded (Antigravity) |
 | `max-tokens` | `200000` | Token budget for one review (Antigravity) |
 | `budget-usd` | `1.00` | Hard spend limit for one review (Claude) |
 | `claude-agent-id` | | Printed by `pr-reviewer setup-claude` |

@@ -29,6 +29,7 @@ jobs:
           # so you can change these from Settings without editing this file.
           provider: ${{ vars.PR_REVIEW_PROVIDER }}
           model: ${{ vars.PR_REVIEW_MODEL }}
+          fallback-model: ${{ vars.PR_REVIEW_FALLBACK_MODEL }}
           max-findings: ${{ vars.PR_REVIEW_MAX_FINDINGS }}
           min-severity: ${{ vars.PR_REVIEW_MIN_SEVERITY }}
           exclude: ${{ vars.PR_REVIEW_EXCLUDE }}

@@ -10,6 +10,7 @@ import asyncio
 import contextlib
 import logging
 import os
+import re
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -23,11 +24,14 @@ from pr_reviewer.application.prompt import build_prompt, system_instructions
 from pr_reviewer.domain.models import ReviewResult, ReviewUsage
 
 DEFAULT_MODEL = "gemini-3.8-flash"
+DEFAULT_FALLBACK_MODEL = "gemini-3.6-flash"
 MAX_MODEL_CALLS = 20
 MAX_TOOL_CALLS = 40
 REVIEW_TIMEOUT_SECONDS = 600.0
-# The SDK only logs a model 503 and ends the turn with no output, so an empty answer is the only signal.
 RETRY_DELAYS_SECONDS = (20.0, 60.0)
+CANCEL_GRACE_SECONDS = 30.0
+_SYSTEM_ERROR = re.compile(r"^System step error \(HTTP (\d+)\)")
+_OVERLOAD_CODES = {"429", "500", "502", "503", "504"}
 
 READ_ONLY_TOOLS = (
     BuiltinTools.VIEW_FILE,
@@ -71,6 +75,28 @@ def _usage(metadata: UsageMetadata | None) -> ReviewUsage:
     )
 
 
+def is_overload(record: logging.LogRecord) -> bool:
+    match = _SYSTEM_ERROR.match(record.getMessage())
+    return match is not None and match[1] in _OVERLOAD_CODES
+
+
+class _OverloadWatch(logging.Handler):
+    """Signal a model overload.
+
+    After a 503 the SDK logs a warning and the turn never ends, so this log line
+    is the only sign that the attempt will not finish.
+    """
+
+    def __init__(self, loop: asyncio.AbstractEventLoop, overloaded: asyncio.Event):
+        super().__init__(level=logging.WARNING)
+        self._loop = loop
+        self._overloaded = overloaded
+
+    def emit(self, record: logging.LogRecord) -> None:
+        if is_overload(record):
+            self._loop.call_soon_threadsafe(self._overloaded.set)
+
+
 def _add_usage(total: ReviewUsage, spent: ReviewUsage) -> ReviewUsage:
     return ReviewUsage(
         input_tokens=total.input_tokens + spent.input_tokens,
@@ -101,33 +127,62 @@ class AntigravityProvider:
         if not _has_credentials():
             raise ProviderError("Set GEMINI_API_KEY, or configure Vertex AI credentials")
         model = request.model or DEFAULT_MODEL
-        config = build_config(request, model=model)
         # The harness also looks for instruction files in its working directory.
         with contextlib.chdir(request.workspace):
             try:
-                return asyncio.run(asyncio.wait_for(self._run(config, request, model), self._timeout_seconds))
+                return asyncio.run(asyncio.wait_for(self._run(request, model), self._timeout_seconds))
             except TimeoutError as error:
                 limit = f"{self._timeout_seconds:g}s"
                 raise ProviderError(f"The agent exceeded the {limit} time limit", model=model) from error
 
-    async def _run(self, config: LocalAgentConfig, request: ReviewRequest, model: str) -> ProviderOutput:
+    async def _chat(self, config: LocalAgentConfig, request: ReviewRequest) -> tuple[Any, ReviewUsage, StopReason]:
+        async with self._agent_factory(config) as agent:
+            response = await agent.chat(build_prompt(request.bundle))
+            data = await response.structured_output()
+            return data, _usage(response.usage_metadata), response.stop_reason
+
+    async def _attempt(
+        self, config: LocalAgentConfig, request: ReviewRequest
+    ) -> tuple[Any, ReviewUsage, StopReason] | None:
+        """Run one agent, or return None as soon as the model reports it is overloaded."""
+        overloaded = asyncio.Event()
+        watch = _OverloadWatch(asyncio.get_running_loop(), overloaded)
+        root = logging.getLogger()
+        root.addHandler(watch)
+        chat = asyncio.create_task(self._chat(config, request))
+        signal = asyncio.create_task(overloaded.wait())
+        try:
+            await asyncio.wait({chat, signal}, return_when=asyncio.FIRST_COMPLETED)
+            if chat.done():
+                return chat.result()
+            chat.cancel()
+            await asyncio.wait({chat}, timeout=CANCEL_GRACE_SECONDS)
+            return None
+        finally:
+            root.removeHandler(watch)
+            signal.cancel()
+            chat.cancel()
+
+    async def _run(self, request: ReviewRequest, model: str) -> ProviderOutput:
         usage = ReviewUsage()
-        attempts = len(RETRY_DELAYS_SECONDS) + 1
-        for attempt in range(attempts):
+        models = (model, model, request.fallback_model or DEFAULT_FALLBACK_MODEL)
+        for attempt, current in enumerate(models):
             if attempt:
                 delay = RETRY_DELAYS_SECONDS[attempt - 1]
-                logger.warning("No answer from the agent. Retrying in %gs (%d/%d)", delay, attempt + 1, attempts)
+                logger.warning("No answer from %s. Retrying with %s in %gs", model, current, delay)
                 await self._sleep(delay)
-            async with self._agent_factory(config) as agent:
-                response = await agent.chat(build_prompt(request.bundle))
-                data = await response.structured_output()
-                usage = _add_usage(usage, _usage(response.usage_metadata))
-                stop_reason = response.stop_reason
+            model = current
+            outcome = await self._attempt(build_config(request, model=model), request)
+            if outcome is None:
+                continue
+            data, spent, stop_reason = outcome
+            usage = _add_usage(usage, spent)
             if stop_reason is not StopReason.UNSPECIFIED:
                 raise ProviderError(f"The agent stopped early: {stop_reason.value}", usage=usage, model=model)
             if data is not None:
                 break
         else:
+            attempts = len(models)
             message = f"The agent returned no structured output after {attempts} attempts. The model may be overloaded"
             raise ProviderError(message, usage=usage, model=model)
         try:

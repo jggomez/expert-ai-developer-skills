@@ -66,6 +66,7 @@ usan el valor por defecto. Para conectar otro input, añade una línea como
 | `api-key` | | | Clave de Gemini o Anthropic, desde un secreto |
 | `provider` | `PR_REVIEW_PROVIDER` | `antigravity` | `antigravity`, `claude` o `fake` |
 | `model` | `PR_REVIEW_MODEL` | `gemini-3.8-flash` o `claude-opus-5-5` | Modelo que se usa |
+| `fallback-model` | `PR_REVIEW_FALLBACK_MODEL` | `gemini-3.6-flash` | Modelo del último intento si el primero está saturado (Antigravity) |
 | `max-tokens` | `PR_REVIEW_MAX_TOKENS` | `200000` | Tope de tokens por revisión (Antigravity) |
 | `budget-usd` | `PR_REVIEW_BUDGET_USD` | `1.00` | Tope de gasto por revisión (Claude) |
 | `max-findings` | `PR_REVIEW_MAX_FINDINGS` | `10` | Máximo de comentarios por revisión |
@@ -113,8 +114,8 @@ lugar. La rúbrica y las instrucciones tienen un límite de 20.000 caracteres ca
 | Qué ves | Qué significa | Qué hacer |
 | --- | --- | --- |
 | El job está en verde, pero no hay comentarios | El job sigue en verde aunque la revisión falle | Lee el comentario de resumen y el log del job |
-| `HTTP 503` o `high demand` en el log | El modelo de Gemini está saturado. El revisor reintenta dos veces | Si sigue fallando, reabre el PR más tarde |
-| "no structured output after 3 attempts" | Fallaron todos los intentos, probablemente por la misma causa | Reabre el PR más tarde o prueba otro `model` |
+| `HTTP 503` o `high demand` en el log | El modelo de Gemini está saturado. El revisor corta ese intento, reintenta y luego usa `fallback-model` | Nada, si la revisión termina. El resumen muestra el modelo usado |
+| "no structured output after 3 attempts" | Fallaron todos los intentos, probablemente por la misma causa | Reabre el PR más tarde o elige otro `model` o `fallback-model` |
 | `/review` no hace nada | El workflow no está en la rama por defecto, o el autor no tiene permiso | Haz merge del workflow. Solo pueden usarlo owners, members y collaborators |
 | Se omite el PR de un fork | Las ejecuciones desde forks no acceden a secretos | Es lo esperado |
 | `does not exist in the base commit` | La rúbrica aún no está en la rama destino | Haz merge de la rúbrica primero |

@@ -94,6 +94,7 @@ def run_review_command(args: argparse.Namespace) -> int:
             model=args.model or None,
             max_tokens=args.max_tokens,
             budget_usd=args.budget_usd,
+            fallback_model=args.fallback_model or None,
         ),
         load_provider=lambda: load_provider(args.provider, args.fake_findings),
         build_workspace=lambda: build_clean_workspace(args.repo, args.workspace),
@@ -150,6 +151,7 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument("--output", type=Path, required=True)
     review.add_argument("--workspace", type=Path, required=True, help="where to create the clean copy")
     review.add_argument("--model", default=_setting("MODEL"))
+    review.add_argument("--fallback-model", default=_setting("FALLBACK_MODEL"), help="model for the last attempt")
     review.add_argument("--max-tokens", type=int, default=_setting("MAX_TOKENS", DEFAULT_MAX_TOKENS))
     review.add_argument(
         "--budget-usd", default=_setting("BUDGET_USD", DEFAULT_BUDGET_USD), help="spend limit for providers that enforce one"

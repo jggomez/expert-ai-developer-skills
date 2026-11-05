@@ -62,6 +62,7 @@ puedes cambiar el modelo sin editar ningún archivo.
 | `api-key` | | Clave de API de Gemini o de Anthropic |
 | `provider` | `antigravity` | `antigravity`, `claude`, o `fake` para probar la instalación sin IA ni clave |
 | `model` | El del proveedor | Modelo que se usa |
+| `fallback-model` | `gemini-3.6-flash` | Modelo del último intento si el primero está saturado (Antigravity) |
 | `max-tokens` | `200000` | Tope de tokens por revisión (Antigravity) |
 | `budget-usd` | `1.00` | Tope de gasto por revisión (Claude) |
 | `claude-agent-id` | | Lo imprime `pr-reviewer setup-claude` |

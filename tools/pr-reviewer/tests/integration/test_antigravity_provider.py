@@ -1,6 +1,8 @@
 """Antigravity provider: read-only agent, budget and result handling."""
 
 import asyncio
+import logging
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -11,9 +13,12 @@ from google.antigravity import BuiltinTools, LocalAgentConfig
 from google.antigravity.types import StopReason, UsageMetadata
 
 from pr_reviewer.adapters.providers.antigravity import (
+    DEFAULT_FALLBACK_MODEL,
+    DEFAULT_MODEL,
     READ_ONLY_TOOLS,
     AntigravityProvider,
     build_config,
+    is_overload,
 )
 from pr_reviewer.application.ports import ProviderError, ReviewRequest
 from pr_reviewer.domain.models import DiffBundle, FileDiff
@@ -191,6 +196,75 @@ def test_retries_stop_and_the_error_names_the_likely_cause(tmp_path: Path):
     assert agents.calls == 3
     assert len(agents.waits) == 2
     assert caught.value.usage.input_tokens == 3 * 1000
+
+
+class OverloadedAgent(FakeAgent):
+    """The real failure: the SDK logs a 503 and the turn then never ends."""
+
+    async def chat(self, prompt):
+        logging.warning("System step error (HTTP %s): %s", 503, "high demand")
+        await asyncio.Event().wait()
+
+
+def test_a_503_stops_a_hung_attempt_and_the_last_attempt_uses_the_fallback_model(tmp_path: Path):
+    # Arrange
+    agents: list[LocalAgentConfig] = []
+
+    def factory(config: LocalAgentConfig) -> FakeAgent:
+        agents.append(config)
+        if len(agents) < 3:
+            return OverloadedAgent(config)
+        return FakeAgent(config, data={"findings": [FINDING]})
+
+    async def no_wait(_: float) -> None:
+        return None
+
+    provider = AntigravityProvider(agent_factory=factory, sleep=no_wait, timeout_seconds=5)
+
+    # Act
+    output = provider.review(request(tmp_path))
+
+    # Assert
+    assert [config.model for config in agents] == [DEFAULT_MODEL, DEFAULT_MODEL, DEFAULT_FALLBACK_MODEL]
+    assert output.model == DEFAULT_FALLBACK_MODEL
+    assert len(output.result.findings) == 1
+
+
+def test_a_configured_fallback_model_is_used(tmp_path: Path):
+    # Arrange
+    agents = ScriptedAgents({"data": None})
+    configured = replace(request(tmp_path), fallback_model="gemini-custom")
+    seen: list[str] = []
+    original = agents.__call__
+
+    def factory(config: LocalAgentConfig) -> FakeAgent:
+        seen.append(config.model)
+        return original(config)
+
+    # Act
+    with pytest.raises(ProviderError):
+        AntigravityProvider(agent_factory=factory, sleep=agents.sleep).review(configured)
+
+    # Assert
+    assert seen[-1] == "gemini-custom"
+
+
+@pytest.mark.parametrize("message", ["System step error (HTTP 500): boom", "Something else (HTTP 503)"])
+def test_the_overload_watch_ignores_other_log_lines_and_keeps_only_transient_codes(message: str):
+    # Arrange
+    record = logging.LogRecord("root", logging.WARNING, __file__, 1, message, None, None)
+    expected = message.startswith("System step error")
+
+    # Act / Assert
+    assert is_overload(record) is expected
+
+
+def test_the_overload_watch_ignores_client_errors():
+    # Arrange
+    record = logging.LogRecord("root", logging.WARNING, __file__, 1, "System step error (HTTP 404): x", None, None)
+
+    # Act / Assert
+    assert is_overload(record) is False
 
 
 def test_a_budget_stop_is_never_retried(tmp_path: Path):
