@@ -18,6 +18,7 @@ from agent_meter.model import Host
 from agent_meter.paths import AppHome
 from agent_meter.pricing import load_pricing
 from agent_meter.project_resolver import ProjectsConfig
+from agent_meter.setup import settings_merge
 from agent_meter.store import Store
 from tests.fixtures.records import make_batch, make_project, ts
 
@@ -267,3 +268,60 @@ def test_nothing_runs_when_nothing_changed(tmp_path: Path) -> None:
 
     assert watcher.poll_once() is False
     assert runs == []
+
+
+@pytest.fixture()
+def claude_settings(home: AppHome, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    path = tmp_path / "user" / ".claude" / "settings.json"
+    path.parent.mkdir(parents=True)
+    path.write_text('{"model": "opus"}', encoding="utf-8")
+    monkeypatch.setattr(settings_merge, "MANAGED_SETTINGS_PATHS", ())
+    return path
+
+
+def test_actions_show_the_current_value(home: AppHome, claude_settings: Path) -> None:
+    actions = {a["id"]: a for a in api(home).actions()["actions"]}
+
+    assert actions["claude.model"]["current"] == "opus"
+    assert actions["claude.effort.opus"]["current"] is None
+
+
+def test_effort_goes_to_the_per_model_setting(home: AppHome, claude_settings: Path) -> None:
+    app = api(home)
+    plan = app.preview("claude.effort.opus", "high")
+
+    assert app.apply_action("claude.effort.opus", "high", plan["before_sha256"])["ok"] is True
+    assert json.loads(claude_settings.read_text())["modelSettings"]["claude-opus-5-5"] == {"effortLevel": "high"}
+
+
+def test_apply_refuses_if_the_file_differs_from_the_preview(home: AppHome, claude_settings: Path) -> None:
+    app = api(home)
+    plan = app.preview("claude.model", "sonnet")
+    claude_settings.write_text('{"model": "opus", "theme": "dark"}', encoding="utf-8")
+
+    result = app.apply_action("claude.model", "sonnet", plan["before_sha256"])
+
+    assert result == {"ok": False, "code": "stale"}
+    assert json.loads(claude_settings.read_text())["model"] == "opus"
+
+
+def test_a_change_appears_in_history_and_can_be_undone(home: AppHome, claude_settings: Path) -> None:
+    app = api(home)
+    plan = app.preview("claude.model", "sonnet")
+    change_id = app.apply_action("claude.model", "sonnet", plan["before_sha256"])["id"]
+
+    (change,) = app.changes()["changes"]
+    undone = app.undo_action(change_id)
+
+    assert change["new_value"] == "sonnet"
+    assert change["effect"] == {"enough": False, "tasks_after": 0}
+    assert undone == {"ok": True}
+    assert json.loads(claude_settings.read_text())["model"] == "opus"
+
+
+def test_insights_suggest_only_known_actions(home: AppHome) -> None:
+    from agent_meter.app.services import _INSIGHT_ACTIONS
+    from agent_meter.setup.actuators import ACTIONS
+
+    for action_id, value in _INSIGHT_ACTIONS.values():
+        assert value in ACTIONS[action_id].values

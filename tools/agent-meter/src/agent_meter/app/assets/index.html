@@ -14,6 +14,7 @@
       <button type="button" data-tab="live" data-i18n="nav.live" aria-current="page">Live</button>
       <button type="button" data-tab="history" data-i18n="nav.history">History</button>
       <button type="button" data-tab="insights" data-i18n="nav.insights">Insights</button>
+      <button type="button" data-tab="changes" data-i18n="nav.changes">Changes</button>
       <button type="button" data-tab="settings" data-i18n="nav.settings">Settings</button>
     </nav>
     <span id="status" role="status" class="muted" data-i18n="status.loading">Loading…</span>
@@ -94,6 +95,22 @@
       <p id="insights-period" class="muted"></p>
       <div id="insights-list"></div>
       <p id="insights-note" class="muted"></p>
+    </section>
+    <section id="changes" hidden>
+      <h2 data-i18n="changes.title">Change your AI settings</h2>
+      <p class="muted" data-i18n="changes.intro">Nothing changes until you confirm the preview, and every change can be undone.</p>
+      <div id="action-list"></div>
+      <div id="change-preview" class="preview" hidden>
+        <pre id="change-diff"></pre>
+        <div class="actions"><button type="button" id="change-confirm" class="primary" data-i18n="changes.confirm">Apply change</button>
+          <button type="button" id="change-cancel" data-i18n="changes.cancel">Cancel</button></div>
+      </div>
+      <p id="change-message" role="status"></p>
+      <h2 data-i18n="changes.history">History</h2>
+      <table id="change-table"><thead><tr><th data-i18n="changes.when">Date</th><th data-i18n="changes.what">Change</th>
+        <th data-i18n="changes.values">Values</th><th data-i18n="changes.effect">After the change</th><th></th></tr></thead>
+        <tbody id="change-rows"></tbody></table>
+      <p id="change-none" class="muted" data-i18n="changes.none" hidden>No changes yet.</p>
     </section>
     <section id="settings" hidden>
       <h2 data-i18n="settings.budgets">Budgets and alerts</h2>

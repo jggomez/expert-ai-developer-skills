@@ -367,7 +367,7 @@ def render_preview(plan: MergePlan, home: HomeLike) -> str:
 
 
 def _write_backup(
-    home: HomeLike, plan: MergePlan, raw: bytes | None, now: datetime
+    home: HomeLike, target: str, raw: bytes | None, now: datetime
 ) -> Path:
     home.backups_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
     stamp = now.astimezone(UTC).strftime("%Y%m%dT%H%M%S%fZ")
@@ -375,7 +375,7 @@ def _write_backup(
     attempt = 0
     while True:
         suffix = "" if attempt == 0 else f"-{attempt}"
-        candidate = home.backups_dir / f"{plan.target}-{stamp}{suffix}{extension}"
+        candidate = home.backups_dir / f"{target}-{stamp}{suffix}{extension}"
         try:
             fd = os.open(candidate, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         except FileExistsError:
@@ -430,7 +430,7 @@ def apply(plan: MergePlan, home: HomeLike, *, now: datetime | None = None) -> No
             f"{plan.file} changed after the preview was shown; run setup again"
         )
     mode = _NEW_FILE_MODE if raw is None else stat.S_IMODE(plan.file.stat().st_mode)
-    backup = _write_backup(home, plan, raw, now or datetime.now(UTC))
+    backup = _write_backup(home, plan.target, raw, now or datetime.now(UTC))
     payload = plan.after_text.encode("utf-8")
     atomic_write(plan.file, payload, mode=mode)
     _record_install(home, plan, backup, sha256_hex(payload))

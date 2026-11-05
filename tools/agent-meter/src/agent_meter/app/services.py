@@ -31,6 +31,8 @@ from agent_meter.config import (
 from agent_meter.insights import Thresholds, build_insights, insights_document
 from agent_meter.locking import LockTimeout
 from agent_meter.paths import AppHome, atomic_write_text
+from agent_meter.setup import actuators
+from agent_meter.setup.actuators import ActuatorError
 from agent_meter.store import Store
 
 __all__ = ["ACTIVE_WINDOW", "EDITABLE_KEYS", "AppApi"]
@@ -52,6 +54,22 @@ latest AS (
 SELECT r.*, l.context_tokens FROM recent r LEFT JOIN latest l USING (host, session_id)
 ORDER BY r.ended_at DESC, r.session_id
 """
+_OBSERVED_MODELS_SQL: Final = """
+SELECT model_label, COUNT(*) AS calls FROM v_calls
+WHERE host = 'antigravity-cli' AND model_label IS NOT NULL AND local_date >= ?
+GROUP BY model_label ORDER BY calls DESC, model_label
+"""
+_EFFECT_SQL: Final = """
+SELECT COUNT(*) AS tasks, AVG(cost_usd) AS cost_per_task, AVG(retries) AS retries_per_task FROM v_tasks
+WHERE host LIKE ? AND local_date BETWEEN ? AND ? AND cost_usd IS NOT NULL
+"""
+OBSERVED_DAYS: Final = 30
+EFFECT_DAYS: Final = 7
+MIN_EFFECT_TASKS: Final = 5
+_INSIGHT_ACTIONS: Final[dict[str, tuple[str, str]]] = {
+    "model_what_if": ("claude.model", "sonnet"),
+    "long_session": ("claude.autocompact", "70"),
+}
 _LOG = logging.getLogger(__name__)
 
 
@@ -156,7 +174,10 @@ class AppApi:
         document = self._with_store(f"insights:{days}", read)
         if "insights" not in document:
             return document
-        return i18n.localize_insights(document, self._config().language)
+        localized = i18n.localize_insights(document, self._config().language)
+        for item in localized["insights"]:
+            item["suggestion"] = _INSIGHT_ACTIONS.get(item["rule"])
+        return localized
 
     def settings(self) -> dict[str, Any]:
         from agent_meter.cli import Ctx, _doctor_checks
@@ -182,6 +203,74 @@ class AppApi:
         except ConfigError as exc:
             return {"ok": False, "error": i18n.translate(str(exc), self._config().language)}
         return {"ok": True}
+
+    def _observed_models(self) -> list[str]:
+        def read(store: Store, cfg: Config) -> dict[str, Any]:
+            start = self._today(cfg) - timedelta(days=OBSERVED_DAYS)
+            return {"models": [str(row["model_label"]) for row in store.query(_OBSERVED_MODELS_SQL, [start])]}
+
+        return list(self._with_store("observed_models", read).get("models", []))
+
+    def actions(self) -> dict[str, Any]:
+        """Every setting the app can change, with its value now and the values on offer."""
+        observed = self._observed_models()
+        return {"actions": [
+            {"id": action.id, "target": action.target, "current": actuators.current_value(action),
+             "options": list(action.values or observed)}
+            for action in actuators.ACTIONS.values()
+        ]}
+
+    def preview(self, action_id: str, value: str) -> dict[str, Any]:
+        try:
+            plan = actuators.plan_change(str(action_id), str(value), observed=self._observed_models())
+        except ActuatorError as exc:
+            return {"ok": False, "code": exc.code}
+        return {"ok": True, "action": plan.action.id, "file": str(plan.file), "old_value": plan.old_value,
+                "new_value": plan.new_value, "diff": plan.diff, "changed": plan.changed, "before_sha256": plan.before_sha256}
+
+    def apply_action(self, action_id: str, value: str, before_sha256: str | None) -> dict[str, Any]:
+        """``before_sha256`` is what the user saw: a file changed since then is never written."""
+        try:
+            plan = actuators.plan_change(str(action_id), str(value), observed=self._observed_models())
+            if plan.before_sha256 != before_sha256:
+                raise ActuatorError("stale")
+            change = actuators.apply_change(plan, self._home, now=self._clock())
+        except ActuatorError as exc:
+            return {"ok": False, "code": exc.code}
+        return {"ok": True, "id": change["id"]}
+
+    def undo_action(self, change_id: str) -> dict[str, Any]:
+        try:
+            actuators.undo_change(str(change_id), self._home, now=self._clock())
+        except ActuatorError as exc:
+            return {"ok": False, "code": exc.code}
+        return {"ok": True}
+
+    def changes(self) -> dict[str, Any]:
+        """Past changes with coarse before and after figures, which show correlation and not cause."""
+        history = actuators.list_changes(self._home)
+
+        def read(store: Store, cfg: Config) -> dict[str, Any]:
+            return {"effects": {c["id"]: self._effect(store, cfg, c) for c in history}}
+
+        effects = self._with_store("change_effects", read).get("effects", {})
+        return {"changes": [{**c, "effect": effects.get(c["id"])} for c in history]}
+
+    def _effect(self, store: Store, cfg: Config, change: dict[str, Any]) -> dict[str, Any]:
+        applied = datetime.fromisoformat(change["applied_at"]).astimezone(ZoneInfo(cfg.timezone)).date()
+        last = min(applied + timedelta(days=EFFECT_DAYS), self._today(cfg))
+        host = "claude-code" if actuators.ACTIONS[change["action"]].target == "claude" else "antigravity%"
+        before = store.query(_EFFECT_SQL, [host, applied - timedelta(days=EFFECT_DAYS), applied - timedelta(days=1)])[0]
+        after = store.query(_EFFECT_SQL, [host, applied + timedelta(days=1), last])[0]
+        tasks = int(str(after["tasks"] or 0))
+        if tasks < MIN_EFFECT_TASKS or not before["tasks"]:
+            return {"enough": False, "tasks_after": tasks}
+
+        def figures(row: dict[str, object]) -> dict[str, str]:
+            cost = Decimal(str(row["cost_per_task"])).quantize(Decimal("0.01"))
+            return {"cost_per_task": str(cost), "retries_per_task": f"{float(str(row['retries_per_task'])):.2f}"}
+
+        return {"enough": True, "tasks_after": tasks, "before": figures(before), "after": figures(after)}
 
     def collect_now(self) -> dict[str, Any]:
         result = collect(self._home, self._config(), lock_timeout_s=COLLECT_LOCK_S)

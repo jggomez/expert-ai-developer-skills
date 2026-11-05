@@ -256,11 +256,14 @@ previsto, pero aún no se ha probado.
 | **En vivo** | Hoy, este mes, previsión de fin de mes, valor del plan, presupuestos y sesiones activas en los últimos 15 minutos |
 | **Historial** | Gasto por día, mes, proyecto y sesión, con filtros de periodo y proyecto |
 | **Insights** | Dónde recortar: hallazgos medidos, ahorros estimados y qué hacer |
+| **Cambios** | Cambia el modelo, el esfuerzo o la compactación de tus IA, con vista previa, deshacer y cifras de antes y después |
 | **Ajustes** | Presupuestos, notificaciones, recolección manual y el diagnóstico de `doctor` |
 
 ![Pantalla Historial con gasto por día, mes, proyecto y sesión](docs/images/app-history-es.png)
 
 ![Pantalla Insights con hallazgos y ahorros estimados](docs/images/app-insights-es.png)
+
+![Pantalla Cambios con la vista previa de un cambio y su historial](docs/images/app-changes-es.png)
 
 ![Pantalla Ajustes con presupuestos y diagnóstico](docs/images/app-settings-es.png)
 
@@ -272,6 +275,25 @@ previsto, pero aún no se ha probado.
 - **Durante una recolección:** la base queda bloqueada, así que la app sigue mostrando las últimas cifras guardadas, lo
   indica en la cabecera y se actualiza al terminar. Una recolección grande puede tardar más de un minuto.
 - **Seguridad:** no hay servidor local ni puerto abierto.
+
+#### Qué puede editar la pantalla Cambios
+
+| Ajuste | Archivo y clave |
+| :--- | :--- |
+| Modelo por defecto de Claude Code (`opus`, `sonnet`, `haiku`) | `~/.claude/settings.json`: `model` |
+| Esfuerzo de Claude Code para Opus 5.5 y Sonnet 5.5 | `~/.claude/settings.json`: `modelSettings.<modelo>.effortLevel` |
+| Umbral de compactación de Claude Code (60, 70 u 80 %) | `~/.claude/settings.json`: `env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` |
+| Modelo por defecto de Antigravity CLI, entre los que usaste en los últimos 30 días | `~/.gemini/antigravity-cli/settings.json`: `model` |
+
+No se escribe nada hasta que confirmes la vista previa. Cada cambio guarda una copia de seguridad y queda en
+`~/.agent-meter/changes.json`. Deshacer restaura el archivo byte a byte, o solo esa clave si lo editaste después. La app
+rechaza JSON inválido, un archivo que cambió después de la vista previa y ajustes administrados por tu organización. Nunca
+edita `~/.gemini/settings.json`, que pertenece a Gemini CLI.
+
+Los cambios se aplican a las sesiones nuevas; las abiertas o reanudadas pueden conservar su modelo. Las cifras de antes y
+después comparan hasta 7 días a cada lado, cuando ya terminaron 5 tareas. Muestran correlación, no causa. Un costo menor con
+más reintentos puede no ser un ahorro. La app no cambia ajustes por su cuenta, no pone topes de gasto y no puede compactar
+una sesión abierta.
 
 Las capturas usan datos ficticios de demostración.
 
@@ -597,6 +619,7 @@ nombres y conteos de herramientas, y errores (solo el tipo).
 | `secret` | Sal local para los hash (nunca se sube) |
 | `last-summary.txt` | Último resumen |
 | `report.html` | Último reporte (ubicación por defecto) |
+| `changes.json` | Ajustes cambiados desde la app, con sus valores anteriores |
 | `state/`, `outbox/`, `logs/`, `lock` | Estado interno (incluidas las últimas cifras de la app), preparación de subidas a BigQuery, tipos de error, bloqueo de concurrencia |
 | `install.json`, `backups/` | Lo que cambió `setup`, para deshacerlo con `uninstall` |
 | `.agent-meter-home` | Marca de que agent-meter creó esta carpeta |

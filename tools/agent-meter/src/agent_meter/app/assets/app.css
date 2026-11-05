@@ -69,3 +69,8 @@ summary { cursor: pointer; color: var(--muted); }
 details table { margin-top: 8px; }
 button.link { border: 0; background: none; padding: 0; color: var(--accent); text-align: left; overflow-wrap: anywhere; }
 button.link:hover { text-decoration: underline; }
+.action, .preview { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
+.action p { margin: 2px 0; }
+.action .actions { margin-top: 8px; }
+.preview pre { margin: 0 0 10px; overflow-x: auto; font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; white-space: pre; }
+#change-rows button { white-space: nowrap; overflow-wrap: normal; }

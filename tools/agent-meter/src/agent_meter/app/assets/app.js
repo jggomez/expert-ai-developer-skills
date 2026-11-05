@@ -201,6 +201,12 @@ function insightCard(item) {
   card.append(node("h3", "", item.title));
   const saving = item.saving_usd === null ? t("insights.no_saving") : t("insights.saving", { amount: usd(item.saving_usd) });
   card.append(node("p", "saving", saving), node("p", "muted", item.saving_basis), node("p", "", item.action));
+  if (item.suggestion) {
+    const button = node("button", "", t("changes.prepare"));
+    button.type = "button";
+    button.addEventListener("click", () => prepareChange(...item.suggestion));
+    card.append(button);
+  }
   return card;
 }
 
@@ -229,7 +235,105 @@ async function refreshSettings() {
   }
 }
 
-const REFRESH = { live: refreshLive, history: refreshHistory, insights: refreshInsights, settings: refreshSettings };
+let pending = null;
+
+function actionCard(action) {
+  const card = node("article", "action");
+  card.dataset.action = action.id;
+  card.append(node("h3", "", t(`action.${action.id}`)));
+  card.append(node("p", "muted", action.current === null ? t("changes.unset") : t("changes.current", { value: action.current })));
+  card.append(node("p", "muted", t(`action.${action.id}.note`)));
+  const row = node("div", "actions");
+  const select = document.createElement("select");
+  select.setAttribute("aria-label", t(`action.${action.id}`));
+  select.replaceChildren(...action.options.map((option) => new Option(option, option)));
+  if (action.options.includes(action.current)) select.value = action.current;
+  const button = node("button", "", t("changes.preview"));
+  button.type = "button";
+  button.disabled = action.options.length === 0;
+  button.addEventListener("click", () => previewChange(action.id, select.value));
+  row.append(select, button);
+  card.append(row);
+  return card;
+}
+
+function hideChangePreview() {
+  pending = null;
+  $("change-preview").hidden = true;
+}
+
+function showChangeMessage(message) {
+  $("change-message").textContent = message;
+}
+
+async function previewChange(actionId, value) {
+  hideChangePreview();
+  const plan = await window.pywebview.api.preview(actionId, value);
+  if (!plan.ok) {
+    showChangeMessage(t(`error.${plan.code}`));
+    return;
+  }
+  if (!plan.changed) {
+    showChangeMessage(t("changes.same"));
+    return;
+  }
+  showChangeMessage("");
+  pending = plan;
+  $("change-diff").textContent = plan.diff;
+  $("change-preview").hidden = false;
+  $("change-preview").scrollIntoView({ block: "nearest" });
+}
+
+async function confirmChange() {
+  if (!pending) return;
+  const plan = pending;
+  hideChangePreview();
+  const result = await window.pywebview.api.apply_action(plan.action, plan.new_value, plan.before_sha256);
+  showChangeMessage(result.ok ? t("changes.applied") : t(`error.${result.code}`));
+  refreshCurrent();
+}
+
+async function undoChange(changeId) {
+  const result = await window.pywebview.api.undo_action(changeId);
+  showChangeMessage(result.ok ? t("changes.undone") : t(`error.${result.code}`));
+  refreshCurrent();
+}
+
+function effectText(effect) {
+  if (!effect) return "—";
+  if (!effect.enough) return t("changes.effect_wait", { tasks: effect.tasks_after });
+  return t("changes.effect_figures", { before: usd(effect.before.cost_per_task), after: usd(effect.after.cost_per_task),
+    retries_before: localized(effect.before.retries_per_task), retries_after: localized(effect.after.retries_per_task) });
+}
+
+function changeRow(change) {
+  let last = change.undone_at ? t("changes.undone_label") : node("button", "", t("changes.undo"));
+  if (last instanceof Node) {
+    last.type = "button";
+    last.addEventListener("click", () => undoChange(change.id));
+    const td = document.createElement("td");
+    td.append(last);
+    last = td;
+  }
+  return row(dateTime(change.applied_at), t(`action.${change.action}`), `${change.old_value ?? "—"} → ${change.new_value}`,
+    effectText(change.effect), last);
+}
+
+async function refreshChanges() {
+  const [available, history] = await Promise.all([window.pywebview.api.actions(), window.pywebview.api.changes()]);
+  $("action-list").replaceChildren(...available.actions.map(actionCard));
+  $("change-rows").replaceChildren(...history.changes.map(changeRow));
+  $("change-none").hidden = history.changes.length > 0;
+  $("change-table").hidden = history.changes.length === 0;
+  setStatus("");
+}
+
+async function prepareChange(actionId, value) {
+  show("changes");
+  await previewChange(actionId, value);
+}
+
+const REFRESH = { live: refreshLive, history: refreshHistory, insights: refreshInsights, changes: refreshChanges, settings: refreshSettings };
 let current = "live";
 
 function refreshCurrent() {
@@ -292,7 +396,9 @@ async function start() {
   $("language").addEventListener("change", changeLanguage);
   $("history-days").addEventListener("change", refreshCurrent);
   $("history-project").addEventListener("change", refreshCurrent);
-  window.agentMeterRefresh = () => (current === "settings" ? undefined : refreshCurrent());
+  $("change-confirm").addEventListener("click", confirmChange);
+  $("change-cancel").addEventListener("click", hideChangePreview);
+  window.agentMeterRefresh = () => (current === "settings" || current === "changes" ? undefined : refreshCurrent());
   window.setInterval(window.agentMeterRefresh, FALLBACK_REFRESH_MS);
   refreshCurrent();
 }
