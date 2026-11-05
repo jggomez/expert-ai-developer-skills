@@ -26,8 +26,6 @@ Nothing runs on your computer or on a server of yours. Reviews run on GitHub Act
 5. **Open a pull request.** After a few minutes it gets inline comments and a summary with the model, tokens
    and estimated cost.
 
-To try the setup with no AI and no key, add `provider: fake` under `with:` for one run.
-
 ## Set up with Claude
 
 Claude needs one extra step, once, because Managed Agents stores the agent in your Anthropic account. Nothing
@@ -48,6 +46,27 @@ stays running on your computer.
 
 Delete `PR_REVIEW_PROVIDER` to go back to Gemini.
 
+## Set up with a Claude Pro or Max plan
+
+Use your subscription instead of paying per token. Reviews use the official
+[Claude Code Action](https://code.claude.com/docs/en/github-actions), and they count against your plan limits.
+
+1. Create a token on your computer:
+
+   ```bash
+   claude setup-token
+   ```
+
+2. Add it as the `CLAUDE_CODE_OAUTH_TOKEN` secret.
+3. Add the repository variable `PR_REVIEW_PROVIDER` with the value `claude-code`.
+
+The token belongs to the person who created it, so never share it. Each person or repository owner uses their
+own. For a team or organization, use an API key from the [Claude Console](https://platform.claude.com) in
+`api-key` instead.
+
+This provider reviews in one pass, without groups, reads the whole clean copy with read-only tools, and does not
+show a cost. The GitHub token also reaches this step, because the official Action needs one.
+
 ## Change the settings
 
 There are three ways to set a value. The first one found wins:
@@ -64,7 +83,7 @@ use the default. To set another input from a variable, add a line such as
 | Input | Environment variable | Default | Use |
 | --- | --- | --- | --- |
 | `api-key` | | | Gemini or Anthropic key, from a secret |
-| `provider` | `PR_REVIEW_PROVIDER` | `antigravity` | `antigravity`, `claude` or `fake` |
+| `provider` | `PR_REVIEW_PROVIDER` | `antigravity` | `antigravity`, `claude` or `claude-code` |
 | `model` | `PR_REVIEW_MODEL` | `gemini-3.6-flash` or `claude-opus-5-5` | Model to use |
 | `max-shards` | `PR_REVIEW_MAX_SHARDS` | `4` | Most groups for a large pull request, reviewed in parallel |
 | `fallback-model` | `PR_REVIEW_FALLBACK_MODEL` | `gemini-3.8-flash` | Model for the last attempt when the first one is overloaded (Antigravity) |
@@ -76,6 +95,7 @@ use the default. To set another input from a variable, add a line such as
 | `max-diff-chars` | `PR_REVIEW_MAX_DIFF_CHARS` | Built-in limit | Largest diff to review |
 | `rubric-file` | `PR_REVIEW_RUBRIC_FILE` | | File that replaces the criteria |
 | `instructions` | `PR_REVIEW_INSTRUCTIONS` | | Text added to the criteria |
+| `claude-code-oauth-token` | `CLAUDE_CODE_OAUTH_TOKEN` | | Token for `provider: claude-code` |
 | `claude-agent-id` | `CLAUDE_AGENT_ID` | | From `setup-claude` |
 | `claude-environment-id` | `CLAUDE_ENVIRONMENT_ID` | | From `setup-claude` |
 | `github-token` | | `github.token` | Keep the default |

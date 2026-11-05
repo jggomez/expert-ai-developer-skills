@@ -48,6 +48,16 @@ def test_rubric_asks_for_exploitable_security_problems_and_concrete_design_harm(
         assert term in rubric
 
 
+def test_rubric_names_code_smells_and_asks_for_concrete_harm():
+    # Act
+    rubric = load_rubric()
+
+    # Assert
+    for term in ("Code smells", "Long functions", "Feature envy", "Shotgun surgery", "Dead code"):
+        assert term in rubric
+    assert "report a smell only when" in rubric
+
+
 def test_rubric_covers_the_axes_and_forbids_style_comments():
     # Act
     rubric = load_rubric().lower()

@@ -6,9 +6,15 @@ from pathlib import Path
 
 import pytest
 
-from pr_reviewer.application.ports import DEFAULT_BUDGET_USD, ProviderOutput
+from pr_reviewer.application.ports import (
+    DEFAULT_BUDGET_USD,
+    ProviderError,
+    ProviderOutput,
+    ReviewRequest,
+)
 from pr_reviewer.domain.models import (
     DiffBundle,
+    Finding,
     ReviewReport,
     ReviewResult,
     ReviewUsage,
@@ -35,20 +41,34 @@ def make_repo(tmp_path: Path) -> tuple[Path, str, str]:
     return repo, base, git("rev-parse", "HEAD")
 
 
-def test_diff_then_fake_review_writes_a_valid_report(tmp_path: Path):
+class ScriptedProvider:
+    """Stands in for the AI at the provider port."""
+
+    name = "scripted"
+
+    def __init__(self, error: Exception | None = None):
+        self.error = error
+
+    def review(self, request: ReviewRequest) -> ProviderOutput:
+        if self.error:
+            raise self.error
+        finding = Finding(
+            file="app.py", line=3, severity="high", category="cost",
+            confidence="high", title="N+1", impact="One call per order",
+        )
+        return ProviderOutput(ReviewResult(findings=[finding]), ReviewUsage(), "scripted")
+
+
+def test_diff_then_review_writes_a_valid_report(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     # Arrange
     repo, base, head = make_repo(tmp_path)
-    fake = tmp_path / "fake.json"
-    fake.write_text(json.dumps({"findings": [{
-        "file": "app.py", "line": 3, "severity": "high", "category": "cost",
-        "confidence": "high", "title": "N+1", "impact": "One call per order",
-    }]}))
+    monkeypatch.setattr(cli, "load_provider", lambda _: ScriptedProvider())
     bundle_path, report_path = tmp_path / "diff.json", tmp_path / "findings.json"
 
     # Act
     diff_code = cli.main(["diff", "--repo", str(repo), "--base", base, "--head", head, "--output", str(bundle_path)])
     review_code = cli.main([
-        "review", "--provider", "fake", "--fake-findings", str(fake), "--repo", str(repo),
+        "review", "--provider", "antigravity", "--repo", str(repo),
         "--bundle", str(bundle_path), "--output", str(report_path), "--workspace", str(tmp_path / "clean"),
     ])
 
@@ -78,15 +98,16 @@ def test_empty_bundle_skips_the_provider(tmp_path: Path):
     assert (code, report.status, report.findings) == (0, "ok", [])
 
 
-def test_provider_failure_becomes_a_failed_report_and_exit_zero(tmp_path: Path):
+def test_provider_failure_becomes_a_failed_report_and_exit_zero(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     # Arrange
     repo, base, head = make_repo(tmp_path)
+    monkeypatch.setattr(cli, "load_provider", lambda _: ScriptedProvider(ProviderError("model down")))
     bundle_path, report_path = tmp_path / "diff.json", tmp_path / "findings.json"
     cli.main(["diff", "--repo", str(repo), "--base", base, "--head", head, "--output", str(bundle_path)])
 
     # Act
     code = cli.main([
-        "review", "--provider", "fake", "--fake-findings", str(tmp_path / "missing.json"), "--repo", str(repo),
+        "review", "--provider", "antigravity", "--repo", str(repo),
         "--bundle", str(bundle_path), "--output", str(report_path), "--workspace", str(tmp_path / "clean"),
     ])
 
@@ -184,7 +205,7 @@ def test_review_uses_the_rubric_from_the_base_commit_and_the_extra_instructions(
     seen: dict[str, object] = {}
 
     class SpyProvider:
-        name = "fake"
+        name = "spy"
 
         def review(self, request):
             seen["rubric"] = request.rubric
@@ -195,7 +216,7 @@ def test_review_uses_the_rubric_from_the_base_commit_and_the_extra_instructions(
 
     # Act
     code = cli.main([
-        "review", "--provider", "fake", "--repo", str(repo), "--bundle", str(bundle),
+        "review", "--provider", "antigravity", "--repo", str(repo), "--bundle", str(bundle),
         "--workspace", str(tmp_path / "ws"), "--output", str(tmp_path / "report.json"),
         "--base", base, "--rubric-file", "app.py",
     ])
@@ -207,15 +228,16 @@ def test_review_uses_the_rubric_from_the_base_commit_and_the_extra_instructions(
     assert seen["rubric"].endswith("All money uses Decimal.")
 
 
-def test_a_missing_rubric_is_a_failed_review_not_a_silent_default(tmp_path: Path):
+def test_a_missing_rubric_is_a_failed_review_not_a_silent_default(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     # Arrange
     repo, base, head = make_repo(tmp_path)
+    monkeypatch.setattr(cli, "load_provider", lambda _: ScriptedProvider())
     bundle, report = tmp_path / "bundle.json", tmp_path / "report.json"
     assert cli.main(["diff", "--repo", str(repo), "--base", base, "--head", head, "--output", str(bundle)]) == 0
 
     # Act
     code = cli.main([
-        "review", "--provider", "fake", "--repo", str(repo), "--bundle", str(bundle),
+        "review", "--provider", "antigravity", "--repo", str(repo), "--bundle", str(bundle),
         "--workspace", str(tmp_path / "ws"), "--output", str(report),
         "--base", base, "--rubric-file", "missing.md",
     ])
@@ -232,7 +254,7 @@ def test_settings_come_from_the_environment_and_empty_means_default(monkeypatch:
     monkeypatch.setenv("PR_REVIEW_MAX_TOKENS", "1234")
     monkeypatch.setenv("PR_REVIEW_MODEL", "my-model")
     monkeypatch.setenv("PR_REVIEW_BUDGET_USD", "")
-    arguments = ["review", "--provider", "fake", "--repo", "r", "--bundle", "b", "--output", "o", "--workspace", "w"]
+    arguments = ["review", "--provider", "antigravity", "--repo", "r", "--bundle", "b", "--output", "o", "--workspace", "w"]
 
     # Act
     parsed = cli.build_parser().parse_args(arguments)
@@ -246,10 +268,53 @@ def test_settings_come_from_the_environment_and_empty_means_default(monkeypatch:
 def test_a_command_line_flag_wins_over_the_environment(monkeypatch: pytest.MonkeyPatch):
     # Arrange
     monkeypatch.setenv("PR_REVIEW_MODEL", "from-env")
-    arguments = ["review", "--provider", "fake", "--repo", "r", "--bundle", "b", "--output", "o", "--workspace", "w"]
+    arguments = ["review", "--provider", "antigravity", "--repo", "r", "--bundle", "b", "--output", "o", "--workspace", "w"]
 
     # Act
     parsed = cli.build_parser().parse_args([*arguments, "--model", "from-flag"])
 
     # Assert
     assert parsed.model == "from-flag"
+
+
+def test_prepare_claude_code_leaves_only_a_clean_copy_and_collect_reads_the_output(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    # Arrange
+    repo, base, head = make_repo(tmp_path)
+    (repo / "CLAUDE.md").write_text("hostile instructions")
+    bundle, report, output_file = tmp_path / "bundle.json", tmp_path / "report.json", tmp_path / "out"
+    assert cli.main(["diff", "--repo", str(repo), "--base", base, "--head", head, "--output", str(bundle)]) == 0
+    monkeypatch.setenv("GITHUB_OUTPUT", str(output_file))
+    review_dir = tmp_path / "review"
+
+    # Act
+    cli.main([
+        "prepare-claude-code", "--repo", str(repo), "--bundle", str(bundle),
+        "--review-dir", str(review_dir), "--relative-dir", ".pr-reviewer/review", "--base", base,
+    ])
+    monkeypatch.setenv("PR_REVIEW_STRUCTURED_OUTPUT", '{"findings": []}')
+    cli.main(["collect-claude-code", "--bundle", str(bundle), "--outcome", "success", "--output", str(report)])
+
+    # Assert
+    written = output_file.read_text(encoding="utf-8")
+    assert not repo.exists()
+    assert not (review_dir / "repo" / "CLAUDE.md").exists()
+    assert (review_dir / "repo" / "app.py").exists()
+    assert "for o in orders" in (review_dir / "diff.patch").read_text(encoding="utf-8")
+    assert ".pr-reviewer/review/diff.patch" in written
+    assert "ready<<" in written
+    assert ReviewReport.model_validate_json(report.read_text(encoding="utf-8")).status == "ok"
+
+
+def test_collect_reports_a_run_that_produced_nothing(tmp_path: Path):
+    # Arrange
+    repo, base, head = make_repo(tmp_path)
+    bundle, report = tmp_path / "bundle.json", tmp_path / "report.json"
+    assert cli.main(["diff", "--repo", str(repo), "--base", base, "--head", head, "--output", str(bundle)]) == 0
+
+    # Act
+    cli.main(["collect-claude-code", "--bundle", str(bundle), "--outcome", "failure", "--output", str(report)])
+
+    # Assert
+    assert ReviewReport.model_validate_json(report.read_text(encoding="utf-8")).status == "failed"

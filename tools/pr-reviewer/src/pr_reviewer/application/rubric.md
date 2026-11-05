@@ -37,6 +37,14 @@ change safely. Silence is a good result: return no findings when nothing matters
 - Dependency inversion: business logic bound directly to a framework, database or vendor.
 - Logic that duplicates code already in the repository or the standard library.
 - Abstractions, layers or dependencies that the change does not need.
+- Code smells that make the change harder to understand or riskier to modify:
+  - Long functions, large classes and god objects that do too many things.
+  - Long parameter lists, and data clumps that belong in one type.
+  - Feature envy: a function that works mostly on another object's data.
+  - Shotgun surgery: one change that forces edits across many unrelated places.
+  - Primitive obsession, such as plain strings for statuses, money or identifiers.
+  - Deep nesting that early returns would flatten, and flag arguments that select behavior.
+  - Dead code, unused branches, and magic values whose meaning is not clear.
 
 **best_practice**: an established practice that prevents real defects is missing.
 - Swallowed exceptions, and errors that lose the cause or leave resources open.
@@ -60,6 +68,8 @@ change safely. Silence is a good result: return no findings when nothing matters
 - For security, trace the input from where an attacker controls it to where it does harm. If an
   existing check blocks the path, do not report it. Name the risk, not only a generic OWASP label.
 - For design, report concrete harm in this change. Never report a principle just because it was bent.
+- Treat smells as signals, not defects: report a smell only when it was introduced or worsened by this
+  change and you can name what it makes harder. Do not report size alone, and rate most smells medium or low.
 - Explain the impact with the scale at which it hurts, for example "one query per order line".
 - Estimate from the code. Never invent measurements, benchmark numbers or CVE identifiers.
 - Never repeat a secret value in a finding. Name the file and the kind of secret instead.

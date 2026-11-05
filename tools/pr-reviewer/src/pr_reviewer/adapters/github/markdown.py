@@ -84,6 +84,8 @@ def format_inline_comment(finding: Finding) -> str:
 def _usage_line(report: ReviewReport) -> str:
     usage = report.usage
     total = usage.input_tokens + usage.output_tokens
+    if report.provider == "claude-code":
+        return f"{report.model or report.provider} · billed to your Claude plan or API key"
     cost = estimate_cost(report.model, usage)
     price = f"~${cost:.3f}" if cost is not None else "cost unknown"
     return f"{report.model or report.provider} · {total:,} tokens · {price}"

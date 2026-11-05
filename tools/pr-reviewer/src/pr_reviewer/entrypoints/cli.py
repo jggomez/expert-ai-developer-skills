@@ -6,6 +6,8 @@ import argparse
 import json
 import logging
 import os
+import secrets
+import shutil
 import sys
 import traceback
 from collections.abc import Sequence
@@ -14,6 +16,11 @@ from typing import cast, get_args
 
 from pr_reviewer.adapters.filesystem.clean_workspace import build_clean_workspace
 from pr_reviewer.adapters.git.diff_reader import GitDiffReader
+from pr_reviewer.adapters.providers.claude_code import (
+    build_input,
+    report_from_output,
+    write_diff,
+)
 from pr_reviewer.application.ports import DEFAULT_BUDGET_USD, DEFAULT_MAX_TOKENS
 from pr_reviewer.application.prepare_diff import prepare_diff
 from pr_reviewer.application.prompt import compose_rubric
@@ -104,7 +111,7 @@ def run_review_command(args: argparse.Namespace) -> int:
         report = run_review(
             bundle,
             settings,
-            load_provider=lambda: load_provider(args.provider, args.fake_findings),
+            load_provider=lambda: load_provider(args.provider),
             build_workspace=lambda: build_clean_workspace(args.repo, args.workspace),
             load_rubric=lambda: _load_rubric(args),
         )
@@ -121,8 +128,48 @@ def _review_large_diff(
         rubric = _load_rubric(args)
     except Exception as error:
         return ReviewReport(status="failed", provider=settings.provider, error=f"{type(error).__name__}: {error}"[:300])
-    jobs = [ShardJob(shard, settings, workspace, rubric, args.fake_findings) for shard in shards]
+    jobs = [ShardJob(shard, settings, workspace, rubric) for shard in shards]
     return merge_reports(review_shards(jobs), shards)
+
+
+def _write_multiline_outputs(values: dict[str, str]) -> None:
+    with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+        for key, value in values.items():
+            delimiter = f"pr_reviewer_{secrets.token_hex(16)}"
+            output.write(f"{key}<<{delimiter}\n{value}\n{delimiter}\n")
+
+
+def run_prepare_claude_code(args: argparse.Namespace) -> int:
+    """Leave the agent a clean copy and remove the raw checkout, which holds instruction files."""
+    bundle = DiffBundle.model_validate_json(args.bundle.read_text(encoding="utf-8"))
+    if not bundle.files:
+        return 0
+    rubric = _load_rubric(args)
+    root = args.review_dir
+    build_clean_workspace(args.repo, root / "repo")
+    shutil.rmtree(args.repo)
+    write_diff(bundle, root / "diff.patch")
+    prepared = build_input(
+        bundle,
+        diff_path=str(args.relative_dir / "diff.patch"),
+        repo_path=str(args.relative_dir / "repo"),
+        model=args.model,
+        rubric=rubric,
+    )
+    _write_multiline_outputs({"prompt": prepared.prompt, "claude_args": prepared.claude_args, "ready": "true"})
+    return 0
+
+
+def run_collect_claude_code(args: argparse.Namespace) -> int:
+    bundle = DiffBundle.model_validate_json(args.bundle.read_text(encoding="utf-8"))
+    if bundle.files:
+        raw = os.environ.get("PR_REVIEW_STRUCTURED_OUTPUT", "")
+        report = report_from_output(raw, model=args.model, outcome=args.outcome)
+    else:
+        report = ReviewReport(status="ok", provider="claude-code")
+    args.output.write_text(report.model_dump_json(indent=2), encoding="utf-8")
+    print(f"Review {report.status}: {len(report.findings)} finding(s)")
+    return 0
 
 
 def run_publish(args: argparse.Namespace) -> int:
@@ -165,7 +212,7 @@ def build_parser() -> argparse.ArgumentParser:
     diff.set_defaults(func=run_diff)
 
     review = commands.add_parser("review", help="run the provider and write a report")
-    review.add_argument("--provider", required=True, choices=["antigravity", "claude", "fake"])
+    review.add_argument("--provider", required=True, choices=["antigravity", "claude"])
     review.add_argument("--repo", type=Path, required=True)
     review.add_argument("--bundle", type=Path, required=True)
     review.add_argument("--output", type=Path, required=True)
@@ -180,8 +227,25 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument("--base", default="", help="trusted commit to read --rubric-file from")
     review.add_argument("--rubric-file", default=_setting("RUBRIC_FILE"), help="repository path that replaces the rubric")
     review.add_argument("--instructions", default=_setting("INSTRUCTIONS"), help="text added to the rubric")
-    review.add_argument("--fake-findings", type=Path)
     review.set_defaults(func=run_review_command)
+
+    prepare = commands.add_parser("prepare-claude-code", help="prepare the input of the official Claude Code Action")
+    prepare.add_argument("--repo", type=Path, required=True)
+    prepare.add_argument("--bundle", type=Path, required=True)
+    prepare.add_argument("--review-dir", type=Path, required=True, help="absolute directory for the agent's files")
+    prepare.add_argument("--relative-dir", type=Path, required=True, help="the same directory, relative to the agent")
+    prepare.add_argument("--base", default="")
+    prepare.add_argument("--model", default=_setting("MODEL"))
+    prepare.add_argument("--rubric-file", default=_setting("RUBRIC_FILE"))
+    prepare.add_argument("--instructions", default=_setting("INSTRUCTIONS"))
+    prepare.set_defaults(func=run_prepare_claude_code)
+
+    collect = commands.add_parser("collect-claude-code", help="turn the Claude Code output into a report")
+    collect.add_argument("--bundle", type=Path, required=True)
+    collect.add_argument("--output", type=Path, required=True)
+    collect.add_argument("--outcome", default="")
+    collect.add_argument("--model", default=_setting("MODEL"))
+    collect.set_defaults(func=run_collect_claude_code)
 
     setup = commands.add_parser("setup-claude", help="create the Claude agent and environment, once")
     setup.set_defaults(func=run_setup_claude)

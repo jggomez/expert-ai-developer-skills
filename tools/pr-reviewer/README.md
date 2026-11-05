@@ -12,7 +12,7 @@ practices and cost. It only comments and never blocks a merge.
 | Security | OWASP Top 10 risks: broken access control, injection, XSS, SSRF, weak auth, exposed secrets |
 | Performance | N+1 queries, I/O in loops, avoidable complexity, blocking async code |
 | Scalability | Unbounded memory, missing pagination or timeouts, single-process state, race conditions |
-| Design | SOLID problems with concrete harm, duplicated logic, unnecessary abstractions |
+| Design | SOLID problems and code smells with concrete harm, duplicated logic, unnecessary abstractions |
 | Best practice | Swallowed errors, missing transactions, floats for money, breaking API changes |
 | Cost | Paid APIs in loops, `SELECT *` on billed warehouses, unbounded retries, oversized LLM prompts, verbose logs |
 
@@ -24,14 +24,15 @@ repository its comments are public too, so handle a serious finding before the p
 
 ## Providers
 
-| | Antigravity | Claude Managed Agents |
-| --- | --- | --- |
-| Agent runs in | Your GitHub runner | A sandbox hosted by Anthropic, with no network |
-| Agent can read | The whole repository (clean copy) | The diff and the changed files |
-| Default model | `gemini-3.6-flash` | `claude-opus-5-5` |
-| Spend limit | Tokens, with `max-tokens` | Dollars, with `budget-usd` |
-| Cost in the summary | Estimated from list prices | Reported by the API, including session time |
-| Status | SDK 0.1.x | Beta API |
+| | Antigravity | Claude Managed Agents | Claude Code |
+| --- | --- | --- | --- |
+| Agent runs in | Your GitHub runner | A sandbox hosted by Anthropic, with no network | Your GitHub runner |
+| Pays with | Gemini API key | Anthropic API key | Claude Pro or Max plan, or an API key |
+| Agent can read | The whole repository (clean copy) | The diff and the changed files | The whole repository (clean copy) |
+| Default model | `gemini-3.6-flash` | `claude-opus-5-5` | Claude Code default |
+| Spend limit | Tokens, with `max-tokens` | Dollars, with `budget-usd` | 20 turns, and your plan limits |
+| Cost in the summary | Estimated from list prices | Reported by the API, including session time | Not shown |
+| Status | SDK 0.1.x | Beta API | Official Action |
 
 ## Install
 
@@ -57,12 +58,13 @@ change the model without editing a file.
 | Input | Default | Description |
 | --- | --- | --- |
 | `api-key` | | Gemini or Anthropic API key |
-| `provider` | `antigravity` | `antigravity`, `claude`, or `fake` to try the setup with no AI and no key |
+| `provider` | `antigravity` | `antigravity`, `claude` or `claude-code` |
 | `model` | Provider default | Model to use |
 | `max-shards` | `4` | Most groups a large pull request is split into, reviewed in parallel |
 | `fallback-model` | `gemini-3.8-flash` | Model for the last attempt when the first one is overloaded (Antigravity) |
 | `max-tokens` | `200000` | Token budget per group of files (Antigravity) |
 | `budget-usd` | `1.00` | Hard spend limit for the whole review (Claude) |
+| `claude-code-oauth-token` | | Token from `claude setup-token`, to use a Claude plan with `provider: claude-code` |
 | `claude-agent-id` | | Printed by `pr-reviewer setup-claude` |
 | `claude-environment-id` | | Printed by `pr-reviewer setup-claude` |
 | `max-findings` | `10` | Maximum findings to publish |
@@ -117,7 +119,7 @@ src/pr_reviewer/
 │   ├── git/          Reads diffs
 │   ├── github/       REST client, Markdown rendering, pull request gateway
 │   ├── filesystem/   Builds the clean copy
-│   └── providers/    Antigravity, Claude and fake review providers
+│   └── providers/    Antigravity and Claude review providers
 └── entrypoints/   Command line and composition root
 ```
 
@@ -135,7 +137,7 @@ uv run pytest && uv run ruff check . && uv run mypy src
 | Tests | Purpose | Needs |
 | --- | --- | --- |
 | `tests/unit` | Domain rules, use cases with in-memory ports, and Markdown rendering | Nothing |
-| `tests/integration` | Adapters against git, the file system, a fake GitHub API and the real SDK classes | git, `antigravity` and `claude` extras |
+| `tests/integration` | Adapters against git, the file system, a simulated GitHub API and the real SDK classes | git, `antigravity` and `claude` extras |
 | `tests/action` | Security rules of `action.yml` and the workflows | Nothing |
 | `tests/architecture` | Dependency rule between layers | Nothing |
 

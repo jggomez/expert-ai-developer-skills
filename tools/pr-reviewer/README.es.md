@@ -12,7 +12,7 @@ prácticas y coste. Solo comenta y nunca bloquea el merge.
 | Seguridad | Riesgos del OWASP Top 10: control de acceso roto, inyección, XSS, SSRF, autenticación débil, secretos expuestos |
 | Rendimiento | Consultas N+1, I/O en bucles, complejidad evitable, bloqueos en código async |
 | Escalabilidad | Memoria sin límite, falta de paginación o timeouts, estado en un solo proceso, condiciones de carrera |
-| Diseño | Problemas SOLID con daño concreto, lógica duplicada, abstracciones innecesarias |
+| Diseño | Problemas SOLID y code smells con daño concreto, lógica duplicada, abstracciones innecesarias |
 | Buenas prácticas | Errores silenciados, transacciones ausentes, floats para dinero, cambios de API incompatibles |
 | Coste | APIs de pago en bucles, `SELECT *` en almacenes de datos facturados, reintentos sin tope, prompts de LLM enormes, logs excesivos |
 
@@ -25,14 +25,15 @@ de que el PR se difunda.
 
 ## Proveedores
 
-| | Antigravity | Claude Managed Agents |
-| --- | --- | --- |
-| Dónde corre el agente | Tu runner de GitHub | Un sandbox alojado por Anthropic, sin red |
-| Qué puede leer | Todo el repositorio (copia limpia) | El diff y los archivos cambiados |
-| Modelo por defecto | `gemini-3.6-flash` | `claude-opus-5-5` |
-| Tope de gasto | Tokens, con `max-tokens` | Dólares, con `budget-usd` |
-| Coste en el resumen | Estimado con precios de lista | Informado por la API, con tiempo de sesión |
-| Estado | SDK 0.1.x | API en beta |
+| | Antigravity | Claude Managed Agents | Claude Code |
+| --- | --- | --- | --- |
+| Dónde corre el agente | Tu runner de GitHub | Un sandbox alojado por Anthropic, sin red | Tu runner de GitHub |
+| Cómo se paga | Clave de Gemini | Clave de Anthropic | Plan Claude Pro o Max, o una clave de API |
+| Qué puede leer | Todo el repositorio (copia limpia) | El diff y los archivos cambiados | Todo el repositorio (copia limpia) |
+| Modelo por defecto | `gemini-3.6-flash` | `claude-opus-5-5` | El de Claude Code |
+| Tope de gasto | Tokens, con `max-tokens` | Dólares, con `budget-usd` | 20 turnos, y los límites de tu plan |
+| Coste en el resumen | Estimado con precios de lista | Informado por la API, con tiempo de sesión | No se muestra |
+| Estado | SDK 0.1.x | API en beta | Action oficial |
 
 ## Instalación
 
@@ -60,12 +61,13 @@ puedes cambiar el modelo sin editar ningún archivo.
 | Entrada | Por defecto | Descripción |
 | --- | --- | --- |
 | `api-key` | | Clave de API de Gemini o de Anthropic |
-| `provider` | `antigravity` | `antigravity`, `claude`, o `fake` para probar la instalación sin IA ni clave |
+| `provider` | `antigravity` | `antigravity`, `claude` o `claude-code` |
 | `model` | El del proveedor | Modelo que se usa |
 | `max-shards` | `4` | Máximo de grupos en que se divide un PR grande, revisados en paralelo |
 | `fallback-model` | `gemini-3.8-flash` | Modelo del último intento si el primero está saturado (Antigravity) |
 | `max-tokens` | `200000` | Tope de tokens por grupo de archivos (Antigravity) |
 | `budget-usd` | `1.00` | Tope de gasto de toda la revisión (Claude) |
+| `claude-code-oauth-token` | | Token de `claude setup-token`, para usar un plan de Claude con `provider: claude-code` |
 | `claude-agent-id` | | Lo imprime `pr-reviewer setup-claude` |
 | `claude-environment-id` | | Lo imprime `pr-reviewer setup-claude` |
 | `max-findings` | `10` | Máximo de hallazgos publicados |
@@ -119,7 +121,7 @@ src/pr_reviewer/
 │   ├── git/          Lee diffs
 │   ├── github/       Cliente REST, renderizado Markdown, gateway del pull request
 │   ├── filesystem/   Crea la copia limpia
-│   └── providers/    Proveedores de revisión Antigravity, Claude y fake
+│   └── providers/    Proveedores de revisión Antigravity y Claude
 └── entrypoints/   Línea de comandos y raíz de composición
 ```
 

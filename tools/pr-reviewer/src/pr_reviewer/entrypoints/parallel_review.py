@@ -25,7 +25,6 @@ class ShardJob:
     settings: ReviewSettings
     workspace: Path
     rubric: str | None
-    fake_findings: Path | None = None
 
 
 def review_shard(job: ShardJob) -> ReviewReport:
@@ -33,7 +32,7 @@ def review_shard(job: ShardJob) -> ReviewReport:
     return run_review(
         job.shard,
         job.settings,
-        load_provider=lambda: load_provider(job.settings.provider, job.fake_findings),
+        load_provider=lambda: load_provider(job.settings.provider),
         build_workspace=lambda: job.workspace,
         load_rubric=lambda: job.rubric,
     )
