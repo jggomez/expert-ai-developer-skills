@@ -27,8 +27,13 @@ def run_app(home: AppHome) -> None:
             window.evaluate_js("window.agentMeterRefresh && window.agentMeterRefresh()")
 
         watcher = TranscriptWatcher(watched_folders(), refresh)
-        watcher.start()
+
+        def catch_up() -> None:
+            """Sessions that ran while the app was closed, and everything on the very first start."""
+            refresh()
+            watcher.start()
+
         try:
-            webview.start()
+            webview.start(catch_up)
         finally:
             watcher.stop()

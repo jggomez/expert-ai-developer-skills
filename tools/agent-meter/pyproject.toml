@@ -26,7 +26,7 @@ classifiers = [
   "Topic :: Utilities",
   "Typing :: Typed",
 ]
-dependencies = ["duckdb>=1.1,<2", "PyYAML>=6.0", "pytz>=2023.3"]
+dependencies = ["duckdb>=1.1,<2", "PyYAML>=6.0", "pytz>=2023.3", "tzdata>=2024.1; sys_platform == 'win32'"]
 
 [project.optional-dependencies]
 app = ["pywebview>=5,<7"]
