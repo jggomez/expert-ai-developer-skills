@@ -265,7 +265,8 @@ and needs the `app` extra (see [§4](#4-install)). Tested on macOS; Windows supp
 
 - **Language:** choose English or Español in the header. The choice is saved as `language` and also applies to budget
   alerts. The CLI and the HTML report stay in English.
-- **Live updates:** the app watches your transcript folders and collects when they change.
+- **Live updates:** the app watches your transcript folders and collects when they change, at most once every 30 seconds
+  after the previous collect ends, so hooks and the CLI can reach the store. Changes in between are picked up by the next one.
 - **While a collect runs:** the store is locked, so the app keeps showing the last saved figures, says so in the header
   and refreshes when the collect ends. A large collect can take over a minute.
 - **Security:** there is no local server and no open port.

@@ -193,3 +193,77 @@ def test_a_broken_saved_file_does_not_stop_the_app(home: AppHome) -> None:
     (home.state_dir / "app-cache.json").write_text("not json")
 
     assert "today_usd" in api(home).overview()
+
+
+class Clock:
+    def __init__(self) -> None:
+        self.now = 1000.0
+
+    def __call__(self) -> float:
+        return self.now
+
+
+def gapped_watcher(folder: Path, runs: list[int], clock: Clock) -> TranscriptWatcher:
+    return TranscriptWatcher([folder], lambda: runs.append(1), min_gap_s=30.0, clock=clock)
+
+
+def change(folder: Path, name: str) -> None:
+    (folder / name).write_text("{}")
+
+
+def test_a_second_change_waits_for_the_gap_and_is_not_lost(tmp_path: Path) -> None:
+    runs: list[int] = []
+    clock = Clock()
+    watcher = gapped_watcher(tmp_path, runs, clock)
+
+    change(tmp_path, "a.jsonl")
+    assert watcher.poll_once() is True
+    change(tmp_path, "b.jsonl")
+    clock.now += 29
+    assert watcher.poll_once() is False
+    assert len(runs) == 1
+
+    clock.now += 1
+    assert watcher.poll_once() is True
+    assert len(runs) == 2
+
+
+def test_the_gap_counts_from_the_end_of_a_slow_collect(tmp_path: Path) -> None:
+    clock = Clock()
+    runs: list[int] = []
+
+    def slow_collect() -> None:
+        runs.append(1)
+        clock.now += 80
+
+    watcher = TranscriptWatcher([tmp_path], slow_collect, min_gap_s=30.0, clock=clock)
+    change(tmp_path, "a.jsonl")
+    watcher.poll_once()
+    change(tmp_path, "b.jsonl")
+    clock.now += 29
+
+    assert watcher.poll_once() is False
+
+
+def test_the_gap_still_applies_after_a_failed_collect(tmp_path: Path) -> None:
+    clock = Clock()
+
+    def failing_collect() -> None:
+        raise OSError("disk")
+
+    watcher = TranscriptWatcher([tmp_path], failing_collect, min_gap_s=30.0, clock=clock)
+    change(tmp_path, "a.jsonl")
+    assert watcher.poll_once() is True
+    change(tmp_path, "b.jsonl")
+
+    assert watcher.poll_once() is False
+
+
+def test_nothing_runs_when_nothing_changed(tmp_path: Path) -> None:
+    runs: list[int] = []
+    clock = Clock()
+    watcher = gapped_watcher(tmp_path, runs, clock)
+    clock.now += 100
+
+    assert watcher.poll_once() is False
+    assert runs == []
