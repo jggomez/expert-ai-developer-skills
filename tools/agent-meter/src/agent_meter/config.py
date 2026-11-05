@@ -94,6 +94,18 @@ class BigQueryConfig:
     looker_template_id: str = ""
 
 
+@dataclass(frozen=True, slots=True)
+class BudgetConfig:
+    daily_usd: Decimal | None = None
+    monthly_usd: Decimal | None = None
+    plan_monthly_usd: Decimal | None = None  # what the subscription costs, to compare with list prices
+    projects: Mapping[str, Decimal] = field(default_factory=dict)  # monthly limit per project id
+
+    @property
+    def active(self) -> bool:
+        return self.daily_usd is not None or self.monthly_usd is not None or bool(self.projects)
+
+
 # Antigravity often omits the model id; such calls are priced (flagged inferred) as this.
 ANTIGRAVITY_DEFAULT_MODEL: Final = "gemini-3.8-flash"
 _ANTIGRAVITY_HOSTS: Final = frozenset(
@@ -126,6 +138,7 @@ class Config:
     usd_rate: Decimal | None = None  # display units per 1 USD
     hosts: Mapping[Host, HostConfig] = field(default_factory=_default_hosts)
     bigquery: BigQueryConfig = field(default_factory=BigQueryConfig)
+    budget: BudgetConfig = field(default_factory=BudgetConfig)
 
     def host(self, host: Host) -> HostConfig:
         return self.hosts.get(host) or _default_host_config(host)
@@ -251,6 +264,12 @@ _BQ_KEYS: Final[dict[str, Coercer]] = {
     "anonymize_projects": _bool,
     "looker_template_id": _str,
 }
+_BUDGET_KEYS: Final[dict[str, Coercer]] = {
+    "daily_usd": _rate,
+    "monthly_usd": _rate,
+    "plan_monthly_usd": _rate,
+}
+_BUDGET_PROJECT_KEY: Final = "projects."
 
 
 # ----------------------------------------------------------------------------- key addressing
@@ -258,7 +277,7 @@ _BQ_KEYS: Final[dict[str, Coercer]] = {
 
 @dataclass(frozen=True, slots=True)
 class _Key:
-    section: Literal["general", "currency", "host", "bigquery"]
+    section: Literal["general", "currency", "host", "bigquery", "budget"]
     name: str
     host: Host | None = None
 
@@ -271,11 +290,17 @@ class _Key:
         if self.section == "host":
             assert self.host is not None
             return f"hosts.{self.host.value}.{self.name}"
+        if self.section == "budget":
+            return f"budget.{self.name}"
         return f"bigquery.{self.name}"
 
 
 def _parse_key(dotted: str) -> _Key:
     parts = dotted.strip().split(".")
+    if parts[0] == "budget" and len(parts) >= 2:
+        name = ".".join(parts[1:])
+        if name in _BUDGET_KEYS or (name.startswith(_BUDGET_PROJECT_KEY) and name != _BUDGET_PROJECT_KEY):
+            return _Key("budget", name)
     if parts[0] == "general" and len(parts) == 2:
         parts = parts[1:]
     if parts[0] == "sinks" and len(parts) == 3 and parts[1] == "bigquery":
@@ -301,6 +326,15 @@ def _parse_key(dotted: str) -> _Key:
     raise ConfigError(f"unknown config key {dotted!r} (see 'agent-meter config show')")
 
 
+def _assign_budget(budget: BudgetConfig, key: _Key, raw: object) -> BudgetConfig:
+    if key.name in _BUDGET_KEYS:
+        return replace(budget, **{key.name: _BUDGET_KEYS[key.name](raw, key.dotted)})
+    project = key.name.removeprefix(_BUDGET_PROJECT_KEY)
+    limit = _rate(raw, key.dotted)
+    projects = {pid: value for pid, value in budget.projects.items() if pid != project}
+    return replace(budget, projects=projects if limit is None else {**projects, project: limit})
+
+
 def _assign(cfg: Config, key: _Key, raw: object) -> Config:
     if key.section == "general":
         return replace(cfg, **{key.name: _GENERAL[key.name](raw, key.dotted)})
@@ -313,6 +347,8 @@ def _assign(cfg: Config, key: _Key, raw: object) -> Config:
         current = hosts.get(key.host) or _default_host_config(key.host)
         hosts[key.host] = replace(current, **{key.name: _HOST_KEYS[key.name](raw, key.dotted)})
         return replace(cfg, hosts=hosts)
+    if key.section == "budget":
+        return replace(cfg, budget=_assign_budget(cfg.budget, key, raw))
     bq = replace(cfg.bigquery, **{key.name: _BQ_KEYS[key.name](raw, key.dotted)})
     return replace(cfg, bigquery=bq)
 
@@ -325,6 +361,10 @@ def _read(cfg: Config, key: _Key) -> object:
     if key.section == "host":
         assert key.host is not None
         return getattr(cfg.host(key.host), key.name)
+    if key.section == "budget":
+        if key.name in _BUDGET_KEYS:
+            return getattr(cfg.budget, key.name)
+        return cfg.budget.projects.get(key.name.removeprefix(_BUDGET_PROJECT_KEY))
     return getattr(cfg.bigquery, key.name)
 
 
@@ -354,6 +394,8 @@ def config_items(cfg: Config) -> list[tuple[str, str]]:
     keys += [_Key("currency", name) for name in _CURRENCY_KEYS]
     keys += [_Key("host", name, host) for host in Host for name in _HOST_KEYS]
     keys += [_Key("bigquery", name) for name in _BQ_KEYS]
+    keys += [_Key("budget", name) for name in _BUDGET_KEYS]
+    keys += [_Key("budget", f"{_BUDGET_PROJECT_KEY}{pid}") for pid in sorted(cfg.budget.projects)]
     return [(k.dotted, _display(_read(cfg, k))) for k in keys]
 
 
@@ -393,7 +435,7 @@ def load_config(home: AppHome) -> Config:
         doc = tomllib.loads(home.config.read_text(encoding="utf-8"))
     except tomllib.TOMLDecodeError as exc:
         raise ConfigError(f"config.toml is not valid TOML: {exc}") from exc
-    unknown = set(doc) - {"general", "currency", "hosts", "sinks"}
+    unknown = set(doc) - {"general", "currency", "hosts", "sinks", "budget"}
     if unknown:
         raise ConfigError(f"config.toml: unknown section(s) {sorted(unknown)}")
     cfg = _apply_table(cfg, _section(doc, "general"), _GENERAL, lambda n: _Key("general", n), "general")
@@ -413,7 +455,16 @@ def load_config(home: AppHome) -> Config:
     if unknown_sinks:
         raise ConfigError(f"config.toml: unknown sink(s) {sorted(unknown_sinks)}")
     bq_table = _section(sinks, "bigquery")
-    return _apply_table(cfg, bq_table, _BQ_KEYS, lambda n: _Key("bigquery", n), "sinks.bigquery")
+    cfg = _apply_table(cfg, bq_table, _BQ_KEYS, lambda n: _Key("bigquery", n), "sinks.bigquery")
+    return _load_budget(cfg, _section(doc, "budget"))
+
+
+def _load_budget(cfg: Config, table: Mapping[str, Any]) -> Config:
+    limits = {name: value for name, value in table.items() if name != "projects"}
+    cfg = _apply_table(cfg, limits, _BUDGET_KEYS, lambda n: _Key("budget", n), "budget")
+    for project, raw in _section(table, "projects").items():
+        cfg = _assign(cfg, _Key("budget", f"{_BUDGET_PROJECT_KEY}{project}"), raw)
+    return cfg
 
 
 def _toml_value(value: object) -> str:
@@ -443,6 +494,11 @@ def save_config(cfg: Config, home: AppHome) -> None:
     out += _lines(
         "sinks.bigquery", [(f.name, getattr(cfg.bigquery, f.name)) for f in fields(BigQueryConfig)]
     )
+    out += _lines("budget", [(name, getattr(cfg.budget, name)) for name in _BUDGET_KEYS])
+    if cfg.budget.projects:
+        out += _lines(
+            "budget.projects", [(json.dumps(pid), limit) for pid, limit in sorted(cfg.budget.projects.items())]
+        )
     atomic_write_text(home.config, "\n".join(out))
 
 

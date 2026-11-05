@@ -289,6 +289,18 @@ def _cmd_insights(ctx: Ctx, ns: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _cmd_budget(ctx: Ctx, ns: argparse.Namespace) -> int:
+    from zoneinfo import ZoneInfo
+
+    from agent_meter.budgets import budget_document, budget_status, render_budget
+
+    as_of = _date(ns.as_of, "--as-of") or datetime.now(ZoneInfo(ctx.cfg.timezone)).date()
+    with _reader(ctx) as store:
+        status = budget_status(store, ctx.cfg.budget, as_of)
+    print(json.dumps(budget_document(status), indent=2, sort_keys=True) if ns.json else render_budget(status))
+    return EXIT_OK
+
+
 def _scheduled_sync(ctx: Ctx) -> None:
     """``collect --scheduled`` also syncs the cloud sink; failures never fail the local collect."""
     try:
@@ -1168,6 +1180,11 @@ def _add_ingest_commands(sub: argparse._SubParsersAction[argparse.ArgumentParser
     p.add_argument("--as-of", help="last day of the period, YYYY-MM-DD; repeats a past result exactly")
     _json_flag(p)
     p.set_defaults(handler=_cmd_insights)
+
+    p = sub.add_parser("budget", help="spending against your limits, month-end forecast and plan value")
+    p.add_argument("--as-of", help="day to report on, YYYY-MM-DD")
+    _json_flag(p)
+    p.set_defaults(handler=_cmd_budget)
 
     p = sub.add_parser("tasks", help="per-task rollups with every subagent")
     p.add_argument("--last", nargs="?", type=int, const=1, help="the N most recent tasks (default 1)")
