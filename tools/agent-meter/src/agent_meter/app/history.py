@@ -28,6 +28,15 @@ GROUP BY c.local_date, c.local_month, c.project_id, p.display_name, c.host, c.se
 """
 
 
+MODEL_LATENCY_SQL: Final = """
+SELECT host, COALESCE(priced_model, model_label, model) AS model, (host = 'claude-code') AS estimated, COUNT(*) AS calls,
+       quantile_cont(latency_ms, 0.5) AS p50_ms, quantile_cont(latency_ms, 0.95) AS p95_ms
+FROM v_calls
+WHERE latency_ms IS NOT NULL AND local_date >= ? AND (? IS NULL OR project_id = ?)
+GROUP BY 1, 2, 3 ORDER BY calls DESC, model LIMIT 12
+"""
+
+
 def _money(value: Decimal) -> str:
     return str(value.quantize(Decimal("0.01")))
 
@@ -133,4 +142,11 @@ def build_history(rows: Sequence[Row], *, as_of: date, days: int = 0, project_id
 
 
 def load_history(store: Store, *, as_of: date, days: int = 0, project_id: str | None = None) -> dict[str, Any]:
-    return build_history(store.query(HISTORY_SQL), as_of=as_of, days=days, project_id=project_id)
+    document = build_history(store.query(HISTORY_SQL), as_of=as_of, days=days, project_id=project_id)
+    start = as_of - timedelta(days=days - 1) if days > 0 else date.min
+    document["model_latency"] = [
+        {"host": str(row["host"]), "model": str(row["model"]), "estimated": bool(row["estimated"]), "calls": row["calls"],
+         "p50_ms": round(float(str(row["p50_ms"]))), "p95_ms": round(float(str(row["p95_ms"])))}
+        for row in store.query(MODEL_LATENCY_SQL, [start, project_id, project_id])
+    ]
+    return document

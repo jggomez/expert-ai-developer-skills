@@ -30,6 +30,8 @@ ALLOWED_FILES = {
     "skills/README.md",
     "plugins/README.md",
     ".claude-plugin/marketplace.json",
+    ".github/workflows/agent-meter-ci.yml",
+    ".github/workflows/agent-meter-desktop.yml",
     "scripts/sync_plugin_skills.py",
     "scripts/sync_agents.py",
     "tests/structure/test_agent_metrics_plugin.py",

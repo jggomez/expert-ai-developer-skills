@@ -113,7 +113,7 @@ class CallRecord:
     model: str | None; model_label: str | None
     input_tokens: int | None; output_tokens: int | None; thinking_tokens: int | None
     cache_write_5m_tokens: int | None; cache_write_1h_tokens: int | None; cache_read_tokens: int | None
-    latency_ms: int | None
+    latency_ms: int | None  # Antigravity: measured. Claude Code: estimated from timestamps
     speed: str | None; inference_geo: str | None
     is_error: bool
     source_format: str               # e.g. "cc-2.1" | "agy-gen-v1" | "agy-transcript-v1"
@@ -572,6 +572,7 @@ Report, summary, `doctor` and the sink read **only** these views. The reference 
 | `v_agent_runs` | agent run | `agent_run_id, task_id, session_id, host, project_id, parent_agent_run_id, agent_type, spawn_depth, started_at, ended_at, active_ms, status, errors, files_touched, test_runs, test_failures, tools_untracked, calls, cost_usd, unpriced_calls, tool_calls` |
 | `v_agent_type_cost` | (task_id, agent_type) | `task_id, agent_type, runs, calls, cost_usd, unpriced_calls, active_ms, tool_calls, files_touched, test_runs, test_failures, cost_share` |
 | `v_tool_counts` | (agent_run_id, tool_name) | `agent_run_id, task_id, tool_name, calls, errors` |
+| `v_model_latency` | (local_month, host, model) | `local_month, host, model, estimated, calls, p50_ms, p95_ms`; `estimated` is true for Claude Code, whose latency comes from timestamps |
 | `v_task_latency` | (local_month, project_id, host) | `local_month, project_id, host, tasks, p50_ms, p95_ms, p99_ms` (`quantile_cont` / `PERCENTILE_CONT` over `v_tasks.latency_ms`, status ≠ in_progress) |
 | `v_dev_hours` | (project_id, local_date) | `project_id, local_date, local_month, hours, source` (`manual` day > `manual` month pro-rata is **not** applied: a month override replaces the month total; day override replaces that day) |
 | `v_client_month` | (local_month, client, project_id) | `local_month, client, project_id, display_name, billing_model, rate_currency, cost_usd, unpriced_calls, dev_hours, billable_value, billable_usd, ai_cost_ratio` (`ai_cost_ratio` NULL when no client/rate; fixed = cumulative cost ÷ fixed_price) |

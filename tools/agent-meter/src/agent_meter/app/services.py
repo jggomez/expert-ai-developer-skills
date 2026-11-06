@@ -229,7 +229,7 @@ class AppApi:
         observed = self._observed_models()
         return {"actions": [
             {"id": action.id, "target": action.target, "current": actuators.current_value(action),
-             "options": list(action.values or observed)}
+             "options": list(actuators.action_options(action, observed))}
             for action in actuators.ACTIONS.values()
         ]}
 

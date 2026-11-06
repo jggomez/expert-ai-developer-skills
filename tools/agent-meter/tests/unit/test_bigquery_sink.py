@@ -64,7 +64,7 @@ NOW = datetime(2026, 10, 16, 15, 0, 0, tzinfo=UTC)
 SALT = bytes(range(32))
 CONTRACT_VIEWS = (
     "v_calls", "v_daily_project_cost", "v_sessions", "v_tasks", "v_agent_runs",
-    "v_agent_type_cost", "v_tool_counts", "v_task_latency", "v_dev_hours", "v_client_month",
+    "v_agent_type_cost", "v_tool_counts", "v_task_latency", "v_model_latency", "v_dev_hours", "v_client_month",
     "v_unpriced_models", "v_untracked", "v_health",
 )
 

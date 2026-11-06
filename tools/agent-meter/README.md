@@ -258,11 +258,21 @@ The app has no paid signature, so your system warns you the first time:
 
 | System | File | How to open it |
 | :--- | :--- | :--- |
-| Apple Silicon Mac | `agent-meter-*-mac-arm64.dmg` | Drag the app to Applications and open it. Click **Done** on the warning, go to **System Settings → Privacy & Security**, scroll to the agent-meter message and click **Open Anyway** |
-| Intel Mac | `agent-meter-*-mac-x64.dmg` | Same as above |
+| Mac with Apple Silicon (M1 or later) | `agent-meter-*-mac-arm64.dmg` | Drag the app to Applications and open it. Click **Done** on the warning, go to **System Settings → Privacy & Security**, scroll to the agent-meter message and click **Open Anyway** |
 | Windows 10 or 11 | `agent-meter-*-windows-x64.exe` | If SmartScreen appears, click **More info → Run anyway**. It needs WebView2, which Windows 11 already includes |
 
-If macOS shows no **Open Anyway**, run `xattr -dr com.apple.quarantine /Applications/agent-meter.app`.
+If macOS shows no **Open Anyway**, run `xattr -dr com.apple.quarantine /Applications/agent-meter.app`. Intel Macs can use the
+command line and `agent-meter app`; there is no installer for them.
+
+**With the app closed:** the app and the command line share the same data, and neither needs the other to be open.
+
+| With the app closed | Command line installed with `agent-meter setup` | Only the downloaded app |
+| :--- | :--- | :--- |
+| Commands such as `report`, `budget` and `insights` | Yes | Not available |
+| Notice when a task or session ends | Yes, through the hooks | No |
+| Budget alerts | Yes, on each collect | No |
+| Scheduled collection | Yes, every 15 minutes | No; everything is read when you open the app |
+| Automatic rules | No, they need the app open | No, they need the app open |
 
 ![Live screen with today's spending, budgets and active sessions](docs/images/app-live.png)
 
@@ -271,7 +281,7 @@ If macOS shows no **Open Anyway**, run `xattr -dr com.apple.quarantine /Applicat
 | **Live** | Today, this month, month-end forecast, plan value, budgets and the sessions active in the last 15 minutes |
 | **History** | Spending by day, month, project and session, filtered by period and project |
 | **Insights** | Where to cut: measured findings, estimated savings and what to do next |
-| **Changes** | Change the model, effort or compaction of your AI tools, with a preview, undo and before and after figures |
+| **Changes** | Change the model, effort, compaction or status line of your AI tools, with a preview, undo and before and after figures, plus automatic rules |
 | **Projects** | Clients, billing, rates, tags and manual hours, without editing `projects.yaml` |
 | **Settings** | Budgets, notifications, a manual collect, an update check and the `doctor` diagnostics |
 
@@ -295,6 +305,12 @@ If macOS shows no **Open Anyway**, run `xattr -dr com.apple.quarantine /Applicat
   menu includes the month, budget alerts and options to open the app or quit.
 - **Updates:** **Check for updates**, in Settings, contacts GitHub only when you click it. If there is a new version, it opens
   the download page. It never installs anything by itself.
+- **Model response time:** History shows P50 and P95 by model. Antigravity records them. Claude Code does not, so its figures
+  are estimates: from the last input to the last line of the answer. Over 1,065 real tasks they never passed the time Claude Code
+  reports for the turn. Sessions collected before this version need `agent-meter collect --full` once.
+- **Status line:** on the Changes screen you can add spending to Claude Code's status line, such as
+  `$1.23 session · $46.20 today · 38% context`. It runs `agent-meter statusline`, so it needs the command line. The session
+  figure comes from Claude Code, and today's figure from the last collect. A status line you already had comes back on undo.
 - **Security:** there is no local server and no open port.
 
 #### What the Changes screen can edit
@@ -374,7 +390,7 @@ What happens:
 | Fact tables (monthly partitions) | `raw_llm_calls`, `raw_tasks`, `raw_agent_runs`, `raw_sessions`, `raw_tool_uses` |
 | Reference tables | `projects`, `pricing`, `pricing_aliases`, `host_defaults`, `dev_hours_manual`, `dev_hours_derived`, `task_tags`, `tag_history`, `settings`, `untracked` |
 | Deduplicated views | `llm_calls`, `tasks`, `agent_runs`, `sessions`, `tool_uses` |
-| **Views for dashboards** | `v_daily_project_cost`, `v_calls`, `v_sessions`, `v_tasks`, `v_agent_runs`, `v_agent_type_cost`, `v_task_latency`, `v_tool_counts`, `v_client_month`, `v_dev_hours`, `v_unpriced_models`, `v_untracked`, `v_health` |
+| **Views for dashboards** | `v_daily_project_cost`, `v_calls`, `v_sessions`, `v_tasks`, `v_agent_runs`, `v_agent_type_cost`, `v_task_latency`, `v_model_latency`, `v_tool_counts`, `v_client_month`, `v_dev_hours`, `v_unpriced_models`, `v_untracked`, `v_health` |
 
 Only numbers and metadata are uploaded (tokens, times, model ids, project/client names, agent types, tool names and
 counts). Set `agent-meter config set bigquery.anonymize_projects true` to upload project, client, remote and tag names as

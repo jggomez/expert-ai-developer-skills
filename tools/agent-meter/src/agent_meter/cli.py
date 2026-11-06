@@ -289,6 +289,13 @@ def _cmd_insights(ctx: Ctx, ns: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _cmd_statusline(ctx: Ctx, _ns: argparse.Namespace) -> int:
+    from agent_meter.statusline import render_statusline
+
+    print(render_statusline(sys.stdin.read(), ctx.home, ctx.cfg))
+    return EXIT_OK
+
+
 def _cmd_budget(ctx: Ctx, ns: argparse.Namespace) -> int:
     from zoneinfo import ZoneInfo
 
@@ -1168,6 +1175,9 @@ def _add_ingest_commands(sub: argparse._SubParsersAction[argparse.ArgumentParser
 
     p = sub.add_parser("app", help="open the desktop app")
     p.set_defaults(handler=_cmd_app)
+
+    p = sub.add_parser("statusline", help="one line for the Claude Code status bar; reads its JSON from stdin")
+    p.set_defaults(handler=_cmd_statusline)
 
     p = sub.add_parser("budget", help="spending against your limits, month-end forecast and plan value")
     p.add_argument("--as-of", help="day to report on, YYYY-MM-DD")

@@ -258,11 +258,21 @@ La app no tiene firma de pago, así que el sistema te avisa la primera vez:
 
 | Sistema | Archivo | Cómo abrirla |
 | :--- | :--- | :--- |
-| Mac con Apple Silicon | `agent-meter-*-mac-arm64.dmg` | Arrastra la app a Aplicaciones y ábrela. Pulsa **Listo** en el aviso, ve a **Ajustes del Sistema → Privacidad y seguridad**, baja hasta el mensaje de agent-meter y pulsa **Abrir igualmente** |
-| Mac con Intel | `agent-meter-*-mac-x64.dmg` | Igual que arriba |
+| Mac con Apple Silicon (M1 o posterior) | `agent-meter-*-mac-arm64.dmg` | Arrastra la app a Aplicaciones y ábrela. Pulsa **Listo** en el aviso, ve a **Ajustes del Sistema → Privacidad y seguridad**, baja hasta el mensaje de agent-meter y pulsa **Abrir igualmente** |
 | Windows 10 u 11 | `agent-meter-*-windows-x64.exe` | Si aparece SmartScreen, pulsa **Más información → Ejecutar de todas formas**. Necesita WebView2, que ya viene en Windows 11 |
 
-Si macOS no muestra **Abrir igualmente**, ejecuta `xattr -dr com.apple.quarantine /Applications/agent-meter.app`.
+Si macOS no muestra **Abrir igualmente**, ejecuta `xattr -dr com.apple.quarantine /Applications/agent-meter.app`. Los Mac con
+Intel pueden usar la línea de comandos y `agent-meter app`; no hay instalador para ellos.
+
+**Con la app cerrada:** la app y la línea de comandos comparten los mismos datos, y ninguna necesita que la otra esté abierta.
+
+| Con la app cerrada | Línea de comandos instalada con `agent-meter setup` | Solo la app descargada |
+| :--- | :--- | :--- |
+| Comandos como `report`, `budget` e `insights` | Sí | No disponibles |
+| Aviso al terminar una tarea o sesión | Sí, con los hooks | No |
+| Alertas de presupuesto | Sí, en cada recolección | No |
+| Recolección programada | Sí, cada 15 minutos | No; todo se lee al abrir la app |
+| Reglas automáticas | No, necesitan la app abierta | No, necesitan la app abierta |
 
 ![Pantalla En vivo con el gasto de hoy, presupuestos y sesiones activas](docs/images/app-live-es.png)
 
@@ -271,7 +281,7 @@ Si macOS no muestra **Abrir igualmente**, ejecuta `xattr -dr com.apple.quarantin
 | **En vivo** | Hoy, este mes, previsión de fin de mes, valor del plan, presupuestos y sesiones activas en los últimos 15 minutos |
 | **Historial** | Gasto por día, mes, proyecto y sesión, con filtros de periodo y proyecto |
 | **Insights** | Dónde recortar: hallazgos medidos, ahorros estimados y qué hacer |
-| **Cambios** | Cambia el modelo, el esfuerzo o la compactación de tus IA, con vista previa, deshacer y cifras de antes y después |
+| **Cambios** | Cambia el modelo, el esfuerzo, la compactación o la barra de estado de tus IA, con vista previa, deshacer y cifras de antes y después, además de reglas automáticas |
 | **Proyectos** | Clientes, facturación, tarifas, etiquetas y horas manuales, sin editar `projects.yaml` |
 | **Ajustes** | Presupuestos, notificaciones, recolección manual, búsqueda de actualizaciones y el diagnóstico de `doctor` |
 
@@ -296,6 +306,12 @@ Si macOS no muestra **Abrir igualmente**, ejecuta `xattr -dr com.apple.quarantin
   notificaciones. Su menú incluye el mes, las alertas de presupuesto y las opciones para abrir la app o salir.
 - **Actualizaciones:** **Buscar actualizaciones**, en Ajustes, consulta GitHub solo cuando lo pulsas. Si hay una versión
   nueva, abre la página de descarga. No instala nada por su cuenta.
+- **Tiempo de respuesta del modelo:** Historial muestra P50 y P95 por modelo. Antigravity los registra. Claude Code no, así que sus
+  cifras son estimadas: desde la última entrada hasta la última línea de la respuesta. En 1.065 tareas reales nunca superaron el
+  tiempo que Claude Code informa para el turno. Las sesiones recolectadas antes de esta versión necesitan `agent-meter collect --full` una vez.
+- **Barra de estado:** en Cambios puedes llevar el gasto a la barra de estado de Claude Code, por ejemplo
+  `$1,23 sesión · $46,20 hoy · 38% contexto`. Ejecuta `agent-meter statusline`, así que necesita la línea de comandos. La cifra de
+  sesión viene de Claude Code, y la de hoy, de la última recolección. Si ya tenías una barra propia, vuelve al deshacer.
 - **Seguridad:** no hay servidor local ni puerto abierto.
 
 #### Qué puede editar la pantalla Cambios
@@ -376,7 +392,7 @@ Qué pasa:
 | Tablas de hechos (particiones mensuales) | `raw_llm_calls`, `raw_tasks`, `raw_agent_runs`, `raw_sessions`, `raw_tool_uses` |
 | Tablas de referencia | `projects`, `pricing`, `pricing_aliases`, `host_defaults`, `dev_hours_manual`, `dev_hours_derived`, `task_tags`, `tag_history`, `settings`, `untracked` |
 | Vistas sin duplicados | `llm_calls`, `tasks`, `agent_runs`, `sessions`, `tool_uses` |
-| **Vistas para tableros** | `v_daily_project_cost`, `v_calls`, `v_sessions`, `v_tasks`, `v_agent_runs`, `v_agent_type_cost`, `v_task_latency`, `v_tool_counts`, `v_client_month`, `v_dev_hours`, `v_unpriced_models`, `v_untracked`, `v_health` |
+| **Vistas para tableros** | `v_daily_project_cost`, `v_calls`, `v_sessions`, `v_tasks`, `v_agent_runs`, `v_agent_type_cost`, `v_task_latency`, `v_model_latency`, `v_tool_counts`, `v_client_month`, `v_dev_hours`, `v_unpriced_models`, `v_untracked`, `v_health` |
 
 Solo se suben números y metadatos (tokens, tiempos, modelos, nombres de proyecto/cliente, tipos de agente, nombres y
 conteos de herramientas). Con `agent-meter config set bigquery.anonymize_projects true` los nombres de proyecto, cliente,

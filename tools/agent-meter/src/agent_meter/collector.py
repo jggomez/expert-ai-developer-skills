@@ -17,7 +17,9 @@ from datetime import UTC, date, datetime
 from datetime import time as dtime
 from pathlib import Path
 from typing import Final, Literal
+from zoneinfo import ZoneInfo
 
+from agent_meter import statusline
 from agent_meter.budgets import due_alerts, send_alerts
 from agent_meter.config import Config, host_defaults, settings_for_store
 from agent_meter.locking import LockTimeout
@@ -324,3 +326,6 @@ def _finish(
     store.recompute_dev_hours(cfg.timezone, cfg.dev_hours_merge_gap_min * 60)
     store.set_meta("last_collect_at", moment.isoformat())
     store.write_snapshot(home.snapshot, tz=cfg.timezone, now=moment)
+    today = moment.astimezone(ZoneInfo(cfg.timezone)).date()
+    rows = store.query("SELECT SUM(cost_usd) AS usd FROM v_daily_project_cost WHERE local_date = ?", [today])
+    statusline.save_today(home, today, rows[0]["usd"])

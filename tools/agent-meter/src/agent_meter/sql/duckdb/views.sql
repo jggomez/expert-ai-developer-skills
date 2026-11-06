@@ -258,6 +258,17 @@ FROM v_tasks
 WHERE status <> 'in_progress'
 GROUP BY strftime(local_date, '%Y-%m'), project_id, host;
 
+-- Claude Code transcripts carry no call duration, so its figures are estimated from timestamps.
+CREATE OR REPLACE VIEW v_model_latency AS
+SELECT
+  local_month, host, COALESCE(priced_model, model_label, model) AS model, (host = 'claude-code') AS estimated,
+  COUNT(*) AS calls,
+  quantile_cont(latency_ms, 0.5) AS p50_ms,
+  quantile_cont(latency_ms, 0.95) AS p95_ms
+FROM v_calls
+WHERE latency_ms IS NOT NULL
+GROUP BY local_month, host, COALESCE(priced_model, model_label, model);
+
 CREATE OR REPLACE VIEW v_dev_hours AS
 WITH manual_day AS (
   SELECT project_id, CAST(period AS DATE) AS local_date, hours FROM dev_hours_manual WHERE length(period) = 10

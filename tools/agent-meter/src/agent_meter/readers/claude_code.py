@@ -53,6 +53,7 @@ _LOG = logging.getLogger(__name__)
 HOST: Final = Host.CLAUDE_CODE
 _PREFIX: Final = HOST.value
 _SYNTHETIC_MODEL: Final = "<synthetic>"
+_MAX_ESTIMATED_LATENCY_MS: Final = 900_000  # longer gaps are a paused session, not a slow answer
 _TIMELINE_TYPES: Final = frozenset({"user", "assistant", "system", "attachment"})
 _EDIT_TOOLS: Final = {
     "Edit": "file_path",
@@ -245,6 +246,16 @@ class _CallCandidate:
     first_ts: datetime
     task_id: str
     run_id: str
+    request_ts: datetime | None
+
+
+def _estimated_latency_ms(candidates: Sequence[_CallCandidate]) -> int | None:
+    """The transcript has no call duration, so this is the last answer line minus the last input before it."""
+    starts = [c.request_ts for c in candidates if c.request_ts is not None]
+    if not starts:
+        return None
+    elapsed = int((max(c.line.ts for c in candidates if c.line.ts) - max(starts)).total_seconds() * 1000)
+    return elapsed if 0 < elapsed <= _MAX_ESTIMATED_LATENCY_MS else None
 
 
 @dataclass(slots=True)
@@ -551,6 +562,7 @@ class ClaudeCodeReader:
         )
         last_prompt: str | None = None
         tool_index: dict[str, tuple[RunDraft, _ToolUse]] = {}
+        request_ts: datetime | None = None
         for line in lines:
             if line.type == "user" and line.prompt_id:
                 last_prompt = line.prompt_id
@@ -571,7 +583,8 @@ class ClaudeCodeReader:
             for tool in line.tool_uses:
                 if tool.tool_id is not None:
                     state.spawn_owner[tool.tool_id] = (task_id, run_id)
-            self._candidate(line, rank, task_id, run_id, state)
+            request_ts = line.ts if line.type == "user" else request_ts
+            self._candidate(line, rank, task_id, run_id, state, request_ts)
 
     # -- shared per-line accounting
 
@@ -608,7 +621,7 @@ class ClaudeCodeReader:
 
     @staticmethod
     def _candidate(
-        line: _Line, rank: str, task_id: str, run_id: str, state: _UnitState
+        line: _Line, rank: str, task_id: str, run_id: str, state: _UnitState, request_ts: datetime | None
     ) -> None:
         if (
             line.type != "assistant"
@@ -624,7 +637,7 @@ class ClaudeCodeReader:
             return
         state.order += 1
         state.candidates.setdefault(line.call_key, []).append(
-            _CallCandidate(rank, state.order, line, line.ts, task_id, run_id)
+            _CallCandidate(rank, state.order, line, line.ts, task_id, run_id, request_ts)
         )
 
     # -- subagents
@@ -703,11 +716,13 @@ class ClaudeCodeReader:
             else f"1::{state.session_id}"
         )
         tool_index: dict[str, tuple[RunDraft, _ToolUse]] = {}
+        request_ts: datetime | None = None
         for line in agent.lines:
             if line.type not in _TIMELINE_TYPES or line.ts is None:
                 continue
             self._apply_line(line, run, tool_index, state)
-            self._candidate(line, rank, task_id, run_id, state)
+            request_ts = line.ts if line.type == "user" else request_ts
+            self._candidate(line, rank, task_id, run_id, state, request_ts)
 
     # -- calls
 
@@ -749,7 +764,7 @@ class ClaudeCodeReader:
                     cache_write_5m_tokens=use.cache_write_5m,
                     cache_write_1h_tokens=use.cache_write_1h,
                     cache_read_tokens=use.cache_read,
-                    latency_ms=None,
+                    latency_ms=_estimated_latency_ms([c for c in candidates if c.rank == owner.rank]),
                     speed=use.speed,
                     inference_geo=use.inference_geo,
                     is_error=any(c.line.is_api_error for c in candidates),

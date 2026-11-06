@@ -7,6 +7,7 @@ import json
 import re
 import shlex
 import sqlite3
+import zlib
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -59,6 +60,8 @@ __all__ = [
 ]
 
 OTHER_LABEL: Final = "(other)"
+SQLITE_DB_HEADER: Final = 100
+SQLITE_WAL_HEADER: Final = 32
 _SAFE_LABEL: Final = re.compile(r"^[A-Za-z0-9_.:@/+ ()-]{1,80}$")
 _ENV_ASSIGNMENT: Final = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
 _TEST_PREFIXES: Final = (
@@ -272,6 +275,19 @@ def fingerprint_file(root: Path, path: Path, kind: str) -> FileFingerprint | Non
         mtime_ns=stat.st_mtime_ns,
         inode=stat.st_ino,
     )
+
+
+def sqlite_change_stamp(path: Path, kind: str) -> int | None:
+    """SQLite marks every commit in these bytes or by growing the file, so a touch alone cannot look like new data.
+
+    The database header holds the change counter. The WAL header holds the salts, which change whenever
+    the log restarts; between restarts commits only append. ``None`` falls back to the modification time.
+    """
+    try:
+        with path.open("rb") as handle:
+            return zlib.crc32(handle.read(SQLITE_DB_HEADER if kind == "agy_db" else SQLITE_WAL_HEADER))
+    except OSError:
+        return None
 
 
 class DiagnosticCollector:

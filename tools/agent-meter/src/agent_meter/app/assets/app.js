@@ -169,6 +169,11 @@ function projectLink(project) {
   return td;
 }
 
+function seconds(ms, estimated) {
+  const value = `${localized((ms / 1000).toFixed(1))} s`;
+  return estimated ? t("history.estimated_time", { value }) : value;
+}
+
 function renderHistory(data) {
   $("history-cost").textContent = usd(data.totals.cost_usd);
   $("history-estimated").textContent = Number(data.totals.estimated_usd) > 0
@@ -184,6 +189,8 @@ function renderHistory(data) {
     `${localized(p.share_pct)} %`, count(p.calls), count(p.sessions), count(p.tasks), compact(p.tokens))));
   $("history-session-rows").replaceChildren(...data.sessions.map((s) => row(dateTime(s.ended_at), dateTime(s.started_at),
     s.project, s.host, count(s.calls), count(s.tasks), usd(s.cost_usd))));
+  $("model-latency").replaceChildren(...(data.model_latency ?? []).map((m) => row(m.model, m.host, count(m.calls),
+    seconds(m.p50_ms, m.estimated), seconds(m.p95_ms, m.estimated))));
   const shown = data.sessions.length;
   const total = data.totals.sessions;
   $("history-shown").textContent = !total ? t("history.empty")

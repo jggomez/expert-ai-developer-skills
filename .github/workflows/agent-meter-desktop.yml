@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-15, macos-15-intel, windows-latest]
+        os: [macos-15, windows-latest]
     defaults:
       run:
         working-directory: tools/agent-meter
