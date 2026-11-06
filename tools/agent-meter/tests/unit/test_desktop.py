@@ -61,4 +61,5 @@ def test_failures_are_grouped_by_message_for_public_annotations(tmp_path: Path) 
     lines = report.annotations(report.failures(results))
 
     # Assert
-    assert lines == ["::error title=2 failed, e.g. a.one::same%0Acause", "::error title=1 failed, e.g. b.three::other"]
+    assert lines == ["::error title=All 3 failed::a.one a.two b.three", "::error title=2 like a.one::same%0Acause",
+                     "::error title=1 like b.three::other"]

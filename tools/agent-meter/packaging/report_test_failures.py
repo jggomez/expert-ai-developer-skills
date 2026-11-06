@@ -16,6 +16,10 @@ def _escape(text: str) -> str:
     return text.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
 
 
+def _escape_property(text: str) -> str:
+    return _escape(text).replace(":", "%3A").replace(",", "%2C")
+
+
 def failures(path: Path) -> list[tuple[str, str]]:
     found: list[tuple[str, str]] = []
     for case in ET.parse(path).getroot().iter("testcase"):  # our own test output
@@ -28,10 +32,10 @@ def failures(path: Path) -> list[tuple[str, str]]:
 def annotations(found: list[tuple[str, str]]) -> list[str]:
     """Most failures on one system share a cause, so the most repeated messages come first."""
     grouped = Counter(message[:MAX_MESSAGE] for _name, message in found)
-    lines = []
-    for message, count in grouped.most_common(MAX_ANNOTATIONS):
+    lines = [f"::error title=All {len(found)} failed::{_escape(' '.join(sorted(name for name, _message in found)))}"]
+    for message, count in grouped.most_common(MAX_ANNOTATIONS - 1):
         example = next(name for name, full in found if full[:MAX_MESSAGE] == message)
-        lines.append(f"::error title={count} failed, e.g. {_escape(example)}::{_escape(message)}")
+        lines.append(f"::error title={count} like {_escape_property(example)}::{_escape(message)}")
     return lines
 
 

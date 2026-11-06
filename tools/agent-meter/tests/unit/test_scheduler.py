@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import plistlib
 import subprocess
 import sys
@@ -136,6 +137,8 @@ def home(tmp_path: Path) -> FakeHome:
     root.mkdir()
     return FakeHome(root)
 
+
+pytestmark = pytest.mark.skipif(os.name == "nt", reason="writes launchd, systemd and cron files with POSIX paths")
 
 EXE = Path("/opt/tools/agent-meter")
 

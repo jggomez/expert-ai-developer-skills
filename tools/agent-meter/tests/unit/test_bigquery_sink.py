@@ -843,7 +843,7 @@ def test_google_gateway_builds_an_ndjson_load_job_with_explicit_schema(
 ) -> None:
     # Arrange
     path = tmp_path / "rows.ndjson"
-    path.write_text('{"call_id":"a"}\n', encoding="utf-8")
+    path.write_bytes(b'{"call_id":"a"}\n')
     spec = build_load_spec(
         OutboxFile("llm_calls", path, 1, 1, "WRITE_APPEND"), project="devhack-3f0c2", dataset="d"
     )
