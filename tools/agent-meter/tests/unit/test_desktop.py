@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import importlib.util
 from pathlib import Path
 
 import pytest
@@ -38,3 +39,26 @@ def test_windows_notice_never_puts_text_on_the_command_line(monkeypatch: pytest.
     script = base64.b64decode(command[-1]).decode("utf-16-le")
     assert "'it''s over'" in script
     assert "'$5 ''left''; rm x'" in script
+
+
+def test_failures_are_grouped_by_message_for_public_annotations(tmp_path: Path) -> None:
+    # Arrange
+    spec = importlib.util.spec_from_file_location("report", Path(__file__).parents[2] / "packaging" / "report_test_failures.py")
+    assert spec is not None and spec.loader is not None
+    report = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(report)
+    results = tmp_path / "results.xml"
+    results.write_text(
+        '<testsuites><testsuite>'
+        '<testcase classname="a" name="one"><failure message="same&#10;cause"/></testcase>'
+        '<testcase classname="a" name="two"><failure message="same&#10;cause"/></testcase>'
+        '<testcase classname="b" name="three"><error message="other"/></testcase>'
+        '<testcase classname="b" name="fine"/>'
+        '</testsuite></testsuites>', encoding="utf-8",
+    )
+
+    # Act
+    lines = report.annotations(report.failures(results))
+
+    # Assert
+    assert lines == ["::error title=2 failed, e.g. a.one::same%0Acause", "::error title=1 failed, e.g. b.three::other"]
