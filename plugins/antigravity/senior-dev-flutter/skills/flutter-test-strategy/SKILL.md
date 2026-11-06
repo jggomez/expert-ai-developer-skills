@@ -40,6 +40,8 @@ Inspect root `AGENTS.md` (`<= 90 lines` wired to `context/memory/MEMORY.md`), of
 - **Flutter Web real-app proof**: Widget tests with mocks do not prove a screen works. With a `web/` target, `e2e-blackbox-tester` runs the release build against the real backend using Playwright. See `flutter-web-playwright.md` in the `blackbox-tester` skill.
 - **Strict Fail-Honest Verification (`BLOCKED` / `SKIPPED`)**: If `flutter test` or `integration_test/` (simulator/emulator/Chrome web) cannot execute (missing Flutter SDK, no simulator booted), you **MUST** report `BLOCKED: Not executed — <exact command & terminal error>` (or `SKIPPED` when N/A)—**strictly forbidden** from claiming `PASSED` without `exit code 0` terminal output.
 
+- **Keep the exit code**: run tests as `log=$(mktemp); flutter test --reporter failures-only <file> >"$log" 2>&1; code=$?; tail -n 40 "$log"; echo "exit=$code log=$log"`. A test command piped straight into `tail`, `head` or `grep` returns the filter's exit code, so a failing run looks green. Search `$log` for details instead of running the same command again.
+
 ## Usage
 ```bash
 # Scoped TDD loop vs full coverage ratchet excluding generated code

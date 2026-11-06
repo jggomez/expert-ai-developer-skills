@@ -27,6 +27,8 @@ This skill governs integration/E2E test automation and produces an actionable, I
    - **`## 1. Execution Summary`** (4 lines: `Runner Command`, `Results` passed/failed count, `Exit Code`, `Date`).
    - **`## 2. Test Case Matrix`**: Every case (`TC-01`, `TC-02`...) **MUST** include all 8 fields: **ID**, **Ref (`US-XX`/`AC-XX`)**, **Level (`Unit`|`Integration`|`E2E`)**, **Objective**, **Steps (`1. ... 2. ... 3. ...`)**, **Expected Result**, **Automated Test (`path::test_fn`)**, and **Status (`PASS`|`FAIL`)**.
 
+- **Keep the exit code**: run tests as `log=$(mktemp); <test command> >"$log" 2>&1; code=$?; tail -n 40 "$log"; echo "exit=$code log=$log"`. A test command piped straight into `tail`, `head` or `grep` returns the filter's exit code, so a failing run looks green. Search `$log` for details instead of running the same command again.
+
 ## Usage
 ### Commands
 ```bash

@@ -17,5 +17,5 @@ description: Optimize context window, prevent token bloat, leverage local proces
 ## 2. Deterministic Scripting & Output Discipline
 
 * **MUST** offload heavy data parsing, text processing, or log filtering to local Python/Bash scripts in `scratch/`.
-* **MUST** prefer commands that summarize output (`--stat`, `-q`, `| tail`, `| head`) over raw verbose logs when the full output isn't needed.
+* **MUST** prefer commands that summarize output (`--stat`, `-q`) over raw verbose logs when the full output isn't needed. When only a long output is available, send it to a log file and read the end of that file: a pipe into `tail` or `head` hides the command's exit code.
 * **MUST** inspect summarized script results rather than streaming raw logs into the agent context window.

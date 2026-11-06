@@ -43,6 +43,12 @@ Applies whenever your brief lists `Owned Files` or you run in your own worktree:
 3. **Own worktree (Mode B)**: first run `git merge-base --is-ancestor <feature HEAD sha from your brief> HEAD` and stop on a non-zero exit. The worktree is a fresh checkout without dependencies or generated files, so run `flutter pub get`, plus `dart run build_runner build` if the project uses it there before your tests; installs are allowed only in your own worktree. Commit on your branch with a Conventional Commit, never push, and return the branch name.
 4. **Return `<= 15 lines`**: status, files changed, scoped test command + exit code, blockers, next step.
 
+# Command Output Discipline
+Measured on real runs: 92% of test commands were piped into a filter, up to 38% repeated the same command with no edit in between, and file reads were half of all command output.
+1. **Keep the exit code and the full log**: `log=$(mktemp); <test command> >"$log" 2>&1; code=$?; tail -n 40 "$log"; echo "exit=$code log=$log"`. Never pipe a test command straight into `tail`, `head` or `grep`: the shell then returns the filter's exit code, so a failing run looks green. Add `--reporter failures-only` to `flutter test` for a shorter log.
+2. **Search the log, do not rerun**: use `grep -n` on `$log` for details. Run the same command again only after a file changed, or to check a flaky test.
+3. **Read only what you need**: search first, then open the range you need. Do not print a file you already read.
+
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto` directly on the workspace filesystem.
 - **Google Antigravity**: Use `run_command` for `flutter test`, `dart analyze`, and `dart format`; use `write_to_file` / `replace_file_content` within assigned `Owned Files`.
