@@ -13,6 +13,7 @@ permissions:
 jobs:
   test:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -30,4 +31,7 @@ jobs:
         if: runner.os == 'Linux'
       - run: uv run mypy src
         if: runner.os == 'Linux'
-      - run: uv run pytest tests -q
+      - run: uv run pytest tests -q --junitxml=test-results.xml
+      - name: Show failures without signing in to GitHub
+        if: failure()
+        run: python packaging/report_test_failures.py test-results.xml
