@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import socket
 import subprocess
 import sys
@@ -30,7 +31,7 @@ from agent_meter.setup.wizard import (
 )
 
 PROJECT = "devhack-3f0c2"
-EXE = Path("/opt/tools/agent-meter")
+EXE = Path(os.path.abspath("/opt/tools/agent-meter"))
 RTK_SETTINGS = {
     "hooks": {
         "BeforeTool": [

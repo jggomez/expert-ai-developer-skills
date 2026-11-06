@@ -270,7 +270,7 @@ def test_plan_claude_refuses_a_file_owned_by_another_user(
     # Arrange
     settings = tmp_path / "settings.json"
     write_json(settings, {})
-    monkeypatch.setattr(os, "getuid", lambda: settings.stat().st_uid + 1)
+    monkeypatch.setattr(os, "getuid", lambda: settings.stat().st_uid + 1, raising=False)
 
     # Act
     with pytest.raises(SettingsRefused) as excinfo:

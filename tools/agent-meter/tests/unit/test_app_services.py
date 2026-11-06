@@ -97,7 +97,7 @@ def test_watcher_reacts_only_when_a_transcript_changes(tmp_path: Path) -> None:
     idle = watcher.poll_once()
     (tmp_path / "projects" / "note.txt").write_text("ignored", encoding="utf-8")
     still_idle = watcher.poll_once()
-    os.utime(transcript, ns=(1, signature([tmp_path / "projects"])[1] + 1))
+    os.utime(transcript, ns=(1, signature([tmp_path / "projects"])[1] + 1_000_000))
     changed = watcher.poll_once()
 
     assert (idle, still_idle, changed) == (False, False, True)

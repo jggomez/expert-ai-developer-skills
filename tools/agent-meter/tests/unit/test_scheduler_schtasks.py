@@ -137,7 +137,7 @@ def home(tmp_path: Path) -> FakeHome:
     return FakeHome(root)
 
 
-EXE = Path("/Users/alice/AppData/Local/bin/agent-meter.exe")
+EXE = Path(os.path.abspath("/Users/alice/AppData/Local/bin/agent-meter.exe"))
 
 
 def test_detect_kind_on_win32_returns_schtasks_when_available(tmp_path: Path) -> None:

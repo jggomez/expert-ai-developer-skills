@@ -76,7 +76,7 @@ def fake_scheduler(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> FakeRunne
     user_home = tmp_path / "user"
 
     def current(_cls: type[SchedulerEnv]) -> SchedulerEnv:
-        return SchedulerEnv(platform="darwin", user_home=user_home, uid=os.getuid(), runner=runner,
+        return SchedulerEnv(platform="darwin", user_home=user_home, uid=getattr(os, "getuid", int)(), runner=runner,
                             which=lambda _name: None)
 
     monkeypatch.setattr(SchedulerEnv, "current", classmethod(current))
