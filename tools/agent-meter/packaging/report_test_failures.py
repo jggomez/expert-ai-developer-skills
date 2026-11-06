@@ -10,6 +10,7 @@ from typing import Final
 
 MAX_ANNOTATIONS: Final = 10  # GitHub keeps ten errors per step
 MAX_MESSAGE: Final = 300
+SHORT_MESSAGE: Final = 160
 
 
 def _escape(text: str) -> str:
@@ -32,7 +33,8 @@ def failures(path: Path) -> list[tuple[str, str]]:
 def annotations(found: list[tuple[str, str]]) -> list[str]:
     """Most failures on one system share a cause, so the most repeated messages come first."""
     grouped = Counter(message[:MAX_MESSAGE] for _name, message in found)
-    lines = [f"::error title=All {len(found)} failed::{_escape(' '.join(sorted(name for name, _message in found)))}"]
+    every = "\n".join(f"{name}: {message[:SHORT_MESSAGE]}" for name, message in sorted(found))
+    lines = [f"::error title=All {len(found)} failed::{_escape(every)}"]
     for message, count in grouped.most_common(MAX_ANNOTATIONS - 1):
         example = next(name for name, full in found if full[:MAX_MESSAGE] == message)
         lines.append(f"::error title={count} like {_escape_property(example)}::{_escape(message)}")

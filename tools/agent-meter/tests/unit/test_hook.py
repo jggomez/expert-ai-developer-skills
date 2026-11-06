@@ -89,6 +89,7 @@ def test_hk01_spawn_failure_exits_zero(monkeypatch: pytest.MonkeyPatch) -> None:
     assert (code, out) == (0, "{}\n")
 
 
+@pytest.mark.skipif(os.name == "nt", reason="the hard timeout needs SIGALRM, which Windows lacks")
 def test_hk02_hard_timeout_is_respected(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(hook, "_spawn_worker", lambda _argv: time.sleep(5))
     started = time.monotonic()
@@ -161,7 +162,7 @@ def test_i4_hook_path_never_imports_duckdb(tmp_path: Path) -> None:
     done = subprocess.run([sys.executable, "-c", code], input=b"{}", capture_output=True, env=env, timeout=30, check=False)
 
     assert done.returncode == 0
-    assert done.stdout.decode() == "{}\n|CLEAN 0\n"
+    assert done.stdout.decode().replace("\r\n", "\n") == "{}\n|CLEAN 0\n"
 
 
 # ----------------------------------------------------------------------------- worker

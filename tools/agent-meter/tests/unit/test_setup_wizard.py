@@ -312,11 +312,11 @@ def test_local_yes_registers_hooks_scheduler_and_backfills_without_network(
     assert result.changed is True
     assert commands(world.claude_settings) == [
         "guard.sh",
-        f"{EXE} hook --host claude-code --event session-end",
-        f"{EXE} hook --host claude-code --event task-end",
+        f"{settings_merge.command_prefix(EXE)} hook --host claude-code --event session-end",
+        f"{settings_merge.command_prefix(EXE)} hook --host claude-code --event task-end",
     ]
     assert commands(world.agy_hooks) == [
-        f"{EXE} hook --host antigravity --event task-end"
+        f"{settings_merge.command_prefix(EXE)} hook --host antigravity --event task-end"
     ]
     assert world.gemini_settings.read_bytes() == gemini_before
     assert world.scheduler.calls == [(world.home.root, EXE)]

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import dataclasses
 import json
+import os
 from collections.abc import Iterator
 from datetime import UTC, date, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
@@ -281,7 +282,8 @@ def test_pv05_only_description_hash_is_stored(store: Store, home: AppHome) -> No
         {"description_hash": hashed}
     ]
     assert_store_free_of(store, CANARY, description, *CLEAR_TEXT_PATHS)  # layer 1: every stored value via SQL
-    assert CANARY.encode() not in home.db.read_bytes()  # layer 2: raw bytes
+    if os.name != "nt":  # Windows keeps an open database locked
+        assert CANARY.encode() not in home.db.read_bytes()  # layer 2: raw bytes
 
 
 def test_missing_project_id_falls_back_to_unassigned(store: Store) -> None:

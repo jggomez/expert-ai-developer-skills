@@ -14,6 +14,9 @@ from tests.privacy_helpers import assert_store_free_of, store_values_containing
 HIGH_CARDINALITY_ROWS = 20_000
 
 
+COMPRESSION_ATTEMPTS = 10
+
+
 def _compressed_canary_store(path: Path) -> None:
     """20,000 distinct canary-bearing strings: DuckDB compresses them (FSST) after CHECKPOINT."""
     con = duckdb.connect(str(path))
@@ -31,7 +34,11 @@ def _compressed_canary_store(path: Path) -> None:
 def test_sql_dump_catches_canary_hidden_from_raw_bytes(tmp_path: Path) -> None:
     # Arrange
     db = tmp_path / "synthetic.duckdb"
-    _compressed_canary_store(db)
+    for attempt in range(COMPRESSION_ATTEMPTS):  # now and then the random strings leave the canary whole in the file
+        db.unlink(missing_ok=True)
+        _compressed_canary_store(db)
+        if CANARY.encode() not in db.read_bytes():
+            break
 
     # Act
     raw_bytes_contain_canary = CANARY.encode() in db.read_bytes()

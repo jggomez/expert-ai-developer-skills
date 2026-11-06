@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 from pathlib import Path
 
@@ -22,6 +23,7 @@ def test_exclusive_lock_blocks_second_writer(tmp_path: Path) -> None:
     assert 0.15 <= waited < 1.0
 
 
+@pytest.mark.skipif(os.name == "nt", reason="msvcrt locks are exclusive, so readers take turns on Windows")
 def test_shared_locks_coexist_but_block_writer(tmp_path: Path) -> None:
     lock = tmp_path / "lock"
 
