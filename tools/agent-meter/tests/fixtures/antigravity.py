@@ -13,6 +13,7 @@ Protobuf blobs are encoded with ``protowriter``; every content-like slot carries
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import sqlite3
@@ -191,7 +192,7 @@ def _step_metadata(at: float | None) -> bytes:
 
 
 def _write_db(path: Path, conv: AgyConversation) -> None:
-    with sqlite3.connect(path) as con:
+    with contextlib.closing(sqlite3.connect(path)) as con, con:
         for ddl in CONVERSATION_DDL:
             con.execute(ddl)
         con.execute(
@@ -310,7 +311,7 @@ def build_root(
                 encoding="utf-8",
             )
     if summaries:
-        with sqlite3.connect(root / "conversation_summaries.db") as con:
+        with contextlib.closing(sqlite3.connect(root / "conversation_summaries.db")) as con, con:
             con.execute(SUMMARIES_DDL)
             for conv in (c for c in conversations if c.in_summaries):
                 uris = json.dumps([conv.workspace_uri]) if conv.workspace_uri else "[]"

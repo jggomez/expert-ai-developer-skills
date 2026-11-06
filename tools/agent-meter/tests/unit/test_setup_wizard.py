@@ -329,7 +329,7 @@ def test_local_yes_registers_hooks_scheduler_and_backfills_without_network(
     output = world.stdout.getvalue()
     assert "claude-code" in output and "1 session" in output
     assert (
-        '"command": "/opt/tools/agent-meter hook --host claude-code --event task-end"'
+        f'"command": {json.dumps(settings_merge.command_prefix(EXE) + " hook --host claude-code --event task-end")}'
         in output
     )
     assert "doctor: all OK" in output

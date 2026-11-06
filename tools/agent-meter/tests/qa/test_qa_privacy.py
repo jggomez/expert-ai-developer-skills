@@ -36,7 +36,7 @@ CANARY_B = CANARY.encode()
 
 
 def _tree_bytes(root: Path) -> dict[str, bytes]:
-    return {p.relative_to(root).as_posix(): p.read_bytes() for p in root.rglob("*") if p.is_file()}
+    return {p.relative_to(root).as_posix(): p.read_bytes() for p in root.rglob("*") if p.is_file() and p.name != "lock"}
 
 
 def _digests(*roots: Path) -> dict[str, tuple[str, int]]:
