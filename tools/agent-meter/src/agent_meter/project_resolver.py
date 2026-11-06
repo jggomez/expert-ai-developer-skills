@@ -283,7 +283,7 @@ class ProjectResolver:
         moved_to = self._cache.get(_location_key("dir", os.path.basename(directory)))
         if moved_to is not None and moved_to != _AMBIGUOUS:
             return self._known.get(moved_to) or self._ref_from_id(moved_to, directory)
-        tail = "/".join(directory.rstrip("/").split("/")[-2:])
+        tail = "/".join(directory.replace("\\", "/").rstrip("/").split("/")[-2:])
         gone_key = _location_key("gone", tail)
         seen = self._cache.get(gone_key)
         if seen is not None:

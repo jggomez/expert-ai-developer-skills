@@ -143,7 +143,7 @@ def test_l3_setup_hook_collect_report_uninstall_restores_bytes(
     while not qa_world.meter.last_summary.exists() and time.monotonic() < deadline:
         time.sleep(0.05)
     _wait_lock_free(qa_world)
-    assert agy_done.returncode == 0 and agy_done.stdout == b"{}\n"
+    assert agy_done.returncode == 0 and agy_done.stdout.strip() == b"{}"
     assert "Antigravity" in qa_world.meter.last_summary.read_text(encoding="utf-8")
 
     # Act 5: summary + report over what the hooks ingested

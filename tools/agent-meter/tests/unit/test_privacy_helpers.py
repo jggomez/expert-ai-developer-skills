@@ -34,7 +34,7 @@ def _compressed_canary_store(path: Path) -> None:
 def test_sql_dump_catches_canary_hidden_from_raw_bytes(tmp_path: Path) -> None:
     # Arrange
     db = tmp_path / "synthetic.duckdb"
-    for attempt in range(COMPRESSION_ATTEMPTS):  # now and then the random strings leave the canary whole in the file
+    for _attempt in range(COMPRESSION_ATTEMPTS):  # now and then the random strings leave the canary whole in the file
         db.unlink(missing_ok=True)
         _compressed_canary_store(db)
         if CANARY.encode() not in db.read_bytes():
