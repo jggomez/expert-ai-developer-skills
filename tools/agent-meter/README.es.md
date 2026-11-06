@@ -6,11 +6,11 @@
 que esas herramientas ya guardan en tu computador y te entrega:
 
 - un **resumen corto al terminar cada tarea o sesión** (tokens, costo equivalente, tiempo, P50/P95),
-- una **app de escritorio** en inglés o español con gasto en vivo, historial, insights y presupuestos,
+- una **app de escritorio** en inglés o español con gasto en vivo, historial, insights, presupuestos, proyectos y cambios de ajustes que confirmas tú,
 - un **reporte HTML** que se abre en el navegador y funciona sin internet,
 - y, si quieres, un **dataset en BigQuery + tablero en Looker Studio** en tu propio proyecto de Google Cloud.
 
-Es **gratis** (el modo local no necesita ninguna cuenta), **solo lee** los datos de tus herramientas y es **privado**: nunca
+Es **gratis** (el modo local no necesita ninguna cuenta), **solo lee** los datos de tus herramientas salvo que confirmes un cambio en la app, y es **privado**: nunca
 guarda prompts, código, entradas o salidas de herramientas ni rutas de archivos.
 
 > English version: [README.md](README.md)
@@ -246,11 +246,12 @@ tiene un botón **Table view** para ver los datos en tabla.
 ### 5.4 La app de escritorio
 
 `agent-meter app` abre una ventana nativa, para cuando prefieres no usar comandos. Muestra los mismos datos que la línea
-de comandos y necesita el extra `app` (ver [§4](#4-instalación)). Está probada en macOS; en Windows se compila y se prueba
-en GitHub Actions, pero aún no se ha usado en un equipo real.
+de comandos y necesita el extra `app` (ver [§4](#4-instalación)). Está probada en macOS con Apple Silicon. El soporte para
+Windows es nuevo y aún no se ha probado en un equipo real.
 
 **Sin instalar Python ni usar comandos:** descarga el instalador de
-[Releases](https://github.com/jggomez/expert-ai-developer-skills/releases), en las versiones `agent-meter-v*`. Solo necesitas
+[Releases](https://github.com/jggomez/expert-ai-developer-skills/releases), en las versiones `agent-meter-v*` (la primera aún está
+pendiente). Solo necesitas
 abrirlo: la app importa tu historial y lee las sesiones nuevas mientras está abierta. Lo que ocurra con la app cerrada entra
 al abrirla de nuevo. Para resúmenes al terminar cada tarea y recolección programada, instala también la línea de comandos.
 
@@ -475,6 +476,7 @@ Opciones globales (antes del comando): `--home <carpeta>` (o `$AGENT_METER_HOME`
 | `config show\|get\|set\|edit` | Configuración (§11) | `config set <clave> <valor>` |
 | `app` | App de escritorio en inglés o español: gasto en vivo, historial por día, mes, proyecto y sesión, insights, presupuestos y diagnóstico (necesita el extra `app`) | — |
 | `insights` | Dónde recortar gasto: reglas fijas, hechos medidos y ahorros estimados | `--days N`, `--as-of AAAA-MM-DD`, `--project P`, `--json` |
+| `statusline` | Una línea para la barra de estado de Claude Code; lee su JSON desde stdin | — |
 | `budget` | Gasto frente a tus límites, previsión de fin de mes y valor del plan | `--as-of AAAA-MM-DD`, `--json` |
 | `doctor` | Revisión de salud (hooks, timer, formatos, precios, historial no medido) | `--cloud`, `--json` |
 | `verify --reconcile` | Local contra una relectura independiente (o contra BigQuery con `--cloud`) | `--from`, `--to`, `--host`, `--cloud` |

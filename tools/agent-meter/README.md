@@ -6,11 +6,11 @@
 transcripts and databases those tools already write on your machine, and turns them into:
 
 - a short **summary after every task or session** (tokens, API-equivalent cost, time, P50/P95),
-- a **desktop app** in English or Spanish with live spending, history, insights and budgets,
+- a **desktop app** in English or Spanish with live spending, history, insights, budgets, projects and setting changes you confirm,
 - an **offline HTML report** you open in your browser,
 - and, optionally, a **BigQuery dataset + Looker Studio dashboard** in your own Google Cloud project.
 
-It is **free** (local mode needs no account at all), **read-only** towards your tools, and **private**: it never stores
+It is **free** (local mode needs no account at all), **read-only** towards your tools unless you confirm a change in the app, and **private**: it never stores
 prompts, code, tool inputs/outputs or file paths.
 
 > 🇪🇸 Guía en español: [README.es.md](README.es.md)
@@ -246,11 +246,12 @@ Every chart has a **Table view** toggle.
 ### 5.4 The desktop app
 
 `agent-meter app` opens a native window, for when you would rather not use commands. It shows the same data as the CLI
-and needs the `app` extra (see [§4](#4-install)). Tested on macOS. On Windows it is built and tested in GitHub
-Actions, but it has not been used on a real machine yet.
+and needs the `app` extra (see [§4](#4-install)). Tested on macOS with Apple Silicon. Windows support is new
+and has not been tried on a real machine yet.
 
 **No Python and no commands:** download the installer from
-[Releases](https://github.com/jggomez/expert-ai-developer-skills/releases), under the `agent-meter-v*` versions. Just open it: the
+[Releases](https://github.com/jggomez/expert-ai-developer-skills/releases), under the `agent-meter-v*` versions (the first one is
+still pending). Just open it: the
 app imports your history and reads new sessions while it is open. Anything that happens while it is closed comes in the next
 time you open it. For summaries after each task and scheduled collection, install the command line too.
 
@@ -462,6 +463,7 @@ Most read commands accept `--json`.
 | `tasks` | Per-task rollups with subagents | `--last [N]`, `--session S`, `--project P`, `--tag T`, `--since D`, `--json` |
 | `app` | Desktop app in English or Spanish: live spending, history by day, month, project and session, insights, budgets and diagnostics (needs the `app` extra) | — |
 | `insights` | Where to cut spending: fixed rules, measured facts and estimated savings | `--days N`, `--as-of YYYY-MM-DD`, `--project P`, `--json` |
+| `statusline` | One line for the Claude Code status bar; reads its JSON from stdin | — |
 | `budget` | Spending against your limits, month-end forecast and plan value | `--as-of YYYY-MM-DD`, `--json` |
 | `report` | HTML report | `--open`, `--out F`, `--month YYYY-MM`, `--from D --to D`, `--project P`, `--client C` |
 | `projects list` | Projects with sessions and cost | `--json` |
