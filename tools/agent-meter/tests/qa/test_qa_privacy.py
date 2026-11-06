@@ -14,6 +14,7 @@ import hashlib
 import json
 import logging
 import subprocess
+import time
 from pathlib import Path
 
 import pytest
@@ -33,10 +34,24 @@ from tests.qa.conftest import QAWorld, agent_meter_argv, make_world
 pytestmark = pytest.mark.privacy
 
 CANARY_B = CANARY.encode()
+READ_WAIT_S = 30.0
+
+
+def _settled_bytes(path: Path) -> bytes:
+    """Read a file, waiting for a detached hook worker that Windows shows as holding it open."""
+    deadline = time.monotonic() + READ_WAIT_S
+    while True:
+        try:
+            return path.read_bytes()
+        except PermissionError:
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(0.2)
 
 
 def _tree_bytes(root: Path) -> dict[str, bytes]:
-    return {p.relative_to(root).as_posix(): p.read_bytes() for p in root.rglob("*") if p.is_file() and p.name != "lock"}
+    return {p.relative_to(root).as_posix(): _settled_bytes(p)
+            for p in root.rglob("*") if p.is_file() and p.name != "lock"}
 
 
 def _digests(*roots: Path) -> dict[str, tuple[str, int]]:
