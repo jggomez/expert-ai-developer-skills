@@ -237,7 +237,7 @@ class ProjectResolver:
 
     def _is_unassigned(self, directory: str) -> bool:
         forms = {directory, _real(directory)}
-        if "/" in forms or forms & self._home:
+        if any(os.path.dirname(form) == form for form in forms) or forms & self._home:
             return True
         return any(
             _is_under(form, root)

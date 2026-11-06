@@ -8,6 +8,7 @@ Pre-existing user files carry unrelated hooks, including Gemini CLI's ``BeforeTo
 from __future__ import annotations
 
 import json
+import os
 import shlex
 import subprocess
 import time
@@ -118,7 +119,7 @@ def test_l3_setup_hook_collect_report_uninstall_restores_bytes(
     qa_world.meter.last_summary.unlink(missing_ok=True)
     payload = json.dumps({"session_id": CLAUDE_SESSION_ID, "hook_event_name": "Stop",
                           "last_assistant_message": CANARY, "cwd": "/Users/dev/work/demo-repo"}).encode()
-    done = subprocess.run(shlex.split(stop_cmd), input=payload, capture_output=True, env=qa_world.env(),
+    done = subprocess.run(shlex.split(stop_cmd, posix=os.name != "nt"), input=payload, capture_output=True, env=qa_world.env(),
                           timeout=30, check=False)
     deadline = time.monotonic() + 30
     while not qa_world.meter.last_summary.exists() and time.monotonic() < deadline:
@@ -136,7 +137,7 @@ def test_l3_setup_hook_collect_report_uninstall_restores_bytes(
         "workspacePaths": ["/Users/dev/work/demo-repo"], "prompt": CANARY,
     }).encode()
     qa_world.meter.last_summary.unlink()
-    agy_done = subprocess.run(shlex.split(agy_cmd), input=agy_payload, capture_output=True,
+    agy_done = subprocess.run(shlex.split(agy_cmd, posix=os.name != "nt"), input=agy_payload, capture_output=True,
                               env=qa_world.env(), timeout=30, check=False)
     deadline = time.monotonic() + 30
     while not qa_world.meter.last_summary.exists() and time.monotonic() < deadline:

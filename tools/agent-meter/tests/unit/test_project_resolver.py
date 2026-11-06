@@ -7,7 +7,6 @@ import os
 import subprocess
 from decimal import Decimal
 from pathlib import Path
-from urllib.parse import quote
 
 import pytest
 
@@ -143,7 +142,7 @@ def test_same_repo_from_cwd_and_file_uri_gets_same_project(tmp_path: Path) -> No
     res = resolver(tmp_path)
 
     from_cwd = res.resolve(str(repo))
-    from_uri = res.resolve("file://" + quote(str(repo)))
+    from_uri = res.resolve(repo.as_uri())
     from_subdir = res.resolve(str(repo / "."))
 
     assert from_cwd == from_uri == from_subdir
@@ -287,7 +286,7 @@ def test_two_missing_locations_of_same_folder_share_project(tmp_path: Path) -> N
 
     # Act
     first = resolver(tmp_path, cache=cache).resolve(str(first_old))
-    second = resolver(tmp_path, cache=cache).resolve(f"file://{second_old}")
+    second = resolver(tmp_path, cache=cache).resolve(second_old.as_uri())
 
     # Assert
     assert second.project_id == first.project_id

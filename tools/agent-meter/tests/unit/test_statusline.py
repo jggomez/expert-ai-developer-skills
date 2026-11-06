@@ -86,7 +86,8 @@ def test_setting_writes_a_command_object_and_undo_restores_a_custom_line(
     original = path.read_bytes()
     monkeypatch.setattr(actuators.shutil, "which", lambda _name: "/opt/my tools/agent-meter")
     monkeypatch.setattr(actuators, "target_paths", lambda: {"claude": path, "antigravity": tmp_path / "no.json"})
-    command = "'/opt/my tools/agent-meter' statusline"
+    command = actuators.statusline_command()
+    assert command is not None
 
     # Act
     plan = actuators.plan_change("claude.statusline", command)
@@ -103,4 +104,7 @@ def test_setting_writes_a_command_object_and_undo_restores_a_custom_line(
 def test_estimated_status_line_appears_in_the_app_options(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(actuators.shutil, "which", lambda _name: "/usr/bin/agent-meter")
 
-    assert actuators.action_options(actuators.ACTIONS["claude.statusline"]) == ("/usr/bin/agent-meter statusline",)
+    options = actuators.action_options(actuators.ACTIONS["claude.statusline"])
+
+    assert len(options) == 1
+    assert options[0].endswith("/usr/bin/agent-meter statusline") or options[0] == '"/usr/bin/agent-meter" statusline'

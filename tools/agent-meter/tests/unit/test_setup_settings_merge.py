@@ -310,7 +310,8 @@ def test_command_prefix_quotes_paths_with_spaces() -> None:
     prefix = command_prefix(executable)
 
     # Assert
-    assert prefix == "'/Users/me/My Tools/agent-meter'"
+    expected = '"\\Users\\me\\My Tools\\agent-meter"' if os.name == "nt" else "'/Users/me/My Tools/agent-meter'"
+    assert prefix == expected
 
 
 # --------------------------------------------------------------------------- plan_antigravity
