@@ -19,6 +19,7 @@ from agent_meter.model import (
     UntrackedReason,
 )
 from agent_meter.readers._agy_decode import _transcript_step
+from agent_meter.readers._common import sqlite_change_stamp
 from agent_meter.readers.antigravity import KNOWN_FORMATS, AntigravityReader
 from tests.fixtures.antigravity import (
     GENERIC,
@@ -579,3 +580,38 @@ def test_result_step_flags_failed_test_runs(result: dict[str, object], expected:
 
     assert step is not None
     assert step.test_failed is expected
+
+
+def test_touching_a_database_is_not_a_change_but_a_commit_is(tmp_path: Path) -> None:
+    # Arrange
+    path = tmp_path / "c.db"
+    wal = tmp_path / "c.db-wal"
+    con = sqlite3.connect(path)
+    con.execute("PRAGMA journal_mode=WAL")
+    con.execute("PRAGMA wal_autocheckpoint=0")
+    con.execute("CREATE TABLE t (v TEXT)")
+    con.commit()
+
+    def signal() -> tuple[int | None, int, int | None, int]:
+        return (sqlite_change_stamp(path, "agy_db"), path.stat().st_size,
+                sqlite_change_stamp(wal, "agy_wal"), wal.stat().st_size)
+
+    before = signal()
+
+    # Act
+    os.utime(path, (1, 1))
+    os.utime(wal, (1, 1))
+    touched = signal()
+    con.execute("INSERT INTO t VALUES ('a')")
+    con.commit()
+    committed = signal()
+    con.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    con.execute("INSERT INTO t VALUES ('b')")
+    con.commit()
+    restarted = signal()
+    con.close()
+
+    # Assert
+    assert touched == before
+    assert committed != touched
+    assert restarted != committed

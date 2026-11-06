@@ -169,6 +169,11 @@ function projectLink(project) {
   return td;
 }
 
+function seconds(ms, estimated) {
+  const value = `${localized((ms / 1000).toFixed(1))} s`;
+  return estimated ? t("history.estimated_time", { value }) : value;
+}
+
 function renderHistory(data) {
   $("history-cost").textContent = usd(data.totals.cost_usd);
   $("history-estimated").textContent = Number(data.totals.estimated_usd) > 0
@@ -184,6 +189,8 @@ function renderHistory(data) {
     `${localized(p.share_pct)} %`, count(p.calls), count(p.sessions), count(p.tasks), compact(p.tokens))));
   $("history-session-rows").replaceChildren(...data.sessions.map((s) => row(dateTime(s.ended_at), dateTime(s.started_at),
     s.project, s.host, count(s.calls), count(s.tasks), usd(s.cost_usd))));
+  $("model-latency").replaceChildren(...(data.model_latency ?? []).map((m) => row(m.model, m.host, count(m.calls),
+    seconds(m.p50_ms, m.estimated), seconds(m.p95_ms, m.estimated))));
   const shown = data.sessions.length;
   const total = data.totals.sessions;
   $("history-shown").textContent = !total ? t("history.empty")
@@ -319,11 +326,27 @@ function changeRow(change) {
     effectText(change.effect), last);
 }
 
+function renderRules(rules) {
+  $("rule-list").replaceChildren(...rules.map((rule) => {
+    const label = node("label", "rule");
+    const box = document.createElement("input");
+    box.type = "checkbox";
+    box.checked = rule.enabled;
+    box.addEventListener("change", async () => {
+      const result = await window.pywebview.api.set_rule(rule.id, box.checked);
+      if (!result.ok) showChangeMessage(t(`error.${result.code}`));
+    });
+    label.append(box, node("span", "", t(`rule.${rule.id}`)));
+    return label;
+  }));
+}
+
 async function refreshChanges() {
-  const [available, history] = await Promise.all([window.pywebview.api.actions(), window.pywebview.api.changes()]);
+  const [available, history, rules] = await Promise.all([window.pywebview.api.actions(), window.pywebview.api.changes(), window.pywebview.api.rules()]);
   $("action-list").replaceChildren(...available.actions.map(actionCard));
   $("change-rows").replaceChildren(...history.changes.map(changeRow));
   $("change-none").hidden = history.changes.length > 0;
+  renderRules(rules.rules);
   $("change-table").hidden = history.changes.length === 0;
   setStatus("");
 }
@@ -333,7 +356,93 @@ async function prepareChange(actionId, value) {
   await previewChange(actionId, value);
 }
 
-const REFRESH = { live: refreshLive, history: refreshHistory, insights: refreshInsights, changes: refreshChanges, settings: refreshSettings };
+let projects = [];
+let editing = null;
+
+function billingLabel(project) {
+  if (project.billing === "hourly") return `${t("projects.hourly")}${project.rate ? `: ${project.rate} ${project.currency ?? ""}` : ""}`;
+  if (project.billing === "fixed") return `${t("projects.fixed")}${project.fixed_price ? `: ${project.fixed_price} ${project.currency ?? ""}` : ""}`;
+  return t("projects.no_billing");
+}
+
+function buttonCell(label, action) {
+  const td = document.createElement("td");
+  const button = node("button", "", label);
+  button.type = "button";
+  button.addEventListener("click", action);
+  td.append(button);
+  return td;
+}
+
+function renderHours(project) {
+  $("hours-rows").replaceChildren(...project.hours.map((entry) => row(entry.period, `${localized(entry.hours)} h`,
+    buttonCell(t("projects.remove"), () => projectResult(window.pywebview.api.remove_project_hours(project.project_id, entry.period))))));
+}
+
+function openProject(project) {
+  editing = project.project_id;
+  const form = $("project-form");
+  form.elements.name.value = project.name;
+  form.elements.client.value = project.client ?? "";
+  form.elements.billing.value = project.billing ?? "";
+  form.elements.rate.value = project.rate ?? "";
+  form.elements.fixed_price.value = project.fixed_price ?? "";
+  form.elements.currency.value = project.currency ?? "";
+  $("tag-form").elements.tag.value = project.tag ?? "";
+  $("project-title").textContent = project.name;
+  renderHours(project);
+  $("project-editor").hidden = false;
+}
+
+async function refreshProjects() {
+  const data = await window.pywebview.api.projects();
+  settle(data);
+  if (data.busy) return;
+  projects = data.projects;
+  $("project-rows").replaceChildren(...projects.map((project) => row(project.name, project.client ?? "—", billingLabel(project),
+    project.tag ?? "—", usd(project.cost_usd), buttonCell(t("projects.edit"), () => openProject(project)))));
+  $("project-none").hidden = projects.length > 0;
+  $("project-table").hidden = projects.length === 0;
+  const open = projects.find((project) => project.project_id === editing);
+  if (open) renderHours(open);
+}
+
+async function projectResult(request) {
+  const result = await request;
+  $("project-message").textContent = result.ok ? t("projects.saved") : t(`error.${result.code}`);
+  await refreshProjects();
+}
+
+function saveProject(event) {
+  event.preventDefault();
+  projectResult(window.pywebview.api.save_project(editing, Object.fromEntries(new FormData(event.target))));
+}
+
+function saveTag(event) {
+  event.preventDefault();
+  projectResult(window.pywebview.api.set_project_tag(editing, event.target.elements.tag.value));
+}
+
+function saveHours(event) {
+  event.preventDefault();
+  const form = event.target;
+  projectResult(window.pywebview.api.set_project_hours(editing, form.elements.period.value, form.elements.hours.value.trim().replace(",", ".")));
+}
+
+let release = null;
+
+async function checkUpdate() {
+  const message = $("update-message");
+  message.textContent = t("settings.checking");
+  $("open-release").hidden = true;
+  const result = await window.pywebview.api.check_update();
+  release = result.newer ? result.url : null;
+  $("open-release").hidden = !release;
+  message.textContent = !result.ok ? t("settings.update_failed")
+    : result.newer ? t("settings.update_found", result) : t("settings.up_to_date", result);
+}
+
+const REFRESH = { live: refreshLive, history: refreshHistory, insights: refreshInsights, changes: refreshChanges, projects: refreshProjects, settings: refreshSettings };
 let current = "live";
 
 function refreshCurrent() {
@@ -398,7 +507,12 @@ async function start() {
   $("history-project").addEventListener("change", refreshCurrent);
   $("change-confirm").addEventListener("click", confirmChange);
   $("change-cancel").addEventListener("click", hideChangePreview);
-  window.agentMeterRefresh = () => (current === "settings" || current === "changes" ? undefined : refreshCurrent());
+  $("project-form").addEventListener("submit", saveProject);
+  $("tag-form").addEventListener("submit", saveTag);
+  $("hours-form").addEventListener("submit", saveHours);
+  $("check-update").addEventListener("click", checkUpdate);
+  $("open-release").addEventListener("click", () => window.pywebview.api.open_release(release));
+  window.agentMeterRefresh = () => (["settings", "changes", "projects"].includes(current) ? undefined : refreshCurrent());
   window.setInterval(window.agentMeterRefresh, FALLBACK_REFRESH_MS);
   refreshCurrent();
 }

@@ -84,6 +84,7 @@ class FileFingerprint:
     size: int
     mtime_ns: int
     inode: int
+    change_stamp: int | None = None  # replaces mtime_ns in the unit fingerprint when the format offers a better signal
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,10 +99,10 @@ class SessionUnit:
 
     @property
     def fingerprint(self) -> str:
-        """SHA-256 hex over the sorted ``(relpath, size, mtime_ns, inode)`` tuples."""
+        """SHA-256 hex over the sorted ``(relpath, size, change stamp or mtime_ns, inode)`` tuples."""
         digest = hashlib.sha256()
         for relpath, size, mtime_ns, inode in sorted(
-            (f.relpath, f.size, f.mtime_ns, f.inode) for f in self.files
+            (f.relpath, f.size, f.mtime_ns if f.change_stamp is None else f.change_stamp, f.inode) for f in self.files
         ):
             digest.update(f"{relpath}\0{size}\0{mtime_ns}\0{inode}\n".encode())
         return digest.hexdigest()

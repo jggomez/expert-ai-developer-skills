@@ -17,7 +17,7 @@ Lee los transcripts y bases de datos que las herramientas ya escriben en tiempo 
 | Costo de IA frente al valor facturable por cliente y mes | "El costo de IA fue el 4% de lo facturado al cliente Z" |
 | Conteo de llamadas a herramientas y archivos tocados (solo conteos) | Qué hizo el agente, sin almacenar contenido |
 
-La app de escritorio opcional muestra los mismos datos con gasto en vivo, historial, insights y presupuestos, en inglés o español:
+La app de escritorio opcional muestra los mismos datos con gasto en vivo, historial, insights, presupuestos, proyectos y cambios de ajustes, en inglés o español:
 
 ![App de escritorio de agent-meter con la pantalla En vivo y datos de demostración](../../tools/agent-meter/docs/images/app-live-es.png)
 

@@ -13,6 +13,8 @@ import copy
 import difflib
 import json
 import os
+import shlex
+import shutil
 import stat
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -24,7 +26,7 @@ from agent_meter.paths import AppHome, atomic_write_text
 from agent_meter.setup import hosts, settings_merge
 from agent_meter.setup._files import atomic_write, sha256_hex
 
-__all__ = ["ACTIONS", "ERROR_CODES", "Action", "ActuatorError", "ChangePlan", "apply_change", "current_value", "list_changes",
+__all__ = ["ACTIONS", "ERROR_CODES", "Action", "ActuatorError", "ChangePlan", "action_options", "apply_change", "current_value", "list_changes",
            "plan_change", "target_paths", "undo_change"]
 
 CHANGES_NAME: Final = "changes.json"
@@ -50,6 +52,7 @@ class Action:
     target: str  # a key of ``target_paths``
     key: tuple[str, ...]
     values: tuple[str, ...]  # empty when the choices come from the user's own data
+    command_object: bool = False  # stored as {"type": "command", "command": value}
 
 
 ACTIONS: Final[dict[str, Action]] = {
@@ -60,6 +63,7 @@ ACTIONS: Final[dict[str, Action]] = {
         Action("claude.effort.opus", "claude", ("modelSettings", "claude-opus-5-5", "effortLevel"), _EFFORTS),
         Action("claude.effort.sonnet", "claude", ("modelSettings", "claude-sonnet-5-5", "effortLevel"), _EFFORTS),
         Action("claude.autocompact", "claude", ("env", "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE"), ("60", "70", "80")),
+        Action("claude.statusline", "claude", ("statusLine",), (), command_object=True),
         Action("antigravity.model", "antigravity", ("model",), ()),
     )
 }
@@ -91,10 +95,32 @@ def _read_key(data: dict[str, Any], key: tuple[str, ...]) -> str | None:
         if not isinstance(node, dict) or part not in node:
             return None
         node = node[part]
+    if isinstance(node, dict) and node.get("type") == "command":
+        node = node.get("command")
     return None if node is None else str(node)
 
 
-def _write_key(data: dict[str, Any], key: tuple[str, ...], value: str) -> None:
+def statusline_command() -> str | None:
+    """The status line runs the installed command, which the packaged app alone does not provide."""
+    binary = shutil.which("agent-meter")
+    if binary is None:
+        return None
+    quoted = f'"{binary}"' if os.name == "nt" else shlex.quote(binary)
+    return f"{quoted} statusline"
+
+
+def action_options(action: Action, observed: Sequence[str] = ()) -> tuple[str, ...]:
+    if action.command_object:
+        command = statusline_command()
+        return () if command is None else (command,)
+    return action.values or tuple(observed)
+
+
+def _store_value(action: Action, value: str) -> str | dict[str, str]:
+    return {"type": "command", "command": value} if action.command_object else value
+
+
+def _write_key(data: dict[str, Any], key: tuple[str, ...], value: str | dict[str, str]) -> None:
     node = data
     for part in key[:-1]:
         child = node.setdefault(part, {})
@@ -161,7 +187,7 @@ def plan_change(action_id: str, value: str, *, observed: Sequence[str] = ()) -> 
     action = ACTIONS.get(action_id)
     if action is None:
         raise ActuatorError("unknown_action", action_id)
-    if value not in (action.values or tuple(observed)):
+    if value not in action_options(action, observed):
         raise ActuatorError("unknown_value", value)
     path = target_paths()[action.target]
     if action.target == "antigravity" and not path.exists():
@@ -169,7 +195,7 @@ def plan_change(action_id: str, value: str, *, observed: Sequence[str] = ()) -> 
     real, raw, data = _load(path)
     _check_managed(real, action)
     after = copy.deepcopy(data)
-    _write_key(after, action.key, value)
+    _write_key(after, action.key, _store_value(action, value))
     old = _read_key(data, action.key)
     return ChangePlan(
         action=action, file=real, before_sha256=None if raw is None else sha256_hex(raw),
@@ -236,7 +262,7 @@ def _revert_key(change: dict[str, Any], action: Action, path: Path, raw: bytes |
     if change["old_value"] is None:
         _remove_key(data, action.key)
     else:
-        _write_key(data, action.key, str(change["old_value"]))
+        _write_key(data, action.key, _store_value(action, str(change["old_value"])))
     _write_settings(path, settings_merge._dump(data).encode("utf-8"), raw)
 
 

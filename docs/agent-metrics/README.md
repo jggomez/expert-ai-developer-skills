@@ -17,7 +17,7 @@ It reads the transcripts and databases that the hosts already write in real time
 | AI cost vs billable value per client and month | "AI cost was 4% of what I billed client Z" |
 | Tool-call counts and files touched (counts only) | What the agent did, with no content stored |
 
-The optional desktop app shows the same data with live spending, history, insights and budgets, in English or Spanish:
+The optional desktop app shows the same data with live spending, history, insights, budgets, projects and setting changes, in English or Spanish:
 
 ![agent-meter desktop app showing the Live screen with demo data](../../tools/agent-meter/docs/images/app-live.png)
 

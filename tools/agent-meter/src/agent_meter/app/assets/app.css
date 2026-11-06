@@ -74,3 +74,7 @@ button.link:hover { text-decoration: underline; }
 .action .actions { margin-top: 8px; }
 .preview pre { margin: 0 0 10px; overflow-x: auto; font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; white-space: pre; }
 #change-rows button { white-space: nowrap; overflow-wrap: normal; }
+.rule { flex-direction: row; align-items: center; gap: 8px; padding: 6px 0; color: inherit; }
+.rule input { width: auto; }
+#project-editor form { padding: 8px 0; }
+#project-rows button, #hours-rows button { white-space: nowrap; overflow-wrap: normal; }

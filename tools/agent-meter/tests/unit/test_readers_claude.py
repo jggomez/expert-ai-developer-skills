@@ -157,7 +157,7 @@ def test_usage_field_mapping(standard: tuple[ClaudeCodeReader, UnitBatch]) -> No
     assert (
         r1.model == "claude-opus-5-5"
         and r1.model_label is None
-        and r1.latency_ms is None
+        and r1.latency_ms == 7_000  # estimated: prompt at 0 s, last answer line at 7 s
     )  # type: ignore[attr-defined]
     assert r1.source_format == "cc-2.1" and r1.is_error is False  # type: ignore[attr-defined]
     assert calls_by_id(batch)["claude-code:r5"].is_error is True  # type: ignore[attr-defined]
@@ -692,3 +692,26 @@ def test_piped_test_run_counts_a_failure_the_exit_code_hid(home: ClaudeHome) -> 
     (bash_use,) = batch.tool_uses
     assert (run.test_runs, run.test_failures) == (1, 1)
     assert bash_use.errors == 0
+
+
+def test_call_latency_is_estimated_from_the_last_input_to_the_last_answer_line(home: ClaudeHome) -> None:
+    # Arrange
+    session = ClaudeSession("44444444-4444-4444-4444-444444444444")
+    first = session.prompt(0, "p1")
+    answer = session.assistant(2, "r1", parent=first, use=usage(10, 5), tools=[tool_use("Bash", "t1", command="ls")])
+    session.assistant(4, "r1", parent=answer, use=usage(10, 9))
+    result = session.tool_result(30, "p1", parent=answer, tool_use_id="t1")
+    session.assistant(33, "r2", parent=result, use=usage(10, 5))
+    idle = session.prompt(50, "p2")
+    session.assistant(2000, "r3", parent=idle, use=usage(10, 5))
+    home.write(session)
+    reader = ClaudeCodeReader(home.root)
+    (unit,) = list(reader.discover())
+
+    # Act
+    calls = calls_by_id(reader.read_unit(unit, make_options(now=ts(3000), description_salt=SALT)))
+
+    # Assert
+    assert calls["claude-code:r1"].latency_ms == 4000  # type: ignore[attr-defined]
+    assert calls["claude-code:r2"].latency_ms == 3000  # type: ignore[attr-defined]
+    assert calls["claude-code:r3"].latency_ms is None  # type: ignore[attr-defined]

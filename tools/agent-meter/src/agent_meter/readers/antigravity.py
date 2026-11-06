@@ -15,7 +15,7 @@ import sqlite3
 from collections import deque
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import closing
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Final
@@ -63,6 +63,7 @@ from agent_meter.readers._common import (
     fingerprint_file,
     safe_label,
     shape_fingerprint,
+    sqlite_change_stamp,
 )
 
 __all__ = [
@@ -82,6 +83,7 @@ ANTIGRAVITY_HOSTS: Final = frozenset(
 TRANSCRIPT_REL: Final = Path(".system_generated/logs/transcript_full.jsonl")
 SUBAGENTS_REL: Final = Path(".system_generated/subagents")
 _UNKNOWN_AGENT: Final = "(unknown)"
+_SQLITE_KINDS: Final = frozenset({"agy_db", "agy_wal"})
 _PARENT_SCAN_ROWS: Final = 50
 
 
@@ -331,7 +333,7 @@ class AntigravityReader:
                 (p, "agy_subagents") for p in sorted(sub_dir.glob("*.json"))
             )
         return [
-            fingerprint
+            replace(fingerprint, change_stamp=sqlite_change_stamp(path, kind)) if kind in _SQLITE_KINDS else fingerprint
             for path, kind in candidates
             if path.is_file()
             and (fingerprint := fingerprint_file(self.root, path, kind)) is not None

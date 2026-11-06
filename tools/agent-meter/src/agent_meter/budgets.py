@@ -129,7 +129,7 @@ def _alert_text(line: BudgetLine, language: str) -> tuple[str, str]:
 
 
 def _line_document(line: BudgetLine) -> dict[str, Any]:
-    return {"label": line.label, "period": line.period, "limit_usd": str(line.limit_usd),
+    return {"key": line.key, "label": line.label, "period": line.period, "limit_usd": str(line.limit_usd),
             "spent_usd": str(line.spent_usd.quantize(Decimal("0.01"))),
             "percent": str(line.percent.quantize(Decimal("0.1"))), "level": line.level}
 

@@ -289,6 +289,13 @@ def _cmd_insights(ctx: Ctx, ns: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _cmd_statusline(ctx: Ctx, _ns: argparse.Namespace) -> int:
+    from agent_meter.statusline import render_statusline
+
+    print(render_statusline(sys.stdin.read(), ctx.home, ctx.cfg))
+    return EXIT_OK
+
+
 def _cmd_budget(ctx: Ctx, ns: argparse.Namespace) -> int:
     from zoneinfo import ZoneInfo
 
@@ -442,24 +449,10 @@ def _cmd_sync(ctx: Ctx, ns: argparse.Namespace) -> int:
 
 
 def _cmd_projects_list(ctx: Ctx, ns: argparse.Namespace) -> int:
+    from agent_meter.project_admin import PROJECT_LIST_SQL
+
     with _reader(ctx) as store:
-        rows = store.query(
-            """
-            SELECT p.project_id, p.display_name, p.kind, p.remote_url, p.client, p.billing_model,
-                   p.hourly_rate, p.fixed_price, p.rate_currency,
-                   (SELECT COUNT(*) FROM v_sessions s WHERE s.project_id = p.project_id) AS sessions,
-                   (SELECT SUM(d.cost_usd) FROM v_daily_project_cost d WHERE d.project_id = p.project_id) AS cost_usd,
-                   (SELECT COALESCE(SUM(d.unpriced_calls), 0) FROM v_daily_project_cost d
-                     WHERE d.project_id = p.project_id) AS unpriced_calls
-            FROM projects p
-            -- Hide orphan identities (e.g. a pre-move path id after its sessions were relocated).
-            WHERE p.project_id = '(unassigned)' OR p.client IS NOT NULL OR p.billing_model IS NOT NULL
-               OR EXISTS (SELECT 1 FROM sessions s WHERE s.project_id = p.project_id)
-               OR EXISTS (SELECT 1 FROM llm_calls c WHERE c.project_id = p.project_id)
-               OR EXISTS (SELECT 1 FROM dev_hours_manual h WHERE h.project_id = p.project_id)
-            ORDER BY p.display_name, p.project_id
-            """
-        )
+        rows = store.query(PROJECT_LIST_SQL)
     if ns.json:
         _emit_json(rows)
         return EXIT_OK
@@ -477,14 +470,7 @@ def _cmd_projects_list(ctx: Ctx, ns: argparse.Namespace) -> int:
 
 
 def _cmd_projects_set(ctx: Ctx, ns: argparse.Namespace) -> int:
-    from dataclasses import replace
-
-    from agent_meter.project_resolver import (
-        ProjectOverride,
-        ProjectsConfig,
-        load_projects_config,
-        save_projects_config,
-    )
+    from agent_meter.project_admin import save_project_override
 
     rate = _decimal(ns.rate, "--rate")
     price = _decimal(ns.price, "--price")
@@ -493,19 +479,12 @@ def _cmd_projects_set(ctx: Ctx, ns: argparse.Namespace) -> int:
         raise UsageError(f"--currency: expected a 3-letter ISO code, got {ns.currency!r}")
     with _writer(ctx) as store:
         pid = _resolve_project(store, ns.project, allow_unknown_id=True)
-        cfg = load_projects_config(ctx.home.projects)
-        current = cfg.projects.get(pid, ProjectOverride())
         changes: dict[str, Any] = {}
         for attr, value in (("display_name", ns.name), ("client", ns.client), ("billing", ns.billing),
                             ("rate", rate), ("fixed_price", price), ("currency", currency)):
             if value is not None:
                 changes[attr] = value or None
-        updated = replace(current, **changes)
-        projects = {**cfg.projects, pid: updated}
-        save_projects_config(
-            ProjectsConfig(projects=projects, path_aliases=cfg.path_aliases, ignore=cfg.ignore, merges=cfg.merges),
-            ctx.home.projects,
-        )
+        save_project_override(ctx.home.projects, pid, changes)
         _refresh_reference(ctx, store)
     ctx.info(f"updated {pid} in {ctx.home.projects}")
     return EXIT_OK
@@ -1196,6 +1175,9 @@ def _add_ingest_commands(sub: argparse._SubParsersAction[argparse.ArgumentParser
 
     p = sub.add_parser("app", help="open the desktop app")
     p.set_defaults(handler=_cmd_app)
+
+    p = sub.add_parser("statusline", help="one line for the Claude Code status bar; reads its JSON from stdin")
+    p.set_defaults(handler=_cmd_statusline)
 
     p = sub.add_parser("budget", help="spending against your limits, month-end forecast and plan value")
     p.add_argument("--as-of", help="day to report on, YYYY-MM-DD")
