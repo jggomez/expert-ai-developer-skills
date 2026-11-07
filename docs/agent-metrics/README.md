@@ -100,6 +100,7 @@ The full reference is in the [package README](../../tools/agent-meter/README.md)
 
 | Document | Contents |
 | :--- | :--- |
+| [App guide](../../tools/agent-meter/docs/app-guide.md) | What each desktop app screen shows and how to use it |
 | [PRD.md](PRD.md) | Personas, user stories (US-01..US-17), business rules, NFRs |
 | [ADR-001-agent-meter.md](ADR-001-agent-meter.md) | Architecture decisions: readers, schema v1, triggers and hooks (§3.10), BigQuery sink (§3.11) |
 | [contracts.md](contracts.md) | Interface contracts, DuckDB schema, store views, outbox and BigQuery tables |
