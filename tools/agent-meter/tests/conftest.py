@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 import os
+from pathlib import Path
 
 import pytest
 
@@ -21,3 +22,16 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
             if needle in source:
                 item.add_marker(pytest.mark.skip(reason=reason))
                 break
+
+
+@pytest.fixture(autouse=True)
+def _isolated_user_home(tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Point HOME away from the real user so no test writes to the real ~/.agent-meter.
+
+    Tests that need a specific home still set HOME or AGENT_METER_HOME themselves.
+    """
+    home = tmp_path_factory.mktemp("user-home")
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
+    monkeypatch.delenv("AGENT_METER_HOME", raising=False)
+    return home
