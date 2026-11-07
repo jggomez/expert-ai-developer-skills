@@ -71,6 +71,7 @@ El programador periódico ejecuta `agent-meter collect --scheduled --quiet` cada
 
 | Documento | Contenido |
 | :--- | :--- |
+| [Guía de la app](../../tools/agent-meter/docs/app-guide.es.md) | Qué muestra cada pantalla de la app de escritorio y cómo usarla |
 | [PRD.md](PRD.md) | Personas, historias de usuario (US-01..US-17), reglas de negocio, RNF |
 | [ADR-001-agent-meter.md](ADR-001-agent-meter.md) | Decisiones de arquitectura: lectores, esquema v1, triggers y hooks (§3.10), sink de BigQuery (§3.11) |
 | [contracts.md](contracts.md) | Contratos de interfaz, esquema DuckDB, vistas del almacén, outbox y tablas de BigQuery |

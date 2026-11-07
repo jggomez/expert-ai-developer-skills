@@ -10,6 +10,8 @@ transcripts and databases those tools already write on your machine, and turns t
 - an **offline HTML report** you open in your browser,
 - and, optionally, a **BigQuery dataset + Looker Studio dashboard** in your own Google Cloud project.
 
+**Desktop app:** download it from [Releases](https://github.com/jggomez/expert-ai-developer-skills/releases) and read the [app guide](docs/app-guide.md).
+
 It is **free** (local mode needs no account at all), **read-only** towards your tools unless you confirm a change in the app, and **private**: it never stores
 prompts, code, tool inputs/outputs or file paths.
 
@@ -250,8 +252,7 @@ and needs the `app` extra (see [§4](#4-install)). Tested on macOS with Apple Si
 and has not been tried on a real machine yet.
 
 **No Python and no commands:** download the installer from
-[Releases](https://github.com/jggomez/expert-ai-developer-skills/releases), under the `agent-meter-v*` versions (the first one is
-still pending). Just open it: the
+[Releases](https://github.com/jggomez/expert-ai-developer-skills/releases), under the `agent-meter-v*` versions. Just open it: the
 app imports your history and reads new sessions while it is open. Anything that happens while it is closed comes in the next
 time you open it. For summaries after each task and scheduled collection, install the command line too.
 
@@ -277,75 +278,16 @@ command line and `agent-meter app`; there is no installer for them.
 
 ![Live screen with today's spending, budgets and active sessions](docs/images/app-live.png)
 
-| Screen | What you get |
-| :--- | :--- |
-| **Live** | Today, this month, month-end forecast, plan value, budgets and the sessions active in the last 15 minutes |
-| **History** | Spending by day, month, project and session, filtered by period and project |
-| **Insights** | Where to cut: measured findings, estimated savings and what to do next |
-| **Changes** | Change the model, effort, compaction or status line of your AI tools, with a preview, undo and before and after figures, plus automatic rules |
-| **Projects** | Clients, billing, rates, tags and manual hours, without editing `projects.yaml` |
-| **Settings** | Budgets, notifications, a manual collect, an update check and the `doctor` diagnostics |
+| Screen | Use it to | Guide |
+| :--- | :--- | :--- |
+| **Live** | See today's spending, budgets and active sessions | [Live](docs/app-guide.md#live) |
+| **History** | Find where the money went, by day, month, project and session | [History](docs/app-guide.md#history) |
+| **Insights** | See what to change to spend less | [Insights](docs/app-guide.md#insights) |
+| **Changes** | Change your AI settings with a preview and undo, and turn on automatic rules | [Changes](docs/app-guide.md#changes) |
+| **Projects** | Add clients, rates, tags and hours | [Projects](docs/app-guide.md#projects) |
+| **Settings** | Set budgets and notifications, and run diagnostics | [Settings](docs/app-guide.md#settings) |
 
-![History screen with spending by day, month, project and session](docs/images/app-history.png)
-
-![Insights screen with findings and estimated savings](docs/images/app-insights.png)
-
-![Changes screen with a preview of a settings change and its history](docs/images/app-changes.png)
-
-![Projects screen with clients, rates, tags and hours](docs/images/app-projects.png)
-
-![Settings screen with budgets and diagnostics](docs/images/app-settings.png)
-
-- **Language:** choose English or Español in the header. The choice is saved as `language` and also applies to budget
-  alerts. The CLI and the HTML report stay in English.
-- **Live updates:** the app watches your transcript folders and collects when they change, at most once every 30 seconds
-  after the previous collect ends, so hooks and the CLI can reach the store. Changes in between are picked up by the next one.
-- **While a collect runs:** the store is locked, so the app keeps showing the last saved figures, says so in the header
-  and refreshes when the collect ends. A large collect can take over a minute.
-- **Next to the clock:** the Mac menu bar shows today's spending. On Windows, an icon appears in the notification area. Its
-  menu includes the month, budget alerts and options to open the app or quit.
-- **Updates:** **Check for updates**, in Settings, contacts GitHub only when you click it. If there is a new version, it opens
-  the download page. It never installs anything by itself.
-- **Model response time:** History shows P50 and P95 by model. Antigravity records them. Claude Code does not, so its figures
-  are estimates: from the last input to the last line of the answer. Over 1,065 real tasks they never passed the time Claude Code
-  reports for the turn. Sessions collected before this version need `agent-meter collect --full` once.
-- **Status line:** on the Changes screen you can add spending to Claude Code's status line, such as
-  `$1.23 session · $46.20 today · 38% context`. It runs `agent-meter statusline`, so it needs the command line. The session
-  figure comes from Claude Code, and today's figure from the last collect. A status line you already had comes back on undo.
-- **Security:** there is no local server and no open port.
-
-#### What the Changes screen can edit
-
-| Setting | File and key |
-| :--- | :--- |
-| Claude Code default model (`opus`, `sonnet`, `haiku`) | `~/.claude/settings.json`: `model` |
-| Claude Code effort for Opus 5.5 and Sonnet 5.5 | `~/.claude/settings.json`: `modelSettings.<model>.effortLevel` |
-| Claude Code compaction threshold (60, 70 or 80%) | `~/.claude/settings.json`: `env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` |
-| Antigravity CLI default model, from those you used in the last 30 days | `~/.gemini/antigravity-cli/settings.json`: `model` |
-
-Nothing is written until you confirm the preview. Each change keeps a backup and is listed in `~/.agent-meter/changes.json`.
-Undo restores the file byte for byte, or only that key if you edited the file afterwards. The app refuses invalid JSON,
-a file that changed after the preview and settings managed by your organization. It never edits `~/.gemini/settings.json`,
-which belongs to Gemini CLI.
-
-Changes apply to new sessions; open and resumed sessions can keep their model. The before and after figures compare up to
-7 days on each side, once 5 tasks have finished. They show correlation, not cause. A lower cost with more retries may not
-be a saving. The app does not cap spending and cannot compact an open session.
-
-#### Automatic rules
-
-They are on the Changes screen and start off. Turn them on one at a time:
-
-| Rule | What it does |
-| :--- | :--- |
-| Monthly budget passed | Sets `sonnet` as the Claude Code default model, once a month |
-| Daily budget passed | Sets `sonnet` as the Claude Code default model, once a day |
-
-Rules run only while the app is open, after a collect. They use the same checks and backups as a manual change, send a
-notification and appear in the history, where you can undo them. If you undo one, it does not repeat until the next period.
-Their state is in `~/.agent-meter/rules.json`.
-
-The screenshots use fictional demo data.
+For what each part of a screen means, see the **[app guide](docs/app-guide.md)**.
 
 ---
 
