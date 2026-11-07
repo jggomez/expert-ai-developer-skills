@@ -73,6 +73,7 @@ _EDIT_TOOLS: Final = frozenset(
 )
 _COMMAND_TOOLS: Final = frozenset({"run_command"})
 _USAGE_FIELDS: Final = frozenset({2, 3, 5, 9, 10})  # 1.4.{2,3,5,9,10}
+_USAGE_MODEL_FIELD: Final = 1  # 1.4.1: model id, the only field left when no token was used
 _REQUIRED_COLUMNS: Final = {
     "trajectory_meta": frozenset({"trajectory_id"}),
     "steps": frozenset({"idx", "step_type", "metadata"}),
@@ -454,7 +455,11 @@ class _GenDecoder:
         return (trajectory, last_step) if trajectory else None
 
     def _usage(self, data: bytes) -> Usage:
-        """``1.4``: absent → unknown (never 0); present → absent subfields are proto3 zeros."""
+        """``1.4``: absent → unknown (never 0); present → absent subfields are proto3 zeros.
+
+        A call cancelled before the model answered keeps only the model id, so every count is 0.
+        Unknown integer fields without any known one mean the layout changed.
+        """
         message = _first_bytes(get_path(data, "1.4"))
         if message is None:
             self._diags.add(DiagnosticKind.FORMAT_CHANGED, "agy_db", "MissingUsage")
@@ -466,7 +471,7 @@ class _GenDecoder:
         except ProtoDecodeError:
             self._diags.add(DiagnosticKind.CORRUPT, "agy_db", "ProtoDecodeError")
             return _UNKNOWN_USAGE
-        if not fields.keys() & _USAGE_FIELDS:
+        if not fields.keys() & _USAGE_FIELDS and fields.keys() - {_USAGE_MODEL_FIELD}:
             self._diags.add(
                 DiagnosticKind.FORMAT_CHANGED, "agy_db", "UnknownUsageLayout"
             )

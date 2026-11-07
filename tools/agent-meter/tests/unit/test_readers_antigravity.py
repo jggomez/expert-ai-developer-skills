@@ -615,3 +615,26 @@ def test_touching_a_database_is_not_a_change_but_a_commit_is(tmp_path: Path) -> 
     assert touched == before
     assert committed != touched
     assert restarted != committed
+
+
+@pytest.mark.parametrize("usage_fields", [[1], []], ids=["model-only", "empty"])
+def test_usage_with_no_token_fields_is_a_zero_token_call(tmp_path: Path, usage_fields: list[int]) -> None:
+    # Arrange: a call cancelled before the model answered keeps only the model id (1.4.1);
+    # proto3 omits the zero token counts, so the layout is known and every count is 0.
+    conv = AgyConversation(
+        conversation_id="c-cancel",
+        trajectory_id="t-cancel",
+        steps=[AgyStep(0, USER_INPUT, 0), AgyStep(1, PLANNER, 1)],
+        calls=[AgyCall(0, usage_fields=usage_fields)],
+    )
+    reader = AntigravityReader(CLI, build_root(tmp_path / "antigravity-cli", [conv]))
+    unit = reader.find_unit("c-cancel")
+    assert unit is not None
+
+    # Act
+    result = reader.read_unit(unit, make_options())
+
+    # Assert
+    (call,) = result.calls
+    assert (call.input_tokens, call.output_tokens, call.cache_read_tokens, call.thinking_tokens) == (0, 0, 0, 0)
+    assert not [d for d in result.diagnostics if d.error_class == "UnknownUsageLayout"]
