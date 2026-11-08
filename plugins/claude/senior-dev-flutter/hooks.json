@@ -1,5 +1,5 @@
 {
-  "description": "Senior Flutter gates: block store builds / major bumps on protected branches, enforce PLAN.md before Dart edits, and keep `dart analyze` clean before finishing.",
+  "description": "Senior Flutter gates: block store builds / major bumps on protected branches, enforce docs/<feature-name>/PLAN.md before Dart edits, and keep `dart analyze` clean before finishing.",
   "hooks": {
     "PreToolUse": [
       {
