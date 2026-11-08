@@ -170,3 +170,13 @@ def test_ignores_agent_plugins_docs_and_dependency_folders(repo, rel):
     result = _run(repo)
     # Assert
     assert result.returncode == 0, result.stdout
+
+
+def test_a_demo_approved_in_the_feature_folder_plan_is_allowed(repo):
+    # Arrange
+    _write(repo, "src/Demo.tsx", "// demo-data: approved\nconst users = mockUsers;\n")
+    _write(repo, "docs/users/PLAN.md", "| Users | none yet | src/Demo.tsx | demo-data: approved by the user |\n")
+    # Act
+    result = _run(repo)
+    # Assert
+    assert result.returncode == 0, result.stdout

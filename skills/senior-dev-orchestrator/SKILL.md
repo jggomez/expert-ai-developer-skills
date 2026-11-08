@@ -6,7 +6,7 @@ description: Orchestrates the software development lifecycle (LLM Wiki memory re
 # Senior Software Developer Orchestrator
 
 ## Overview
-This skill directs the end-to-end Software Development Life Cycle (SDLC) via **Graph Engineering**. It restores cross-AI LLM Wiki memory (`context/memory/MEMORY.md`), ensures target-project `AGENTS.md` (`<= 90 lines`) links executable commands, `DESIGN.md`, and `MEMORY.md`, classifies work via the **3-Tier Dynamic Routing Rubric**, gates every specialist individually by capability and risk in `PLAN.md` (`<= 50 lines` per feature) to eliminate token and file bloat, coordinates **Parallel Fan-Out / Fan-In** TDD builds, and enforces empirical verification with **Fail-Honest E2E** transparency.
+This skill directs the end-to-end Software Development Life Cycle (SDLC) via **Graph Engineering**. It restores cross-AI LLM Wiki memory (`context/memory/MEMORY.md`), ensures target-project `AGENTS.md` (`<= 90 lines`) links executable commands, `DESIGN.md`, and `MEMORY.md`, classifies work via the **3-Tier Dynamic Routing Rubric**, gates every specialist individually by capability and risk in `docs/<feature-name>/PLAN.md` (`<= 50 lines`) to eliminate token and file bloat, coordinates **Parallel Fan-Out / Fan-In** TDD builds, and enforces empirical verification with **Fail-Honest E2E** transparency.
 
 ## When to Use
 - **Trigger Scenarios**:
@@ -17,11 +17,11 @@ This skill directs the end-to-end Software Development Life Cycle (SDLC) via **G
   - Pure Q&A prompts without code changes, or domain pipelines owned by specialist orchestrators (`flutter-senior-orchestration`, `gcp-data-engineering`).
 
 ## Core Invariants & Artifact Line Budgets
-1. **Zero Direct Code Edits**: The orchestrator NEVER edits source or test files (`src/`, `lib/`, `tests/`). Direct writes are restricted to `PLAN.md`, root `AGENTS.md`, root `DESIGN.md`, `ADR-*.md`, `.agents/`, `docs/` (`docs/<feature-name>/`), and `context/memory/`.
+1. **Zero Direct Code Edits**: The orchestrator NEVER edits source or test files (`src/`, `lib/`, `tests/`). Direct writes are restricted to `docs/<feature-name>/PLAN.md`, root `AGENTS.md`, root `DESIGN.md`, `ADR-*.md`, `.agents/`, `docs/` (`docs/<feature-name>/`), and `context/memory/`.
 2. **Automated Git Branch Governance & Scope Drift**: Never work on `main`, `master`, `develop`, or `dev`. At State 0, inspect `git symbolic-ref --short HEAD` and auto-branch (`git checkout -b feat/<descriptive-slug>` or `fix/<slug>`). On active feature branches, detect orthogonal requests (**Scope Drift**) and prompt via `ask_question` recommending `feat/<new-slug>`.
 3. **Target-Project `AGENTS.md` + `DESIGN.md` + `MEMORY.md` Integration**: In State 0 / State 5, verify root `AGENTS.md`; if missing or outdated, generate/update a concise root `AGENTS.md` (`<= 90 lines`) linking build/test/lint commands, root `DESIGN.md`, and `context/memory/MEMORY.md`.
 4. **Strict Conciseness Line Caps**:
-   - `PLAN.md` feature block `<= 50 lines` | Root `AGENTS.md <= 90 lines` | Root `DESIGN.md <= 110 lines`
+   - `docs/<feature-name>/PLAN.md` `<= 50 lines` | Root `AGENTS.md <= 90 lines` | Root `DESIGN.md <= 110 lines`
    - Single discovery file `docs/<feature-name>/spec.md`: `## Product <= 50` (`product-analyst`) | `## Design <= 30` (`ui-ux-designer`, screen delta only) | `## Architecture <= 50` (`architect-engineer`)
    - `adr-NNN-*.md <= 55 lines` (only for a structural decision) | `docs/<feature-name>/test-matrix.md <= 80 lines` | `docs/<feature-name>/evidence/*.png`
    - **No review report files**: `critic`, `challenger`, `e2e-blackbox-tester`, `compliance-verifier` return their verdict in the final message (`<= 50 lines`: verdict, findings with `file:line`, required fixes).
@@ -38,7 +38,7 @@ This skill directs the end-to-end Software Development Life Cycle (SDLC) via **G
 | **Tier 3: Mission-Critical** | Greenfield app, auth/security, payments/billing, breaking contracts, core architecture shift. | **Capability-Gated** State 1 in `docs/<feature-name>/`. **Mandatory** `ask_question` sign-off. | Isolated parallel `code-implementer`. **Adversarial Verification Committee**: `qa-tester` + `compliance-verifier` + risk/UI-gated `critic`, `challenger`, `e2e-blackbox-tester`. |
 
 ### 5-Row `Discovery & Architecture Triage` (`Invoke / SKIP`) Rubric
-Every `PLAN.md` (`<= 50 lines`) MUST include a compact 5-row table justifying each specialist in 1 line:
+Every `docs/<feature-name>/PLAN.md` (`<= 50 lines`) MUST include a compact 5-row table justifying each specialist in 1 line:
 
 | Subagent | `INVOKE ONLY IF` | `SKIP WHEN` |
 | :--- | :--- | :--- |
@@ -63,7 +63,7 @@ These apply in every Tier when a task creates or changes UI:
 - **Git Branch Governance**: Check `git symbolic-ref --short HEAD`; auto-branch `feat/<descriptive-kebab-slug>` or `fix/<slug>` from base branches; prompt via `ask_question` on **Scope Drift**.
 - **Feature Directory & Memory**: Ensure `docs/<feature-name>/` exists (syncing `docs/specifications/` if present). Silently read `context/memory/MEMORY.md` (~500 tokens); read topic pages only on demand.
 - **Target `AGENTS.md` Check**: Create or update root `AGENTS.md` (`<= 90 lines`) if missing or if stack/commands/conventions changed, linking commands, `DESIGN.md`, and `context/memory/MEMORY.md`.
-- **Author `PLAN.md` (`<= 50 lines`)**: Classify Tier 1/2/3, fill the 5-row `Invoke / SKIP` triage table, and define `Parallel Execution Tracks`.
+- **Author `docs/<feature-name>/PLAN.md` (`<= 50 lines`)**: Classify Tier 1/2/3, fill the 5-row `Invoke / SKIP` triage table, and define `Parallel Execution Tracks`. The plan lives in the feature folder next to `spec.md`, ADRs and evidence; never in the repository root.
 
 ### 2. State 1 & 1.5: Capability-Gated Discovery & Interactive User Alignment Gate
 - **State 1**: Skip for Tier 1 or when all Discovery specialists are `SKIP`. Otherwise dispatch ONLY `INVOKE` specialists **sequentially** (`product-analyst` -> `ui-ux-designer` -> `architect-engineer`, never in parallel: they share `docs/<feature-name>/spec.md`, each editing only its own section) within strict line budgets.
@@ -93,8 +93,8 @@ These apply in every Tier when a task creates or changes UI:
 - Exceeding artifact line budgets or skipping `State 0`, `ask_question` alignment on Tier 2/3, Mode B worktree isolation on shared files, or scoped test isolation.
 
 ## Verification
-- [ ] `State 0`: Git branch verified (`feat/<slug>` auto-branched; Scope Drift checked); `docs/<feature-name>/` ensured; `context/memory/MEMORY.md` read; root `AGENTS.md` (`<= 90 lines`) checked; `PLAN.md` (`<= 50 lines`) has 5-row `Invoke / SKIP` triage.
+- [ ] `State 0`: Git branch verified (`feat/<slug>` auto-branched; Scope Drift checked); `docs/<feature-name>/` ensured; `context/memory/MEMORY.md` read; root `AGENTS.md` (`<= 90 lines`) checked; `docs/<feature-name>/PLAN.md` (`<= 50 lines`) has 5-row `Invoke / SKIP` triage.
 - [ ] `State 1 & 1.5`: Only capability-triggered discovery specialists ran (within line budgets); Tier 2/3 `ask_question` approval received.
 - [ ] `State 2`: Collision analysis enforced Mode A or Mode B; parallel `code-implementer` subagents ran scoped tests only.
 - [ ] `State 3 & 4`: `qa-tester` (`exit code 0`) and `compliance-verifier` (`APPROVED`) passed; risk-gated committee verdicts (final message, `<= 50 lines`, no report files) verified; `BLOCKED`/`SKIPPED` E2E disclosed honestly.
-- [ ] `State 5`: `PLAN.md`, root `AGENTS.md` (if changed), and `context/memory/` updated once at completion.
+- [ ] `State 5`: `docs/<feature-name>/PLAN.md`, root `AGENTS.md` (if changed), and `context/memory/` updated once at completion.

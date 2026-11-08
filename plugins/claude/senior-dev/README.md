@@ -6,7 +6,7 @@
 ![Platform: Claude Code](https://img.shields.io/badge/platform-Claude%20Code-orange.svg)
 
 `senior-dev` is a Claude Code plugin for teams that want a repeatable SDLC loop: triage, discovery, TDD build, QA, and a compliance audit before shipping.
-The orchestrator writes `PLAN.md`, delegates work to specialist subagents, and never edits application code itself.
+The orchestrator writes `docs/<feature-name>/PLAN.md`, delegates work to specialist subagents, and never edits application code itself.
 Hooks enforce plan-first, branch safety and passing tests; a Playwright MCP server lets the black-box tester verify real browser flows.
 `senior-dev-flutter` and `python-backend` depend on this plugin and install it automatically.
 
@@ -54,7 +54,7 @@ Ask the senior-dev:compliance-verifier agent for a release-readiness verdict on 
 
 | Agent | Role | Model |
 | :--- | :--- | :--- |
-| `senior-dev-orchestrator` | Triages the task, writes `PLAN.md`, dispatches and coordinates subagents | `inherit` |
+| `senior-dev-orchestrator` | Triages the task, writes `docs/<feature-name>/PLAN.md`, dispatches and coordinates subagents | `inherit` |
 | `product-analyst` | Clarifies business rules; writes user stories and acceptance criteria | `sonnet` |
 | `ui-ux-designer` | Maintains `DESIGN.md` and feature UI deltas; WCAG AA | `sonnet` |
 | `architect-engineer` | Module boundaries, API/DB contracts, MADR records | `inherit` |
@@ -91,7 +91,7 @@ Each agent preloads only its core skills; others load on demand through the `Ski
 
 | Event | Script | Behavior |
 | :--- | :--- | :--- |
-| `PreToolUse` (`Write\|Edit`) | `hooks/orchestrator-role-gate.js` | Allows docs and plans (`*.md`, `*.txt`, `docs/`, `.agents/`, `context/`, `.claude/`). For code: denies edits on `main`/`master`/`develop`/`dev`, denies edits without a `PLAN.md` (Edits of 10 lines or fewer are exempt), and denies edits when the running agent is an orchestrator. |
+| `PreToolUse` (`Write\|Edit`) | `hooks/orchestrator-role-gate.js` | Allows docs and plans (`*.md`, `*.txt`, `docs/`, `.agents/`, `context/`, `.claude/`). For code: denies edits on `main`/`master`/`develop`/`dev`, denies edits without a `docs/<feature-name>/PLAN.md` (Edits of 10 lines or fewer are exempt), and denies edits when the running agent is an orchestrator. |
 | `Stop` | `hooks/universal-quality-gate.js` | Runs `scripts/verify.sh`, `dart analyze`, `npm test`, `pytest -q` (through the project's `uv` / `.venv` / `poetry` environment, never a global pytest), `cargo test` or `go test ./...` when they apply, from the git root even when the shell sits in a subfolder. Skips when no code changed or the same code state already passed. Blocks at most 3 times per turn. A changed web UI must also pass the fake-data scan and carry fresh E2E evidence; that gate blocks only the turn that changed the UI and otherwise reports it as unverified. |
 | `SubagentStop` | `hooks/e2e-evidence-gate.js` | Rejects an `e2e-blackbox-tester` `PASSED`/`REJECTED` verdict unless its transcript shows a successful navigate + screenshot (or a `playwright` run) and real PNG files exist. `BLOCKED`/`SKIPPED` always pass. |
 
@@ -135,7 +135,7 @@ The full state machine is documented in [AGENTS.md](../../../AGENTS.md) and the 
 
 | Symptom | Cause | Fix |
 | :--- | :--- | :--- |
-| `PLAN FIRST` denial on a code edit | No `PLAN.md` in the root, `docs/` or `.agents/` | Create `PLAN.md`, or keep the change to a small Edit (10 lines or fewer) |
+| `PLAN FIRST` denial on a code edit | No `PLAN.md` in `docs/<feature-name>/` (or the legacy root, `docs/`, `.agents/` locations) | Create `docs/<feature-name>/PLAN.md`, or keep the change to a small Edit (10 lines or fewer) |
 | `PROTECTED BRANCH` denial | Working on `main`, `master`, `develop` or `dev` | Run `git checkout -b feat/<slug>` |
 | `ORCHESTRATOR CODE PROHIBITION` denial | The orchestrator tried to edit code | Expected: it must delegate to `code-implementer` |
 | Turn will not end; `UNIVERSAL QUALITY GATE VIOLATION` | A detected test suite or linter fails | Fix the failures. After 3 blocks in one turn the gate lets the turn end with a notice |

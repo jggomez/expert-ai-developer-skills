@@ -10,8 +10,9 @@ vendored dependencies (their own comments legitimately talk about "mock" and "fa
 It is a heuristic: it can flag a false positive, and it cannot see invented data with believable
 names. Running the real app (`check_evidence.py`) is what proves the data is real.
 
-A demo the user approved is allowed when the file carries `demo-data: approved` and a line of
-`PLAN.md` or `docs/*/spec.md` holds both that text and the file path.
+A demo the user approved is allowed when the file carries `demo-data: approved` and a line of the
+feature plan (`docs/<feature-name>/PLAN.md`, or a legacy root `PLAN.md`) or `docs/*/spec.md` holds
+both that text and the file path.
 
 Usage:
     python3 check_fake_data.py --repo .                 # uncommitted and untracked changes
@@ -96,7 +97,7 @@ def approved_demo(repo: Path, rel: str) -> bool:
             return False
     except (OSError, UnicodeDecodeError):
         return False
-    for plan in [repo / "PLAN.md", *sorted(repo.glob("docs/*/spec.md"))]:
+    for plan in [*sorted(repo.glob("docs/*/PLAN.md")), *sorted(repo.glob("docs/*/spec.md")), repo / "PLAN.md"]:
         try:
             lines = plan.read_text(encoding="utf-8").splitlines()
         except (OSError, UnicodeDecodeError):

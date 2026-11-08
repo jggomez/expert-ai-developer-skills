@@ -156,8 +156,31 @@ function pytestCommand(root) {
   return null;
 }
 
-/** Where a plan-first gate accepts the plan, relative to a checkout root. */
+/**
+ * Where a plan-first gate accepts the plan, relative to a checkout root. The orchestrator keeps a
+ * feature's plan with its other artifacts in `docs/<feature-name>/PLAN.md` (see plansIn); these
+ * root locations stay accepted for projects that still carry a root PLAN.md.
+ */
 const PLAN_LOCATIONS = ['PLAN.md', path.join('docs', 'PLAN.md'), path.join('doc', 'PLAN.md'), path.join('.agents', 'PLAN.md'), path.join('.claude', 'PLAN.md')];
+
+/** Every plan under `root`: `docs/<feature-name>/PLAN.md` first, then the legacy root locations. */
+function plansIn(root) {
+  const found = [];
+  try {
+    for (const entry of fs.readdirSync(path.join(root, 'docs'), { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      if (!entry.isDirectory()) continue;
+      const candidate = path.join(root, 'docs', entry.name, 'PLAN.md');
+      if (fs.existsSync(candidate)) found.push(candidate);
+    }
+  } catch (err) {
+    // no docs/ folder
+  }
+  for (const rel of PLAN_LOCATIONS) {
+    const candidate = path.join(root, rel);
+    if (fs.existsSync(candidate)) found.push(candidate);
+  }
+  return found;
+}
 
 /**
  * Path of the active PLAN.md for `dir`, or null. Looks in `dir`, then in the main checkout when
@@ -174,10 +197,8 @@ function findPlan(dir) {
     // Not a git repository (or git unavailable): only `dir` itself is checked.
   }
   for (const root of roots) {
-    for (const rel of PLAN_LOCATIONS) {
-      const candidate = path.join(root, rel);
-      if (fs.existsSync(candidate)) return candidate;
-    }
+    const plans = plansIn(root);
+    if (plans.length) return plans[0];
   }
   return null;
 }

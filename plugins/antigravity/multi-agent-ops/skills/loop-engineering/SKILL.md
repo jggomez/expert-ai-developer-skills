@@ -23,7 +23,7 @@ This skill orchestrates multi-agent execution loops, isolated parallel worker to
 ### State 0: Memory Restore, Target-Project `AGENTS.md` Bootstrap & 3-Tier Triage
 1. **Silent Memory Restore**: Read `context/memory/MEMORY.md` if present (`~500 tokens`), loading `architecture.md`, `conventions.md`, or `log/YYYY-MM-DD.md` only on demand.
 2. **Target-Project `AGENTS.md` Bootstrap (`<= 90 lines`)**: When operating in a target user repository that lacks a root `AGENTS.md`—or when its stack, build/test commands, `DESIGN.md` contract, or architectural conventions change—bootstrap or update a concise root `AGENTS.md` (`<= 90 lines`) using [references/project-agents-template.md](references/project-agents-template.md) (`1. Project Overview & Tech Stack`, `2. Executable Commands`, `3. Architecture & Coding Conventions`, `4. Design & Persistent Memory` wired to root `DESIGN.md` and `context/memory/MEMORY.md`).
-3. **Concise `PLAN.md` (`<= 50 lines`) & 3-Tier SDLC Triage**:
+3. **Concise `docs/<feature-name>/PLAN.md` (`<= 50 lines`) & 3-Tier SDLC Triage**:
 
 | Dimension / Phase | Tier 1: Fast-Track (Low Complexity) | Tier 2: Standard (Medium Complexity) | Tier 3: Mission-Critical (Complex) |
 | :--- | :--- | :--- | :--- |
@@ -72,7 +72,7 @@ python3 ./skills/loop-engineering/scripts/pr_cron_reviewer.py                # a
 - ❌ Exceeding the 3-loop self-correction cap or skipping `ask_question` alignment on Tier 2 / Tier 3 tasks.
 
 ## Verification
-- [ ] SDLC Tier (`Tier 1` `Fast-Track`, `Tier 2` `Standard`, or `Tier 3` `Mission-Critical`) and capability-gated `Invoke / SKIP` table recorded in `PLAN.md` (`<= 50 lines`).
+- [ ] SDLC Tier (`Tier 1` `Fast-Track`, `Tier 2` `Standard`, or `Tier 3` `Mission-Critical`) and capability-gated `Invoke / SKIP` table recorded in `docs/<feature-name>/PLAN.md` (`<= 50 lines`).
 - [ ] Target-project root `AGENTS.md` (`<= 90 lines`) bootstrapped or updated per [references/project-agents-template.md](references/project-agents-template.md) when missing or outdated.
 - [ ] Parallel tracks verified collision-free (contract-first step committed; Mode A disjoint files, or Mode B worktrees with a verified base commit), with the 3-loop self-correction cap enforced.
 

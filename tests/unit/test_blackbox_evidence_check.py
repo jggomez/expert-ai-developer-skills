@@ -312,3 +312,16 @@ def test_evidence_older_than_the_last_ui_change_fails(tmp_path):
     # Assert
     assert result.returncode == 1
     assert "before the last change" in result.stdout
+
+
+def test_a_declaration_in_the_feature_folder_plan_counts(tmp_path):
+    # Arrange: the orchestrator keeps the plan in docs/<feature-name>/PLAN.md, not in the root
+    evidence = tmp_path / "docs" / "about" / "evidence"
+    _write_set(evidence, manifest=False)
+    (tmp_path / ".git").mkdir()
+    (tmp_path / "docs" / "about" / "PLAN.md").write_text("| About | data-source: none |\n")
+    _write_manifest(evidence, requests=[], dataChecks=[], noDataSource="static about page")
+    # Act
+    result = _run(evidence)
+    # Assert
+    assert result.returncode == 0, result.stdout
