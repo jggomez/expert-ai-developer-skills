@@ -53,17 +53,11 @@ let testCommand = '';
 if (hasVerifyScript) {
   testCommand = `python3 "${verifyScript}"`;
 } else {
-  // Check if pytest is available
-  let pytestAvailable = false;
-  try {
-    execSync('pytest --version', { stdio: 'ignore' });
-    pytestAvailable = true;
-  } catch (e) {
-    pytestAvailable = false;
-  }
-
-  if (pytestAvailable) {
-    testCommand = 'pytest';
+  // pytest from the project's own environment (uv / .venv / poetry) before a global one from PATH:
+  // a global pytest cannot import the project's dependencies and fails every module.
+  const pytestCommand = g.pytestCommand(workspaceRoot);
+  if (pytestCommand) {
+    testCommand = pytestCommand;
   } else if (hasTestsDir) {
     testCommand = 'python3 -m unittest discover -s tests';
   } else {

@@ -275,3 +275,90 @@ def test_read_stdin_json_waits_for_a_late_payload():
     out, _ = proc.communicate(json.dumps({"cwd": "/late"}), timeout=30)
     # Assert
     assert json.loads(out) == {"cwd": "/late"}
+
+
+def _fake_uv(tmp_path):
+    """A stand-in `uv` on PATH that records its arguments and succeeds."""
+    bin_dir = tmp_path / "fake-bin"
+    bin_dir.mkdir(exist_ok=True)
+    calls = bin_dir / "calls"
+    (bin_dir / "uv").write_text(f"#!/bin/sh\necho \"uv $*\" >> {json.dumps(str(calls))}\nexit 0\n")
+    (bin_dir / "uv").chmod(0o755)
+    return dict(os.environ, PATH=f"{bin_dir}{os.pathsep}{os.environ['PATH']}"), calls
+
+
+def test_workspace_is_the_git_root_even_when_cwd_is_a_subfolder(repo):
+    # Arrange: Claude Code's `cwd` follows the shell, which may have cd'ed into a subfolder
+    sub = repo / "apps" / "api"
+    sub.mkdir(parents=True)
+    # Act
+    root = _node_eval(f"g.workspaceOf({{cwd: {json.dumps(str(sub))}}})")
+    # Assert
+    assert os.path.realpath(root) == os.path.realpath(str(repo))
+
+
+def test_workspace_outside_git_is_the_cwd_itself(tmp_path):
+    # Arrange
+    plain = tmp_path / "plain"
+    plain.mkdir()
+    # Act
+    root = _node_eval(f"g.workspaceOf({{cwd: {json.dumps(str(plain))}}})")
+    # Assert
+    assert root == str(plain)
+
+
+def test_pytest_command_prefers_the_uv_environment(tmp_path):
+    # Arrange
+    (tmp_path / "uv.lock").write_text("")
+    env, _ = _fake_uv(tmp_path)
+    script = f"const g = require({json.dumps(LIB)}); process.stdout.write(g.pytestCommand({json.dumps(str(tmp_path))}));"
+    # Act
+    out = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True, env=env).stdout
+    # Assert
+    assert out == "uv run pytest -q"
+
+
+def test_pytest_command_uses_the_project_virtualenv(tmp_path):
+    # Arrange
+    venv_pytest = tmp_path / ".venv" / "bin" / "pytest"
+    venv_pytest.parent.mkdir(parents=True)
+    venv_pytest.write_text("#!/bin/sh\nexit 0\n")
+    venv_pytest.chmod(0o755)
+    # Act
+    out = _node_eval(f"g.pytestCommand({json.dumps(str(tmp_path))})")
+    # Assert
+    assert out == f'"{venv_pytest}" -q'
+
+
+def test_pytest_command_is_null_without_any_runner(tmp_path):
+    # Arrange: nothing on PATH
+    env = dict(os.environ, PATH=str(tmp_path / "empty"))
+    (tmp_path / "empty").mkdir()
+    script = f"const g = require({json.dumps(LIB)}); process.stdout.write(JSON.stringify(g.pytestCommand({json.dumps(str(tmp_path))})));"
+    # Act
+    out = subprocess.run([shutil.which("node"), "-e", script], capture_output=True, text=True, check=True, env=env).stdout
+    # Assert
+    assert json.loads(out) is None
+
+
+@pytest.mark.parametrize("hook", [
+    os.path.join(CLAUDE_PLUGINS, "python-backend", "hooks", "stop-gate.js"),
+    os.path.join(CLAUDE_PLUGINS, "senior-dev", "hooks", "universal-quality-gate.js"),
+])
+def test_python_gates_run_pytest_through_uv_when_the_project_uses_it(repo, hook):
+    # Arrange: a uv project whose tests only import inside its own environment
+    (repo / "pyproject.toml").write_text("[project]\nname = 'app'\nversion = '0'\n")
+    (repo / "uv.lock").write_text("")
+    (repo / "tests").mkdir()
+    (repo / "tests" / "test_app.py").write_text("import app\n")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-qm", "uv project")
+    (repo / "app.py").write_text("x = 2\n")
+    env, calls = _fake_uv(repo.parent)
+    payload = {"cwd": str(repo), "hook_event_name": "Stop", "stop_hook_active": False}
+    # Act
+    result = subprocess.run(["node", hook], input=json.dumps(payload), capture_output=True, text=True,
+                            timeout=120, env=env)
+    # Assert
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "uv run pytest -q" in calls.read_text()

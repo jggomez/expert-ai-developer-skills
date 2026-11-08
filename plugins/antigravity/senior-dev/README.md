@@ -94,7 +94,7 @@ Reviewers return their verdict in the final message (50 lines or fewer); they do
 | Event | Script | Behavior |
 | :--- | :--- | :--- |
 | `PreToolUse` (`write_to_file\|replace_file_content\|multi_replace_file_content`) | `hooks/orchestrator-role-gate.js` | Allows docs and plans (`*.md`, `*.txt`, `docs/`, `.agents/`, `context/`, `.gemini/`). For code: denies edits on `main`/`master`/`develop`/`dev`, denies edits without a `PLAN.md` (edits of 10 lines or fewer are exempt), and denies edits from the main orchestrator session. |
-| `Stop` | `hooks/universal-quality-gate.js` | On `model_stop`, runs `scripts/verify.sh`, `dart analyze`, `npm test`, `pytest -q`, `cargo test` or `go test ./...` when they apply, within a 180 s budget, and asks the agent to continue if one fails. |
+| `Stop` | `hooks/universal-quality-gate.js` | On `model_stop`, runs `scripts/verify.sh`, `dart analyze`, `npm test`, `pytest -q` (through the project's `uv` / `.venv` / `poetry` environment, never a global pytest), `cargo test` or `go test ./...` when they apply, from the git root and within a 180 s budget, and asks the agent to continue if one fails. A changed web UI must also pass the fake-data scan and carry fresh E2E evidence; that gate blocks only the turn that changed the UI and otherwise reports it as unverified. |
 
 Stop gates share one library (`hooks/shared/gate-utils.js`): they act only on `terminationReason: model_stop`, cache a green result until the code changes, never run the same suite twice across plugins, and stop asking to continue after 3 blocks per user message.
 

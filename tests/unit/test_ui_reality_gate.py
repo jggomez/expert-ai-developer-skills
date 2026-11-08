@@ -155,3 +155,61 @@ def test_the_retry_limit_says_the_ui_is_not_verified(repo):
     result = _run(repo, active=True)
     # Assert
     assert "UI NOT verified" in result.stdout + result.stderr
+
+
+def _give_up_on_unverified_ui(repo):
+    """One turn changes the UI and the gate blocks it 3 times, then lets the turn end."""
+    _write(repo, "src/Items.tsx", "export const Items = () => null;\n")
+    for _ in range(3):
+        _run(repo, active=True)
+    _run(repo, active=True)
+
+
+@pytest.mark.parametrize("hook", HOOKS)
+def test_a_later_turn_that_leaves_the_ui_untouched_is_told_not_blocked(repo, hook):
+    # Arrange: the UI stayed unverified in an earlier turn (the user has been told)
+    _give_up_on_unverified_ui(repo)
+    # Act: a new turn (a plain answer, or edits elsewhere) ends with the same UI files
+    _write(repo, "src/api/items.py")
+    result = _run(repo, hook, active=False)
+    # Assert
+    assert not _blocked(result), result.stdout + result.stderr
+    assert "still NOT verified" in result.stdout + result.stderr
+
+
+def test_a_later_turn_that_changes_the_ui_again_is_gated_again(repo):
+    # Arrange
+    _give_up_on_unverified_ui(repo)
+    # Act: the new turn edits the UI
+    _write(repo, "src/Items.tsx", "export const Items = () => <div />;\n")
+    result = _run(repo, active=False)
+    # Assert
+    assert _blocked(result), result.stdout + result.stderr
+    assert "block 1/3" in result.stdout + result.stderr
+
+
+def test_fresh_evidence_in_a_later_turn_clears_the_notice(repo):
+    # Arrange
+    _give_up_on_unverified_ui(repo)
+    old = time.time() - 30
+    os.utime(repo / "src" / "Items.tsx", (old, old))
+    _evidence(repo)
+    # Act
+    result = _run(repo, active=False)
+    # Assert
+    assert not _blocked(result), result.stdout + result.stderr
+    assert "NOT verified" not in result.stdout + result.stderr
+
+
+def test_the_gate_scans_from_the_git_root_when_the_shell_sits_in_a_subfolder(repo):
+    # Arrange: the UI file lives at the root while the agent's cwd is a subfolder
+    _write(repo, "src/Items.tsx", "export const Items = () => null;\n")
+    sub = repo / "apps" / "api"
+    sub.mkdir(parents=True)
+    payload = {"hook_event_name": "Stop", "cwd": str(sub), "session_id": "s1", "stop_hook_active": False}
+    # Act
+    result = subprocess.run(["node", HOOKS[0]], input=json.dumps(payload), capture_output=True, text=True,
+                            timeout=60, env=dict(os.environ, TMPDIR=str(repo.parent)))
+    # Assert
+    assert _blocked(result), result.stdout + result.stderr
+    assert "UI REALITY GATE" in result.stdout + result.stderr
