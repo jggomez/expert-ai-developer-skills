@@ -51,9 +51,16 @@ function isUiFile(file) {
   return UI_FILE.test(file) && !TEST_FILE.test(file) && (exists('web') || !/\.dart$/i.test(file));
 }
 
-/** Changed UI files (repo-relative, like every path from `git status`). */
+/**
+ * Changed UI files (repo-relative, like every path from `git status`). Outside a git repository
+ * (e.g. a folder holding several repos) nothing can be compared, so the UI gate does not apply.
+ */
 function changedUiFiles() {
-  return g.changedCodeFiles(workspaceRoot).filter(isUiFile);
+  try {
+    return g.changedCodeFiles(workspaceRoot).filter(isUiFile);
+  } catch (err) {
+    return [];
+  }
 }
 
 function latestChangeSeconds(files) {
