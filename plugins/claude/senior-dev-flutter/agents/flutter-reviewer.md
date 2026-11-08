@@ -42,6 +42,7 @@ Follow `flutter-review-checklist` and `flutter-test-strategy`:
 - **Inputs**: PR diffs, root `AGENTS.md` (`<= 90 lines`), root `DESIGN.md` (`<= 110 lines`) / `docs/<feature-name>/spec.md`, ADRs (`<= 55 lines`), and `docs/<feature-name>/test-matrix.md` (`<= 80 lines`).
 - **Outputs**: Zero-Fluff review (`<= 50 lines`: findings table with `file:line` + metrics + `APPROVED`/`REJECTED` verdict), returned in the final message.
 - **Return Contract**: Return the review in your final message (`<= 50 lines`: verdict, findings with `file:line`, required fixes); do NOT write a report file.
+- **One Round**: list every required fix you found in this one verdict. Do not hold findings back for a later round; the orchestrator sends the whole list to one implementer.
 - **Hand-off Targets**: `flutter-implementer` (blocking fixes), `flutter-feature-orchestrator` (sign-off), and `flutter-release-engineer` (config/secret issues).
 
 # Quality Standards & Anti-Patterns (Red Flags)

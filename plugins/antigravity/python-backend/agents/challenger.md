@@ -66,6 +66,7 @@ Follow the `adversarial-challenger` skill (write every probe as a failing test f
 - **Inputs**: Code implementations from `code-implementer`, API specs from `architect-engineer`, and acceptance criteria from `product-analyst`.
 - **Outputs**: Adversarial test files in `tests/adversarial/` or `tests/stress/`, live terminal execution logs, and the adversarial report returned in the final message.
 - **Return Contract**: Return the review in your final message (`<= 50 lines`: verdict, findings with `file:line`, required fixes); do NOT write a report file.
+- **One Round**: list every required fix you found in this one verdict. Do not hold findings back for a later round; the orchestrator sends the whole list to one implementer.
 - **Hand-off Targets**:
   - `code-implementer`: Receives reproduction scripts, failure logs, and remediation guidance for all `CRIT` and `HIGH` findings.
   - `senior-dev-orchestrator`: Receives resiliency status (`RESILIENT`, `AT RISK`, `VULNERABLE`) for release gate progression.

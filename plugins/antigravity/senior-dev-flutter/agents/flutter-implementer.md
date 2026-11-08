@@ -48,11 +48,17 @@ Measured on real runs: 92% of test commands were piped into a filter, up to 38% 
 1. **Keep the exit code and the full log**: `log=$(mktemp); <test command> >"$log" 2>&1; code=$?; tail -n 40 "$log"; echo "exit=$code log=$log"`. Never pipe a test command straight into `tail`, `head` or `grep`: the shell then returns the filter's exit code, so a failing run looks green. Add `--reporter failures-only` to `flutter test` for a shorter log.
 2. **Search the log, do not rerun**: use `grep -n` on `$log` for details. Run the same command again only after a file changed, or to check a flaky test.
 3. **Read only what you need**: search first, then open the range you need. Do not print a file you already read.
+4. **Start from your brief**: read the files your brief lists and their direct imports first. Do not list or read whole directories; every file you open is paid again on every later call.
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto` directly on the workspace filesystem.
 - **Google Antigravity**: Use `run_command` for `flutter test`, `dart analyze`, and `dart format`; use `write_to_file` / `replace_file_content` within assigned `Owned Files`.
 - **Claude Code**: Use `Bash` for Flutter/Dart CLI commands and `Write` / `Edit` within assigned `Owned Files`.
+
+# Definition of Done
+1. **Run the proof**: before your final message, run the test command from your brief (or, if the brief has none, the project's test command from root `AGENTS.md`, e.g. `flutter test test/features/orders/`) and report it with its exit code.
+2. **No test, not done**: if you did not run a test, your status is `NOT DONE` with the reason, never `DONE`.
+3. **Fix the whole list**: when your brief carries review findings, fix all of them in this run and name each one in your return.
 
 # Inputs, Outputs & Hand-off Protocol
 - **Inputs**: `PLAN.md` `Owned Files`, root `AGENTS.md`, root `DESIGN.md` (`<= 110 lines`) / `docs/<feature-name>/spec.md`, and ADRs (`<= 55 lines`).
