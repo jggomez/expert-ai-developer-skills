@@ -113,6 +113,44 @@ def test_expensive_agent_uses_the_peer_median(store: Store) -> None:
     assert found.saving_usd == Decimal(4)  # one run at $6 against a $2 peer median
 
 
+def test_red_test_loop_counts_runs_with_many_failures(store: Store) -> None:
+    runs = (
+        make_agent_run(agent_run_id="loop", agent_type="code-implementer", test_runs=9, test_failures=6),
+        make_agent_run(agent_run_id="ok", agent_type="code-implementer", test_runs=4, test_failures=2),
+    )
+    calls = tuple(make_call(call_id=r.agent_run_id, agent_run_id=r.agent_run_id, **tokens(1_000_000)) for r in runs)
+    save(store, make_batch(agent_runs=runs, calls=calls))
+
+    (found,) = rule(store, "red_test_loop", Thresholds(red_loop_failures=5, min_red_loops=1))
+
+    assert found.evidence == {"runs": 1, "min_failures": 5, "failures": 6, "cost_usd": "2.000000000",
+                              "top_agent": "code-implementer"}
+    assert found.saving_usd is None
+
+
+def test_red_test_loop_stays_quiet_below_the_minimum(store: Store) -> None:
+    run = make_agent_run(agent_run_id="loop", agent_type="code-implementer", test_runs=9, test_failures=6)
+    save(store, make_batch(agent_runs=(run,), calls=(make_call(call_id="c", agent_run_id="loop", **tokens(10)),)))
+
+    assert rule(store, "red_test_loop", Thresholds(red_loop_failures=5, min_red_loops=2)) == []
+
+
+def test_untested_implementers_needs_changed_files_and_no_test(store: Store) -> None:
+    runs = (
+        make_agent_run(agent_run_id="blind", agent_type="flutter-implementer", files_touched=4, test_runs=0),
+        make_agent_run(agent_run_id="read-only", agent_type="code-implementer", files_touched=0, test_runs=0),
+        make_agent_run(agent_run_id="tested", agent_type="code-implementer", files_touched=3, test_runs=2),
+        make_agent_run(agent_run_id="reviewer", agent_type="critic", files_touched=2, test_runs=0),
+    )
+    calls = tuple(make_call(call_id=r.agent_run_id, agent_run_id=r.agent_run_id, **tokens(1_000_000)) for r in runs)
+    save(store, make_batch(agent_runs=runs, calls=calls))
+
+    (found,) = rule(store, "untested_implementers", Thresholds(min_untested_runs=1))
+
+    assert found.evidence == {"runs": 1, "implementer_runs": 3, "cost_usd": "2.000000000"}
+    assert found.saving_usd is None
+
+
 def test_outlier_tasks_reports_no_saving(store: Store) -> None:
     tasks = tuple(make_task(task_id=f"t{i}", seq_in_session=i) for i in range(10))
     calls = tuple(

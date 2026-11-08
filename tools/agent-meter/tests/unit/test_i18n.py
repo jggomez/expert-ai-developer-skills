@@ -17,7 +17,8 @@ from agent_meter.paths import AppHome
 from agent_meter.setup import actuators
 
 ASSETS = files("agent_meter.app") / "assets"
-ALL_RULES = ("long_session", "stale_cache", "repeated_implementers", "expensive_agent", "outlier_tasks", "model_what_if")
+ALL_RULES = ("long_session", "stale_cache", "repeated_implementers", "expensive_agent", "outlier_tasks", "model_what_if",
+             "red_test_loop", "untested_implementers")
 
 
 def insight_item(rule: str, evidence: dict[str, object]) -> dict[str, object]:
@@ -32,6 +33,9 @@ EVIDENCE: dict[str, dict[str, object]] = {
     "outlier_tasks": {"tasks": 1477, "top_tasks": 148, "share_pct": "67"},
     "model_what_if": {"source": "claude-opus-5-5", "target": "claude-sonnet-5-5", "calls": 8969,
                       "cost_usd": "740.87", "alternative_usd": "370.43"},
+    "red_test_loop": {"runs": 72, "min_failures": 5, "failures": 1240, "cost_usd": "379.5",
+                      "top_agent": "flutter-implementer"},
+    "untested_implementers": {"runs": 134, "implementer_runs": 460, "cost_usd": "212.4"},
 }
 
 
@@ -114,7 +118,8 @@ def test_spanish_numbers_use_spanish_separators(rule: str, fragment: str) -> Non
 def test_insight_evidence_carries_what_the_templates_need() -> None:
     fields = re.compile(r"\{(\w+)\}")
     known = {"cost", "alternative", "average", "threshold", "baseline", "hours", "calls", "share", "ratio", "count",
-             "tasks", "top", "agent", "source", "target", "sessions", "resumes", "repeats"}
+             "tasks", "top", "agent", "source", "target", "sessions", "resumes", "repeats", "runs", "failures",
+             "total"}
 
     for texts in i18n.INSIGHT_TEXT.values():
         for template in texts:

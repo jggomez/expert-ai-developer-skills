@@ -73,6 +73,8 @@ result. Each finding has a measured fact, what to do about it and, when it can b
 | Expensive agents | An agent costs at least twice as much as the others, over 5 runs or more | Review the instructions, model and scope given to that agent |
 | Outlier tasks | A few tasks hold most of the spending, once you have 10 tasks or more | Open the costliest tasks and split similar work into smaller tasks |
 | Model comparison | You used a model with a cheaper alternative | Try the cheaper model on routine work |
+| Red test loops | At least 3 agent runs each failed tests 5 times or more | Have agents stop after 3 red runs in a row and report what blocks them |
+| Implementers without tests | At least 3 implementer runs changed files without running a test | Give each implementer the test command that proves its work, and treat a return without it as not done |
 
 Findings are facts, and savings are estimates. The model comparison shows price only: it says nothing about quality or rework.
 
