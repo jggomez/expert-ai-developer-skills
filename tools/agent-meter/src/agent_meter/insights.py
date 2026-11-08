@@ -69,6 +69,21 @@ WHERE {scope} AND r.agent_type <> 'main' AND r.cost_usd IS NOT NULL
 GROUP BY r.agent_type HAVING COUNT(*) >= ? ORDER BY r.agent_type
 """
 
+_RED_TEST_LOOP_SQL: Final = """
+SELECT r.agent_type, COUNT(*) AS runs, SUM(r.test_failures) AS failures, SUM(r.cost_usd) AS cost_usd
+FROM v_agent_runs r JOIN v_tasks t ON t.task_id = r.task_id
+WHERE {scope} AND r.test_failures >= ?
+GROUP BY r.agent_type ORDER BY runs DESC, cost_usd DESC, r.agent_type
+"""
+
+_UNTESTED_IMPLEMENTERS_SQL: Final = """
+SELECT COUNT(*) AS implementer_runs,
+       COUNT(*) FILTER (WHERE r.files_touched > 0 AND r.test_runs = 0) AS runs,
+       SUM(r.cost_usd) FILTER (WHERE r.files_touched > 0 AND r.test_runs = 0) AS cost_usd
+FROM v_agent_runs r JOIN v_tasks t ON t.task_id = r.task_id
+WHERE {scope} AND r.agent_type ILIKE '%implementer%'
+"""
+
 _TASKS_SQL: Final = """
 SELECT task_id, cost_usd, calls, agent_runs, retries, test_failures FROM v_tasks
 WHERE {scope} AND cost_usd IS NOT NULL ORDER BY cost_usd DESC, task_id
@@ -103,6 +118,9 @@ class Thresholds:
     outlier_tasks_shown: int = 10
     many_agents: int = 5
     many_calls: int = 200
+    red_loop_failures: int = 5
+    min_red_loops: int = 3
+    min_untested_runs: int = 3
 
 
 @dataclass(frozen=True, slots=True)
@@ -242,6 +260,47 @@ def _expensive_agents(store: ViewSource, scope: _Scope, limits: Thresholds) -> l
     return found
 
 
+def _red_test_loops(store: ViewSource, scope: _Scope, limits: Thresholds) -> list[Insight]:
+    sql = _RED_TEST_LOOP_SQL.format(scope=scope.where("t."))
+    rows = store.query(sql, [*scope.params, limits.red_loop_failures])
+    runs = sum(int(str(r["runs"])) for r in rows)
+    if runs < limits.min_red_loops:
+        return []
+    cost = sum((_money(r["cost_usd"]) for r in rows), ZERO)
+    failures = sum(int(str(r["failures"])) for r in rows)
+    return [Insight(
+        rule="red_test_loop",
+        title=f"{runs} agent run(s) failed tests {limits.red_loop_failures} or more times and cost {_usd(cost)}",
+        action="Have agents stop after 3 red runs in a row and report what blocks them. "
+               "Check those tasks for a missing setup or an unclear spec.",
+        evidence={"runs": runs, "min_failures": limits.red_loop_failures, "failures": failures,
+                  "cost_usd": str(cost), "top_agent": str(rows[0]["agent_type"])},
+        saving_usd=None,
+        saving_basis="No estimate: some failing runs are normal TDD, so the avoidable part is unknown.",
+        query=sql,
+    )]
+
+
+def _untested_implementers(store: ViewSource, scope: _Scope, limits: Thresholds) -> list[Insight]:
+    sql = _UNTESTED_IMPLEMENTERS_SQL.format(scope=scope.where("t."))
+    row = store.query(sql, scope.params)[0]
+    runs = int(str(row["runs"] or 0))
+    if runs < limits.min_untested_runs:
+        return []
+    cost = _money(row["cost_usd"])
+    total = int(str(row["implementer_runs"]))
+    return [Insight(
+        rule="untested_implementers",
+        title=f"{runs} of {total} implementer runs changed files without running a test, costing {_usd(cost)}",
+        action="Give each implementer the test command that proves its work, "
+               "and treat a return without that command and its exit code as not done.",
+        evidence={"runs": runs, "implementer_runs": total, "cost_usd": str(cost)},
+        saving_usd=None,
+        saving_basis="No estimate: this measures risk, not waste. Untested changes tend to come back as rework.",
+        query=sql,
+    )]
+
+
 def _task_reason(row: dict[str, object], limits: Thresholds) -> str:
     reasons = [
         (int(str(row["agent_runs"] or 0)) >= limits.many_agents, "many agents"),
@@ -316,6 +375,7 @@ def _model_what_if(store: ViewSource, scope: _Scope, _limits: Thresholds) -> lis
 
 _RULES: Final[tuple[Callable[[ViewSource, _Scope, Thresholds], list[Insight]], ...]] = (
     _long_sessions, _stale_cache, _repeated_implementers, _expensive_agents, _outlier_tasks, _model_what_if,
+    _red_test_loops, _untested_implementers,
 )
 
 

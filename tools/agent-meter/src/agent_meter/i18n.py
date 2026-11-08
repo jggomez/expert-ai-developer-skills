@@ -269,17 +269,33 @@ INSIGHT_TEXT: Final[Mapping[str, tuple[str, str, str]]] = {
         "Prueba {target} en trabajo rutinario. Esto compara solo el precio, no la calidad.",
         "Los mismos tokens al precio de lista del modelo destino. La calidad y el retrabajo pueden cambiar.",
     ),
+    "red_test_loop": (
+        "{runs} ejecuciones de agentes fallaron los tests {failures} veces o más y costaron {cost}",
+        "Haz que los agentes paren tras 3 ejecuciones en rojo seguidas y expliquen qué los bloquea. "
+        "Revisa si a esas tareas les faltaba preparación o una especificación clara.",
+        "Sin estimación: algunos fallos son TDD normal, así que no se sabe qué parte se podía evitar.",
+    ),
+    "untested_implementers": (
+        "{runs} de {total} ejecuciones de implementadores cambiaron archivos sin ejecutar ningún test, por {cost}",
+        "Da a cada implementador el comando de test que prueba su trabajo, "
+        "y considera sin terminar cualquier respuesta que no traiga ese comando y su código de salida.",
+        "Sin estimación: esto mide riesgo, no desperdicio. Los cambios sin probar suelen volver como retrabajo.",
+    ),
 }
 _SINGULAR_TITLES: Final[Mapping[str, tuple[str, str]]] = {
     "long_session": ("sessions", "1 sesión superó {threshold} llamadas y costó {cost}"),
     "stale_cache": ("resumes", "1 reanudación tras más de {hours} h de inactividad costó {cost}"),
     "repeated_implementers": ("tasks", "1 tarea volvió a ejecutar un implementador después de que terminara, por {cost}"),
     "outlier_tasks": ("top_tasks", "1 de {tasks} tareas concentró el {share} % del costo"),
+    "red_test_loop": ("runs", "1 ejecución de un agente falló los tests {failures} veces o más y costó {cost}"),
+    "untested_implementers": ("runs", "1 de {total} ejecuciones de implementadores cambió archivos sin ejecutar "
+                                      "ningún test, por {cost}"),
 }
 _OVERLAP_NOTE: Final = "Los ahorros son estimaciones y las reglas pueden solaparse, así que no los sumes."
 _MONEY_FIELDS: Final = (("cost", "cost_usd"), ("alternative", "alternative_usd"), ("average", "average_usd"))
 _COUNT_FIELDS: Final = (("sessions", "sessions"), ("threshold", "threshold_calls"), ("baseline", "baseline_calls"),
-                        ("resumes", "resumes"), ("tasks", "tasks"), ("top", "top_tasks"), ("calls", "calls"))
+                        ("resumes", "resumes"), ("tasks", "tasks"), ("top", "top_tasks"), ("calls", "calls"),
+                        ("runs", "runs"), ("failures", "min_failures"), ("total", "implementer_runs"))
 _NUMBER_FIELDS: Final = (("hours", "idle_hours"), ("ratio", "ratio"), ("share", "share_pct"))
 _TEXT_FIELDS: Final = (("agent", "agent_type"), ("source", "source"), ("target", "target"))
 

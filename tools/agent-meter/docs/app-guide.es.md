@@ -73,6 +73,8 @@ el mismo resultado. Cada hallazgo incluye un hecho medido, qué hacer y, cuando 
 | Agentes caros | Un agente cuesta al menos el doble que los demás, en 5 ejecuciones o más | Revisa las instrucciones, el modelo y el alcance de ese agente |
 | Tareas atípicas | Pocas tareas concentran la mayor parte del gasto, a partir de 10 tareas | Abre las tareas más caras y divide el trabajo similar en tareas más pequeñas |
 | Comparación de modelos | Usaste un modelo con una alternativa más barata | Prueba el modelo más barato en trabajo rutinario |
+| Bucles de tests en rojo | Al menos 3 ejecuciones de agentes fallaron los tests 5 veces o más cada una | Haz que los agentes paren tras 3 ejecuciones en rojo seguidas y expliquen qué los bloquea |
+| Implementadores sin tests | Al menos 3 ejecuciones de implementadores cambiaron archivos sin ejecutar ningún test | Da a cada implementador el comando de test que prueba su trabajo y considera sin terminar la respuesta que no lo traiga |
 
 Los hallazgos son hechos y los ahorros son estimaciones. La comparación de modelos muestra solo el precio: no dice nada de la
 calidad ni del retrabajo.
