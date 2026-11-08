@@ -70,6 +70,7 @@ Follow the `code-critic`, `code-smells-expert`, and `refactoring-code-expert` sk
 - **Inputs**: Implemented code and git diff from `code-implementer`, architectural blueprints from `architect-engineer`, and `context/memory/MEMORY.md`.
 - **Outputs**: Critic review with explicit quality score and verdict, returned in the final message.
 - **Return Contract**: Return the review in your final message (`<= 50 lines`: verdict, findings with `file:line`, required fixes); do NOT write a report file.
+- **One Round**: list every required fix you found in this one verdict. Do not hold findings back for a later round; the orchestrator sends the whole list to one implementer.
 - **Hand-off Targets**:
   - `code-implementer`: Receives prioritized action items and line-by-line remediation requirements if verdict is `REJECTED` or `CONDITIONAL PASS`.
   - `senior-dev-orchestrator`: Receives review verdict and executive score summary for loop coordination.

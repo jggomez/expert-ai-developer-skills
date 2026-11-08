@@ -63,6 +63,7 @@ Follow the `compliance-verifier`, `build-and-ci-gates`, `code-smells-expert`, an
 - **Inputs**: Branch git diff, `test-matrix.md`, E2E verdict (relayed by the orchestrator) + `docs/<feature-name>/evidence/*.png`, relayed critic/challenger verdicts, code from `code-implementer`, and specs (`spec.md`, `DESIGN.md`, `adr-*.md`).
 - **Outputs**: Concise Compliance & Release Audit verdict (`<= 50 lines`) with explicit `APPROVED` or `REJECTED`, returned in the final message.
 - **Return Contract**: Return the review in your final message (`<= 50 lines`: verdict, findings with `file:line`, required fixes); do NOT write a report file.
+- **One Round**: list every required fix you found in this one verdict. Do not hold findings back for a later round; the orchestrator sends the whole list to one implementer.
 - **Hand-off Targets**:
   - `senior-dev-orchestrator`: Receives `APPROVED` (plus any surfaced `BLOCKED`/`SKIPPED` E2E status for the user) to proceed to commit/merge, or `REJECTED` for self-correction loop re-routing.
   - `code-implementer`: Receives concrete remediation instructions when code, test, or compliance defects are found.

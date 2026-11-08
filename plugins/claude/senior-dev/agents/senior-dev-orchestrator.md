@@ -70,6 +70,13 @@ Decide per phase and record the tracks in `PLAN.md`:
    - Either host: `python3 <loop-engineering skill dir>/scripts/run_parallel_agents.py tasks.json` creates the worktrees from the current HEAD.
    - Each worker commits on its own branch and returns the branch name. Merge the branches one at a time (`git merge --no-ff <branch>`), run the affected tests after each merge, and on a conflict run `git merge --abort` and hand the conflict to an `code-implementer`.
 
+### Implementer Briefs
+Measured on real runs: implementers re-read up to ~200k tokens of context on every call, many generic implementer runs ran no test at all, and about 90 tasks needed a second implementer run for the same work.
+1. **Small slices**: one brief covers at most ~6 files to create or change. Split a bigger phase into sequential briefs; each brief starts a fresh `code-implementer`, so no worker carries the context of the previous slice.
+2. **Hand over the context**: list the exact files to read (with line ranges when you know them) and the contracts they must follow. The worker reads those and their direct imports, not the rest of the repository.
+3. **Done means tested**: every brief states its acceptance criteria and the exact test command that proves them. Reject a return without that command and its exit code, and send it back to the same worker once.
+4. **One review round**: reviewers return every required fix in one list. Send the whole list to one `code-implementer` in one brief, never one fix at a time.
+
 ### Real UI Rules
 These apply in every Tier when a task creates or changes UI:
 1. **Data contract first**: In `PLAN.md` or `## Product`, list each screen's data, its real source and whether that source exists. If one is missing, call `AskUserQuestion`: build it, connect an existing one, or approve a demo. Never decide this alone.
