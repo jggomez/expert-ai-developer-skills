@@ -8,8 +8,8 @@ screenshots, written recently, covering every required viewport width. A text fi
 It also needs proof that the app used real data: `run-*.json` manifests written by the
 `e2e_recorder` helpers must show a data request answered by a server, a value compared with its
 source, and, after any write, a value that survived a reload. Network stubs in the E2E tests fail.
-A screen with no data source needs `data-source: none` in `PLAN.md` or `docs/*/spec.md`, and a demo
-needs `demo-data: approved` there.
+A screen with no data source needs `data-source: none` in the feature plan (`docs/<feature-name>/PLAN.md`,
+or a legacy root `PLAN.md`) or in `docs/*/spec.md`, and a demo needs `demo-data: approved` there.
 
 The orchestrator and the compliance-verifier run this before accepting `PASSED`; the tester
 runs it before reporting. Standard library only.
@@ -75,8 +75,13 @@ def project_root(evidence_dir: Path) -> Path:
     return resolved.parent
 
 
+def plan_files(root: Path) -> list[Path]:
+    """Feature plans and specs (`docs/<feature-name>/PLAN.md`, `docs/*/spec.md`) plus a legacy root PLAN.md."""
+    return [*sorted(root.glob("docs/*/PLAN.md")), *sorted(root.glob("docs/*/spec.md")), root / "PLAN.md"]
+
+
 def declared_in_plan(root: Path, text: str) -> bool:
-    for plan in [root / "PLAN.md", *sorted(root.glob("docs/*/spec.md"))]:
+    for plan in plan_files(root):
         try:
             if text in plan.read_text(encoding="utf-8"):
                 return True
@@ -143,12 +148,12 @@ def check_manifests(evidence_dir: Path, oldest_allowed: float | None) -> list[st
     root = project_root(evidence_dir)
     if demo:
         if not declared_in_plan(root, "demo-data: approved"):
-            problems.append("the run is a demo, but PLAN.md or docs/*/spec.md has no `demo-data: approved`")
+            problems.append("the run is a demo, but docs/<feature>/PLAN.md or docs/*/spec.md has no `demo-data: approved`")
         return problems
     problems += stubbed_tests(root)
     if no_data_source:
         if not declared_in_plan(root, "data-source: none"):
-            problems.append("no data source used, but PLAN.md or docs/*/spec.md has no `data-source: none`")
+            problems.append("no data source used, but docs/<feature>/PLAN.md or docs/*/spec.md has no `data-source: none`")
         return problems
 
     data_requests = [r for r in requests if is_real_data_request(r)]

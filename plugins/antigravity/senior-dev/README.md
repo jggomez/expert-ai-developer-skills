@@ -6,7 +6,7 @@
 ![Platform: Google Antigravity](https://img.shields.io/badge/platform-Google%20Antigravity-4285F4.svg)
 
 `senior-dev` is a Google Antigravity plugin for teams that want a repeatable SDLC loop: triage, discovery, TDD build, QA, and a compliance audit before shipping.
-The orchestrator writes `PLAN.md`, delegates work to specialist subagents, and never edits application code itself.
+The orchestrator writes `docs/<feature-name>/PLAN.md`, delegates work to specialist subagents, and never edits application code itself.
 Hooks enforce plan-first, branch safety and passing tests before the agent stops.
 
 ## Requirements
@@ -50,7 +50,7 @@ Ask the compliance-verifier agent for a release-readiness verdict on this branch
 
 | Agent | Role |
 | :--- | :--- |
-| `senior-dev-orchestrator` | Main agent: triages the task, writes `PLAN.md`, dispatches subagents via `invoke_subagent` |
+| `senior-dev-orchestrator` | Main agent: triages the task, writes `docs/<feature-name>/PLAN.md`, dispatches subagents via `invoke_subagent` |
 | `product-analyst` | Clarifies business rules; writes `## Product` in `docs/<feature-name>/spec.md` |
 | `ui-ux-designer` | Maintains root `DESIGN.md` and `## Design`; WCAG AA |
 | `architect-engineer` | Module boundaries, API/DB contracts, MADR records, `## Architecture` |
@@ -93,7 +93,7 @@ Reviewers return their verdict in the final message (50 lines or fewer); they do
 
 | Event | Script | Behavior |
 | :--- | :--- | :--- |
-| `PreToolUse` (`write_to_file\|replace_file_content\|multi_replace_file_content`) | `hooks/orchestrator-role-gate.js` | Allows docs and plans (`*.md`, `*.txt`, `docs/`, `.agents/`, `context/`, `.gemini/`). For code: denies edits on `main`/`master`/`develop`/`dev`, denies edits without a `PLAN.md` (edits of 10 lines or fewer are exempt), and denies edits from the main orchestrator session. |
+| `PreToolUse` (`write_to_file\|replace_file_content\|multi_replace_file_content`) | `hooks/orchestrator-role-gate.js` | Allows docs and plans (`*.md`, `*.txt`, `docs/`, `.agents/`, `context/`, `.gemini/`). For code: denies edits on `main`/`master`/`develop`/`dev`, denies edits without a `docs/<feature-name>/PLAN.md` (edits of 10 lines or fewer are exempt), and denies edits from the main orchestrator session. |
 | `Stop` | `hooks/universal-quality-gate.js` | On `model_stop`, runs `scripts/verify.sh`, `dart analyze`, `npm test`, `pytest -q` (through the project's `uv` / `.venv` / `poetry` environment, never a global pytest), `cargo test` or `go test ./...` when they apply, from the git root and within a 180 s budget, and asks the agent to continue if one fails. A changed web UI must also pass the fake-data scan and carry fresh E2E evidence; that gate blocks only the turn that changed the UI and otherwise reports it as unverified. |
 
 Stop gates share one library (`hooks/shared/gate-utils.js`): they act only on `terminationReason: model_stop`, cache a green result until the code changes, never run the same suite twice across plugins, and stop asking to continue after 3 blocks per user message.
@@ -137,7 +137,7 @@ The full state machine is documented in [AGENTS.md](../../../AGENTS.md) and the 
 
 | Symptom | Cause | Fix |
 | :--- | :--- | :--- |
-| `PLAN FIRST` denial on a code edit | No `PLAN.md` in the root, `docs/` or `.agents/` | Create `PLAN.md` before editing code |
+| `PLAN FIRST` denial on a code edit | No `PLAN.md` in `docs/<feature-name>/` (or the legacy root, `docs/`, `.agents/` locations) | Create `docs/<feature-name>/PLAN.md` before editing code |
 | `PROTECTED BRANCH` denial | Working on `main`, `master`, `develop` or `dev` | Run `git checkout -b feat/<slug>` |
 | `ORCHESTRATOR CODE PROHIBITION` denial | The main orchestrator session tried to edit code | Expected: delegate to `code-implementer` via `invoke_subagent` |
 | Agent keeps working; `UNIVERSAL QUALITY GATE VIOLATION` | A detected test suite or linter fails | Fix the failures shown in the gate output |

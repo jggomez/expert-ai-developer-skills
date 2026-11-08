@@ -9,7 +9,7 @@
 ## 1. Inviolable Core Principles
 
 ### 1.1. Plan-First Mandatory Gate
-* **No Unplanned Code Changes**: Before any application code modification, refactoring, or implementation begins, an up-to-date `PLAN.md` file **MUST** be authored or updated and committed/saved to disk in the repository root.
+* **No Unplanned Code Changes**: Before any application code modification, refactoring, or implementation begins, an up-to-date plan **MUST** be authored or updated and saved to disk at `docs/<feature-name>/PLAN.md`, next to the feature's `spec.md`, ADRs and evidence. Never leave a `PLAN.md` in the repository root: it outlives the feature and confuses the next request (the plan-first gate still accepts a legacy root `PLAN.md` in older projects).
 * **Granular Task Breakdown**: The plan must detail exact tracks, phases, actionable verification criteria, and affected components.
 * **Lifecycle Synchronization**: As milestones progress, agents must keep `PLAN.md` strictly synchronized with the true system state.
 
@@ -25,7 +25,7 @@ All multi-agent execution flows follow a deterministic, adaptive Directed Acycli
 
 ```mermaid
 flowchart TD
-    STATE0["STATE 0: MEMORY RESTORE & SDLC TRIAGE GATE<br/>1. Read context/memory/MEMORY.md<br/>2. Derive slug & create docs/&lt;feature-name&gt;/<br/>3. Author PLAN.md + 3-Tier SDLC Triage"] --> ROUTE{"SDLC Triage<br/>Tier Selection"}
+    STATE0["STATE 0: MEMORY RESTORE & SDLC TRIAGE GATE<br/>1. Read context/memory/MEMORY.md<br/>2. Derive slug & create docs/&lt;feature-name&gt;/<br/>3. Author docs/&lt;feature-name&gt;/PLAN.md + 3-Tier SDLC Triage"] --> ROUTE{"SDLC Triage<br/>Tier Selection"}
     ROUTE -->|"Tier 1 (Fast-Track)"| STATE2_T1["STATE 2: FAST-TRACK BUILD<br/>1 code-implementer (Disjoint Mode A)"]
     ROUTE -->|"Tier 2 (Standard)"| STATE1_T2["STATE 1: SELECTIVE DISCOVERY<br/>product-analyst / architect-engineer"]
     ROUTE -->|"Tier 3 (Mission-Critical)"| STATE1_T3["STATE 1: FULL DISCOVERY<br/>product-analyst + ui-ux-designer + architect-engineer"]
@@ -42,7 +42,7 @@ flowchart TD
     STATE3_QA --> FAN_IN
     STATE4_AUDIT --> FAN_IN
     STATE3_ADV --> FAN_IN
-    FAN_IN --> STATE5["STATE 5: SHIP & MEMORY UPDATE<br/>Update PLAN.md + context/memory/ & git commit"]
+    FAN_IN --> STATE5["STATE 5: SHIP & MEMORY UPDATE<br/>Update docs/&lt;feature-name&gt;/PLAN.md + context/memory/ & git commit"]
 ```
 
 #### 1.3.1. Dynamic 3-Tier Adaptive SDLC State Machine
@@ -62,7 +62,7 @@ Execution workflows scale dynamically according to task scope, surface area, and
 1. **STATE 0 — MEMORY RESTORE & SDLC TRIAGE GATE (Mandatory)**:
    - **Feature Directory Creation**: Detect incoming feature requests and derive the `<feature-name>` slug (e.g. `user-auth`, `order-checkout`). Ensure `docs/<feature-name>/` directory is created (creating `docs/` if not present) where feature artifacts (single discovery file `spec.md`, `adr-*.md` only for structural decisions, `test-matrix.md`, `evidence/*.png`) will be stored. Review verdicts are returned in the reviewer's final message, never written as files. If the workspace already has `docs/specifications/` or legacy docs, instruct specialists to inspect and synchronize them.
    - **LLM Wiki Memory Read (`context-restore`)**: Check if `context/memory/MEMORY.md` exists; if so, read it silently (~500 tokens) to restore cross-AI handoff state (left by Claude Code or Antigravity). Read linked topic pages (`context/memory/architecture.md`, `context/memory/conventions.md`, `context/memory/log/YYYY-MM-DD.md`) only on demand.
-   - **Mandatory 3-Tier SDLC Triage & Capability-Gated Dispatch (`PLAN.md`)**: Author/update a concise `PLAN.md` (`<= 50 lines` per feature) classifying the task into Tier 1 (Fast-Track), Tier 2 (Standard), or Tier 3 (Mission-Critical) with an explicit `Invoke / SKIP` table. Never over-invoke specialists blindly—evaluate each subagent by capability and risk:
+   - **Mandatory 3-Tier SDLC Triage & Capability-Gated Dispatch (`docs/<feature-name>/PLAN.md`)**: Author/update a concise `docs/<feature-name>/PLAN.md` (`<= 50 lines`) classifying the task into Tier 1 (Fast-Track), Tier 2 (Standard), or Tier 3 (Mission-Critical) with an explicit `Invoke / SKIP` table. Never over-invoke specialists blindly—evaluate each subagent by capability and risk:
      * **`product-analyst`**: **INVOKE ONLY IF** business scope, user stories, or acceptance criteria are ambiguous/missing. **SKIP** if the prompt already defines clear scope/stories, or for bugfixes, refactors, chores, docs, and technical CLIs. Owns `## Product` in `docs/<feature-name>/spec.md` (`<= 50 lines`: Objective, Scope, User Stories `US-XX`, Acceptance Criteria `AC-XX`).
      * **`ui-ux-designer`**: **INVOKE ONLY IF** UI screens/components are created/modified AND root `DESIGN.md` is missing or new visual patterns are introduced. **SKIP** for backend/APIs, data pipelines, CLIs, or minor UI tweaks covered by `DESIGN.md`. Maintains root `DESIGN.md` (`<= 110 lines`, official Google 2-layer YAML + 8-section spec) and owns the optional `## Design` feature delta in `docs/<feature-name>/spec.md` (`<= 30 lines`).
      * **`architect-engineer`**: **INVOKE ONLY IF** introducing structural decisions (new DB schema, cross-service API contracts, new core dependency, architectural pattern shift). **SKIP** when following established repository architecture. Produces concise MADR `docs/<feature-name>/adr-NNN-*.md` (`<= 55 lines`: Context, Options, Decision & Justification, Trade-offs) and owns `## Architecture` in `docs/<feature-name>/spec.md` (`<= 50 lines`).

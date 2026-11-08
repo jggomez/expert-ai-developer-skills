@@ -108,8 +108,8 @@ const hasPlan = g.findPlan(workspaceRoot) !== null || g.isSmallEdit(toolName, to
 
 if (!hasPlan) {
   deny(
-    `[GRAPH GATE ERROR - PLAN FIRST]: No "PLAN.md" was found in "${workspaceRoot}".\n` +
-    `Per the Loop Engineering lifecycle, you MUST create and structure a "PLAN.md" ` +
+    `[GRAPH GATE ERROR - PLAN FIRST]: No plan was found in "${workspaceRoot}" (docs/<feature-name>/PLAN.md).\n` +
+    `Per the Loop Engineering lifecycle, you MUST create and structure "docs/<feature-name>/PLAN.md" ` +
     `defining the tasks and subagent assignments before writing or editing application code.`
   );
 }

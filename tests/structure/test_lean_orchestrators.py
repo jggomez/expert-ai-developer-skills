@@ -176,3 +176,48 @@ def test_orchestrators_accept_baseref_from_any_settings_file(host, plugin, agent
     for path in (".claude/settings.local.json", "~/.claude/settings.json"):
         assert path in body, path
     assert "fresh checkout" in body
+
+
+@needs_node
+def test_find_plan_accepts_the_feature_folder_plan(repo):
+    # Arrange: the orchestrator keeps the plan with the feature's artifacts, not in the root
+    plan = repo / "docs" / "user-auth" / "PLAN.md"
+    plan.parent.mkdir(parents=True)
+    plan.write_text("# plan\n")
+    lib = os.path.join(ROOT, "scripts", "hook-lib", "gate-utils.js")
+    script = f"const g = require({json.dumps(lib)}); process.stdout.write(JSON.stringify(g.findPlan(process.argv[1])));"
+    # Act
+    out = subprocess.run(["node", "-e", script, str(repo)], capture_output=True, text=True, check=True)
+    # Assert
+    assert os.path.realpath(json.loads(out.stdout)) == os.path.realpath(plan)
+
+
+@needs_node
+def test_claude_plan_first_gate_accepts_a_feature_folder_plan(repo):
+    # Arrange: a feature branch whose only plan is docs/<feature-name>/PLAN.md
+    _git(repo, "checkout", "-qb", "feat/user-auth")
+    plan = repo / "docs" / "user-auth" / "PLAN.md"
+    plan.parent.mkdir(parents=True)
+    plan.write_text("# plan\n")
+    payload = {"hook_event_name": "PreToolUse", "cwd": str(repo), "agent_type": "code-implementer",
+               "tool_name": "Write", "tool_input": {"file_path": str(repo / "src" / "auth.py"), "content": "x\n" * 30}}
+    gate = os.path.join(ROOT, "plugins", "claude", "senior-dev", "hooks", "orchestrator-role-gate.js")
+    # Act
+    result = subprocess.run(["node", gate], input=json.dumps(payload), capture_output=True, text=True, timeout=30)
+    # Assert
+    assert result.returncode == 0, result.stderr
+    assert "PLAN FIRST" not in (result.stdout + result.stderr), result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("path", [
+    "plugins/antigravity/senior-dev/agents/senior-dev-orchestrator.md",
+    "plugins/claude/senior-dev/agents/senior-dev-orchestrator.md",
+    "skills/senior-dev-orchestrator/SKILL.md",
+    "plugins/antigravity/senior-dev/rules/senior-dev-rules.md",
+])
+def test_senior_dev_orchestrator_keeps_the_plan_in_the_feature_folder(path):
+    # Act
+    text = open(os.path.join(ROOT, path), encoding="utf-8").read()
+    # Assert: the plan is authored in docs/<feature-name>/, and a root PLAN.md is ruled out
+    assert "Author `docs/<feature-name>/PLAN.md`" in text or "`docs/<feature-name>/PLAN.md`" in text, path
+    assert "repository root" in text, path
