@@ -29,7 +29,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { execFileSync } = require('child_process');
+const { execFileSync, execSync } = require('child_process');
 
 const MAX_BLOCKS = 3;
 const FINAL_STOP_REASONS = new Set(['NO_TOOL_CALL', 'model_stop']);
@@ -110,19 +110,50 @@ function git(cwd, args) {
 }
 
 /**
- * Directory the checks run in. Claude Code sends `cwd`. Antigravity sends `workspacePaths`, which
- * may point at a subfolder: resolve it to the git root so PLAN.md, tests and .git are found.
+ * Directory the checks run in: the git root of the host's workspace. Claude Code sends `cwd`,
+ * which follows the shell (a `cd apps/x` in a Bash call would otherwise make the Stop gate pick
+ * up that subfolder's pyproject.toml); Antigravity sends `workspacePaths`, which may point at a
+ * subfolder. Both resolve to the git root so PLAN.md, tests and .git are found and the gate runs
+ * the same checks no matter where the agent last stood. Outside git the path is used as is.
  * (Antigravity runs hooks with the plugin root as cwd, so process.cwd() is only a last resort.)
  */
 function workspaceOf(payload) {
-  if (payload.cwd) return payload.cwd;
-  const ws = Array.isArray(payload.workspacePaths) ? payload.workspacePaths[0] : null;
+  const ws = payload.cwd || (Array.isArray(payload.workspacePaths) ? payload.workspacePaths[0] : null);
   if (!ws) return process.cwd();
   try {
     return git(ws, ['rev-parse', '--show-toplevel']).trim() || ws;
   } catch (err) {
     return ws;
   }
+}
+
+/** True when `cmd` resolves on PATH. */
+function commandExists(cmd) {
+  try {
+    if (process.platform === 'win32') execFileSync('where', [cmd], { stdio: 'ignore' });
+    else execSync(`command -v ${cmd}`, { stdio: 'ignore', shell: '/bin/sh' });
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+/**
+ * The command that runs pytest inside the project's own environment, or null when none exists.
+ * A global `pytest` from PATH cannot import the project's dependencies, so it fails every module:
+ * `uv run` (uv.lock), the project's virtualenv, `poetry run` (poetry.lock), and PATH only last.
+ */
+function pytestCommand(root) {
+  const has = (rel) => fs.existsSync(path.join(root, rel));
+  if (has('uv.lock') && commandExists('uv')) return 'uv run pytest -q';
+  for (const venv of ['.venv', 'venv']) {
+    const bin = path.join(root, venv, process.platform === 'win32' ? 'Scripts' : 'bin',
+      process.platform === 'win32' ? 'pytest.exe' : 'pytest');
+    if (fs.existsSync(bin)) return `"${bin}" -q`;
+  }
+  if (has('poetry.lock') && commandExists('poetry')) return 'poetry run pytest -q';
+  if (commandExists('pytest')) return 'pytest -q';
+  return null;
 }
 
 /** Where a plan-first gate accepts the plan, relative to a checkout root. */
@@ -241,8 +272,11 @@ function saveJson(file, data) {
  * @param {string} opts.gateId   Shared id for identical verifications across plugins (e.g. 'python-tests').
  * @param {object} opts.payload  Parsed hook stdin.
  * @param {number} [opts.maxBlocks]
+ * @param {(file: string) => boolean} [opts.fileFilter]  Keeps only the changed code files this gate
+ *   cares about (e.g. UI files): the fingerprint, the "no code changes" skip and isRepeat() then
+ *   ignore every other change.
  */
-function createStopGate({ gateId, payload, maxBlocks = MAX_BLOCKS }) {
+function createStopGate({ gateId, payload, maxBlocks = MAX_BLOCKS, fileFilter = null }) {
   const cwd = workspaceOf(payload);
   const gitDir = resolveGitDir(cwd);
   const stateDir = gitDir || os.tmpdir();
@@ -262,6 +296,7 @@ function createStopGate({ gateId, payload, maxBlocks = MAX_BLOCKS }) {
   if (gitDir) {
     try {
       files = changedCodeFiles(cwd);
+      if (typeof fileFilter === 'function') files = files.filter(fileFilter);
       fingerprint = fingerprintOf(cwd, files);
     } catch (err) {
       files = null;
@@ -270,6 +305,7 @@ function createStopGate({ gateId, payload, maxBlocks = MAX_BLOCKS }) {
   }
 
   let lockHeld = false;
+  let repeat = false;
 
   function readGateState() {
     const state = loadJson(stateFile);
@@ -325,7 +361,13 @@ function createStopGate({ gateId, payload, maxBlocks = MAX_BLOCKS }) {
       const { gate } = readGateState();
       const continuing = isContinuing(gate);
       const blocks = continuing ? gate.blocks || 0 : 0;
-      if (!continuing && gate.blocks) writeGateState({ blocks: 0 });
+      // `seen` is the state at the previous Stop: a new turn that left these files untouched
+      // (a plain answer, or edits elsewhere) is a repeat of a state already reported.
+      repeat = !continuing && Boolean(fingerprint) && gate.seen === fingerprint;
+      const update = {};
+      if (fingerprint && gate.seen !== fingerprint) update.seen = fingerprint;
+      if (!continuing && gate.blocks) update.blocks = 0;
+      if (Object.keys(update).length) writeGateState(update);
 
       if (continuing && blocks >= maxBlocks) {
         return `retry-limit (${blocks}/${maxBlocks} blocks this turn)`;
@@ -357,7 +399,20 @@ function createStopGate({ gateId, payload, maxBlocks = MAX_BLOCKS }) {
 
     retryLimitReached() {
       const { gate } = readGateState();
-      return isContinuing(gate) && (gate.blocks || 0) >= maxBlocks;
+      const reached = isContinuing(gate) && (gate.blocks || 0) >= maxBlocks;
+      // The turn ends here: remember the state it leaves behind so the next turn can tell
+      // whether it touched these files at all.
+      if (reached && fingerprint && gate.seen !== fingerprint) writeGateState({ seen: fingerprint });
+      return reached;
+    },
+
+    /**
+     * True (after begin()) when this is a new turn and the gate's files are exactly as the
+     * previous turn left them: the check may run, but blocking again would only repeat a
+     * verdict the agent already received.
+     */
+    isRepeat() {
+      return repeat;
     },
 
     markPass() {
@@ -370,9 +425,18 @@ function createStopGate({ gateId, payload, maxBlocks = MAX_BLOCKS }) {
       releaseLock();
     },
 
-    /** Records the failure and returns the reason decorated with the retry counter. */
-    markFail(reason) {
+    /**
+     * Records the failure and returns the reason decorated with the retry counter.
+     * `blocking: false` records the red state without spending one of the turn's blocks
+     * (the caller reports it as a notice instead of stopping the agent).
+     */
+    markFail(reason, { blocking = true } = {}) {
       const { gate } = readGateState();
+      if (!blocking) {
+        writeGateState({ red: fingerprint || 'unknown', redAt: Date.now(), greenAt: null });
+        releaseLock();
+        return reason;
+      }
       const blocks = (isContinuing(gate) ? gate.blocks || 0 : 0) + 1;
       writeGateState({ red: fingerprint || 'unknown', redAt: Date.now(), greenAt: null, blocks, turn: turnKey });
       releaseLock();
@@ -483,6 +547,8 @@ module.exports = {
   detectHost,
   hostOf,
   workspaceOf,
+  commandExists,
+  pytestCommand,
   findPlan,
   isFinalStop,
   isCodePath,

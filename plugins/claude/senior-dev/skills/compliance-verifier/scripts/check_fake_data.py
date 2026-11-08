@@ -3,7 +3,9 @@
 
 A green test suite says nothing about a screen that paints invented data. This check reads the
 lines a change adds and fails on mock data, placeholder people, fake-data libraries and literals
-returned after a simulated delay. Test code, fixtures and seeds are ignored.
+returned after a simulated delay. Test code, fixtures and seeds are ignored, and so are folders that
+never hold the app's UI: agent plugins and rules (`.claude/`, `.agents/`), docs, virtualenvs and
+vendored dependencies (their own comments legitimately talk about "mock" and "fake" data).
 
 It is a heuristic: it can flag a false positive, and it cannot see invented data with believable
 names. Running the real app (`check_evidence.py`) is what proves the data is real.
@@ -29,7 +31,8 @@ APPROVAL = "demo-data: approved"
 SCANNED_SUFFIXES = {".ts", ".tsx", ".js", ".jsx", ".mjs", ".vue", ".svelte", ".html", ".dart"}
 IGNORED_PATH = re.compile(
     r"(^|/)(tests?|__tests__|__mocks__|e2e|integration_test|test_driver|mocks?|fixtures?|stories|cypress|"
-    r"playwright|seeds?|migrations?|node_modules|build|dist)(/|$)"
+    r"playwright|seeds?|migrations?|node_modules|build|dist"
+    r"|\.claude|\.agents|\.gemini|\.cursor|\.venv|venv|docs?|context|vendor|coverage|\.dart_tool|\.next)(/|$)"
     r"|\.(test|spec|stories)\.|_test\.dart$|\.config\.[cm]?[jt]s$"
 )
 INPUT_HINT = re.compile(r"placeholder|hintText|helperText|labelText", re.IGNORECASE)

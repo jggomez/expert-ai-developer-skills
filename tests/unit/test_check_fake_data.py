@@ -153,3 +153,20 @@ def test_outside_a_git_repository_is_a_usage_error(tmp_path):
     result = _run(tmp_path)
     # Assert
     assert result.returncode == 2
+
+
+@pytest.mark.parametrize("rel", [
+    ".claude/plugins/senior-dev/hooks/universal-quality-gate.js",
+    ".agents/rules/ui.js",
+    "node_modules/pkg/index.js",
+    ".venv/lib/site-packages/pkg/static/app.js",
+    "docs/items/evidence/report.html",
+    "vendor/lib/widget.js",
+])
+def test_ignores_agent_plugins_docs_and_dependency_folders(repo, rel):
+    # Arrange: these folders never hold the app's UI, and plugin comments talk about mock data
+    _write(repo, rel, "// rejects mock or fake data in the UI\nconst mockUsers = [];\n")
+    # Act
+    result = _run(repo)
+    # Assert
+    assert result.returncode == 0, result.stdout
