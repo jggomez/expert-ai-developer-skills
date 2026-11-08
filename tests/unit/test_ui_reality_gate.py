@@ -213,3 +213,18 @@ def test_the_gate_scans_from_the_git_root_when_the_shell_sits_in_a_subfolder(rep
     # Assert
     assert _blocked(result), result.stdout + result.stderr
     assert "UI REALITY GATE" in result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("hook", HOOKS)
+def test_a_folder_that_is_not_a_git_repository_is_not_gated(tmp_path, hook):
+    # Arrange: Claude runs from a parent folder holding several repos (no .git of its own)
+    workdir = tmp_path / "clients"
+    workdir.mkdir()
+    (workdir / "page.tsx").write_text("export const Page = () => null;\n")
+    payload = {"hook_event_name": "Stop", "cwd": str(workdir), "session_id": "s1", "stop_hook_active": False}
+    # Act
+    result = subprocess.run(["node", hook], input=json.dumps(payload), capture_output=True, text=True, timeout=60,
+                            env=dict(os.environ, TMPDIR=str(tmp_path)))
+    # Assert: a clean allow, no crash trace
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "Command failed" not in result.stderr and "UI REALITY GATE" not in result.stdout + result.stderr
