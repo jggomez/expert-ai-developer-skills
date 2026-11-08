@@ -96,6 +96,14 @@ _TEST_PREFIXES: Final = (
 )
 _SCRIPT_RUNNERS: Final = (("npm", "run"), ("pnpm", "run"), ("yarn", "run"), ("bun", "run"), ("yarn",))
 _COMMAND_WRAPPERS: Final = frozenset({"command", "env", "exec", "nice", "sudo", "time"})
+_PACKAGE_MANAGERS: Final = frozenset({"npm", "pnpm", "yarn", "bun"})
+# Options that pick a package or folder before the script name: ``npm --prefix api test``.
+_PACKAGE_SCOPE_OPTIONS: Final = frozenset(
+    {"--prefix", "-C", "--dir", "--cwd", "--filter", "-F", "--workspace", "-w"}
+)
+_PACKAGE_EXEC: Final = frozenset({"exec", "dlx", "x"})
+_NPX_FLAGS: Final = frozenset({"--yes", "-y", "--no-install"})
+_TEST_FILE: Final = re.compile(r"(^|/)(tests?|__tests__|e2e)/|(^|[._/-])(tests?|spec)([._-]|$)")
 _SHELL_SEPARATORS: Final = frozenset(";&|()\n")
 _FAILURE_TAIL_CHARS: Final = 16_384
 _TEST_FAILURE: Final = re.compile(
@@ -174,11 +182,46 @@ def _strip_wrappers(tokens: list[str]) -> list[str]:
     return rest
 
 
+def _strip_package_scope(words: list[str]) -> list[str]:
+    """``pnpm --filter web test`` → ``pnpm test``; ``pnpm exec tsx`` and ``npx tsx`` → ``tsx``."""
+    if words[0] == "npx" or words[0] == "bunx":
+        rest = [w for w in words[1:] if w not in _NPX_FLAGS]
+        return rest or words
+    if words[0] not in _PACKAGE_MANAGERS:
+        return words
+    rest = words[1:]
+    while rest:
+        scoped = rest[0] in _PACKAGE_SCOPE_OPTIONS or (words[0] == "yarn" and rest[0] == "workspace")
+        if scoped and len(rest) > 1:
+            rest = rest[2:]
+        else:
+            break
+    if rest and rest[0] in _PACKAGE_EXEC and len(rest) > 1:
+        return rest[1:]
+    return [words[0], *rest]
+
+
+def _runs_test_script(words: list[str]) -> bool:
+    """``node --test``, ``tsx --test``, ``node tests/x.js`` and ``./run.sh test``."""
+    if words[0] in {"node", "tsx", "deno"}:
+        if "--test" in words:
+            return True
+        if words[0] != "node" or "--check" in words or "-c" in words:
+            return False
+        script = next((w for w in words[1:] if not w.startswith("-")), "")
+        return bool(script) and _TEST_FILE.search(script) is not None
+    return words[0].endswith(".sh") and len(words) > 1 and words[1] == "test"
+
+
 def _runs_tests(tokens: list[str]) -> bool:
     words = _strip_wrappers(tokens)
     if not words:
         return False
     words[0] = PurePath(words[0]).name
+    words = _strip_package_scope(words)
+    words[0] = PurePath(words[0]).name
+    if _runs_test_script(words):
+        return True
     for runner in _SCRIPT_RUNNERS:
         script = words[len(runner)] if len(words) > len(runner) else ""
         if tuple(words[: len(runner)]) == runner and (script == "test" or script.startswith("test:")):
