@@ -60,7 +60,7 @@ Example prompts:
 
 | Agent | Role | Model |
 | :--- | :--- | :--- |
-| `flutter-feature-orchestrator` | Sizes the request, writes `PLAN.md`, sequences official skills and delegates to subagents | `inherit` |
+| `flutter-feature-orchestrator` | Sizes the request, writes `docs/<feature-name>/PLAN.md`, sequences official skills and delegates to subagents | `inherit` |
 | `flutter-architect` | State management choice, module boundaries, MADR ADRs | `inherit` |
 | `flutter-implementer` | Flutter/Dart changes with TDD and `DESIGN.md` token fidelity | `inherit` |
 | `flutter-reviewer` | Rebuild scope, `const`, keys, dispose/leaks, async `BuildContext`, ADR conformance | `inherit` |
@@ -73,7 +73,7 @@ The full list is in the *Claude Code Runtime Notes* of [`agents/flutter-feature-
 
 | Skill | Purpose |
 | :--- | :--- |
-| **`flutter-senior-orchestration`** | Run a feature or fix end to end: context restore, tier routing, gated dispatch via `PLAN.md` |
+| **`flutter-senior-orchestration`** | Run a feature or fix end to end: context restore, tier routing, gated dispatch via `docs/<feature-name>/PLAN.md` |
 | **`flutter-architecture-decisions`** | Choose state management (Riverpod, Bloc, signals, setState), module boundaries, ADRs |
 | **`flutter-review-checklist`** | Senior review checklist and a file-only project audit script |
 | **`flutter-test-strategy`** | What to test at unit, widget, golden and integration level; coverage gates |
@@ -102,7 +102,7 @@ Specialist skills (product, design, QA, critic, challenger, black-box) come from
 
 ## How it works
 
-1. The orchestrator restores `context/memory/MEMORY.md` and writes a short `PLAN.md` with a tier (1 fast-track, 2 standard, 3 mission-critical).
+1. The orchestrator restores `context/memory/MEMORY.md` and writes a short `docs/<feature-name>/PLAN.md` with a tier (1 fast-track, 2 standard, 3 mission-critical).
 2. Tier 2 and 3 run only the discovery specialists the plan justifies, then pause for your approval.
 3. Shared files (`pubspec.yaml`, router, DI, generated code) change first in one committed step; then up to 3 `flutter-implementer` tracks run in parallel on disjoint files, without git writes or `build_runner`. Worktrees are a last resort.
 4. `flutter-reviewer`, `qa-tester` and, when needed, `flutter-release-engineer` and adversarial reviewers verify the work.
@@ -132,7 +132,7 @@ Without it the orchestrator asks you to add it or runs those tracks one after an
 
 | Symptom | Cause | Fix |
 | :--- | :--- | :--- |
-| Edit to a `.dart` file is denied with `PLAN-FIRST VIOLATION` | No `PLAN.md` at the repo root, `docs/`, `.agents/` or `.claude/` | Create `PLAN.md`. Small `Edit` calls (10 lines or fewer per side) are allowed without it |
+| Edit to a `.dart` file is denied with `PLAN-FIRST VIOLATION` | No `PLAN.md` in `docs/<feature-name>/` (or the legacy root, `docs/`, `.agents/`, `.claude/` locations) | Create `docs/<feature-name>/PLAN.md`. Small `Edit` calls (10 lines or fewer per side) are allowed without it |
 | Dart edit denied on `main` | Protected branch (`main`, `master`, `develop`, `dev`) | `git checkout -b feat/<slug>` |
 | `flutter build ipa` or `pub upgrade --major-versions` denied | Store builds and major bumps are blocked on protected branches | Run them from a release or chore branch, or in CI |
 | Agent cannot finish: "`dart analyze` is not clean" | Stop gate found analyzer issues | Fix the findings. The gate blocks at most 3 times per turn and skips if code is unchanged since the last pass |

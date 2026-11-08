@@ -214,6 +214,9 @@ def test_claude_plan_first_gate_accepts_a_feature_folder_plan(repo):
     "plugins/claude/senior-dev/agents/senior-dev-orchestrator.md",
     "skills/senior-dev-orchestrator/SKILL.md",
     "plugins/antigravity/senior-dev/rules/senior-dev-rules.md",
+    "plugins/antigravity/senior-dev-flutter/agents/flutter-feature-orchestrator.md",
+    "plugins/claude/senior-dev-flutter/agents/flutter-feature-orchestrator.md",
+    "skills/flutter-senior-orchestration/SKILL.md",
 ])
 def test_senior_dev_orchestrator_keeps_the_plan_in_the_feature_folder(path):
     # Act

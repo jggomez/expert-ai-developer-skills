@@ -120,8 +120,8 @@ if (isFileModTool && targetFile) {
 
       if (!hasPlan) {
         deny(
-          `[FLUTTER GRAPH GATE - PLAN FIRST]: No "PLAN.md" found in "${cwd}".\n` +
-          `You MUST create a "PLAN.md" defining target platforms, state management, and tasks before modifying Dart code.`
+          `[FLUTTER GRAPH GATE - PLAN FIRST]: No plan found in "${cwd}" (docs/<feature-name>/PLAN.md).\n` +
+          `You MUST create "docs/<feature-name>/PLAN.md" defining target platforms, state management, and tasks before modifying Dart code.`
         );
       }
 

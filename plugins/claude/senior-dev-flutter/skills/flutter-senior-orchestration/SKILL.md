@@ -1,6 +1,6 @@
 ---
 name: flutter-senior-orchestration
-description: Use to run a Flutter feature or fix end to end — restoring cross-AI context (context/memory/), bootstrapping root AGENTS.md, 3-tier dynamic routing, capability and risk-gated subagent dispatch via PLAN.md, sequencing official flutter-*/dart-* skills, and dispatching parallel or sequential subagents (ui-ux-designer, flutter-architect, flutter-implementer, flutter-reviewer, flutter-release-engineer, qa-tester).
+description: Use to run a Flutter feature or fix end to end — restoring cross-AI context (context/memory/), bootstrapping root AGENTS.md, 3-tier dynamic routing, capability and risk-gated subagent dispatch via docs/<feature-name>/PLAN.md, sequencing official flutter-*/dart-* skills, and dispatching parallel or sequential subagents (ui-ux-designer, flutter-architect, flutter-implementer, flutter-reviewer, flutter-release-engineer, qa-tester).
 ---
 
 # Flutter Senior Orchestration
@@ -16,11 +16,11 @@ The **Flutter Senior Orchestration** skill governs end-to-end delivery of Flutte
   - Pure backend tasks (`python-expert`, `database-migration-expert`) or single-turn Q&A without code edits.
 
 ## Core Invariants & Artifact Line Budgets
-1. **Zero Direct Dart Implementation**: The orchestrator NEVER edits `.dart` files (`lib/`, `test/`). Direct writes are restricted to `PLAN.md`, root `AGENTS.md`, root `DESIGN.md`, `doc/adr/*.md`, `docs/` (`docs/<feature-name>/`), `.agents/`, and `context/memory/`.
+1. **Zero Direct Dart Implementation**: The orchestrator NEVER edits `.dart` files (`lib/`, `test/`). Direct writes are restricted to `docs/<feature-name>/PLAN.md`, root `AGENTS.md`, root `DESIGN.md`, `doc/adr/*.md`, `docs/` (`docs/<feature-name>/`), `.agents/`, and `context/memory/`.
 2. **Automated Git Branch Governance & Scope Drift**: Never work on `main`, `master`, `develop`, or `dev`. At State 0, inspect `git symbolic-ref --short HEAD` and auto-branch (`git checkout -b feat/<descriptive-slug>` or `fix/<slug>`). On active feature branches, detect orthogonal requests (**Scope Drift**) and prompt via `AskUserQuestion` recommending `feat/<new-slug>`.
 3. **Target-Project `AGENTS.md` + `DESIGN.md` + `MEMORY.md` Integration**: In State 0 / State 5, verify root `AGENTS.md`; if missing or if stack/commands/conventions changed, generate/update a concise root `AGENTS.md` (`<= 90 lines`) linking executable commands (`flutter analyze`, `flutter test`), root `DESIGN.md`, and `context/memory/MEMORY.md`.
 4. **Strict Conciseness Line Caps**:
-   - `PLAN.md` feature block `<= 50 lines` | Root `AGENTS.md <= 90 lines` | Root `DESIGN.md <= 110 lines`
+   - `docs/<feature-name>/PLAN.md` `<= 50 lines` | Root `AGENTS.md <= 90 lines` | Root `DESIGN.md <= 110 lines`
    - Single discovery file `docs/<feature-name>/spec.md`: `## Product <= 50` (`product-analyst`) | `## Design <= 30` (`ui-ux-designer`, screen delta only) | `## Architecture <= 50` (`flutter-architect`)
    - `adr-NNN-*.md <= 55 lines` (only for a structural decision) | `docs/<feature-name>/test-matrix.md <= 80 lines` | `docs/<feature-name>/evidence/*.png`
    - **No review report files**: `flutter-reviewer`, `critic`, `challenger`, `e2e-blackbox-tester` return their verdict in the final message (`<= 50 lines`: verdict, findings with `file:line`, required fixes).
@@ -37,7 +37,7 @@ The **Flutter Senior Orchestration** skill governs end-to-end delivery of Flutte
 | **Tier 3: Mission-Critical** | Greenfield app, core state migration (Riverpod/Bloc), auth/payments, FFI/native plugins, store release. | **Capability-Gated** State 1 in `docs/<feature-name>/`. **Mandatory** `AskUserQuestion` sign-off. | Isolated parallel `flutter-implementer`. **Adversarial Review Committee**: `flutter-reviewer` + `flutter-release-engineer` + `qa-tester` (+ risk/web-gated specialists). |
 
 ### 5-Row `Discovery & Architecture Triage` (`Invoke / SKIP`) Rubric
-Every `PLAN.md` (`<= 50 lines`) MUST include a compact 5-row table justifying each specialist in 1 line:
+Every `docs/<feature-name>/PLAN.md` (`<= 50 lines`) MUST include a compact 5-row table justifying each specialist in 1 line:
 
 | Subagent | `INVOKE ONLY IF` | `SKIP WHEN` |
 | :--- | :--- | :--- |
@@ -62,7 +62,7 @@ These apply in every Tier when a task creates or changes UI on a project with a 
 1. **Git Branch Governance**: Inspect `git symbolic-ref --short HEAD`; auto-branch `feat/<descriptive-slug>` or `fix/<slug>` off base branches; prompt via `AskUserQuestion` on **Scope Drift**.
 2. **Feature Directory & Memory**: Ensure `docs/<feature-name>/` exists (syncing `docs/specifications/` if present). Silently read `context/memory/MEMORY.md` (~500 tokens); drill down on demand.
 3. **Target `AGENTS.md` Check**: Create or update root `AGENTS.md` (`<= 90 lines`) if missing or if stack/commands/conventions changed, linking commands, root `DESIGN.md`, and `context/memory/MEMORY.md`.
-4. **Author `PLAN.md` (`<= 50 lines`)**: Classify Tier 1/2/3, complete the 5-row `Invoke / SKIP` triage table, and define `Parallel Execution Tracks`.
+4. **Author `docs/<feature-name>/PLAN.md` (`<= 50 lines`)**: Classify Tier 1/2/3, complete the 5-row `Invoke / SKIP` triage table, and define `Parallel Execution Tracks`. The plan lives in the feature folder next to `spec.md`, ADRs and evidence; never in the repository root.
 
 ### 2. State 1 & 1.5: Capability-Gated Discovery & Interactive User Alignment Gate
 - **State 1**: Skip for Tier 1 or when all Discovery specialists are `SKIP`. Otherwise dispatch ONLY `INVOKE` specialists **sequentially** (`product-analyst` -> `ui-ux-designer` -> `flutter-architect`, never in parallel: they share `docs/<feature-name>/spec.md`, each editing only its own section) within strict line budgets.
@@ -92,8 +92,8 @@ These apply in every Tier when a task creates or changes UI on a project with a 
 - Exceeding artifact line budgets, skipping `AskUserQuestion` on Tier 2/3, omitting Mode B worktree isolation on shared files (`pubspec.yaml`, router, `build_runner`), omitting `.dispose()` or `mounted` checks, or committing raw secrets.
 
 ## Verification
-- [ ] `State 0`: Branch checked (`feat/<slug>` auto-created; Scope Drift checked); `docs/<feature-name>/` created; `context/memory/MEMORY.md` read; root `AGENTS.md` (`<= 90 lines`) checked; `PLAN.md` (`<= 50 lines`) has 5-row `Invoke / SKIP` triage.
+- [ ] `State 0`: Branch checked (`feat/<slug>` auto-created; Scope Drift checked); `docs/<feature-name>/` created; `context/memory/MEMORY.md` read; root `AGENTS.md` (`<= 90 lines`) checked; `docs/<feature-name>/PLAN.md` (`<= 50 lines`) has 5-row `Invoke / SKIP` triage.
 - [ ] `State 1 & 1.5`: Only capability-triggered specialists ran within line caps; Tier 2/3 `AskUserQuestion` approval received.
 - [ ] `State 2`: Collision analysis enforced Mode A or Mode B; parallel `flutter-implementer` tracks ran scoped tests only.
 - [ ] `State 3 & 4`: Tiered verification passed (`flutter-reviewer` 60/120fps & zero leaks, `flutter-release-engineer`, `qa-tester` `test-matrix.md <= 80` & `exit code 0` in `Adversarial Review Committee`); `BLOCKED`/`SKIPPED` E2E disclosed honestly.
-- [ ] `State 5`: `PLAN.md`, root `AGENTS.md` (if changed), and `context/memory/` updated once at completion.
+- [ ] `State 5`: `docs/<feature-name>/PLAN.md`, root `AGENTS.md` (if changed), and `context/memory/` updated once at completion.

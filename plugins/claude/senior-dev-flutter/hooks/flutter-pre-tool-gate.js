@@ -90,8 +90,8 @@ if (isFileModTool) {
 
       if (!hasPlan) {
         deny(
-          `[PLAN-FIRST VIOLATION]: Cannot modify Dart code in "${targetFile}" without an active "PLAN.md".\n` +
-          `Per Senior Flutter Orchestration standards, you must create and structure a "PLAN.md" ` +
+          `[PLAN-FIRST VIOLATION]: Cannot modify Dart code in "${targetFile}" without an active plan (docs/<feature-name>/PLAN.md).\n` +
+          `Per Senior Flutter Orchestration standards, you must create and structure "docs/<feature-name>/PLAN.md" ` +
           `defining architecture, state management strategy, and subagent assignments before writing or modifying code.`
         );
       }

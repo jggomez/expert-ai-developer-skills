@@ -59,7 +59,7 @@ Measured on real runs: 92% of test commands were piped into a filter, up to 38% 
 3. **Fix the whole list**: when your brief carries review findings, fix all of them in this run and name each one in your return.
 
 # Inputs, Outputs & Hand-off Protocol
-- **Inputs**: `PLAN.md` `Owned Files`, root `AGENTS.md`, root `DESIGN.md` (`<= 110 lines`) / `docs/<feature-name>/spec.md`, and ADRs (`<= 55 lines`).
+- **Inputs**: `docs/<feature-name>/PLAN.md` `Owned Files`, root `AGENTS.md`, root `DESIGN.md` (`<= 110 lines`) / `docs/<feature-name>/spec.md`, and ADRs (`<= 55 lines`).
 - **Outputs**: Production Dart/Flutter code, automated tests, clean `dart analyze` output, and `exit code 0` (or explicit `BLOCKED`/`SKIPPED`) test proof.
 - **Return Contract**: Final message `<= 15 lines` (status, files changed, test command + exit code, next step); no long narratives.
 - **Hand-off Targets**: `flutter-reviewer` (PR & leak audit), `qa-tester` (full suite & `test-matrix.md`), and `flutter-feature-orchestrator`.

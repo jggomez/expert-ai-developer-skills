@@ -51,7 +51,7 @@ Official docs: [agent skills](https://docs.flutter.dev/ai/agent-skills) · [MCP 
 
 | Agent | Role |
 | :--- | :--- |
-| `flutter-feature-orchestrator` | Main agent. Sizes the request, writes `PLAN.md`, sequences official skills and delegates |
+| `flutter-feature-orchestrator` | Main agent. Sizes the request, writes `docs/<feature-name>/PLAN.md`, sequences official skills and delegates |
 | `flutter-architect` | State management choice, module boundaries, MADR ADRs |
 | `flutter-implementer` | Flutter/Dart changes with TDD and `DESIGN.md` token fidelity |
 | `flutter-reviewer` | Rebuild scope, `const`, keys, dispose/leaks, async `BuildContext`, ADR conformance |
@@ -69,7 +69,7 @@ The six specialists are synced copies of the `senior-dev` agents (`scripts/sync_
 
 | Skill | Purpose |
 | :--- | :--- |
-| **`flutter-senior-orchestration`** | Run a feature or fix end to end: context restore, tier routing, gated dispatch via `PLAN.md` |
+| **`flutter-senior-orchestration`** | Run a feature or fix end to end: context restore, tier routing, gated dispatch via `docs/<feature-name>/PLAN.md` |
 | **`flutter-architecture-decisions`** | Choose state management (Riverpod, Bloc, signals, setState), module boundaries, ADRs |
 | **`flutter-review-checklist`** | Senior review checklist and a file-only project audit script |
 | **`flutter-test-strategy`** | What to test at unit, widget, golden and integration level; coverage gates |
@@ -113,7 +113,7 @@ Registered in the `senior-dev-flutter-gates` group of `hooks.json`.
 
 ## How it works
 
-1. The orchestrator restores `context/memory/MEMORY.md` and writes a short `PLAN.md` with a tier (1 fast-track, 2 standard, 3 mission-critical).
+1. The orchestrator restores `context/memory/MEMORY.md` and writes a short `docs/<feature-name>/PLAN.md` with a tier (1 fast-track, 2 standard, 3 mission-critical).
 2. Tier 2 and 3 run only the discovery specialists the plan justifies, then pause for your approval.
 3. Shared files (`pubspec.yaml`, router, DI, generated code) change first in one committed step; then up to 3 `flutter-implementer` tracks run in parallel on disjoint files, without git writes or `build_runner`. Worktrees are a last resort.
 4. `flutter-reviewer`, `qa-tester` and, when needed, `flutter-release-engineer` and adversarial reviewers verify the work.
@@ -127,7 +127,7 @@ The full lifecycle is described in the root [README](../../../README.md) and [AG
 
 | Symptom | Cause | Fix |
 | :--- | :--- | :--- |
-| `.dart` edit denied with `PLAN FIRST` | No `PLAN.md` at the workspace root or `doc/` | Create `PLAN.md` before editing Dart code |
+| `.dart` edit denied with `PLAN FIRST` | No `PLAN.md` in `docs/<feature-name>/` (or the legacy root / `doc/` locations) | Create `docs/<feature-name>/PLAN.md` before editing Dart code |
 | `.dart` edit denied with `GRAPH INVARIANT VIOLATION` | The orchestrator tried to edit Dart code directly | Delegate the change to `flutter-implementer` |
 | Dart edit denied on `main` | Protected branch (`main`, `master`, `develop`, `dev`) | `git checkout -b feat/<slug>` |
 | `flutter build ipa` or `pub upgrade --major-versions` denied | Store builds and major bumps are blocked on protected branches | Run them from a release or chore branch, or in CI |
