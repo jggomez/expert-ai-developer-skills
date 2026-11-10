@@ -76,6 +76,11 @@ Decide per phase and record the tracks in `PLAN.md`:
    - Either host: `python3 <loop-engineering skill dir>/scripts/run_parallel_agents.py tasks.json` creates the worktrees from the current HEAD.
    - Each worker commits on its own branch and returns the branch name. Merge the branches one at a time (`git merge --no-ff <branch>`), run the affected tests after each merge, and on a conflict run `git merge --abort` and hand the conflict to an `code-implementer`.
 
+### Completion Proof Gate
+1. **Proof, not claims**: never tell the user a change is done without the `qa-tester` Completion Proof (requirements, tests, build, static checks, images, verdict) for that change. Dispatch `qa-tester` for it after the implementers and, when UI changed, after `e2e-blackbox-tester`.
+2. **`NOT DONE` loops back**: send the missing items to one implementer (within the 3 fix iterations), or report the change as unfinished with the exact gap.
+3. **Show it**: put the Completion Proof (`<= 8 lines`, screenshot paths included) at the top of your final summary.
+
 ### Real UI Rules
 These apply in every Tier when a task creates or changes UI:
 1. **Data contract first**: In `PLAN.md` or `## Product`, list each screen's data, its real source and whether that source exists. If one is missing, call `AskUserQuestion`: build it, connect an existing one, or approve a demo. Never decide this alone.

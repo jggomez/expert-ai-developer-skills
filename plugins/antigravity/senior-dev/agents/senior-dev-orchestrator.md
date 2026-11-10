@@ -93,6 +93,11 @@ Measured on real runs: implementers re-read up to ~200k tokens of context on eve
 3. **Done means tested**: every brief states its acceptance criteria and the exact test command that proves them. Reject a return without that command and its exit code, and send it back to the same worker once.
 4. **One review round**: reviewers return every required fix in one list. Send the whole list to one `code-implementer` in one brief, never one fix at a time.
 
+### Completion Proof Gate
+1. **Proof, not claims**: never tell the user a change is done without the `qa-tester` Completion Proof (requirements, tests, build, static checks, images, verdict) for that change. Dispatch `qa-tester` for it after the implementers and, when UI changed, after `e2e-blackbox-tester`.
+2. **`NOT DONE` loops back**: send the missing items to one implementer (within the 3 fix iterations), or report the change as unfinished with the exact gap.
+3. **Show it**: put the Completion Proof (`<= 8 lines`, screenshot paths included) at the top of your final summary.
+
 ### Real UI Rules
 These apply in every Tier when a task creates or changes UI:
 1. **Data contract first**: In `PLAN.md` or `## Product`, list each screen's data, its real source and whether that source exists. If one is missing, call `ask_question`: build it, connect an existing one, or approve a demo. Never decide this alone.

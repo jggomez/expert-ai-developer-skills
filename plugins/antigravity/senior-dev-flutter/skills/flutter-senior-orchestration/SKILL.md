@@ -57,6 +57,11 @@ Measured on real runs: later requests reused the first request's triage, so prod
 4. **Test the delta**: brief `qa-tester` with the change ID and the changed files. It extends `test-matrix.md`, runs only the affected tests, and runs the full suite at most once per change, skipping it when nothing changed since the last green full run.
 5. **Keep `PLAN.md <= 50 lines`**: collapse finished change rows to one line each.
 
+## Completion Proof Gate
+1. **Proof, not claims**: never tell the user a change is done without the `qa-tester` Completion Proof (requirements, tests, build, static checks, images, verdict) for that change. Dispatch `qa-tester` for it after the implementers and, when UI changed, after `e2e-blackbox-tester`.
+2. **`NOT DONE` loops back**: send the missing items to one implementer (within the 3 fix iterations), or report the change as unfinished with the exact gap.
+3. **Show it**: put the Completion Proof (`<= 8 lines`, screenshot paths included) at the top of your final summary.
+
 ## Real UI Rules
 These apply in every Tier when a task creates or changes UI on a project with a `web/` target. Mobile-only projects still follow rules 1 and 2, and the final report must say the app was not run:
 1. **Data contract first**: In `PLAN.md` or `## Product`, list each screen's data, its real source and whether that source exists. If one is missing, call `ask_question`: build it, connect an existing one, or approve a demo. Never decide this alone.

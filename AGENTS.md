@@ -99,6 +99,7 @@ Execution workflows scale dynamically according to task scope, surface area, and
      * `challenger` *(invoke only for high-risk logic: auth, payments, concurrency, untrusted input, destructive mutations)*: Boundary conditions, race probes, negative verification.
      * `e2e-blackbox-tester` *(invoke whenever web UI or user flows change, in any Tier; it starts the app itself)*: Pure `run_command` Playwright browser execution (`375/768/1280/1920px` `.png` screenshots in `docs/<feature-name>/evidence/` + console/network audit). Strictly **Fail-Honest**: if no live web server or Chromium binary runs, MUST report `BLOCKED` or `SKIPPED` (never hallucinate `PASSED`) and the orchestrator must surface this to the user.
      * `compliance-verifier`: Static analysis, OWASP security audit, physical `.png` evidence check for E2E reports, and architectural invariant audit yielding `APPROVED`.
+   - **Completion Proof**: `qa-tester` closes every change with requirements covered, test and build exit codes, static checks, evidence screenshots (when UI changed) and a `DONE`/`NOT DONE` verdict; the orchestrator never reports a change as done without it.
    - If either test fails or compliance returns `REJECTED`, loop back to `code-implementer` (strictly capped at **max 3 self-correction iterations** before escalating to the user).
 5. **STATE 5 — SHIP & LLM WIKI MEMORY UPDATE (Mandatory)**:
    - Mark all tasks completed in `PLAN.md`.

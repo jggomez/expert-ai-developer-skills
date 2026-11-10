@@ -44,6 +44,16 @@ Every user request is a change `C-NN` (named in your brief). Do not start over:
 4. **Full suite at most once per change**: in Tier 2/3 run it once, after the affected tests pass, and skip it when nothing changed since the `Last full run` recorded in the matrix (report `full suite skipped: unchanged since <sha>`). Implementers and reviewers never run it.
 5. **Stay within 80 lines**: collapse older verified changes to one line (`C-01: TC-01..TC-09 PASS @ abc123`).
 
+# Completion Proof
+You close every change: prove it is finished, never just claim it. Run this after the implementers and, when UI changed, after `e2e-blackbox-tester`. Each line needs a command with its exit code, a file, or an explained `n/a`:
+1. **Requirements**: every `AC-XX` of this change (or every item of the brief when there is no spec) maps to a `TC` marked `PASS`; list anything uncovered as `MISSING`.
+2. **Tests**: the affected run and the full run (or `skipped: unchanged since <sha>`), each with its exit code.
+3. **Build**: run the project's build command from root `AGENTS.md` once per change (e.g. `npm run build`, `npx tsc --noEmit`, `flutter build web`, `uv build`, `python -m compileall -q src`) and give its exit code. With no build step, write `n/a (<reason>)`.
+4. **Static checks**: the linter or type checker on the changed files and its exit code.
+5. **Images**: when UI changed, list the screenshots in `docs/<feature-name>/evidence/` and the exit code of `python3 <blackbox-tester skill dir>/scripts/check_evidence.py docs/<feature-name>/evidence`; an E2E `BLOCKED` stays `BLOCKED`. With no UI change, write `n/a (no UI change)`.
+6. **Verdict**: `DONE` only when every line is exit `0` or an explained `n/a`; otherwise `NOT DONE` naming the missing proof.
+Write it as `## 3. Completion Proof` in `test-matrix.md` (Tier 1: only in your return message) and put it first in your return message.
+
 # Command Output Discipline
 Measured on real runs: 92% of test commands were piped into a filter, up to 38% repeated the same command with no edit in between, and file reads were half of all command output.
 1. **Keep the exit code and the full log**: `log=$(mktemp); <test command> >"$log" 2>&1; code=$?; tail -n 40 "$log"; echo "exit=$code log=$log"`. Never pipe a test command straight into `tail`, `head` or `grep`: the shell then returns the filter's exit code, so a failing run looks green.
@@ -59,7 +69,7 @@ Measured on real runs: 92% of test commands were piped into a filter, up to 38% 
 # Inputs, Outputs & Hand-off Protocol
 - **Inputs**: Code changes from `code-implementer`, `docs/<feature-name>/spec.md` (`## Product` `US-XX`/`AC-XX`, `## Architecture`) and ADRs.
 - **Outputs**: Terminal test proof (`exit code 0`), automated integration/E2E tests, and `docs/<feature-name>/test-matrix.md` (`<= 80 lines` for Tier 2/3).
-- **Return Contract**: Final message `<= 15 lines` (status, files changed, test command + exit code, next step); no long narratives.
+- **Return Contract**: Final message `<= 15 lines`: the Completion Proof (6 lines) first, then files changed and next step; no long narratives.
 - **Hand-off Targets**: `compliance-verifier` (audit sign-off), `senior-dev-orchestrator` (Fan-In), or `code-implementer` (failing tracebacks for remediation).
 
 # Quality Standards & Anti-Patterns (Red Flags)
@@ -69,6 +79,7 @@ Measured on real runs: 92% of test commands were piped into a filter, up to 38% 
 - **NEVER** generate full E2E matrices for Tier 1 fixes or use arbitrary `sleep()` delays.
 
 # Verification & Completion Checklist
+- [ ] Completion Proof written with Requirements, Tests, Build, Static checks, Images and a `DONE`/`NOT DONE` Verdict.
 - [ ] Affected tests executed with verified `exit code 0`; full suite (Tier 2/3) run at most once per change, or skipped as unchanged since `Last full run`.
 - [ ] Existing `test-matrix.md` extended with `C-NN` rows, earlier rows kept.
 - [ ] `docs/<feature-name>/test-matrix.md` (`<= 80 lines`, Tier 2/3) contains `1. Execution Summary` and `2. Test Case Matrix`.

@@ -37,6 +37,16 @@ Every user request is a change `C-NN` (named in your brief). Do not start over:
 4. **Full suite at most once per change**: in Tier 2/3 run it once, after the affected tests pass, and skip it when nothing changed since the `Last full run` recorded in the matrix (report `full suite skipped: unchanged since <sha>`). Implementers and reviewers never run it.
 5. **Stay within 80 lines**: collapse older verified changes to one line (`C-01: TC-01..TC-09 PASS @ abc123`).
 
+### Phase 4: Completion Proof (close every change)
+You close every change: prove it is finished, never just claim it. Run this after the implementers and, when UI changed, after `e2e-blackbox-tester`. Each line needs a command with its exit code, a file, or an explained `n/a`:
+1. **Requirements**: every `AC-XX` of this change (or every item of the brief when there is no spec) maps to a `TC` marked `PASS`; list anything uncovered as `MISSING`.
+2. **Tests**: the affected run and the full run (or `skipped: unchanged since <sha>`), each with its exit code.
+3. **Build**: run the project's build command from root `AGENTS.md` once per change (e.g. `npm run build`, `npx tsc --noEmit`, `flutter build web`, `uv build`, `python -m compileall -q src`) and give its exit code. With no build step, write `n/a (<reason>)`.
+4. **Static checks**: the linter or type checker on the changed files and its exit code.
+5. **Images**: when UI changed, list the screenshots in `docs/<feature-name>/evidence/` and the exit code of `python3 <blackbox-tester skill dir>/scripts/check_evidence.py docs/<feature-name>/evidence`; an E2E `BLOCKED` stays `BLOCKED`. With no UI change, write `n/a (no UI change)`.
+6. **Verdict**: `DONE` only when every line is exit `0` or an explained `n/a`; otherwise `NOT DONE` naming the missing proof.
+Write it as `## 3. Completion Proof` in `test-matrix.md` (Tier 1: only in your return message) and put it first in your return message.
+
 ## Usage
 ### Commands
 ```bash
@@ -48,7 +58,7 @@ pytest tests/ -v
 ### Host Execution
 - **Claude Code**: Author missing integration/E2E tests via `Write`/`Edit`, execute via `Bash`, and write `docs/<feature-name>/test-matrix.md`.
 - **Antigravity**: Run suites via `Bash` and write `docs/<feature-name>/test-matrix.md` via `Write` / `Edit`.
-- **Return Contract**: Final message `<= 15 lines` (status, files changed, test command + exit code, next step); no long narratives.
+- **Return Contract**: Final message `<= 15 lines`: the Completion Proof first, then files changed and next step; no long narratives.
 
 ## Red Flags
 - ❌ Claiming `PASS` without real terminal execution showing `exit code 0`.
