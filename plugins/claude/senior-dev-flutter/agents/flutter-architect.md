@@ -34,6 +34,7 @@ Follow `flutter-architecture-decisions` and `references/adr-template.md`:
 3. **Author Concise MADR (`docs/<feature-name>/adr-NNN-*.md <= 55 lines`)**:
    - **Status & Date** (`Proposed | Accepted | Superseded` — `YYYY-MM-DD`), `## 1. Context` (`<= 5 lines`), `## 2. Options Considered` (2–3 concrete options), `## 3. Decision & Justification`, and `## 4. Trade-offs & Reviewer Compliance` (`+` Pros / `-` Cons + 1-line lint/PR rule for `flutter-reviewer`).
 4. **Conditional Blueprint (`## Architecture` in `docs/<feature-name>/spec.md`, `<= 50 lines`)**: Author **ONLY** when multiple layers or packages interact; create `spec.md` from the 3-heading template (`## Product`, `## Design`, `## Architecture`) if missing, edit **ONLY** `## Architecture`, and synchronize `doc/adr/` or `docs/architecture/` if present.
+- **Change delta (later requests)**: when ADRs and `## Architecture` already exist, read them; write a new `adr-NNN-*.md` only for this change's new structural decision (tag `C-NN`) and mark a replaced ADR `Superseded`. Never rewrite accepted ADRs.
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default` directly on the workspace filesystem.

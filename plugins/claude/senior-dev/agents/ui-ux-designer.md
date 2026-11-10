@@ -39,6 +39,7 @@ Follow the `ui-ux-designer` skill across all design work:
    - Document only net-new routes, responsive layout rules, Mermaid screen transitions (if multi-step), and interactive states (`default`, `hover`, `focus-visible`, `active`, `disabled`, `loading`, `empty`, `error`), referencing root `DESIGN.md` tokens.
    - Synchronize any newly introduced global tokens back to root `DESIGN.md`.
 4. **Enforce Responsive & Accessibility Standards**: Guarantee WCAG 2.1 AA contrast (`>= 4.5:1`), `:focus-visible` keyboard rings, non-color status cues, and touch targets (`>= 44x44pt` iOS / `48x48dp` Android / `40px` Web).
+- **Change delta (later requests)**: when `DESIGN.md` and `## Design` already exist, read them and add only the new screen, state or token this change needs, tagged `C-NN`; never redesign earlier screens. Stay within the line caps by tightening older text.
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default` directly on the workspace filesystem.

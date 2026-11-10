@@ -25,6 +25,8 @@ This skill governs UI/UX design systems using the **official Google Labs / Googl
    - Fill `## Design` **ONLY** when the feature introduces net-new screen layouts, user flows, or interactive states. If `spec.md` is missing, create it from the 3-heading template (`## Product`, `## Design`, `## Architecture`); edit **ONLY** `## Design`.
    - Reference root `DESIGN.md` tokens (`{colors.primary}`, `{spacing.md}`) directly—never duplicate full color/typography tables per feature.
 
+- **Change delta (later requests)**: when `DESIGN.md` and `## Design` already exist, read them and add only the new screen, state or token this change needs, tagged `C-NN`; never redesign earlier screens. Stay within the line caps by tightening older text.
+
 ## Multi-Platform Guidelines
 - **Web (Fluid & Accessible)**: Use CSS Grid/Flexbox and `rem` units across Mobile (`<640px`), Tablet (`768–1023px`), and Desktop (`>=1024px`) with zero horizontal scroll, `:focus-visible` `2px` offset rings, and reserved async media boxes (zero CLS).
 - **Mobile (Flutter, iOS, Android)**: Enforce `>= 44x44pt` (iOS) / `48x48dp` (Android) touch targets, Safe Area insets, thumb-zone primary actions, and Material 3 / Cupertino adaptive conventions.

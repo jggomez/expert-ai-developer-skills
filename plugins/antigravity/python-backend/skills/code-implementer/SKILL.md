@@ -33,8 +33,8 @@ Enforce the strict Red-Green-Refactor loop:
 3. **Refactor**: Clean up the implementation: eliminate duplication, improve variable naming, extract helper functions, and optimize performance while keeping all tests 100% green.
 
 ### Phase 3: Validation & Quality Gate
-1. Execute the local unit test suite to verify 100% pass rate.
-2. Run language formatters and linters (e.g., `black`, `ruff`, `eslint`, `dart format`).
+1. Run the tests for the code you changed (the command from your brief) and verify `exit code 0`; leave the full suite to `qa-tester`, which runs it at most once per change.
+2. Run formatters and linters on the files you changed (e.g., `ruff check <files>`, `eslint <files>`, `dart format <files>`).
 3. Ensure no compiler or static analysis warnings remain.
 
 - **Keep the exit code**: run tests as `log=$(mktemp); <test command> >"$log" 2>&1; code=$?; tail -n 40 "$log"; echo "exit=$code log=$log"`. A test command piped straight into `tail`, `head` or `grep` returns the filter's exit code, so a failing run looks green. Search `$log` for details instead of running the same command again.

@@ -43,6 +43,7 @@ Follow the `senior-architect-engineering` skill and `references/adr-template.md`
    - `## 4. Trade-offs`: `+` Benefits vs `-` Costs, operational risks, and mitigations.
 4. **Author Blueprint Only When Multi-Module (`## Architecture` in `docs/<feature-name>/spec.md`, `<= 50 lines`)**:
    - If `spec.md` is missing, create it from the 3-heading template (`## Product`, `## Design`, `## Architecture`); edit **ONLY** `## Architecture`. Specify module ownership, typed API/DB schemas, Mermaid interaction diagram, and architectural invariants for `compliance-verifier`. Synchronize global `docs/architecture/` if present.
+- **Change delta (later requests)**: when ADRs and `## Architecture` already exist, read them; write a new `adr-NNN-*.md` only for this change's new structural decision (tag `C-NN`) and mark a replaced ADR `Superseded`. Never rewrite accepted ADRs.
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto` directly on the workspace filesystem.

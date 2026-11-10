@@ -1,6 +1,9 @@
 # QA Test Matrix: <feature-name>
 
 ## 1. Execution Summary
+- **Change**: `C-02` (add login rate limit); earlier: `C-01: TC-01..TC-03 PASS @ abc1234`
+- **Affected run**: `pytest tests/e2e/test_auth_rate_limit.py -v` -> exit `0`
+- **Last full run**: `def5678`, exit `0` (skip the next full run while the tree is unchanged)
 - **Runner Command**: `pytest tests/ -v`
 - **Results**: `18 passed, 0 failed` across Unit, Integration, and E2E tiers
 - **Exit Code**: `0` (verified via terminal execution)

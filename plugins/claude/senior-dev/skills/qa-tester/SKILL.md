@@ -11,7 +11,7 @@ This skill governs integration/E2E test automation and produces an actionable, I
 ## When to Use
 ### SDLC Tier Adaptation & Trigger Rules
 - **Tier 1 (Fast-Track)**: Single-file bugfixes, typos, chores, or localized refactors. Execute **only the scoped test file** (`exit code 0` proof) and **SKIP `test-matrix.md`** to preserve 70–85% token/latency savings.
-- **Tier 2 (Standard)**: Multi-file features, endpoints, schemas, or UI views. Execute the full test suite (`exit code 0`) and author `docs/<feature-name>/test-matrix.md` (`<= 80 lines`).
+- **Tier 2 (Standard)**: Multi-file features, endpoints, schemas, or UI views. Run the affected tests, then the full suite at most once per change (`exit code 0`), and extend `docs/<feature-name>/test-matrix.md` (`<= 80 lines`).
 - **Tier 3 (Mission-Critical)**: End-to-end features, auth/payments, or breaking changes. Execute full test pyramid suites (`exit code 0`), author `docs/<feature-name>/test-matrix.md` (`<= 80 lines`), and serve on the Adversarial Verification Committee.
 - **Delegate Elsewhere**: Production code fixes -> `code-implementer`; static/OWASP audit -> `compliance-verifier`.
 
@@ -28,6 +28,14 @@ This skill governs integration/E2E test automation and produces an actionable, I
    - **`## 2. Test Case Matrix`**: Every case (`TC-01`, `TC-02`...) **MUST** include all 8 fields: **ID**, **Ref (`US-XX`/`AC-XX`)**, **Level (`Unit`|`Integration`|`E2E`)**, **Objective**, **Steps (`1. ... 2. ... 3. ...`)**, **Expected Result**, **Automated Test (`path::test_fn`)**, and **Status (`PASS`|`FAIL`)**.
 
 - **Keep the exit code**: run tests as `log=$(mktemp); <test command> >"$log" 2>&1; code=$?; tail -n 40 "$log"; echo "exit=$code log=$log"`. A test command piped straight into `tail`, `head` or `grep` returns the filter's exit code, so a failing run looks green. Search `$log` for details instead of running the same command again.
+
+### Phase 3: Incremental Test Matrix (every later request)
+Every user request is a change `C-NN` (named in your brief). Do not start over:
+1. **Extend, never replace**: read the existing `docs/<feature-name>/test-matrix.md`; add `TC` rows for the new change tagged `C-NN`, and update only the rows whose behavior changed.
+2. **Skip what is already proven**: list changed files with `git diff --name-only <Last full run sha>` plus `git status --short`. A `TC` whose code and test files are not in that list keeps `PASS (C-01 @ <sha>)` and is not re-run.
+3. **Affected tests first**: run only the test files for the changed code (e.g. `pytest tests/unit/test_orders.py`, `npx vitest related <files> --run`, `flutter test test/features/orders/`); after a failure re-run only the failing tests (`pytest --lf`).
+4. **Full suite at most once per change**: in Tier 2/3 run it once, after the affected tests pass, and skip it when nothing changed since the `Last full run` recorded in the matrix (report `full suite skipped: unchanged since <sha>`). Implementers and reviewers never run it.
+5. **Stay within 80 lines**: collapse older verified changes to one line (`C-01: TC-01..TC-09 PASS @ abc123`).
 
 ## Usage
 ### Commands

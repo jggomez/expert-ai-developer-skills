@@ -49,6 +49,14 @@ Every `docs/<feature-name>/PLAN.md` (`<= 50 lines`) MUST include a compact 5-row
 
 > **Zero-Bloat Fast-Forward**: When ALL Discovery rows evaluate to `SKIP`, skip State 1 discovery file bloat completely and proceed directly to the `AskUserQuestion` alignment modal and State 2 build.
 
+## Every Request Is a Change
+Measured on real runs: later requests reused the first request's triage, so product, design and architecture were never considered again, and every change re-ran the whole suite.
+1. **One user message = one change**: the phases of one message share one triage. A later message that asks for a change is a new change `C-NN`, even on the same branch, feature and `PLAN.md`.
+2. **Triage the delta again**: for each change run a short State 0 (branch and Scope Drift check, read `PLAN.md`; read `context/memory/` only if not read this session), then add one row to the `## Changes` table in `PLAN.md`: `| C-02 | <request in one line> | Tier | product | design | arch | e2e | critic/challenger |`, each cell `INVOKE`/`SKIP` plus a 3-5 word reason. Judge only what this change adds; never copy the previous row.
+3. **Discovery appends**: new stories or rules -> the product analyst adds `US`/`AC` tagged `C-NN`; a new screen or visual pattern -> the UI/UX designer adds the screen delta; a new schema, contract or dependency -> the architect writes a new ADR. Run the alignment gate again only when the change is Tier 2/3 and a discovery row is `INVOKE`.
+4. **Test the delta**: brief `qa-tester` with the change ID and the changed files. It extends `test-matrix.md`, runs only the affected tests, and runs the full suite at most once per change, skipping it when nothing changed since the last green full run.
+5. **Keep `PLAN.md <= 50 lines`**: collapse finished change rows to one line each.
+
 ## Real UI Rules
 These apply in every Tier when a task creates or changes UI on a project with a `web/` target. Mobile-only projects still follow rules 1 and 2, and the final report must say the app was not run:
 1. **Data contract first**: In `PLAN.md` or `## Product`, list each screen's data, its real source and whether that source exists. If one is missing, call `AskUserQuestion`: build it, connect an existing one, or approve a demo. Never decide this alone.
@@ -86,6 +94,7 @@ These apply in every Tier when a task creates or changes UI on a project with a 
 - **Google Antigravity**: Dispatch subagents via `Agent`, gate alignment via `AskUserQuestion`, and verify with `flutter analyze` and `flutter test`.
 
 ## Red Flags
+- Reusing a previous change's `Invoke / SKIP` row for a new request, or running the full suite once per agent instead of at most once per change.
 - Editing `.dart` source or test files directly in the orchestrator.
 - Over-invoking specialists whose capability/risk gate evaluates to `SKIP` (e.g., running `e2e-blackbox-tester` on mobile-only targets without web, or `flutter-architect` when following existing patterns).
 - Masking `BLOCKED` or `SKIPPED` browser E2E as passed instead of explicitly reporting *"Browser E2E was NOT executed (`BLOCKED`/`SKIPPED`): <exact reason>"*.

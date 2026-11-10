@@ -37,8 +37,16 @@ This skill orchestrates multi-agent execution loops, isolated parallel worker to
 ### Lean Execution Defaults
 1. **Lightest tier that fits**: size by risk and ambiguity, not by file count. A large but well-specified change is Tier 2 with every discovery specialist `SKIP`. Scale alone never makes a task Tier 3: Tier 3 requires the user to ask for it, or a change to authentication/authorization, payments, or a destructive data migration.
 2. **Scope discipline**: build exactly what was asked. Repository rules constrain *how*, never *what*; extra ideas go under "Suggestions" in the final summary.
-3. **Multi-phase requests**: State 0 once (one `PLAN.md` listing every phase); per phase only build + scoped tests + one Conventional Commit + a `<= 5 line` progress note; discovery, alignment, the review committee, E2E and State 5 run once for the whole request (before the first and after the last phase, or after a phase the user marks as risky).
+3. **Multi-phase requests**: State 0 once (one `PLAN.md` listing every phase); per phase only build + scoped tests + one Conventional Commit + a `<= 5 line` progress note; discovery, alignment, the review committee, E2E and State 5 run once for the whole request, meaning one user message (before the first and after the last phase, or after a phase the user marks as risky).
 4. **Stop on red**: never start the next phase on a failing tree.
+
+### Every Request Is a Change
+Measured on real runs: later requests reused the first request's triage, so product, design and architecture were never considered again, and every change re-ran the whole suite.
+1. **One user message = one change**: the phases of one message share one triage. A later message that asks for a change is a new change `C-NN`, even on the same branch, feature and `PLAN.md`.
+2. **Triage the delta again**: for each change run a short State 0 (branch and Scope Drift check, read `PLAN.md`; read `context/memory/` only if not read this session), then add one row to the `## Changes` table in `PLAN.md`: `| C-02 | <request in one line> | Tier | product | design | arch | e2e | critic/challenger |`, each cell `INVOKE`/`SKIP` plus a 3-5 word reason. Judge only what this change adds; never copy the previous row.
+3. **Discovery appends**: new stories or rules -> the product analyst adds `US`/`AC` tagged `C-NN`; a new screen or visual pattern -> the UI/UX designer adds the screen delta; a new schema, contract or dependency -> the architect writes a new ADR. Run the alignment gate again only when the change is Tier 2/3 and a discovery row is `INVOKE`.
+4. **Test the delta**: brief `qa-tester` with the change ID and the changed files. It extends `test-matrix.md`, runs only the affected tests, and runs the full suite at most once per change, skipping it when nothing changed since the last green full run.
+5. **Keep `PLAN.md <= 50 lines`**: collapse finished change rows to one line each.
 
 ### Safe Parallel Dispatch
 1. **Parallel only when it pays**: `>= 2` independent, substantial tracks split by ownership (app, package, module); otherwise one implementer. At most 3 implementers at once.
@@ -65,6 +73,7 @@ python3 ./skills/loop-engineering/scripts/pr_cron_reviewer.py                # a
 - **Antigravity**: several subagents in one `Agent` call; workspace `inherit` for Mode A, `branch` for Mode B.
 
 ## Red Flags
+- Reusing a previous change's `Invoke / SKIP` row for a new request, or running the full suite once per agent instead of at most once per change.
 - ❌ Concurrent workers editing overlapping files, running git writes or codegen in a shared tree, or running the full test suite inside parallel worker loops.
 - ❌ Running the full Tier 3 ceremony on every phase of a well-specified request, or adding features nobody asked for.
 - ❌ Over-invoking discovery specialists or adversarial committees on Tier 1 tasks (destroying 70–85% token/latency savings).

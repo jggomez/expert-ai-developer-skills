@@ -34,6 +34,8 @@ Follow [references/adr-template.md](references/adr-template.md) strictly—zero 
 - Synchronize global `docs/architecture/` indexes if already maintained by the project.
 - **Return Contract**: Final message `<= 15 lines` (status, files changed, test command + exit code or `n/a`, next step); no long narratives.
 
+- **Change delta (later requests)**: when ADRs and `## Architecture` already exist, read them; write a new `adr-NNN-*.md` only for this change's new structural decision (tag `C-NN`) and mark a replaced ADR `Superseded`. Never rewrite accepted ADRs.
+
 ## Usage
 ### Commands & Scaffolding
 ```bash
