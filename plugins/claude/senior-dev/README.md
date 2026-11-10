@@ -59,7 +59,7 @@ Ask the senior-dev:compliance-verifier agent for a release-readiness verdict on 
 | `ui-ux-designer` | Maintains `DESIGN.md` and feature UI deltas; WCAG AA | `sonnet` |
 | `architect-engineer` | Module boundaries, API/DB contracts, MADR records | `inherit` |
 | `code-implementer` | Writes production code with Red-Green-Refactor TDD | `inherit` |
-| `qa-tester` | Runs unit/integration/E2E suites; writes `test-matrix.md` | `sonnet` |
+| `qa-tester` | Runs the affected tests, the full suite once per change; extends `test-matrix.md` | `sonnet` |
 | `critic` | Independent review: complexity, DRY, SOLID, maintainability | `inherit` |
 | `challenger` | Stress tests, fuzzing, boundary and concurrency probes | `inherit` |
 | `e2e-blackbox-tester` | Browser journeys via Playwright MCP with screenshot evidence | `sonnet` |
@@ -118,6 +118,7 @@ flowchart LR
 ```
 
 The orchestrator classifies each task as Tier 1 (fast-track), Tier 2 (standard) or Tier 3 (mission-critical) and invokes only the specialists the task needs.
+Each new message is a new change (`C-02`, `C-03`…) with its own triage, so product, design and architecture are reconsidered every time.
 Parallel workers run in one message, at most 3 at a time, on disjoint files; shared files change first in one committed step. Worktree isolation (`isolation: "worktree"`) is a last resort and needs `"worktree": {"baseRef": "head"}` in `.claude/settings.json`, because Claude Code otherwise branches worktrees from the default branch.
 Well-specified work stays light: scale alone never makes a task Tier 3, the orchestrator never adds unrequested features, and a multi-phase request runs discovery, review and E2E once for the whole request, with one commit per phase.
 The full state machine is documented in [AGENTS.md](../../../AGENTS.md) and the [root README](../../../README.md).

@@ -55,7 +55,7 @@ Ask the compliance-verifier agent for a release-readiness verdict on this branch
 | `ui-ux-designer` | Maintains root `DESIGN.md` and `## Design`; WCAG AA |
 | `architect-engineer` | Module boundaries, API/DB contracts, MADR records, `## Architecture` |
 | `code-implementer` | Writes production code with Red-Green-Refactor TDD |
-| `qa-tester` | Runs unit/integration/E2E suites; writes `test-matrix.md` |
+| `qa-tester` | Runs the affected tests, the full suite once per change; extends `test-matrix.md` |
 | `critic` | Independent review: complexity, DRY, SOLID, maintainability |
 | `challenger` | Stress tests, fuzzing, boundary and concurrency probes |
 | `e2e-blackbox-tester` | Browser journeys with `.png` evidence in `docs/<feature-name>/evidence/`, proven by `skills/blackbox-tester/scripts/check_evidence.py` |
@@ -123,6 +123,7 @@ flowchart LR
 ```
 
 The orchestrator classifies each task as Tier 1 (fast-track), Tier 2 (standard) or Tier 3 (mission-critical) and invokes only the specialists the task needs.
+Each new message is a new change (`C-02`, `C-03`…) with its own triage, so product, design and architecture are reconsidered every time.
 Well-specified work stays light: scale alone never makes a task Tier 3, the orchestrator never adds unrequested features, and a multi-phase request runs discovery, review and E2E once for the whole request, with one commit per phase. Parallel workers (at most 3) own disjoint files; shared files change first in one committed step.
 Discovery specialists run in sequence on one shared `docs/<feature-name>/spec.md`, each editing only its own section.
 The full state machine is documented in [AGENTS.md](../../../AGENTS.md) and the [root README](../../../README.md).

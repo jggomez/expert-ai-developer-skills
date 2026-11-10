@@ -40,7 +40,8 @@ Senior AI Dev Kit ships the same engineering workflow for two hosts, **Claude Co
 
 ## Features
 
-- **Risk-based workflow.** Tasks are triaged into three tiers: small fixes skip discovery and review committees; risky changes get full discovery, user sign-off and adversarial review.
+- **Risk-based workflow.** Tasks are triaged into three tiers: small fixes skip discovery and review committees; risky changes get full discovery, user sign-off and adversarial review. Every new request is triaged again on its own.
+- **Incremental testing.** The QA matrix grows with each change, only affected tests run, and the full suite runs at most once per change.
 - **Specialist subagents.** Orchestrators delegate to product analyst, UI/UX designer, architect, implementer, QA tester, critic, challenger, E2E black-box tester and compliance verifier.
 - **Enforced guardrails.** Hooks block code edits without a `PLAN.md`, block commits to protected branches, and run the test suite before a turn can end.
 - **Honest verification.** The E2E tester starts the app and uses it in a real browser, against the real backend. Hooks reject fake data, network stubs and any `PASSED` verdict without fresh proof. Flutter web is included; mobile-only apps are not run.
