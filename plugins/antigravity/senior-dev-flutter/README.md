@@ -114,9 +114,9 @@ Registered in the `senior-dev-flutter-gates` group of `hooks.json`.
 ## How it works
 
 1. The orchestrator restores `context/memory/MEMORY.md` and writes a short `docs/<feature-name>/PLAN.md` with a tier (1 fast-track, 2 standard, 3 mission-critical).
-2. Tier 2 and 3 run only the discovery specialists the plan justifies, then pause for your approval.
+2. Tier 2 and 3 run only the discovery specialists the plan justifies, then pause for your approval. Each new message is triaged again as a new change.
 3. Shared files (`pubspec.yaml`, router, DI, generated code) change first in one committed step; then up to 3 `flutter-implementer` tracks run in parallel on disjoint files, without git writes or `build_runner`. Worktrees are a last resort.
-4. `flutter-reviewer`, `qa-tester` and, when needed, `flutter-release-engineer` and adversarial reviewers verify the work.
+4. `flutter-reviewer`, `qa-tester` and, when needed, `flutter-release-engineer` and adversarial reviewers verify the work. Only affected tests run; the full suite runs once per change.
 5. The milestone is saved to `context/memory/`.
 
 The full lifecycle is described in the root [README](../../../README.md) and [AGENTS.md](../../../AGENTS.md).

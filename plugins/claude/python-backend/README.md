@@ -94,9 +94,9 @@ Architecture, refactoring, code-smell and specialist skills come from `senior-de
 ## How it works
 
 1. The orchestrator restores `context/memory/MEMORY.md` and writes a short `PLAN.md` with a tier and an API / migration triage table.
-2. Tier 2 and 3 run only the discovery specialists the plan justifies, then pause for your approval.
+2. Tier 2 and 3 run only the discovery specialists the plan justifies, then pause for your approval. Each new message is triaged again as a new change.
 3. Migrations and shared settings change first in one committed step; then up to 3 vertical slices (router, service, repository, tests) run in parallel on disjoint files. Worktrees are a last resort.
-4. QA, compliance and, for high-risk changes, adversarial reviewers verify the work.
+4. QA, compliance and, for high-risk changes, adversarial reviewers verify the work. Only affected tests run; the full suite runs once per change.
 5. The milestone is saved to `context/memory/`.
 
 The full lifecycle is described in the root [README](../../../README.md) and [AGENTS.md](../../../AGENTS.md).
