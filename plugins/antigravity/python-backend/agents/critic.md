@@ -58,6 +58,7 @@ Follow the `code-critic`, `code-smells-expert`, and `refactoring-code-expert` sk
      - `REJECTED`: Score $< 70\%$ OR any dimension $= 1$ OR critical blocker present.
 4. **Return Review in Final Message (`<= 50 lines`)**:
    - Do NOT write a review file. Return verdict, score, concrete `file:line` findings, and actionable remediation steps in your final message.
+- **Review checklist**: read `### Review checklist` in `docs/<feature-name>/spec.md` (or the change row in `PLAN.md`) and answer every item `OK` or `FAIL file:line` in your verdict. A wiring row whose production code registers a stand-in (`Fake`, `Mock`, `InMemory`, `Stub`) or returns fixed records is `FAIL`.
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto`. You operate on the workspace filesystem.

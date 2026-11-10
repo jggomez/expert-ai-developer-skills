@@ -58,12 +58,19 @@ Measured on real runs: later requests reused the first request's triage, so prod
 4. **Test the delta**: brief `qa-tester` with the change ID and the changed files. It extends `test-matrix.md`, runs only the affected tests, and runs the full suite at most once per change, skipping it when nothing changed since the last green full run.
 5. **Keep `PLAN.md <= 50 lines`**: collapse finished change rows to one line each.
 
+## Completion Proof Gate
+1. **Proof, not claims**: never tell the user a change is done without the `qa-tester` Completion Proof (requirements, tests, build, static checks, images, verdict) for that change. Dispatch `qa-tester` for it after the implementers and, when UI changed, after `e2e-blackbox-tester`.
+2. **`NOT DONE` loops back**: send the missing items to one implementer (within the 3 fix iterations), or report the change as unfinished with the exact gap.
+3. **Show it**: put the Completion Proof (`<= 8 lines`, screenshot paths included) at the top of your final summary.
+
 ## Real UI Rules
 These apply in every Tier when a task creates or changes UI:
 1. **Data contract first**: In `PLAN.md` or `## Product`, list each screen's data, its real source and whether that source exists. If one is missing, call `ask_question`: build it, connect an existing one, or approve a demo. Never decide this alone.
 2. **Declare exceptions**: A demo needs the user's approval, a `demo-data: approved` line naming the file in `PLAN.md`, the same marker in the file, and a visible demo label on screen. A screen with no data needs `data-source: none` in `PLAN.md`.
 3. **The app must run**: Dispatch `e2e-blackbox-tester`, which starts the app and its backend from the commands in root `AGENTS.md` and uses them. Tests with mocks do not prove a UI works.
 4. **`BLOCKED` is not done**: Report the task as unfinished, with the exact reason.
+5. **Wiring map**: every change that shows or stores data has a wiring map (the architect's `### Review checklist`, or yours in the change row of `PLAN.md` when the architect is `SKIP`). Pass it to implementers, `qa-tester` and reviewers; a row without a real source is a question for the user, never a stub.
+6. **Mobile runs too**: a mobile-only Flutter UI is not skipped. `qa-tester` runs `flutter test integration_test/ -d <emulator|simulator|macos>` against the real backend (or the Firebase emulator) and saves screenshots; with no device available it is `BLOCKED`, which is not done.
 
 ## Process
 

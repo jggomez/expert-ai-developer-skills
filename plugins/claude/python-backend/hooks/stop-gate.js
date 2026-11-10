@@ -17,6 +17,14 @@ const payload = g.readStdinJson();
 if (!g.isFinalStop(payload)) g.exitAllow();
 const workspaceRoot = g.workspaceOf(payload);
 
+// 0. Fake data in changed production code (shared 'fake-data' gate; on Claude Code the senior-dev
+//    dependency runs it, since this plugin does not bundle the compliance-verifier skill there).
+const fake = g.runFakeDataGate({
+  payload,
+  script: path.join(__dirname, '..', 'skills', 'compliance-verifier', 'scripts', 'check_fake_data.py'),
+});
+if (fake && fake.block) g.exitBlock(fake.block);
+
 // 1. Check for verify_tests.py in skills layout
 const verifyScript = path.join(workspaceRoot, 'skills', 'test-driven-development', 'scripts', 'verify_tests.py');
 const hasVerifyScript = fs.existsSync(verifyScript);

@@ -147,6 +147,10 @@ const SUITES = [
 // The host kills the hook at its hooks.json timeout (180 s): share that budget across suites.
 const budget = g.createBudget(180000);
 const notices = [];
+// 0. Fake data in any changed production code (mobile Flutter and backends too), before the suites.
+const fake = g.runFakeDataGate({ payload, script: FAKE_DATA_CHECK });
+if (fake && fake.block) g.exitBlock(fake.block);
+if (fake && fake.notice) notices.push(fake.notice);
 for (const suite of SUITES) {
   if (!suite.applies()) continue;
 

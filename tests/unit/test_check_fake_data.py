@@ -180,3 +180,42 @@ def test_a_demo_approved_in_the_feature_folder_plan_is_allowed(repo):
     result = _run(repo)
     # Assert
     assert result.returncode == 0, result.stdout
+
+
+# Track 43: fakes hide below the screen, in data layers and backends, under believable names.
+@pytest.mark.parametrize("rel,line", [
+    ("lib/data/orders_repository.dart", "    return [Order(id: 1, name: 'Latte')];"),
+    ("lib/features/orders/order_service.dart", "  return const [Order(id: 1, name: 'Latte')];"),
+    ("app/repositories/orders.py", "    return [{'id': 1, 'name': 'Latte'}]"),
+    ("internal/api/orders_client.go", "\treturn []Order{{ID: 1, Name: \"Latte\"}}, nil"),
+    ("lib/di.dart", "  getIt.registerSingleton<OrdersRepository>(InMemoryOrdersRepository());"),
+    ("app/main.py", "repo = InMemoryOrderRepository()"),
+    ("lib/data/orders_api.dart", "  // TODO: replace with the real API call"),
+    ("app/services/orders.py", "    # hardcoded for now until the backend exists"),
+])
+def test_rejects_stand_ins_below_the_screen(repo, rel, line):
+    # Arrange
+    _write(repo, rel, f"{line}\n")
+    # Act
+    result = _run(repo)
+    # Assert
+    assert result.returncode == 1, result.stdout
+    assert f"{rel}:1" in result.stdout
+
+
+@pytest.mark.parametrize("rel,line", [
+    ("lib/data/orders_repository.dart", "    return [];"),
+    ("lib/data/orders_repository.dart", "    return (json as List).map(Order.fromJson).toList();"),
+    ("app/repositories/orders.py", "    return [Order(**row) for row in rows]"),
+    ("lib/ui/orders_page.dart", "    return [Text(order.name), Text(order.price)];"),
+    ("tests/test_orders.py", "repo = InMemoryOrderRepository()  # mock, John Doe"),
+    ("app/conftest.py", "repo = InMemoryOrderRepository()"),
+    ("internal/api/orders_client_test.go", "\treturn []Order{{ID: 1}}, nil"),
+])
+def test_allows_real_data_layers_and_test_doubles_in_tests(repo, rel, line):
+    # Arrange
+    _write(repo, rel, f"{line}\n")
+    # Act
+    result = _run(repo)
+    # Assert
+    assert result.returncode == 0, result.stdout

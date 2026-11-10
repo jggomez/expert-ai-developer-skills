@@ -76,12 +76,19 @@ Decide per phase and record the tracks in `PLAN.md`:
    - Either host: `python3 <loop-engineering skill dir>/scripts/run_parallel_agents.py tasks.json` creates the worktrees from the current HEAD.
    - Each worker commits on its own branch and returns the branch name. Merge the branches one at a time (`git merge --no-ff <branch>`), run the affected tests after each merge, and on a conflict run `git merge --abort` and hand the conflict to an `code-implementer`.
 
+### Completion Proof Gate
+1. **Proof, not claims**: never tell the user a change is done without the `qa-tester` Completion Proof (requirements, tests, build, static checks, images, verdict) for that change. Dispatch `qa-tester` for it after the implementers and, when UI changed, after `e2e-blackbox-tester`.
+2. **`NOT DONE` loops back**: send the missing items to one implementer (within the 3 fix iterations), or report the change as unfinished with the exact gap.
+3. **Show it**: put the Completion Proof (`<= 8 lines`, screenshot paths included) at the top of your final summary.
+
 ### Real UI Rules
 These apply in every Tier when a task creates or changes UI:
 1. **Data contract first**: In `PLAN.md` or `## Product`, list each screen's data, its real source and whether that source exists. If one is missing, call `AskUserQuestion`: build it, connect an existing one, or approve a demo. Never decide this alone.
 2. **Declare exceptions**: A demo needs the user's approval, a `demo-data: approved` line naming the file in `PLAN.md`, the same marker in the file, and a visible demo label on screen. A screen with no data needs `data-source: none` in `PLAN.md`.
 3. **The app must run**: Dispatch `e2e-blackbox-tester`, which starts the app and its backend from the commands in root `AGENTS.md` and uses them. Tests with mocks do not prove a UI works.
 4. **`BLOCKED` is not done**: Report the task as unfinished, with the exact reason.
+5. **Wiring map**: every change that shows or stores data has a wiring map (the architect's `### Review checklist`, or yours in the change row of `PLAN.md` when the architect is `SKIP`). Pass it to implementers, `qa-tester` and reviewers; a row without a real source is a question for the user, never a stub.
+6. **Mobile runs too**: a mobile-only Flutter UI is not skipped. `qa-tester` runs `flutter test integration_test/ -d <emulator|simulator|macos>` against the real backend (or the Firebase emulator) and saves screenshots; with no device available it is `BLOCKED`, which is not done.
 
 ### Capability & Risk-Gated Dispatch (`## Discovery & Architecture Triage`)
 Never over-invoke subagents as rigid bundles. Every `PLAN.md` (`<= 50 lines` per feature) MUST include a compact 5-row **Discovery & Architecture Triage (`Invoke / SKIP`)** table justifying each specialist in 1 line:

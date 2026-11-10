@@ -18,6 +18,14 @@ const payload = g.readStdinJson();
 if (!g.isFinalStop(payload)) g.exitAllow();
 const cwd = g.workspaceOf(payload);
 
+// Fake data in changed Dart code, mobile included (shared 'fake-data' gate; on Claude Code the
+// senior-dev dependency runs it, since this plugin does not bundle the compliance-verifier skill there).
+const fake = g.runFakeDataGate({
+  payload,
+  script: path.join(__dirname, '..', 'skills', 'compliance-verifier', 'scripts', 'check_fake_data.py'),
+});
+if (fake && fake.block) g.exitBlock(fake.block);
+
 const pubspec = path.join(cwd, 'pubspec.yaml');
 if (!fs.existsSync(pubspec)) {
   g.exitAllow();

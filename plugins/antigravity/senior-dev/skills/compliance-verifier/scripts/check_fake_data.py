@@ -7,6 +7,10 @@ returned after a simulated delay. Test code, fixtures and seeds are ignored, and
 never hold the app's UI: agent plugins and rules (`.claude/`, `.agents/`), docs, virtualenvs and
 vendored dependencies (their own comments legitimately talk about "mock" and "fake" data).
 
+Fakes also hide below the screen, so the scan covers data layers and backends too: stand-in
+classes (`InMemory...`), comments that promise a real source later, and fixed records returned from
+repositories, services, API clients and data sources.
+
 It is a heuristic: it can flag a false positive, and it cannot see invented data with believable
 names. Running the real app (`check_evidence.py`) is what proves the data is real.
 
@@ -29,12 +33,14 @@ import sys
 from pathlib import Path
 
 APPROVAL = "demo-data: approved"
-SCANNED_SUFFIXES = {".ts", ".tsx", ".js", ".jsx", ".mjs", ".vue", ".svelte", ".html", ".dart"}
+SCANNED_SUFFIXES = {".ts", ".tsx", ".js", ".jsx", ".mjs", ".vue", ".svelte", ".html", ".dart",
+                    ".py", ".go", ".kt", ".swift", ".java"}
 IGNORED_PATH = re.compile(
     r"(^|/)(tests?|__tests__|__mocks__|e2e|integration_test|test_driver|mocks?|fixtures?|stories|cypress|"
     r"playwright|seeds?|migrations?|node_modules|build|dist"
     r"|\.claude|\.agents|\.gemini|\.cursor|\.venv|venv|docs?|context|vendor|coverage|\.dart_tool|\.next)(/|$)"
     r"|\.(test|spec|stories)\.|_test\.dart$|\.config\.[cm]?[jt]s$"
+    r"|(^|/)test_[^/]*\.py$|_test\.(py|go)$|(^|/)conftest\.py$|(^|/)(testdata|androidTest|Tests)(/|$)"
 )
 INPUT_HINT = re.compile(r"placeholder|hintText|helperText|labelText", re.IGNORECASE)
 PATTERNS = (
@@ -49,8 +55,22 @@ PATTERNS = (
     ("placeholder person", re.compile(r"\b(?:John|Jane) Doe\b")),
     ("fake-data library", re.compile(r"@faker-js|\bfaker\.|package:faker/|from ['\"]msw|\bsetupWorker\(")),
     ("random value", re.compile(r"\bMath\.random\(\)|\bRandom\(\)\.next")),
+    ("stand-in implementation", re.compile(r"\bInMemory[A-Z]\w*|\bin_memory_(?:repo|repository|store|db)\w*")),
+    ("real source left for later", re.compile(
+        r"(?:replace|swap|connect)\s+(?:this\s+|it\s+)?(?:with|to)\s+(?:the\s+|a\s+)?(?:real|actual)\s+"
+        r"(?:api|backend|service|server|data|endpoint|source)|hard-?coded\s+(?:for\s+now|until|data|list)",
+        re.IGNORECASE)),
+)
+DATA_LAYER = re.compile(
+    r"(^|/)(data|datasources?|repositor(?:y|ies)|services?|api|clients?)(/|$)"
+    r"|(repository|repositories|datasource|data_source|service|api|client)\.\w+$",
+    re.IGNORECASE,
+)
+LITERAL_RECORDS = re.compile(
+    r"\breturn\s+(?:const\s+)?(?:<[^>]+>\s*)?(?:\[\][A-Za-z_]\w*\s*)?[\[{]\s*(?:[{\['\"0-9]|[A-Z]\w*\s*[({])"
 )
 EXAMPLE_ADDRESS = re.compile(r"[\w.+-]*@?example\.(?:com|org|net)")
+COMPREHENSION = re.compile(r"\sfor\s+\w+(?:\s*,\s*\w+)*\s+in\s")  # built from real rows
 DELAY = re.compile(r"Future\.delayed\(|setTimeout\(|\bsleep\(")
 LITERAL_RETURN = re.compile(r"\breturn\s+(?:const\s+)?(?:<[^>]+>\s*)?[\[{]|\bresolve\(\s*[\[{]")
 DELAY_WINDOW = 6
@@ -113,6 +133,9 @@ def findings_for(rel: str, lines: list[tuple[int, str]]) -> list[str]:
         reason = next((label for label, pattern in PATTERNS if pattern.search(text)), None)
         if reason is None and EXAMPLE_ADDRESS.search(text) and not INPUT_HINT.search(text):
             reason = "placeholder address"
+        if reason is None and DATA_LAYER.search(rel) and LITERAL_RECORDS.search(text) \
+                and not COMPREHENSION.search(text):
+            reason = "fixed records returned from the data layer"
         if reason is None and DELAY.search(text):
             window = lines[index:index + DELAY_WINDOW]
             if any(LITERAL_RETURN.search(later) for _, later in window):

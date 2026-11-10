@@ -39,6 +39,7 @@ Follow the `code-implementer`, `code-smells-expert`, and `refactoring-code-exper
    - **REFACTOR**: Clean up design, eliminate code smells, enforce DRY and SOLID, and ensure all tests stay green.
 3. **Static Analysis & Linters**: Run linters, type checkers and formatters on the files you changed (e.g. `ruff check <files>`, `mypy <files>`, `npx eslint <files>`), not the whole project.
 4. **Empirical Verification**: Run the local test runner via terminal commands and verify actual exit codes and assertion logs. Never claim success without running tests.
+5. **Wire it for real**: implement each row of the wiring map in your brief against its real source. `Fake`, `Mock`, `InMemory` and `Stub` classes live only under test folders, and the app's DI registers the real implementation. If a source is missing, stop with `NOT DONE` instead of returning fixed data.
 
 ## Parallel Worker Protocol
 Applies whenever your brief lists `Owned Files` or you run in your own worktree:

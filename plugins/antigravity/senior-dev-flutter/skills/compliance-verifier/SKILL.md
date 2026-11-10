@@ -1,0 +1,77 @@
+---
+name: compliance-verifier
+description: Guides the final quality assurance and compliance verification of a project. Trigger when checking non-functional requirements, static code analysis, test coverage, and security compliance before release.
+---
+
+# Compliance Verifier Skill
+
+## Overview
+This skill ensures that software deliverables pass all quality gates, static analysis checks, security audits, and non-functional requirements (NFRs) before final merge or release. It acts as the Principal Release & Compliance Auditor, evaluating readiness objectively and issuing formal verdicts (`APPROVED` or `REJECTED` with explicit remediation steps).
+
+## When to Use
+### Trigger Scenarios
+- Final quality gate check before merging a Pull Request or cutting a release.
+- Verifying compliance against security benchmarks (OWASP Top 10, secret scanning, credential leaks).
+- Auditing Non-Functional Requirements (latency budgets, concurrency, memory limits, maintainability).
+- Evaluating test coverage and static analysis results across a codebase.
+
+### When NOT to Use
+- **Active implementation and coding**: Route to `code-implementer` or `test-driven-development`.
+- **Authoring E2E test scenarios**: Route to `qa-tester`.
+- **Drafting Architectural Decision Records**: Route to `senior-architect-engineering`.
+- **Trivial standalone typo fixes**: Quick manual verification is sufficient.
+
+## Process
+### Phase 1: Code Quality & Static Analysis Audit
+1. Run linters, type-checkers, and style formatters on the changed files (e.g., `ruff`, `mypy`, `eslint`, `dart analyze`).
+2. **Do not re-run the test suite**: test proof belongs to `qa-tester`; use the test command and exit code relayed in your brief, and inspect the diff for skipped, deleted or weakened assertions. Run the suite yourself only when the brief carries no `qa-tester` result for this change.
+3. Review test coverage reports to ensure critical business logic is covered.
+
+### Phase 2: Security & Secret Leak Audit
+1. Scan the repository and diff for exposed credentials, tokens, or private keys.
+2. Inspect data access and query patterns for injection flaws (SQL, command injection) or broken authorization checks.
+3. Verify dependency vulnerability advisories if new dependencies were introduced.
+
+### Phase 3: Non-Functional Requirements (NFR) Validation
+1. Verify adherence to defined Quality Attribute Drivers (QADs) such as latency limits, concurrency models, and resource constraints.
+2. Check for memory leaks, unclosed streams, unhandled async task rejections, or runaway loops.
+
+### Phase 4: Formal Audit Verdict
+Return the official audit verdict in your final message (`<= 50 lines`: verdict, findings with `file:line`, required fixes); do NOT write a report file:
+- **`APPROVED`**: Issued only when all quality gates, security scans, and tests pass completely.
+- **`REJECTED`**: Issued if any critical vulnerability, test failure, or NFR violation is detected, accompanied by numbered, actionable remediation instructions.
+
+- **Review checklist**: read `### Review checklist` in `docs/<feature-name>/spec.md` (or the change row in `PLAN.md`) and answer every item `OK` or `FAIL file:line` in your verdict. A wiring row whose production code registers a stand-in (`Fake`, `Mock`, `InMemory`, `Stub`) or returns fixed records is `FAIL`.
+
+## Usage
+### Verification Commands
+```bash
+# Example static analysis and security checks
+python3 scripts/check_fake_data.py --repo . --base main  # whenever code changed; non-zero means REJECTED
+ruff check .
+mypy .
+pytest --cov=. --cov-fail-under=80
+```
+
+### Example Prompts
+- *"Run a full compliance audit on this PR branch: check test coverage, static analysis, secret scans, and NFRs."*
+- *"Verify if our new authentication endpoint complies with OWASP guidelines and project security standards."*
+- *"Audit the repository before release and provide a formal APPROVED/REJECTED verdict with findings."*
+
+### Host Execution Instructions
+- **Claude Code**: Direct the agent to execute test and linting commands, review outputs, and return the compliance verdict in the final message (no report file).
+- **Antigravity**: Launch as the final compliance subagent (`compliance-verifier`) before closing a development loop or merging.
+
+## Red Flags
+- Issuing an `APPROVED` verdict without linters or without a `qa-tester` result showing `exit code 0`.
+- Treating hardcoded secrets or disabled lint rules as acceptable "temporary" debt.
+- Ignoring test coverage drops or unhandled edge cases.
+- Issuing a `REJECTED` verdict without providing clear, actionable remediation steps.
+
+## Verification
+- [ ] 100% of automated tests pass cleanly with zero failures.
+- [ ] Linters and type checkers report zero errors or unhandled warnings.
+- [ ] Secret scanner detects zero leaked API keys, tokens, or credentials.
+- [ ] NFRs and performance criteria verified against project specifications.
+- [ ] Formal audit verdict returned in the final message (no report file) with an unambiguous `APPROVED` or `REJECTED` verdict.
+
