@@ -24,4 +24,5 @@
 - **Build**: `uv build` exit `0`
 - **Static checks**: `ruff check src/auth` exit `0`; `mypy src/auth` exit `0`
 - **Images**: `docs/user-auth/evidence/login-375x812.png` (+3 viewports); `check_evidence.py` exit `0`
+- **Wiring**: `GET /api/login` on the running backend, no mocks, exit `0`; `check_fake_data.py` exit `0`
 - **Verdict**: `DONE`

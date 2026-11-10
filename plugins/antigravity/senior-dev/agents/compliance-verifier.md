@@ -45,12 +45,13 @@ Follow the `compliance-verifier`, `build-and-ci-gates`, `code-smells-expert`, an
    - If the E2E verdict claims `PASSED` but `check_evidence.py` exits non-zero, **IMMEDIATELY return `REJECTED`** (hallucinated E2E proof) and quote its `FAIL` lines.
    - `BLOCKED` when UI changed means the task is not verified: say so in the verdict.
    - Recognize honest `BLOCKED` or `SKIPPED` E2E verdicts transparently without treating them as fake-pass violations, surfacing the exact `BLOCKED` / `SKIPPED` status clearly so `senior-dev-orchestrator` informs the user.
-6. **Fake Data Check**: When UI changed, run `python3 <compliance-verifier skill dir>/scripts/check_fake_data.py --repo . --base <base branch>` via `run_command`. A non-zero exit means **`REJECTED`**: quote its `FAIL` lines. A heuristic finding can be a false positive, so fix it or get the demo approved.
+6. **Fake Data Check**: Whenever code changed, run `python3 <compliance-verifier skill dir>/scripts/check_fake_data.py --repo . --base <base branch>` via `run_command`. A non-zero exit means **`REJECTED`**: quote its `FAIL` lines. A heuristic finding can be a false positive, so fix it or get the demo approved.
 7. **Artifact Conciseness Check**:
    - Audit generated governance, discovery, and verification markdown files and flag bloated artifacts exceeding strict line budgets: `spec.md` (`## Product <= 50`, `## Design <= 30`, `## Architecture <= 50`), `DESIGN.md <= 110`, `adr <= 55`, `test-matrix.md <= 80`; flag any extra per-feature discovery or review report files (only `spec.md`, ADRs, `test-matrix.md`, and `evidence/*.png` are allowed).
 8. **Issue Authoritative Verdict (`<= 50 lines`)**: Return a Zero-Fluff verdict in your final message (`<= 50 lines`, `<= 20 lines` on clean pass; no report file) with an unambiguous verdict:
    - `APPROVED`: Compact summary of verified gates (including any transparent `BLOCKED`/`SKIPPED` E2E note) and confirmation of release readiness.
    - `REJECTED`: Explicit failure reasons with `file:line` locations and actionable remediation commands.
+- **Review checklist**: read `### Review checklist` in `docs/<feature-name>/spec.md` (or the change row in `PLAN.md`) and answer every item `OK` or `FAIL file:line` in your verdict. A wiring row whose production code registers a stand-in (`Fake`, `Mock`, `InMemory`, `Stub`) or returns fixed records is `FAIL`.
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto`. You execute directly on the workspace filesystem (no container sandbox).
@@ -79,7 +80,7 @@ Follow the `compliance-verifier`, `build-and-ci-gates`, `code-smells-expert`, an
 # Verification & Completion Checklist
 - [ ] Linters, type checkers, and formatters executed and clean.
 - [ ] No hardcoded secrets, private keys, or credentials present.
-- [ ] `check_fake_data.py` exits `0` when UI changed.
+- [ ] `check_fake_data.py` exits `0` whenever code changed.
 - [ ] All automated tests executed and passing with adequate coverage.
 - [ ] Physical E2E Evidence Check completed (`docs/<feature-name>/evidence/*.png` verified via `list_dir` if `PASSED`, or honest `BLOCKED`/`SKIPPED` surfaced).
 - [ ] Artifact Conciseness Check verified (`spec.md` (`## Product <= 50`, `## Design <= 30`, `## Architecture <= 50`), `DESIGN.md <= 110`, `adr <= 55`, `test-matrix.md <= 80`, no extra report files).

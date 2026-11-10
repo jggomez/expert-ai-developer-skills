@@ -11,7 +11,8 @@ ORCHESTRATORS = [
     ("senior-dev-flutter", "flutter-feature-orchestrator"),
     ("python-backend", "python-backend-orchestrator"),
 ]
-PROOF_LINES = ["**Requirements**", "**Tests**", "**Build**", "**Static checks**", "**Images**", "**Verdict**"]
+PROOF_LINES = ["**Requirements**", "**Tests**", "**Build**", "**Static checks**", "**Images**", "**Wiring**",
+               "**Verdict**"]
 
 
 def _read(*parts):

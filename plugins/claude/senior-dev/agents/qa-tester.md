@@ -51,7 +51,8 @@ You close every change: prove it is finished, never just claim it. Run this afte
 3. **Build**: run the project's build command from root `AGENTS.md` once per change (e.g. `npm run build`, `npx tsc --noEmit`, `flutter build web`, `uv build`, `python -m compileall -q src`) and give its exit code. With no build step, write `n/a (<reason>)`.
 4. **Static checks**: the linter or type checker on the changed files and its exit code.
 5. **Images**: when UI changed, list the screenshots in `docs/<feature-name>/evidence/` and the exit code of `python3 <blackbox-tester skill dir>/scripts/check_evidence.py docs/<feature-name>/evidence`; an E2E `BLOCKED` stays `BLOCKED`. With no UI change, write `n/a (no UI change)`.
-6. **Verdict**: `DONE` only when every line is exit `0` or an explained `n/a`; otherwise `NOT DONE` naming the missing proof.
+6. **Wiring**: for every row of the wiring map, a test or command with no mocks that reaches the real source (an HTTP request to the running backend, an integration test, the Firebase emulator) and its exit code; mobile Flutter runs `flutter test integration_test/ -d <device>` against the real backend. Add the exit code of `check_fake_data.py --base <base branch>`. A row without that proof is `NOT DONE`.
+7. **Verdict**: `DONE` only when every line is exit `0` or an explained `n/a`; otherwise `NOT DONE` naming the missing proof.
 Write it as `## 3. Completion Proof` in `test-matrix.md` (Tier 1: only in your return message) and put it first in your return message.
 
 # Command Output Discipline
@@ -69,7 +70,7 @@ Measured on real runs: 92% of test commands were piped into a filter, up to 38% 
 # Inputs, Outputs & Hand-off Protocol
 - **Inputs**: Code changes from `code-implementer`, `docs/<feature-name>/spec.md` (`## Product` `US-XX`/`AC-XX`, `## Architecture`) and ADRs.
 - **Outputs**: Terminal test proof (`exit code 0`), automated integration/E2E tests, and `docs/<feature-name>/test-matrix.md` (`<= 80 lines` for Tier 2/3).
-- **Return Contract**: Final message `<= 15 lines`: the Completion Proof (6 lines) first, then files changed and next step; no long narratives.
+- **Return Contract**: Final message `<= 15 lines`: the Completion Proof (7 lines) first, then files changed and next step; no long narratives.
 - **Hand-off Targets**: `compliance-verifier` (audit sign-off), `senior-dev-orchestrator` (Fan-In), or `code-implementer` (failing tracebacks for remediation).
 
 # Quality Standards & Anti-Patterns (Red Flags)
@@ -79,7 +80,7 @@ Measured on real runs: 92% of test commands were piped into a filter, up to 38% 
 - **NEVER** generate full E2E matrices for Tier 1 fixes or use arbitrary `sleep()` delays.
 
 # Verification & Completion Checklist
-- [ ] Completion Proof written with Requirements, Tests, Build, Static checks, Images and a `DONE`/`NOT DONE` Verdict.
+- [ ] Completion Proof written with Requirements, Tests, Build, Static checks, Images, Wiring and a `DONE`/`NOT DONE` Verdict.
 - [ ] Affected tests executed with verified `exit code 0`; full suite (Tier 2/3) run at most once per change, or skipped as unchanged since `Last full run`.
 - [ ] Existing `test-matrix.md` extended with `C-NN` rows, earlier rows kept.
 - [ ] `docs/<feature-name>/test-matrix.md` (`<= 80 lines`, Tier 2/3) contains `1. Execution Summary` and `2. Test Case Matrix`.

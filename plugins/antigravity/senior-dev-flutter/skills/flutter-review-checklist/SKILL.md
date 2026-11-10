@@ -38,6 +38,8 @@ Audit diffs against [references/flutter-review-checklist.md](references/flutter-
 ### 3. Zero-Fluff Verdict (`<= 50 lines`)
 Output **findings table (`file:line`, severity, fix) + metrics + verdict (`APPROVED` | `REJECTED`) only**. Flag any hallucinated test/E2E `PASSED` claim without `exit code 0` or bloated artifacts exceeding line caps (`DESIGN.md > 110`, `spec.md` `## Design > 30` / `## Architecture > 50`, `adr > 55`, `test-matrix.md > 80`) as **`REJECTED`**.
 
+- **Review checklist**: read `### Review checklist` in `docs/<feature-name>/spec.md` (or the change row in `PLAN.md`) and answer every item `OK` or `FAIL file:line` in your verdict. A wiring row whose production code registers a stand-in (`Fake`, `Mock`, `InMemory`, `Stub`) or returns fixed records is `FAIL`.
+
 ## Usage
 ```bash
 python3 ./skills/flutter-review-checklist/scripts/flutter_project_audit.py

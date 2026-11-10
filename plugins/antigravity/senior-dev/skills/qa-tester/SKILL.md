@@ -44,7 +44,8 @@ You close every change: prove it is finished, never just claim it. Run this afte
 3. **Build**: run the project's build command from root `AGENTS.md` once per change (e.g. `npm run build`, `npx tsc --noEmit`, `flutter build web`, `uv build`, `python -m compileall -q src`) and give its exit code. With no build step, write `n/a (<reason>)`.
 4. **Static checks**: the linter or type checker on the changed files and its exit code.
 5. **Images**: when UI changed, list the screenshots in `docs/<feature-name>/evidence/` and the exit code of `python3 <blackbox-tester skill dir>/scripts/check_evidence.py docs/<feature-name>/evidence`; an E2E `BLOCKED` stays `BLOCKED`. With no UI change, write `n/a (no UI change)`.
-6. **Verdict**: `DONE` only when every line is exit `0` or an explained `n/a`; otherwise `NOT DONE` naming the missing proof.
+6. **Wiring**: for every row of the wiring map, a test or command with no mocks that reaches the real source (an HTTP request to the running backend, an integration test, the Firebase emulator) and its exit code; mobile Flutter runs `flutter test integration_test/ -d <device>` against the real backend. Add the exit code of `check_fake_data.py --base <base branch>`. A row without that proof is `NOT DONE`.
+7. **Verdict**: `DONE` only when every line is exit `0` or an explained `n/a`; otherwise `NOT DONE` naming the missing proof.
 Write it as `## 3. Completion Proof` in `test-matrix.md` (Tier 1: only in your return message) and put it first in your return message.
 
 ## Usage

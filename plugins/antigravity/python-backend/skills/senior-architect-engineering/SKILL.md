@@ -36,6 +36,8 @@ Follow [references/adr-template.md](references/adr-template.md) strictly—zero 
 
 - **Change delta (later requests)**: when ADRs and `## Architecture` already exist, read them; write a new `adr-NNN-*.md` only for this change's new structural decision (tag `C-NN`) and mark a replaced ADR `Superseded`. Never rewrite accepted ADRs.
 
+- **Review checklist** (`### Review checklist`): end `## Architecture` with `### Review checklist`: (a) a **Wiring map**, one row per screen or endpoint: `screen/endpoint -> state/repository -> real source (endpoint, table, Firebase collection) -> exists | build in C-NN | demo approved`; (b) 3-6 verifiable rules for reviewers (e.g. `repositories never import UI`, `every migration has a downgrade`). A source that does not exist is never stubbed: mark it `build in C-NN` or ask for a demo approval.
+
 ## Usage
 ### Commands & Scaffolding
 ```bash

@@ -97,6 +97,8 @@ These apply in every Tier when a task creates or changes UI on a project with a 
 2. **Declare exceptions**: A demo needs the user's approval, a `demo-data: approved` line naming the file in `PLAN.md`, the same marker in the file, and a visible demo label on screen. A screen with no data needs `data-source: none` in `PLAN.md`.
 3. **The app must run**: Dispatch `e2e-blackbox-tester`, which starts the app and its backend from the commands in root `AGENTS.md` and uses them. Tests with mocks do not prove a UI works.
 4. **`BLOCKED` is not done**: Report the task as unfinished, with the exact reason.
+5. **Wiring map**: every change that shows or stores data has a wiring map (the architect's `### Review checklist`, or yours in the change row of `PLAN.md` when the architect is `SKIP`). Pass it to implementers, `qa-tester` and reviewers; a row without a real source is a question for the user, never a stub.
+6. **Mobile runs too**: a mobile-only Flutter UI is not skipped. `qa-tester` runs `flutter test integration_test/ -d <emulator|simulator|macos>` against the real backend (or the Firebase emulator) and saves screenshots; with no device available it is `BLOCKED`, which is not done.
 
 ### Capability & Risk-Gated Dispatch (`## Discovery & Architecture Triage`)
 Never over-invoke subagents blindly. Every `docs/<feature-name>/PLAN.md` (`<= 50 lines`) MUST include a compact 5-row **Discovery & Architecture Triage (`Invoke / SKIP`)** table justifying each specialist in 1 line:

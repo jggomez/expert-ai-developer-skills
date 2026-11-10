@@ -135,6 +135,8 @@ Do NOT write a review file. Return a **Zero-Fluff** review in your final message
 
 ---
 
+- **Review checklist**: read `### Review checklist` in `docs/<feature-name>/spec.md` (or the change row in `PLAN.md`) and answer every item `OK` or `FAIL file:line` in your verdict. A wiring row whose production code registers a stand-in (`Fake`, `Mock`, `InMemory`, `Stub`) or returns fixed records is `FAIL`.
+
 ## Usage
 
 ### Invocations & Inspection Techniques

@@ -41,11 +41,13 @@ Return the official audit verdict in your final message (`<= 50 lines`: verdict,
 - **`APPROVED`**: Issued only when all quality gates, security scans, and tests pass completely.
 - **`REJECTED`**: Issued if any critical vulnerability, test failure, or NFR violation is detected, accompanied by numbered, actionable remediation instructions.
 
+- **Review checklist**: read `### Review checklist` in `docs/<feature-name>/spec.md` (or the change row in `PLAN.md`) and answer every item `OK` or `FAIL file:line` in your verdict. A wiring row whose production code registers a stand-in (`Fake`, `Mock`, `InMemory`, `Stub`) or returns fixed records is `FAIL`.
+
 ## Usage
 ### Verification Commands
 ```bash
 # Example static analysis and security checks
-python3 scripts/check_fake_data.py --repo . --base main  # when UI changed; non-zero means REJECTED
+python3 scripts/check_fake_data.py --repo . --base main  # whenever code changed; non-zero means REJECTED
 ruff check .
 mypy .
 pytest --cov=. --cov-fail-under=80

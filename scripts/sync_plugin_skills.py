@@ -129,6 +129,7 @@ ANTIGRAVITY_EXTRA_SKILLS = {
     "senior-dev-flutter": [
         "product-analyst",
         "qa-tester",
+        "compliance-verifier",
         "code-critic",
         "code-smells-expert",
         "refactoring-code-expert",

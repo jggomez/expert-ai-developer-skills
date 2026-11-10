@@ -561,6 +561,43 @@ function isSmallEdit(toolName, toolInput, maxLines = SMALL_EDIT_MAX_LINES) {
   return false;
 }
 
+/** Production code the fake-data check reads (UI, mobile Dart and backends alike). */
+const FAKE_DATA_FILE = /\.(ts|tsx|js|jsx|mjs|vue|svelte|html|dart|py|go|kt|swift|java)$/i;
+
+/**
+ * Fake-data gate shared by every Stop gate: runs check_fake_data.py when changed production code
+ * (mobile Flutter and backends included) is not yet known to be clean. Returns null when it passes
+ * or does not apply, `{ block }` with the reason to block, or `{ notice }` after the retry limit.
+ * One gate id across plugins, so a Stop that runs several gates checks the same files once.
+ */
+function runFakeDataGate({ payload, script, timeoutMs = 60000 }) {
+  if (!script || !fs.existsSync(script) || !commandExists('python3')) return null;
+  const root = workspaceOf(payload);
+  let files;
+  try {
+    files = changedCodeFiles(root).filter((file) => FAKE_DATA_FILE.test(file));
+  } catch (err) {
+    return null; // not a git repository: nothing to compare against
+  }
+  if (files.length === 0) return null;
+  const gate = createStopGate({ gateId: 'fake-data', payload, fileFilter: (file) => FAKE_DATA_FILE.test(file) });
+  if (gate.retryLimitReached()) return { notice: retryLimitNotice('fake-data') };
+  if (gate.begin()) return null;
+  try {
+    execFileSync('python3', [script, '--repo', root], { cwd: root, stdio: 'pipe', timeout: timeoutMs });
+    gate.markPass();
+    return null;
+  } catch (error) {
+    const out = `${error.stdout ? error.stdout.toString() : ''}${error.stderr ? error.stderr.toString() : ''}` ||
+      error.message || '';
+    return {
+      block: gate.markFail('[FAKE DATA GATE]: Production code returns invented data instead of its real source ' +
+        '(API, database, Firebase). Connect the real source, or ask the user to approve a demo ' +
+        '(`demo-data: approved` in the file and in docs/<feature-name>/PLAN.md).\n\nOutput:\n' + out.slice(0, 3000)),
+    };
+  }
+}
+
 module.exports = {
   MAX_BLOCKS,
   SMALL_EDIT_MAX_LINES,
@@ -574,6 +611,7 @@ module.exports = {
   isFinalStop,
   isCodePath,
   changedCodeFiles,
+  runFakeDataGate,
   createStopGate,
   exitBlock,
   exitAllow,
