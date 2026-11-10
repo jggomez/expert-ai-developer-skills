@@ -15,6 +15,28 @@ que esas herramientas ya guardan en tu computador y te entrega:
 Es **gratis** (el modo local no necesita ninguna cuenta), **solo lee** los datos de tus herramientas salvo que confirmes un cambio en la app, y es **privado**: nunca
 guarda prompts, código, entradas o salidas de herramientas ni rutas de archivos.
 
+## Cómo se ve
+
+![Pantalla En vivo](../../docs/agent-metrics/images/live.png)
+**En vivo**: el gasto de hoy y del mes, una proyección a fin de mes, los presupuestos y las sesiones activas, con Claude Code y Antigravity lado a lado.
+
+![Pantalla Historial](../../docs/agent-metrics/images/history.png)
+**Historial**: gasto, llamadas, sesiones y tareas de cualquier periodo, día por día.
+
+![Gasto por proyecto](../../docs/agent-metrics/images/history-projects.png)
+**Por proyecto**: qué proyecto se lleva tu presupuesto, con costo, porcentaje, llamadas, tareas y tokens.
+
+![Pantalla Insights](../../docs/agent-metrics/images/insights.png)
+**Insights**: dónde recortar, con hallazgos medidos y ahorros estimados, como usar un modelo más barato en el trabajo rutinario o detectar un subagente que cuesta varias veces más que los demás.
+
+![Pantalla Cambios](../../docs/agent-metrics/images/changes.png)
+**Cambios**: cambia el modelo o el esfuerzo por defecto de tus herramientas de IA. Nada cambia hasta que confirmas una vista previa, y todo se puede deshacer.
+
+![Diagnóstico](../../docs/agent-metrics/images/diagnostics.png)
+**Diagnóstico**: confirma que se están recolectando los datos de cada herramienta (hooks, última carga, precios, programador) y avisa de los archivos que no pudo leer.
+
+En vivo usa datos de demostración; las demás capturas muestran uso real. Los costos son precios de lista de la API, no lo que cobra tu plan.
+
 > English version: [README.md](README.md)
 
 ---
