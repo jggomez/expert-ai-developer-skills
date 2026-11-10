@@ -23,8 +23,8 @@ This skill ensures that software deliverables pass all quality gates, static ana
 
 ## Process
 ### Phase 1: Code Quality & Static Analysis Audit
-1. Execute repository linters, type-checkers, and style formatters (e.g., `ruff`, `mypy`, `eslint`, `dart analyze`).
-2. Verify that 100% of tests pass without skipped or failing assertions.
+1. Run linters, type-checkers, and style formatters on the changed files (e.g., `ruff`, `mypy`, `eslint`, `dart analyze`).
+2. **Do not re-run the test suite**: test proof belongs to `qa-tester`; use the test command and exit code relayed in your brief, and inspect the diff for skipped, deleted or weakened assertions. Run the suite yourself only when the brief carries no `qa-tester` result for this change.
 3. Review test coverage reports to ensure critical business logic is covered.
 
 ### Phase 2: Security & Secret Leak Audit
@@ -61,7 +61,7 @@ pytest --cov=. --cov-fail-under=80
 - **Antigravity**: Launch as the final compliance subagent (`compliance-verifier`) before closing a development loop or merging.
 
 ## Red Flags
-- Issuing an `APPROVED` verdict without executing test suites or linters.
+- Issuing an `APPROVED` verdict without linters or without a `qa-tester` result showing `exit code 0`.
 - Treating hardcoded secrets or disabled lint rules as acceptable "temporary" debt.
 - Ignoring test coverage drops or unhandled edge cases.
 - Issuing a `REJECTED` verdict without providing clear, actionable remediation steps.

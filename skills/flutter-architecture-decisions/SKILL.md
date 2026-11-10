@@ -38,6 +38,8 @@ Evaluate state complexity via [references/state-management-decision-matrix.md](r
 - **Concise MADR (`docs/<feature-name>/adr-NNN-*.md <= 55 lines`)**: Follow [references/adr-template.md](references/adr-template.md)—**Status & Date**, `## 1. Context` (`<= 5 lines`), `## 2. Options Considered` (2–3 concrete options), `## 3. Decision & Justification`, and `## 4. Trade-offs & Reviewer Compliance` (`+` Pros / `-` Cons + 1-line lint/PR rule for `flutter-reviewer`). Sync `doc/adr/` if used by the repo.
 - **Blueprint (`## Architecture` in `docs/<feature-name>/spec.md`, `<= 50 lines`)**: Author **ONLY** when multiple layers or packages interact; skip when a single ADR suffices. Create `spec.md` from the 3-heading template (`## Product`, `## Design`, `## Architecture`) if missing and edit **ONLY** `## Architecture`.
 
+- **Change delta (later requests)**: when ADRs and `## Architecture` already exist, read them; write a new `adr-NNN-*.md` only for this change's new structural decision (tag `C-NN`) and mark a replaced ADR `Superseded`. Never rewrite accepted ADRs.
+
 ## Usage
 ### Example Prompts & Host Execution
 - `"Compare Riverpod vs Bloc for our offline-first cart flow and write a <=55-line MADR ADR."`

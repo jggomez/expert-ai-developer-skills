@@ -39,6 +39,7 @@ Follow the `product-analyst` skill and `references/prd-template.md`:
    - `### User Stories`: `US-01`, `US-02` in strict standard format: **As a** `<role>`, **I want** `<action>`, **so that** `<outcome>` (*Como `<rol>`, quiero `<acción>`, para `<beneficio>`*).
    - `### Acceptance Criteria & Edge Cases`: `AC-01`, `AC-02` mapped to `US-XX`, using directly testable Given/When/Then or crisp bullets plus critical validation, permission, and failure/edge rules.
 4. **Synchronize Legacy Specs**: If `docs/specifications/` exists in the workspace, keep its index/links synchronized.
+- **Change delta (later requests)**: when `## Product` already exists, read it and add only the new `US`/`AC` for this change, tagged `C-NN`; never rewrite earlier stories. Stay within the line cap by tightening older text, not by dropping it.
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto` directly on the workspace filesystem.

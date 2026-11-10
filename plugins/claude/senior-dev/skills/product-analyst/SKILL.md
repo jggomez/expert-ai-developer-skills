@@ -29,6 +29,8 @@ If `docs/<feature-name>/spec.md` is missing, create it from the 3-heading templa
 
 *Global Sync*: If the workspace maintains `docs/specifications/` or a global requirements index, update its links to keep documentation synchronized.
 
+- **Change delta (later requests)**: when `## Product` already exists, read it and add only the new `US`/`AC` for this change, tagged `C-NN`; never rewrite earlier stories. Stay within the line cap by tightening older text, not by dropping it.
+
 ## Usage
 ### Example Prompts
 - *"Clarify scope boundaries for workspace invitations and write the `## Product` section of `docs/workspace-invites/spec.md` (`<= 50 lines`)."*

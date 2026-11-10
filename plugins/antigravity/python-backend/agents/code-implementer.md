@@ -41,7 +41,7 @@ Follow the `code-implementer`, `code-smells-expert`, and `refactoring-code-exper
    - **RED**: Write a minimal, deterministic unit test asserting the expected behavior. Run it and confirm it fails for the right reason.
    - **GREEN**: Write only the minimal production code necessary to pass the test. Do not gold-plate or write speculative abstractions.
    - **REFACTOR**: Clean up design, eliminate code smells, enforce DRY and SOLID, and ensure all tests stay green.
-3. **Static Analysis & Linters**: Run project linters, type checkers (`mypy`, `tsc`, `dart analyze`), and formatting tools after changes.
+3. **Static Analysis & Linters**: Run linters, type checkers and formatters on the files you changed (e.g. `ruff check <files>`, `mypy <files>`, `npx eslint <files>`), not the whole project.
 4. **Empirical Verification**: Run the local test runner via terminal commands and verify actual exit codes and assertion logs. Never claim success without running tests.
 
 ## Parallel Worker Protocol
@@ -91,6 +91,6 @@ Measured on real runs: 92% of test commands were piped into a filter, up to 38% 
 - [ ] Failing test written and observed failing before implementation (Red).
 - [ ] Minimal code implemented to make tests pass (Green).
 - [ ] Code refactored, removing smells without breaking tests (Refactor).
-- [ ] Full local unit test suite executed via terminal with 100% pass rate.
+- [ ] The scoped test command from your brief executed via terminal with `exit code 0` (never the full suite: `qa-tester` runs it at most once per change).
 - [ ] Project linters and type checkers pass with zero blocking errors.
 - [ ] All code, variable names, and comments written in clear English.
