@@ -15,6 +15,28 @@ transcripts and databases those tools already write on your machine, and turns t
 It is **free** (local mode needs no account at all), **read-only** towards your tools unless you confirm a change in the app, and **private**: it never stores
 prompts, code, tool inputs/outputs or file paths.
 
+## What it looks like
+
+![Live screen](../../docs/agent-metrics/images/live.png)
+**Live**: today's spend, this month's spend, a month-end forecast, budgets and the sessions running now, with Claude Code and Antigravity side by side.
+
+![History screen](../../docs/agent-metrics/images/history.png)
+**History**: spend, calls, sessions and tasks for any period, day by day.
+
+![Spending by project](../../docs/agent-metrics/images/history-projects.png)
+**By project**: which project takes your budget, with cost, share, calls, tasks and tokens.
+
+![Insights screen](../../docs/agent-metrics/images/insights.png)
+**Insights**: where to cut, with measured findings and estimated savings, such as a cheaper model for routine work or a subagent that costs several times more than its peers.
+
+![Changes screen](../../docs/agent-metrics/images/changes.png)
+**Changes**: switch the default model or effort of your AI tools. Nothing changes until you confirm a preview, and every change can be undone.
+
+![Diagnostics](../../docs/agent-metrics/images/diagnostics.png)
+**Diagnostics**: confirms each tool is being collected (hooks, last ingest, prices, scheduler) and warns about files it could not read.
+
+Live uses demo data; the other screenshots show real usage. Costs are API list prices, not what your plan charges.
+
 > 🇪🇸 Guía en español: [README.es.md](README.es.md)
 
 ---
