@@ -83,4 +83,3 @@ All specifications and verification outputs are neatly housed in a feature-scope
 - `docs/<feature-name>/test-matrix.md` — Standardized QA test matrix with positive, boundary, and negative scenarios.
 - `docs/<feature-name>/evidence/*.png` — Browser E2E screenshots.
 - Review verdicts (`critic`, `challenger`, `e2e-blackbox-tester`, `compliance-verifier`) are returned in the reviewer's final message (`<= 50` lines), never written as files; every other worker returns `<= 15` lines (status, files changed, test command + exit code, next step).
-
