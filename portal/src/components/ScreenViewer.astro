@@ -1,0 +1,137 @@
+---
+/**
+ * Screenshot switcher for a tool: tabs for each screen, one framed image, and a full-size view in a <dialog>.
+ * Shows the Spanish screenshot on /es/ when one exists.
+ */
+import { TOOLS, UI, screenMedia } from '../lib/site.mjs';
+
+interface Props { lang: 'es' | 'en'; item: any; eager?: boolean }
+const { lang, item, eager = false } = Astro.props;
+const t = UI[lang];
+const screens = TOOLS[item.slug].screens
+  .map((screen: any) => ({ ...screen, media: screenMedia(item, screen.id, lang) }))
+  .filter((screen: any) => screen.media);
+const uid = `sv-${item.slug}`;
+---
+<div class="viewer" data-viewer>
+  {screens.length > 1 && (
+    <div class="viewer__tabs" role="tablist" aria-label={`${item.name}: ${t.screens}`}>
+      {screens.map((screen: any, i: number) => (
+        <button
+          type="button"
+          role="tab"
+          id={`${uid}-tab-${screen.id}`}
+          aria-controls={`${uid}-panel-${screen.id}`}
+          aria-selected={i === 0 ? 'true' : 'false'}
+          tabindex={i === 0 ? 0 : -1}
+        >{screen.name[lang]}</button>
+      ))}
+    </div>
+  )}
+  {screens.map((screen: any, i: number) => (
+    <figure class="viewer__panel" role="tabpanel" id={`${uid}-panel-${screen.id}`} aria-labelledby={`${uid}-tab-${screen.id}`} hidden={i !== 0}>
+      <button type="button" class="viewer__frame" data-full={screen.media.src} data-alt={screen.caption[lang]} aria-label={`${t.openImage}: ${screen.name[lang]}`}>
+        <img
+          src={screen.media.src}
+          width={screen.media.w}
+          height={screen.media.h}
+          alt={screen.caption[lang]}
+          loading={eager && i === 0 ? 'eager' : 'lazy'}
+          decoding="async"
+        />
+        <span class="viewer__zoom" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9.5 2.5h4v4M13.5 2.5 9 7M6.5 13.5h-4v-4M2.5 13.5 7 9"/></svg>
+        </span>
+      </button>
+      <figcaption>{screen.caption[lang]}</figcaption>
+    </figure>
+  ))}
+  <dialog class="viewer__dialog" aria-label={t.openImage}>
+    <form method="dialog"><button class="viewer__close" type="submit">{t.closeImage}</button></form>
+    <img alt="" />
+  </dialog>
+</div>
+
+<script>
+  function initViewers() {
+    document.querySelectorAll<HTMLElement>('[data-viewer]').forEach((viewer) => {
+      if (viewer.dataset.ready) return;
+      viewer.dataset.ready = '1';
+      const tabs = [...viewer.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+      const select = (index: number, focus = false) => {
+        tabs.forEach((tab, i) => {
+          const on = i === index;
+          tab.setAttribute('aria-selected', String(on));
+          tab.tabIndex = on ? 0 : -1;
+          const panel = document.getElementById(tab.getAttribute('aria-controls') ?? '');
+          if (panel) panel.hidden = !on;
+        });
+        if (focus) tabs[index].focus();
+      };
+      tabs.forEach((tab, i) => tab.addEventListener('click', () => select(i)));
+      viewer.querySelector('[role="tablist"]')?.addEventListener('keydown', (event) => {
+        const key = (event as KeyboardEvent).key;
+        const current = tabs.findIndex((tab) => tab.getAttribute('aria-selected') === 'true');
+        if (key === 'ArrowRight' || key === 'ArrowLeft') {
+          event.preventDefault();
+          select((current + (key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length, true);
+        }
+      });
+      const dialog = viewer.querySelector<HTMLDialogElement>('dialog');
+      const full = dialog?.querySelector('img');
+      viewer.querySelectorAll<HTMLButtonElement>('[data-full]').forEach((frame) =>
+        frame.addEventListener('click', () => {
+          if (!dialog || !full) return;
+          full.src = frame.dataset.full ?? '';
+          full.alt = frame.dataset.alt ?? '';
+          dialog.showModal();
+        }),
+      );
+      dialog?.addEventListener('click', (event) => {
+        if (event.target === dialog) dialog.close();
+      });
+    });
+  }
+  initViewers();
+  document.addEventListener('astro:page-load', initViewers);
+</script>
+
+<style>
+  .viewer { min-width: 0; }
+  .viewer__tabs {
+    display: flex; gap: 4px; margin-bottom: 14px; overflow-x: auto; scrollbar-width: none;
+    padding: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; width: max-content; max-width: 100%;
+  }
+  .viewer__tabs button {
+    flex: none; min-height: 34px; padding: 0 14px; border-radius: 999px; border: 0; background: transparent; cursor: pointer;
+    font: 500 var(--step--1)/1 var(--font); color: var(--muted); transition: background .15s, color .15s;
+  }
+  .viewer__tabs button:hover { color: var(--ink-strong); }
+  .viewer__tabs button[aria-selected='true'] { background: var(--surface); color: var(--ink-strong); box-shadow: 0 1px 2px rgb(27 42 74 / 0.12); }
+  .viewer__panel { margin: 0; }
+  .viewer__panel[hidden] { display: none; }
+  .viewer__frame {
+    position: relative; display: block; width: 100%; padding: 0; cursor: zoom-in;
+    aspect-ratio: 1100 / 760; overflow: hidden;
+    border: 1px solid var(--line-strong); border-radius: var(--r-lg); background: var(--surface);
+    box-shadow: 0 30px 60px -40px rgb(27 42 74 / 0.45);
+  }
+  .viewer__frame img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+  .viewer__zoom {
+    position: absolute; right: 12px; bottom: 12px; display: grid; place-items: center; width: 36px; height: 36px;
+    border-radius: 50%; background: var(--ink-strong); color: #fff; opacity: 0; transition: opacity .15s;
+  }
+  .viewer__frame:hover .viewer__zoom, .viewer__frame:focus-visible .viewer__zoom { opacity: 1; }
+  .viewer__panel figcaption { margin-top: 12px; color: var(--muted); font-size: 0.9375rem; }
+  .viewer__dialog {
+    padding: 0; border: 0; border-radius: var(--r-lg); max-width: min(1200px, 94vw); max-height: 92vh; overflow: auto;
+    background: var(--surface);
+  }
+  .viewer__dialog::backdrop { background: rgb(15 26 51 / 0.72); }
+  .viewer__dialog img { width: 100%; height: auto; }
+  .viewer__dialog form { position: sticky; top: 0; display: flex; justify-content: flex-end; padding: 10px; background: var(--surface); border-bottom: 1px solid var(--line); }
+  .viewer__close {
+    min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface);
+    font: 600 var(--step--1)/1 var(--font); cursor: pointer;
+  }
+</style>

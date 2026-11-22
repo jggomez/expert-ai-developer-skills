@@ -107,3 +107,29 @@ for (const width of [375, 768, 1280, 1920]) {
     expect(errors).toEqual([]);
   });
 }
+
+test('tools showcase: Spanish screenshots, screen switcher, full-size view and release downloads', async ({ page }) => {
+  const errors = trackErrors(page);
+  await page.goto('/es/');
+  const meter = page.locator('#tool-agent-meter');
+  await expect(meter.locator('img:visible')).toHaveAttribute('src', '/media/agent-meter/app-live-es.png');
+  await meter.getByRole('tab', { name: 'Historial' }).click();
+  const shown = meter.locator('img:visible');
+  await expect(shown).toHaveAttribute('src', '/media/agent-meter/app-history-es.png');
+  await expect.poll(() => shown.evaluate((img) => img.complete && img.naturalWidth), { timeout: 10000 }).toBeGreaterThan(0);
+  await meter.getByRole('button', { name: /Ver imagen completa/ }).first().click();
+  await expect(meter.locator('dialog')).toBeVisible();
+  await meter.getByRole('button', { name: 'Cerrar' }).click();
+  await expect(meter.locator('dialog')).toBeHidden();
+  await expect(meter.getByRole('link', { name: /Descargar para Mac/ })).toHaveAttribute('href', /agent-meter-v0\.1\.0\/agent-meter-0\.1\.0-mac-arm64\.dmg$/);
+  await expect(meter.getByRole('link', { name: /Descargar para Windows/ })).toHaveAttribute('href', /windows-x64\.exe$/);
+  await expect(page.locator('#tool-pr-reviewer img:visible')).toHaveAttribute('src', '/media/pr-reviewer/inline-comment-sql-injection.png');
+  expect(errors).toEqual([]);
+});
+
+test('tool detail page shows the English gallery and every install step', async ({ page }) => {
+  await page.goto('/en/tool/agent-meter/');
+  await expect(page.locator('.viewer img:visible')).toHaveAttribute('src', '/media/agent-meter/app-live.png');
+  await expect(page.getByText('agent-meter setup --local')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'App guide' })).toHaveAttribute('href', /docs\/app-guide\.md$/);
+});

@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Pipeline from '../../components/Pipeline.astro';
+import ToolsShowcase from '../../components/ToolsShowcase.astro';
 import Catalog from '../../components/Catalog.astro';
 import Cmd from '../../components/Cmd.astro';
 import Glyph from '../../components/Glyph.astro';
@@ -76,6 +77,8 @@ const skipWord = lang === 'es' ? 'Omitir' : 'Skip';
       </figure>
     </div>
   </section>
+
+  <ToolsShowcase lang={lang} />
 
   <Pipeline lang={lang} />
 

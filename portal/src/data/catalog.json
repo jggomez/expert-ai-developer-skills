@@ -1197,6 +1197,7 @@
         "python-backend",
         "senior-dev"
       ],
+      "homePlugin": "senior-dev",
       "install": {}
     },
     {
@@ -1216,6 +1217,7 @@
         "senior-dev",
         "senior-dev-flutter"
       ],
+      "homePlugin": "senior-dev",
       "install": {}
     },
     {
@@ -1234,6 +1236,7 @@
         "python-backend",
         "senior-dev"
       ],
+      "homePlugin": "senior-dev",
       "install": {}
     },
     {
@@ -1252,6 +1255,7 @@
         "python-backend",
         "senior-dev"
       ],
+      "homePlugin": "senior-dev",
       "install": {}
     },
     {
@@ -1269,6 +1273,7 @@
       "includedIn": [
         "shared-context"
       ],
+      "homePlugin": "shared-context",
       "install": {}
     },
     {
@@ -1288,6 +1293,7 @@
         "senior-dev",
         "senior-dev-flutter"
       ],
+      "homePlugin": "senior-dev",
       "install": {}
     },
     {
@@ -1307,6 +1313,7 @@
         "senior-dev",
         "senior-dev-flutter"
       ],
+      "homePlugin": "senior-dev",
       "install": {}
     },
     {
@@ -1324,6 +1331,7 @@
       "includedIn": [
         "senior-dev-flutter"
       ],
+      "homePlugin": "senior-dev-flutter",
       "install": {}
     },
     {
@@ -1341,6 +1349,7 @@
       "includedIn": [
         "senior-dev-flutter"
       ],
+      "homePlugin": "senior-dev-flutter",
       "install": {
         "claude": "claude --agent senior-dev-flutter:flutter-feature-orchestrator"
       }
@@ -1360,6 +1369,7 @@
       "includedIn": [
         "senior-dev-flutter"
       ],
+      "homePlugin": "senior-dev-flutter",
       "install": {}
     },
     {
@@ -1377,6 +1387,7 @@
       "includedIn": [
         "senior-dev-flutter"
       ],
+      "homePlugin": "senior-dev-flutter",
       "install": {}
     },
     {
@@ -1394,6 +1405,7 @@
       "includedIn": [
         "senior-dev-flutter"
       ],
+      "homePlugin": "senior-dev-flutter",
       "install": {}
     },
     {
@@ -1413,6 +1425,7 @@
         "senior-dev",
         "senior-dev-flutter"
       ],
+      "homePlugin": "senior-dev",
       "install": {}
     },
     {
@@ -1430,6 +1443,7 @@
       "includedIn": [
         "python-backend"
       ],
+      "homePlugin": "python-backend",
       "install": {
         "claude": "claude --agent python-backend:python-backend-orchestrator"
       }
@@ -1451,6 +1465,7 @@
         "senior-dev",
         "senior-dev-flutter"
       ],
+      "homePlugin": "senior-dev",
       "install": {}
     },
     {
@@ -1468,6 +1483,7 @@
       "includedIn": [
         "senior-data-engineer"
       ],
+      "homePlugin": "senior-data-engineer",
       "install": {}
     },
     {
@@ -1485,6 +1501,7 @@
       "includedIn": [
         "senior-dev"
       ],
+      "homePlugin": "senior-dev",
       "install": {
         "claude": "claude --agent senior-dev:senior-dev-orchestrator"
       }
@@ -1504,6 +1521,7 @@
       "includedIn": [
         "sql-query-optimizer"
       ],
+      "homePlugin": "sql-query-optimizer",
       "install": {}
     },
     {
@@ -1523,6 +1541,7 @@
         "senior-dev",
         "senior-dev-flutter"
       ],
+      "homePlugin": "senior-dev",
       "install": {}
     },
     {
@@ -2306,6 +2325,92 @@
       ],
       "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/tools/agent-meter",
       "includedIn": [],
+      "media": [
+        {
+          "src": "/media/agent-meter/app-changes-es.png",
+          "screen": "app-changes",
+          "lang": "es",
+          "w": 1100,
+          "h": 1657
+        },
+        {
+          "src": "/media/agent-meter/app-changes.png",
+          "screen": "app-changes",
+          "lang": "en",
+          "w": 1100,
+          "h": 1657
+        },
+        {
+          "src": "/media/agent-meter/app-history-es.png",
+          "screen": "app-history",
+          "lang": "es",
+          "w": 1100,
+          "h": 1640
+        },
+        {
+          "src": "/media/agent-meter/app-history.png",
+          "screen": "app-history",
+          "lang": "en",
+          "w": 1100,
+          "h": 1640
+        },
+        {
+          "src": "/media/agent-meter/app-insights-es.png",
+          "screen": "app-insights",
+          "lang": "es",
+          "w": 1100,
+          "h": 760
+        },
+        {
+          "src": "/media/agent-meter/app-insights.png",
+          "screen": "app-insights",
+          "lang": "en",
+          "w": 1100,
+          "h": 760
+        },
+        {
+          "src": "/media/agent-meter/app-live-es.png",
+          "screen": "app-live",
+          "lang": "es",
+          "w": 1100,
+          "h": 760
+        },
+        {
+          "src": "/media/agent-meter/app-live.png",
+          "screen": "app-live",
+          "lang": "en",
+          "w": 1100,
+          "h": 760
+        },
+        {
+          "src": "/media/agent-meter/app-projects-es.png",
+          "screen": "app-projects",
+          "lang": "es",
+          "w": 1100,
+          "h": 1176
+        },
+        {
+          "src": "/media/agent-meter/app-projects.png",
+          "screen": "app-projects",
+          "lang": "en",
+          "w": 1100,
+          "h": 1176
+        },
+        {
+          "src": "/media/agent-meter/app-settings-es.png",
+          "screen": "app-settings",
+          "lang": "es",
+          "w": 1100,
+          "h": 760
+        },
+        {
+          "src": "/media/agent-meter/app-settings.png",
+          "screen": "app-settings",
+          "lang": "en",
+          "w": 1100,
+          "h": 760
+        }
+      ],
       "install": {}
     },
     {
@@ -2320,6 +2425,29 @@
       ],
       "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/tools/pr-reviewer",
       "includedIn": [],
+      "media": [
+        {
+          "src": "/media/pr-reviewer/inline-comment-command-injection.png",
+          "screen": "inline-comment-command-injection",
+          "lang": "en",
+          "w": 894,
+          "h": 553
+        },
+        {
+          "src": "/media/pr-reviewer/inline-comment-sql-injection.png",
+          "screen": "inline-comment-sql-injection",
+          "lang": "en",
+          "w": 959,
+          "h": 588
+        },
+        {
+          "src": "/media/pr-reviewer/summary-comment.png",
+          "screen": "summary-comment",
+          "lang": "en",
+          "w": 948,
+          "h": 548
+        }
+      ],
       "install": {}
     }
   ]

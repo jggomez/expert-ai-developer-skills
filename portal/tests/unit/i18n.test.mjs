@@ -44,3 +44,34 @@ describe('bilingual content', () => {
     expect(() => itemText('es', 'skill/does-not-exist')).toThrow(/Missing es translation/);
   });
 });
+
+describe('tools showcase', async () => {
+  const { existsSync } = await import('node:fs');
+  const { resolve } = await import('node:path');
+  const { TOOLS, screenMedia } = await import('../../src/lib/site.mjs');
+  const SOURCE = resolve(import.meta.dirname, '..', '..', '..', 'tools');
+
+  it.each(Object.keys(TOOLS))('%s has a screenshot and ES/EN captions for every screen', (slug) => {
+    const item = getItem(`tool/${slug}`);
+    expect(item, slug).toBeDefined();
+    for (const screen of TOOLS[slug].screens) {
+      for (const lang of LANGS) {
+        const media = screenMedia(item, screen.id, lang);
+        expect(media, `${slug} ${screen.id} ${lang}`).toBeDefined();
+        expect(existsSync(resolve(SOURCE, slug, 'docs', 'images', media.src.split('/').pop()))).toBe(true);
+        expect(screen.name[lang] && screen.caption[lang]).toBeTruthy();
+      }
+    }
+  });
+
+  it('shows the Spanish agent-meter screenshot on Spanish pages', () => {
+    const item = getItem('tool/agent-meter');
+    expect(screenMedia(item, 'app-live', 'es').src).toBe('/media/agent-meter/app-live-es.png');
+    expect(screenMedia(item, 'app-live', 'en').src).toBe('/media/agent-meter/app-live.png');
+  });
+
+  it('pins Python 3.12 in the agent-meter install command', () => {
+    const commands = TOOLS['agent-meter'].steps.map((s) => s.command).filter(Boolean);
+    expect(commands[0]).toMatch(/^uv tool install --python 3\.12 /);
+  });
+});

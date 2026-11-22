@@ -6,7 +6,7 @@
  *
  * Usage: node scripts/build-catalog.mjs [--repo <path>] [--out <path>]
  */
-import { existsSync, readdirSync, readFileSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse as parseYaml } from 'yaml';
@@ -71,6 +71,33 @@ function clean(text) {
   return String(text ?? '').replace(/\s+/g, ' ').trim();
 }
 
+/** Width and height of a PNG, read from its IHDR chunk. */
+export function pngSize(file) {
+  const head = readFileSync(file).subarray(0, 24);
+  if (head.toString('ascii', 1, 4) !== 'PNG') throw new Error(`Not a PNG: ${file}`);
+  return { w: head.readUInt32BE(16), h: head.readUInt32BE(20) };
+}
+
+/**
+ * Screenshots of a standalone tool (tools/<slug>/docs/images/*.png). Files ending in `-es` are the Spanish
+ * version of the same screen. When `mediaOut` is set, files are copied to `<mediaOut>/<slug>/`.
+ */
+export function collectMedia(repo, slug, mediaOut) {
+  const dir = join(repo, 'tools', slug, 'docs', 'images');
+  const media = [];
+  for (const file of listFiles(dir, '.png')) {
+    const base = basename(file, '.png');
+    const lang = base.endsWith('-es') ? 'es' : 'en';
+    const screen = base.replace(/-es$/, '');
+    media.push({ src: `/media/${slug}/${file}`, screen, lang, ...pngSize(join(dir, file)) });
+    if (mediaOut) {
+      mkdirSync(join(mediaOut, slug), { recursive: true });
+      copyFileSync(join(dir, file), join(mediaOut, slug, file));
+    }
+  }
+  return media;
+}
+
 /** Reads every plugin for both hosts and returns a map name -> plugin record. */
 function collectPlugins(repo) {
   const plugins = new Map();
@@ -104,7 +131,7 @@ function collectPlugins(repo) {
 }
 
 /** Builds the full catalog object for the repository at `repo`. */
-export function buildCatalog(repo) {
+export function buildCatalog(repo, { mediaOut = null } = {}) {
   const plugins = collectPlugins(repo);
   const items = [];
   const pluginsWith = (key, value) =>
@@ -159,8 +186,9 @@ export function buildCatalog(repo) {
       for (const file of listFiles(join(repo, 'plugins', host, p.name, 'agents'), '.md')) {
         const slug = basename(file, '.md');
         const path = `plugins/${host}/${p.name}/agents/${file}`;
-        const entry = agentSeen.get(slug) ?? { slug, path, description: '', model: '', plugins: new Set(), hosts: new Set() };
+        const entry = agentSeen.get(slug) ?? { slug, path, description: '', model: '', plugins: new Set(), claudePlugins: new Set(), hosts: new Set() };
         entry.plugins.add(p.name);
+        if (host === 'claude') entry.claudePlugins.add(p.name);
         entry.hosts.add(host);
         if (!entry.description || host === 'claude') {
           const { data } = readFrontmatter(join(repo, path));
@@ -176,6 +204,7 @@ export function buildCatalog(repo) {
   }
   for (const a of [...agentSeen.values()].sort((x, y) => x.slug.localeCompare(y.slug))) {
     const owners = [...a.plugins].sort();
+    const home = [...a.claudePlugins].sort()[0] ?? owners[0];
     const isOrchestrator = a.slug.endsWith('orchestrator');
     items.push({
       id: `agent/${a.slug}`,
@@ -187,7 +216,8 @@ export function buildCatalog(repo) {
       hosts: [...a.hosts].sort(),
       source: `${GITHUB_BLOB}/${a.path}`,
       includedIn: owners,
-      install: isOrchestrator ? { claude: `claude --agent ${owners[0]}:${a.slug}` } : {},
+      homePlugin: home,
+      install: isOrchestrator ? { claude: `claude --agent ${home}:${a.slug}` } : {},
     });
   }
 
@@ -288,6 +318,7 @@ export function buildCatalog(repo) {
       hosts: ['antigravity', 'claude'],
       source: `${GITHUB_TREE}/tools/${slug}`,
       includedIn: [],
+      media: collectMedia(repo, slug, mediaOut),
       install: {},
     });
   }
@@ -305,7 +336,9 @@ function main() {
   };
   const repo = flag('--repo', resolve(HERE, '..', '..'));
   const out = flag('--out', resolve(HERE, '..', 'src', 'data', 'catalog.json'));
-  const catalog = buildCatalog(repo);
+  const mediaOut = resolve(HERE, '..', 'public', 'media');
+  rmSync(mediaOut, { recursive: true, force: true });
+  const catalog = buildCatalog(repo, { mediaOut });
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, `${JSON.stringify(catalog, null, 2)}\n`);
   console.log(`catalog: ${catalog.items.length} items ${JSON.stringify(catalog.counts)} -> ${out}`);

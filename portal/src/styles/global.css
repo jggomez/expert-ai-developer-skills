@@ -112,6 +112,7 @@ code, kbd, pre { font-family: var(--mono); }
   white-space: pre-wrap; overflow-wrap: anywhere; padding: 8px 0;
 }
 .cmd code::before { content: '$ '; color: #7f8db0; }
+.cmd--long code { white-space: nowrap; overflow-x: auto; overflow-wrap: normal; scrollbar-width: thin; scrollbar-color: #3a4a70 transparent; }
 .cmd button {
   flex: none; min-height: 36px; padding: 0 12px; border-radius: 7px; cursor: pointer;
   border: 1px solid #3a4a70; background: transparent; color: #e8ecf6;

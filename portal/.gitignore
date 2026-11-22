@@ -4,3 +4,4 @@ dist/
 .firebase/
 test-results/
 playwright-report/
+public/media/

@@ -3,7 +3,7 @@
 interface Props { command: string; copy: string; copied: string }
 const { command, copy, copied } = Astro.props;
 ---
-<div class="cmd">
+<div class="cmd" class:list={[{ 'cmd--long': command.length > 90 }]}>
   <code>{command}</code>
   <button type="button" data-copy={command} data-label={copy} data-done-label={copied}>{copy}</button>
 </div>

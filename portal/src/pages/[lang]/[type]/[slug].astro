@@ -2,7 +2,9 @@
 import Base from '../../../layouts/Base.astro';
 import Cmd from '../../../components/Cmd.astro';
 import Glyph from '../../../components/Glyph.astro';
-import { HOST_LABELS, LANGS, UI, catalogItems, getItem, itemText, itemUrl, kindLabel } from '../../../lib/site.mjs';
+import ScreenViewer from '../../../components/ScreenViewer.astro';
+import ToolInstall from '../../../components/ToolInstall.astro';
+import { HOST_LABELS, LANGS, TOOLS, UI, catalogItems, getItem, itemText, itemUrl, kindLabel } from '../../../lib/site.mjs';
 
 export function getStaticPaths() {
   return LANGS.flatMap((lang) =>
@@ -34,7 +36,8 @@ if (item.type === 'plugin') {
 }
 if (item.type === 'skill') commands.push({ label: 'Agent Skills CLI', command: item.install.skills });
 if (item.type === 'agent' && item.install.claude) commands.push({ label: HOST_LABELS.claude, command: item.install.claude });
-const firstParent = parents[0];
+const firstParent = item.homePlugin ? getItem(`plugin/${item.homePlugin}`) : parents[0];
+const isTool = item.type === 'tool' && Boolean(TOOLS[item.slug]);
 ---
 <Base lang={lang} path={path} title={text.title} description={text.summary}>
   <article class="wrap detail" data-kind={item.type}>
@@ -56,6 +59,13 @@ const firstParent = parents[0];
           <h2>{t.whenToUse}</h2>
           <p>{text.use}</p>
         </section>
+
+        {isTool && (
+          <section>
+            <h2>{t.screens}</h2>
+            <ScreenViewer lang={lang} item={item} eager />
+          </section>
+        )}
 
         {children.map((group) => (
           <section>
@@ -85,7 +95,9 @@ const firstParent = parents[0];
       <aside class="detail__side">
         <div class="side__block">
           <h2>{t.howToGet}</h2>
-          {commands.length > 0 ? (
+          {isTool ? (
+            <ToolInstall lang={lang} slug={item.slug} />
+          ) : commands.length > 0 ? (
             <div class="side__cmds">
               {commands.map((c) => (
                 <>
