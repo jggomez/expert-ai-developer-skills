@@ -1,0 +1,15 @@
+---
+/** Small geometric mark per item kind: the shape tells the kind apart without relying on color alone. */
+interface Props { kind: string; size?: number }
+const { kind, size = 14 } = Astro.props;
+---
+<svg class="glyph" data-kind={kind} width={size} height={size} viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
+  {kind === 'plugin' && <rect x="1.5" y="1.5" width="13" height="13" rx="3" />}
+  {kind === 'agent' && <circle cx="8" cy="8" r="6.5" />}
+  {kind === 'skill' && <path d="M8 1.5 14.8 14H1.2Z" />}
+  {kind === 'hook' && <path d="M5 1.5h3v7.25a2.25 2.25 0 1 0 4.5 0V6.5h3v2.25a5.25 5.25 0 1 1-10.5 0Z" />}
+  {kind === 'rule' && <><rect x="1" y="3" width="14" height="3.2" rx="1" /><rect x="1" y="9.8" width="9" height="3.2" rx="1" /></>}
+  {kind === 'workflow' && <path d="M1.5 2h4.5l5 6-5 6H1.5l5-6Zm7 0H11l4.5 6-4.5 6H8.5l4.5-6Z" />}
+  {kind === 'sidecar' && <path fill-rule="evenodd" d="M8 1.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13Zm0 3.25a3.25 3.25 0 1 0 0 6.5 3.25 3.25 0 0 0 0-6.5Z" />}
+  {kind === 'tool' && <path d="M8 1 15 8 8 15 1 8Z" />}
+</svg>

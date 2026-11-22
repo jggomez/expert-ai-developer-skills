@@ -7,6 +7,8 @@
 [![Google Antigravity](https://img.shields.io/badge/Google%20Antigravity-plugins-4285F4.svg)](plugins/README.md)
 [![Agent Skills](https://img.shields.io/badge/skills-agentskills.io-6E40C9.svg)](skills/README.md)
 
+**Browse the catalog in English or Spanish: [senior-ai-dev-kit.web.app](https://senior-ai-dev-kit.web.app)**
+
 Senior AI Dev Kit ships the same engineering workflow for two hosts, **Claude Code** and **Google Antigravity**. An orchestrator agent triages each task by risk, delegates to specialist subagents (product, design, architecture, implementation, QA, review), and only ships when tests pass and reviewers approve. Lifecycle hooks enforce the rules, so they do not depend on the model remembering them.
 
 ## What's inside

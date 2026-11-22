@@ -1,0 +1,190 @@
+---
+import Base from '../../layouts/Base.astro';
+import Pipeline from '../../components/Pipeline.astro';
+import Catalog from '../../components/Catalog.astro';
+import Cmd from '../../components/Cmd.astro';
+import Glyph from '../../components/Glyph.astro';
+import { KINDS, KIND_BLURBS, LANGS, UI, counts, kindLabel, marketplace, repoSlug } from '../../lib/site.mjs';
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as 'es' | 'en';
+const t = UI[lang];
+
+const plan = lang === 'es'
+  ? {
+      file: 'docs/user-auth/PLAN.md',
+      change: 'Inicio de sesión con Google',
+      tier: 'Nivel 2, estándar',
+      rows: [
+        ['product-analyst', 'Omitir', 'El alcance ya está claro'],
+        ['architect-engineer', 'Llamar', 'Nueva tabla de sesiones'],
+        ['code-implementer', 'Llamar', 'Dos tracks en paralelo'],
+        ['qa-tester', 'Llamar', 'Suite completa, una vez'],
+      ],
+      proof: 'pytest tests/ terminó con exit code 0',
+    }
+  : {
+      file: 'docs/user-auth/PLAN.md',
+      change: 'Sign in with Google',
+      tier: 'Tier 2, standard',
+      rows: [
+        ['product-analyst', 'Skip', 'Scope is already clear'],
+        ['architect-engineer', 'Invoke', 'New sessions table'],
+        ['code-implementer', 'Invoke', 'Two parallel tracks'],
+        ['qa-tester', 'Invoke', 'Full suite, once'],
+      ],
+      proof: 'pytest tests/ finished with exit code 0',
+    };
+const skipWord = lang === 'es' ? 'Omitir' : 'Skip';
+---
+<Base lang={lang} path={`/${lang}/`}>
+  <section class="hero">
+    <div class="wrap hero__in">
+      <div class="hero__copy">
+        <h1>{t.heroTitle}</h1>
+        <p class="hero__lead">{t.heroLead}</p>
+        <div class="hero__cta">
+          <a class="btn btn--primary" href="#catalogo">{lang === 'es' ? 'Explorar el catálogo' : 'Browse the catalog'}</a>
+          <a class="btn" href="#instalar">{lang === 'es' ? 'Instalar en 1 minuto' : 'Install in a minute'}</a>
+        </div>
+      </div>
+
+      <figure class="plan" aria-label={lang === 'es' ? 'Ejemplo del plan que escribe el orquestador' : 'Example of the plan the orchestrator writes'}>
+        <div class="plan__bar">
+          <span class="plan__file">{plan.file}</span>
+        </div>
+        <div class="plan__body">
+          <p class="plan__change"><code>C-01</code>{plan.change}</p>
+          <p class="plan__tier">{plan.tier}</p>
+          <table>
+            <tbody>
+              {plan.rows.map(([agent, decision, why]) => (
+                <tr class={decision === skipWord ? 'is-skip' : ''}>
+                  <th scope="row"><Glyph kind="agent" size={10} />{agent}</th>
+                  <td class="plan__decision">{decision}</td>
+                  <td class="plan__why">{why}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p class="plan__proof"><span aria-hidden="true"></span>{plan.proof}</p>
+        </div>
+        <figcaption>{lang === 'es' ? 'El orquestador decide qué especialistas llamar y no cierra la tarea sin una prueba en verde.' : 'The orchestrator decides which specialists to call and does not close the task without a green test run.'}</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <Pipeline lang={lang} />
+
+  <section class="section inside" aria-labelledby="inside-title">
+    <div class="wrap">
+      <div class="section__head">
+        <h2 id="inside-title">{t.insideTitle}</h2>
+      </div>
+      <ul class="kinds">
+        {KINDS.map((kind) => (
+          <li data-kind={kind}>
+            <a href={`?kind=${kind}#catalogo`} data-set-kind={kind}>
+              <span class="kinds__head"><Glyph kind={kind} size={16} /><strong>{counts[kind]} {kindLabel(lang, kind, counts[kind])}</strong></span>
+              <span class="kinds__blurb">{KIND_BLURBS[lang][kind]}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <Catalog lang={lang} />
+
+  <section class="section install" id="instalar" aria-labelledby="install-title">
+    <div class="wrap">
+      <div class="section__head">
+        <h2 id="install-title">{t.installTitle}</h2>
+        <p>{t.installLead}</p>
+      </div>
+      <div class="install__grid">
+        <div class="install__box">
+          <h3>{t.installClaude}</h3>
+          <Cmd command={`claude plugin marketplace add ${repoSlug}`} copy={t.copy} copied={t.copied} />
+          <Cmd command={`claude plugin install senior-dev@${marketplace}`} copy={t.copy} copied={t.copied} />
+          <Cmd command="claude --agent senior-dev:senior-dev-orchestrator" copy={t.copy} copied={t.copied} />
+        </div>
+        <div class="install__box">
+          <h3>{t.installAntigravity}</h3>
+          <Cmd command={`git clone https://github.com/${repoSlug}.git`} copy={t.copy} copied={t.copied} />
+          <Cmd command="cd expert-ai-developer-skills" copy={t.copy} copied={t.copied} />
+          <Cmd command="agy plugin install ./plugins/antigravity/senior-dev" copy={t.copy} copied={t.copied} />
+        </div>
+        <div class="install__box">
+          <h3>{t.installSkills}</h3>
+          <Cmd command={`npx skills add ${repoSlug} --list`} copy={t.copy} copied={t.copied} />
+          <Cmd command={`npx skills add ${repoSlug} --skill python-expert`} copy={t.copy} copied={t.copied} />
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero { padding-block: clamp(48px, 9vw, 112px) clamp(48px, 7vw, 88px); }
+  .hero__in { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 56px; align-items: center; }
+  .hero h1 { font-size: clamp(2.4rem, 1.5rem + 3.4vw, 4.4rem); font-weight: 750; letter-spacing: -0.04em; line-height: 1; max-width: 17ch; text-wrap: balance; }
+  .hero__lead { margin-top: 28px; font-size: var(--step-1); color: var(--muted); max-width: 52ch; }
+  .hero__cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 32px; }
+
+  .plan {
+    margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+    box-shadow: 0 1px 0 var(--line), 0 24px 48px -28px rgb(27 42 74 / 0.35);
+    overflow: hidden; transform: rotate(-1deg);
+    animation: plan-in .7s cubic-bezier(.2, .7, .2, 1) both .1s;
+  }
+  @keyframes plan-in { from { opacity: 0; transform: translateY(16px) rotate(-1deg); } }
+  .plan__bar { display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-bottom: 1px solid var(--line); background: var(--bg); }
+  .plan__file { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); }
+  .plan__body { padding: 20px 18px 18px; }
+  .plan__change code { font-size: 0.75rem; font-weight: 500; color: var(--muted); border: 1px solid var(--line-strong); border-radius: 5px; padding: 2px 6px; margin-right: 10px; vertical-align: 2px; }
+  .plan__change { font-weight: 700; color: var(--ink-strong); font-size: var(--step-1); letter-spacing: -0.01em; }
+  .plan__tier { display: inline-block; margin-top: 8px; font-size: 0.8125rem; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: 4px 10px; border-radius: 999px; }
+  .plan table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 0.8125rem; }
+  .plan th, .plan td { text-align: left; padding: 9px 0; border-top: 1px solid var(--line); vertical-align: baseline; }
+  .plan th { font-family: var(--mono); font-weight: 500; color: var(--ink-strong); white-space: nowrap; }
+  .plan th :global(.glyph) { display: inline-block; margin-right: 6px; vertical-align: -1px; }
+  .plan__decision { font-weight: 600; color: var(--k-agent); padding-inline: 12px !important; }
+  .plan__why { color: var(--muted); }
+  .plan tr.is-skip th, .plan tr.is-skip .plan__decision { color: var(--muted); }
+  .plan tr.is-skip th { text-decoration: line-through; text-decoration-color: var(--line-strong); }
+  .plan__proof {
+    display: flex; align-items: center; gap: 8px; margin-top: 14px; padding: 10px 12px;
+    border-radius: var(--r-sm); background: #eaf6f1; color: #0b5d50; font-family: var(--mono); font-size: 0.75rem;
+  }
+  .plan__proof span { width: 8px; height: 8px; border-radius: 50%; background: #10a37f; flex: none; }
+  .plan figcaption { padding: 0 18px 18px; color: var(--muted); font-size: 0.8125rem; }
+
+  .kinds { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+  .kinds li { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .kinds a { display: grid; gap: 10px; align-content: start; height: 100%; padding: 22px 20px 26px; text-decoration: none; transition: background .15s; }
+  .kinds a:hover { background: var(--surface); }
+  .kinds__head { display: inline-flex; align-items: center; gap: 10px; color: var(--ink-strong); font-size: var(--step-1); }
+  .kinds__head strong { font-weight: 650; letter-spacing: -0.01em; }
+  .kinds__blurb { color: var(--muted); font-size: 0.9375rem; }
+
+  .install { background: var(--surface); border-top: 1px solid var(--line); }
+  .install__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
+  .install__box { display: grid; gap: 8px; align-content: start; min-width: 0; }
+  .install__box h3 { font-size: var(--step-1); font-weight: 650; margin-bottom: 6px; letter-spacing: -0.01em; }
+
+  @media (max-width: 1000px) {
+    .hero__in { grid-template-columns: 1fr; gap: 48px; }
+    .plan { max-width: 560px; transform: none; animation-name: plan-in-flat; }
+    @keyframes plan-in-flat { from { opacity: 0; transform: translateY(16px); } }
+    .kinds { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .install__grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 520px) {
+    .kinds { grid-template-columns: 1fr; }
+    .plan__why { display: none; }
+  }
+</style>

@@ -1,0 +1,147 @@
+---
+import Glyph from './Glyph.astro';
+import { PIPELINE, UI, getItem, itemText, itemUrl } from '../lib/site.mjs';
+
+interface Props { lang: 'es' | 'en' }
+const { lang } = Astro.props;
+const t = UI[lang];
+---
+<section class="section flow" id="flujo" aria-labelledby="flow-title">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 id="flow-title">{t.flowTitle}</h2>
+      <p>{t.flowLead}</p>
+    </div>
+
+    <div class="flow__track" role="tablist" aria-label={t.flowTitle} style={`--phases:${PIPELINE.length}`}>
+      <span class="flow__rail" aria-hidden="true"><span class="flow__fill"></span></span>
+      {PIPELINE.map((phase, i) => (
+        <button
+          class="flow__step"
+          role="tab"
+          id={`tab-${phase.key}`}
+          aria-controls={`panel-${phase.key}`}
+          aria-selected={i === 0 ? 'true' : 'false'}
+          tabindex={i === 0 ? 0 : -1}
+          data-index={i}
+          type="button"
+        >
+          <span class="flow__dot" aria-hidden="true">{i + 1}</span>
+          <span class="flow__name">{phase.name[lang]}</span>
+        </button>
+      ))}
+    </div>
+
+    {PIPELINE.map((phase, i) => (
+      <div class="flow__panel" role="tabpanel" id={`panel-${phase.key}`} aria-labelledby={`tab-${phase.key}`} hidden={i !== 0}>
+        <p class="flow__text">{phase.text[lang]}</p>
+        <ul class="flow__items">
+          {phase.ids.map((id) => {
+            const item = getItem(id);
+            return (
+              <li>
+                <a href={itemUrl(lang, item)} data-kind={item.type}>
+                  <Glyph kind={item.type} />
+                  <span>{itemText(lang, id).title}</span>
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    ))}
+  </div>
+</section>
+
+<script>
+  function initPipeline() {
+    const track = document.querySelector<HTMLElement>('.flow__track');
+    if (!track || track.dataset.ready) return;
+    track.dataset.ready = '1';
+    const tabs = [...track.querySelectorAll<HTMLButtonElement>('.flow__step')];
+    const select = (index: number, focus = false) => {
+      tabs.forEach((tab, i) => {
+        const on = i === index;
+        tab.setAttribute('aria-selected', String(on));
+        tab.tabIndex = on ? 0 : -1;
+        tab.classList.toggle('is-past', i < index);
+        const panel = document.getElementById(tab.getAttribute('aria-controls') ?? '');
+        if (panel) panel.hidden = !on;
+      });
+      track.style.setProperty('--progress', String(index / (tabs.length - 1)));
+      if (focus) tabs[index].focus();
+    };
+    tabs.forEach((tab, i) => tab.addEventListener('click', () => select(i)));
+    track.addEventListener('keydown', (event) => {
+      const current = tabs.findIndex((tab) => tab.getAttribute('aria-selected') === 'true');
+      const moves: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+      if (event.key in moves) {
+        event.preventDefault();
+        select((current + moves[event.key] + tabs.length) % tabs.length, true);
+      } else if (event.key === 'Home') {
+        event.preventDefault();
+        select(0, true);
+      } else if (event.key === 'End') {
+        event.preventDefault();
+        select(tabs.length - 1, true);
+      }
+    });
+    select(0);
+  }
+  initPipeline();
+  document.addEventListener('astro:page-load', initPipeline);
+</script>
+
+<style>
+  .flow { background: var(--surface); border-block: 1px solid var(--line); }
+  .flow__track {
+    --progress: 0;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(var(--phases), 1fr);
+    margin-bottom: 36px;
+  }
+  .flow__rail {
+    position: absolute; left: calc(100% / var(--phases) / 2); right: calc(100% / var(--phases) / 2);
+    top: 21px; height: 2px; background: var(--line);
+  }
+  .flow__fill {
+    position: absolute; inset: 0; background: var(--accent);
+    transform-origin: left; transform: scaleX(var(--progress));
+    transition: transform .45s cubic-bezier(.2, .7, .2, 1);
+  }
+  .flow__step {
+    position: relative; display: grid; justify-items: center; gap: 12px;
+    background: none; border: 0; padding: 0 4px; cursor: pointer; font: inherit; color: var(--muted);
+  }
+  .flow__dot {
+    display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+    background: var(--surface); border: 2px solid var(--line-strong);
+    font: 600 var(--step--1)/1 var(--font); color: var(--muted);
+    transition: background .25s, border-color .25s, color .25s, transform .25s;
+  }
+  .flow__name { font-weight: 600; font-size: var(--step-0); }
+  .flow__step:hover .flow__dot { border-color: var(--ink); color: var(--ink); }
+  .flow__step.is-past .flow__dot { border-color: var(--accent); color: var(--accent); }
+  .flow__step[aria-selected='true'] { color: var(--ink-strong); }
+  .flow__step[aria-selected='true'] .flow__dot {
+    background: var(--accent); border-color: var(--accent); color: #fff; transform: scale(1.08);
+  }
+  .flow__panel { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 24px 56px; align-items: start; }
+  .flow__panel[hidden] { display: none; }
+  .flow__text { font-size: var(--step-1); line-height: 1.5; color: var(--ink); max-width: 46ch; }
+  .flow__items { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .flow__items a {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 40px;
+    padding: 0 14px; border-radius: 999px; text-decoration: none;
+    background: var(--bg); border: 1px solid var(--line); color: var(--ink-strong); font-weight: 500; font-size: var(--step--1);
+    transition: border-color .15s, background .15s;
+  }
+  .flow__items a:hover { border-color: var(--kind); background: var(--surface); }
+  @media (max-width: 760px) {
+    .flow__panel { grid-template-columns: 1fr; }
+    .flow__name { font-size: 0.8rem; }
+    .flow__dot { width: 36px; height: 36px; }
+    .flow__rail { top: 17px; }
+  }
+</style>

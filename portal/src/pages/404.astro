@@ -1,0 +1,24 @@
+---
+import Base from '../layouts/Base.astro';
+import { UI } from '../lib/site.mjs';
+const t = UI.es;
+const e = UI.en;
+---
+<Base lang="es" path="/es/" title={t.notFoundTitle}>
+  <section class="wrap nf">
+    <h1>{t.notFoundTitle}</h1>
+    <p>{t.notFoundLead}</p>
+    <p lang="en" class="nf__en">{e.notFoundTitle}. {e.notFoundLead}</p>
+    <div class="nf__cta">
+      <a class="btn btn--primary" href="/es/#catalogo">{t.backToCatalog}</a>
+      <a class="btn" href="/en/#catalogo" lang="en">{e.backToCatalog}</a>
+    </div>
+  </section>
+</Base>
+<style>
+  .nf { padding-block: clamp(64px, 12vw, 160px); max-width: 760px; }
+  .nf h1 { font-size: var(--step-4); font-weight: 750; letter-spacing: -0.04em; }
+  .nf p { margin-top: 20px; font-size: var(--step-1); }
+  .nf__en { color: var(--muted); }
+  .nf__cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 32px; }
+</style>

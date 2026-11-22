@@ -1,0 +1,9 @@
+---
+/** A shell command with a copy button. Copy logic lives in Base.astro (one delegated listener). */
+interface Props { command: string; copy: string; copied: string }
+const { command, copy, copied } = Astro.props;
+---
+<div class="cmd">
+  <code>{command}</code>
+  <button type="button" data-copy={command} data-label={copy} data-done-label={copied}>{copy}</button>
+</div>

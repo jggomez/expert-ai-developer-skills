@@ -1,0 +1,22 @@
+{
+  "name": "senior-ai-dev-kit-portal",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "catalog": "node scripts/build-catalog.mjs",
+    "dev": "npm run catalog && astro dev",
+    "build": "npm run catalog && astro build",
+    "preview": "node tests/e2e/serve.mjs",
+    "test": "npm run catalog && vitest run",
+    "e2e": "playwright test",
+    "deploy": "npm run build && firebase deploy --only hosting --project senior-ai-dev-kit"
+  },
+  "dependencies": {
+    "astro": "^7.4.13"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "vitest": "^5.1.1",
+    "yaml": "^2.9.1"
+  }
+}
