@@ -81,7 +81,7 @@ momento (`agent-meter sync --full-reload`).
 
 ```bash
 # 1) Instalar (necesitas uv: https://docs.astral.sh/uv/)
-uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+uv tool install --python 3.12 "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 
 # 2) Configurar una sola vez: detecta Claude Code / Antigravity e importa tu historial
 agent-meter setup --local
@@ -125,38 +125,38 @@ quieras números frescos.
 
 ## 4. Instalación
 
-**Requisitos:** macOS, Linux o Windows (PowerShell/CMD o WSL2), Python ≥ 3.11 (`uv` lo instala por ti) y `uv` o `pipx`.
+**Requisitos:** macOS, Linux o Windows (PowerShell/CMD o WSL2), Python ≥ 3.11 y `uv` o `pipx`. Deja `--python 3.12` en los comandos de abajo: sin él, `uv` usa el primer Python que encuentra y uno viejo (como el 3.10 de macOS) hace fallar la instalación. Con él, `uv` descarga 3.12 si no lo tienes.
 
 ### 4.1 Desde GitHub (recomendado)
 
 ```bash
 # Solo modo local
-uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+uv tool install --python 3.12 "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 
 # Local + soporte para BigQuery (opción B)
-uv tool install "agent-meter[bigquery] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+uv tool install --python 3.12 "agent-meter[bigquery] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 
 # Con la app de escritorio (agent-meter app)
-uv tool install "agent-meter[app] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+uv tool install --python 3.12 "agent-meter[app] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 
 # Lo mismo con pipx
 pipx install --python python3.12 "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 ```
 
-Para instalar desde una rama específica (por ejemplo, antes de unirla a `main`), agrega `@<rama>` justo después de la URL
+Para instalar una versión, tag o rama concreta, agrega `@<ref>` justo después de la URL
 del repositorio:
 
 ```bash
-uv tool install "agent-meter[bigquery] @ git+https://github.com/jggomez/expert-ai-developer-skills@feature/agent-metrics#subdirectory=tools/agent-meter"
+uv tool install --python 3.12 "agent-meter[bigquery] @ git+https://github.com/jggomez/expert-ai-developer-skills@agent-meter-v0.1.0#subdirectory=tools/agent-meter"
 ```
 
 ### 4.2 Desde una copia local del repositorio
 
 ```bash
 cd /ruta/a/expert-ai-developer-skills
-uv tool install "./tools/agent-meter"               # modo local
-uv tool install "./tools/agent-meter[bigquery]"     # con soporte para BigQuery
-uv tool install "./tools/agent-meter[app]"          # con la app de escritorio (agent-meter app)
+uv tool install --python 3.12 "./tools/agent-meter"               # modo local
+uv tool install --python 3.12 "./tools/agent-meter[bigquery]"     # con soporte para BigQuery
+uv tool install --python 3.12 "./tools/agent-meter[app]"          # con la app de escritorio (agent-meter app)
 ```
 
 ### 4.3 Verificar, actualizar o quitar el programa

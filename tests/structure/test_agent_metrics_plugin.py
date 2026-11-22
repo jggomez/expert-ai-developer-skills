@@ -36,7 +36,7 @@ SETTINGS_MERGE = os.path.join(
 WRAPPER_REL = os.path.join("hooks", "agent-meter-hook.js")
 REPO_URL = "https://github.com/jggomez/expert-ai-developer-skills"
 STALE_REPO_URL = "github.com/jggomez/skills-programming-ai"
-UV_INSTALL = f'uv tool install "git+{REPO_URL}#subdirectory=tools/agent-meter"'
+UV_INSTALL = f'uv tool install --python 3.12 "git+{REPO_URL}#subdirectory=tools/agent-meter"'
 INSTALL_HINT_PREFIX = "agent-meter not installed: see "
 HOST_TIMEOUT_S = 10
 

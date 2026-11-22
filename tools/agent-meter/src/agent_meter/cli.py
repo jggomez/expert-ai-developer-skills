@@ -316,7 +316,7 @@ def _cmd_app(ctx: Ctx, _ns: argparse.Namespace) -> int:
     except ModuleNotFoundError as exc:
         if exc.name != "webview":
             raise
-        ctx.err("the desktop app needs an extra package: uv tool install 'agent-meter[app]'")
+        ctx.err("the desktop app needs an extra package: uv tool install --python 3.12 'agent-meter[app] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter'")
         return EXIT_ERROR
     return EXIT_OK
 
