@@ -1,6 +1,6 @@
 ---
 name: documentation-expert
-description: Author and validate Zero-Fluff technical documentation, root AGENTS.md, Google DESIGN.md alignment, Diátaxis guides, and Mermaid diagrams with strict conciseness caps and relative link verification.
+description: "Use when writing or cleaning up technical docs: root AGENTS.md, DESIGN.md alignment, Diátaxis guides and Mermaid diagrams, kept short and with checked relative links."
 ---
 
 # Documentation Expert Skill
@@ -46,7 +46,6 @@ python3 ./skills/documentation-expert/scripts/validate_docs.py
 
 ### Host Execution Instructions
 - **Claude Code**: Run `validate_docs.py` via Bash after authoring or editing markdown docs.
-- **Antigravity**: Verify Mermaid quoting, line caps, and relative links via `validate_docs.py`.
 
 ## Red Flags
 - Bloated prose walls exceeding artifact line budgets (`AGENTS.md > 90`, `DESIGN.md > 110`, reports `> 50` lines).

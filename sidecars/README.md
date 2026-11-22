@@ -17,6 +17,8 @@ This directory contains generic, highly reusable sidecar configurations that can
 
 ## 2. Installation Guide
 
+Sidecars are **manual installs**: no plugin in this repo ships or registers them, so nothing runs until you copy a folder as shown below.
+
 To register these sidecars in your Antigravity environment, you can install them as **Global Sidecars** or **Plugin Sidecars**.
 
 ### 2.1 Installing as Global Sidecars
@@ -56,7 +58,12 @@ Runs every hour (`0 * * * *`). It launches a new Antigravity conversation and in
 Runs every 30 minutes (`*/30 * * * *`). It launches a conversation instructing the agent to list all pending review assignments from GitHub/GitLab, keeping the developer informed of incoming work.
 
 ### `workspace-daemon` (Continuous Process)
-A persistent file-watching background daemon. If files are changed, it executes static checks and formats code automatically. Antigravity will automatically restart this script if it exits.
+A persistent background daemon. Every 5 seconds it looks for changed `.py` files under `WORKSPACE_ROOT` and runs `ruff format` and `ruff check --fix` on them. Files that were already there unchanged are never touched.
+
+- `WORKSPACE_ROOT` is required; without it the daemon exits with code 2 instead of guessing a folder.
+- The log goes to `~/.cache/workspace-daemon/workspace_daemon.log` (override with `WORKSPACE_DAEMON_STATE`), never into your project.
+- Lint that ruff cannot fix is logged as "issues remain", not as a failure. If `ruff` is not installed it logs a warning and skips.
+- It rewrites files on disk, so only use it on projects where automatic formatting is welcome.
 
 ---
 

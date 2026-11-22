@@ -1,6 +1,6 @@
 ---
 name: flutter-test-strategy
-description: Use when deciding what to test in a Flutter/Dart codebase across unit, widget, golden, and integration layers, authoring concise IEEE/ISTQB test-matrix.md (<= 80 lines), and enforcing fail-honest coverage gates.
+description: "Use when deciding what to test in a Flutter or Dart codebase across unit, widget, golden and integration layers, writing a short test matrix (at most 80 lines), and enforcing honest coverage gates."
 ---
 
 # Flutter Test Strategy

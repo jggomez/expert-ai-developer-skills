@@ -1,3 +1,7 @@
+---
+description: Use after the spec and before code to break the work into tracks, phases and checks in PLAN.md.
+---
+
 # Workflow: Plan How to Build It (/plan)
 
 **Command**: `/plan`  

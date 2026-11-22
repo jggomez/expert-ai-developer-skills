@@ -58,7 +58,6 @@ Measured on real runs: 92% of test commands were piped into a filter, up to 38% 
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default`. You execute directly on the workspace filesystem (no container sandbox).
 - **Tool Mapping**:
-  - In **Google Antigravity**: Use `Bash` for terminal commands (test runners, linters, git status), and `Edit` / `Write` for surgical file modifications.
   - In **Claude Code**: Use `Bash` for shell command execution, and `Edit` / `Write` for file modifications.
 - Keep file changes surgical and strictly preserve unrelated comments, docstrings, and formatting.
 

@@ -43,7 +43,7 @@ python3 ./skills/bigquery-query-optimization/scripts/lint_sql_query.py queries/
 # Verify byte scan reduction via BigQuery dry-run
 bq query --use_legacy_sql=false --dry_run < optimized_query.sql
 ```
-- **Host Execution**: Run `lint_sql_query.py` and `bq --dry_run` via shell (`Bash` in Claude Code; `Bash` in Antigravity), reporting `STATIC_ANALYSIS_ONLY` / `BLOCKED` if GCP ADC is unavailable.
+- **Host Execution**: Run `lint_sql_query.py` and `bq --dry_run` via shell (`Bash` in Claude Code), reporting `STATIC_ANALYSIS_ONLY` / `BLOCKED` if GCP ADC is unavailable.
 
 ## Red Flags
 - Fabricating `bq query --dry_run` scanned bytes or slot metrics when GCP credentials fail instead of reporting `STATIC_ANALYSIS_ONLY` / `BLOCKED: Live plan not executed — <exact error>`.

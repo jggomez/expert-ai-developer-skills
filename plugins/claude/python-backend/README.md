@@ -78,7 +78,7 @@ Architecture, refactoring, code-smell and specialist skills come from `senior-de
 
 | Event | Script | Behavior |
 | :--- | :--- | :--- |
-| `SessionStart` | `hooks/python-backend-activate.js` | Injects `rules/python-backend-rules.md` as context if present. This package ships no `rules/` directory, so it currently injects nothing |
+| `SessionStart` | `hooks/python-backend-activate.js` | Injects `rules/python-backend-rules.md` (branch safety, TDD, static checks, migrations, deploy and secret guards) as session context |
 | `PreToolUse` (`Write`, `Edit`) | `hooks/pre-tool-gate.js` | Denies `.py` edits on `main`, `master`, `develop` or `dev`. Denies `.py` edits without `PLAN.md` unless the edit is small |
 | `PreToolUse` (`Bash`) | `hooks/pre-tool-gate.js` | Asks before deploy commands (`deploy`, `apply -f`). Denies `git add/commit/push/merge` on protected branches |
 | `PreToolUse` (MCP) | `hooks/pre-tool-gate.js` | Asks before Cloud Run `deploy_*` tools and Firebase add/update/delete/set tools |

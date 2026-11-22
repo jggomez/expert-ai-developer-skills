@@ -1,3 +1,7 @@
+---
+description: Use when a branch is ready for review: self-review, a short honest description, linked tests and submission.
+---
+
 # Workflow: Pull Request Preparation & Submission
 
 **Identifier**: `pull-request-workflow`  

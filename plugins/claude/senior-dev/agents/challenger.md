@@ -57,7 +57,6 @@ Follow the `adversarial-challenger` skill (write every probe as a failing test f
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default`. You execute directly on the workspace filesystem.
 - **Tool Mapping**:
-  - In **Google Antigravity**: Use `Bash` to execute stress suites (`pytest tests/adversarial/`, `artillery`, concurrency scripts); use `Write` and `Edit` to author adversarial test files (the report is returned in the final message, never written).
   - In **Claude Code**: Use `Bash` for command execution; `Write` and `Edit` for test scripts only (report returned in the final message).
 - All resilience claims must be backed by executed terminal commands and captured stdout/stderr.
 

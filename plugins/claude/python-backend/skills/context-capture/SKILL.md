@@ -1,6 +1,6 @@
 ---
 name: context-capture
-description: Use when finishing a task at State 5 (Ship & Finish) or when the user explicitly asks to "save context", "guarda contexto", "record decisions", or "hand off" — writes ultra-compact persistent memory to context/memory/ and ensures target-project root AGENTS.md (<= 90 lines) stays wired to DESIGN.md and MEMORY.md across Claude Code and Google Antigravity.
+description: "Use when finishing a task, or when asked to \"save context\", \"guarda contexto\", \"record decisions\" or \"hand off\": writes compact memory to context/memory/ and keeps the root AGENTS.md (at most 90 lines) linked to DESIGN.md and MEMORY.md for Claude Code and Google Antigravity."
 ---
 
 # Context Capture Skill

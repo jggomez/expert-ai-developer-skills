@@ -64,7 +64,6 @@ Measured on real runs: 92% of test commands were piped into a filter, up to 38% 
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default` directly on the workspace filesystem.
 - **Tool Mapping**:
-  - **Google Antigravity**: Use `Bash` to run test suites and capture exit codes; use `Write` / `Edit` to author integration/E2E tests and `docs/<feature-name>/test-matrix.md`.
   - **Claude Code**: Use `Bash` to run test suites and `Write` / `Edit` to author tests and `docs/<feature-name>/test-matrix.md`.
 
 # Inputs, Outputs & Hand-off Protocol

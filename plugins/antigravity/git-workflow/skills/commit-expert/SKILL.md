@@ -1,6 +1,6 @@
 ---
 name: commit-expert
-description: Guidelines, best practices, and script validators to verify commit message formats and configure local git commit hooks.
+description: "Use when writing commit messages or setting up commit checks: Conventional Commits rules, validator scripts and local git commit hooks."
 ---
 
 # Commit Expert Skill

@@ -36,7 +36,6 @@ Follow `context-restore` for loading and `context-capture` for saving:
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default` directly on the workspace filesystem.
-- **Antigravity**: Use `Read`, `Edit`, and `Write` for `context/memory/` and root `AGENTS.md` link updates; `Bash` for context scripts; `AskUserQuestion` for restore confirmation.
 - **Claude Code**: Use `Read`, `Edit`, `Write`, and `Bash` equivalents with valid UTF-8 GFM markdown.
 
 # Inputs, Outputs & Hand-off Protocol

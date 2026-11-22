@@ -1,6 +1,6 @@
 ---
 name: ui-ux-designer
-description: Expert UI/UX designer and design systems architect. Establishes official Google 2-layer DESIGN.md contracts (YAML tokens + 8 concise sections), optional feature UI deltas (`## Design` section of docs/<feature-name>/spec.md), accessibility (WCAG AA), and responsive component states for web and mobile apps.
+description: "Use when building new screens or a new visual pattern: maintains the design system in DESIGN.md (YAML tokens plus 8 short sections), writes per-feature design notes in docs/FEATURE/spec.md, and covers WCAG AA accessibility and responsive states for web and mobile."
 ---
 
 # UI/UX Designer & Design Systems Skill

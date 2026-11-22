@@ -1,3 +1,7 @@
+---
+description: Use after a plan is approved to build it in small, tested vertical slices, one step at a time with TDD.
+---
+
 # Workflow: Build Incrementally (/build)
 
 **Command**: `/build`  

@@ -39,7 +39,6 @@ Follow `flutter-architecture-decisions` and `references/adr-template.md`:
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default` directly on the workspace filesystem.
-- **Google Antigravity**: Use `Read` / `Grep` / `Glob` to inspect code, `AskUserQuestion` for trade-offs, `Write` / `Edit` for ADRs and `## Architecture`, and `Bash` for read-only `dart analyze` checks.
 - **Claude Code**: Use `Read` / `Grep` / `Glob` for inspection, `Write` / `Edit` for ADRs and `## Architecture`, and `Bash` for read-only checks.
 
 # Inputs, Outputs & Hand-off Protocol

@@ -58,7 +58,6 @@ python3 ./skills/refactoring-code-expert/scripts/run_tests.py
 
 ### Host Execution Instructions
 - **Claude Code**: Run `run_tests.py` via the bash tool between micro-refactorings to guarantee continuous green state.
-- **Antigravity**: Apply changes incrementally, verifying test suite execution at each step before completing the turn.
 
 ## Red Flags
 - Changing external API behavior or function return signatures while claiming to refactor.

@@ -1,6 +1,6 @@
 ---
 name: repo-research
-description: Analyze a repository's structure, stack, commands, and invariants to create a high-signal Codebase Map (.agents/rules/project-context.md <= 80 lines) and bootstrap/sync root AGENTS.md and context/memory/MEMORY.md.
+description: "Use when opening a codebase you do not know yet: maps its structure, stack, commands and invariants into a codebase map (.agents/rules/project-context.md, at most 80 lines) and bootstraps the root AGENTS.md and context/memory/MEMORY.md."
 ---
 
 # Repository Research Skill
@@ -49,7 +49,6 @@ python3 ./skills/repo-research/scripts/repo_analyzer.py
 
 ### Host Execution Instructions
 - **Claude Code**: Run `repo_analyzer.py` via Bash, selectively read entry/config files, then refine `project-context.md` (`<= 80 lines`) and sync root `AGENTS.md` + `context/memory/MEMORY.md`.
-- **Antigravity**: Execute `repo_analyzer.py` via `Bash` during State 0 orientation, then finalize the Codebase Map and root governance links.
 
 ## Red Flags
 - Producing bloated 10-section codebase dumps (`> 80 lines`) or speculative prose.

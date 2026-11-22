@@ -42,7 +42,7 @@ psql -d mydb -c "EXPLAIN (ANALYZE, BUFFERS) SELECT id, email FROM users WHERE cr
 # MySQL execution plan
 mysql -u root -p -e "EXPLAIN ANALYZE SELECT id, email FROM users WHERE status = 'active';"
 ```
-- **Host Execution**: Run `psql`/`mysql` via shell (`Bash` in Claude Code; `Bash` in Antigravity) or explicitly label `STATIC_ANALYSIS_ONLY` / `BLOCKED` if DB access is unavailable.
+- **Host Execution**: Run `psql`/`mysql` via shell (`Bash` in Claude Code) or explicitly label `STATIC_ANALYSIS_ONLY` / `BLOCKED` if DB access is unavailable.
 
 ## Red Flags
 - Fabricating `EXPLAIN ANALYZE` execution latencies or buffer counts when no live database ran.

@@ -1,6 +1,6 @@
 ---
 name: commit-expert
-description: Guidelines, best practices, and script validators to verify commit message formats and configure local git commit hooks.
+description: "Use when writing commit messages or setting up commit checks: Conventional Commits rules, validator scripts and local git commit hooks."
 ---
 
 # Commit Expert Skill
@@ -74,7 +74,6 @@ python3 ./skills/commit-expert/scripts/validate_commit_msg.py .git/COMMIT_EDITMS
 
 ### Host Execution Instructions
 - **Claude Code**: Validate commit message files before running `git commit`, ensuring compatibility with `gitflow-branch-gate.js`.
-- **Antigravity**: Ensure that every commit created during the COMMIT phase complies with Conventional Commits and branch rules.
 
 ## Red Flags
 - Commits violating the Conventional Commits regex `^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)...`.

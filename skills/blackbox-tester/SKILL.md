@@ -1,6 +1,6 @@
 ---
 name: blackbox-tester
-description: Black-box browser verification validating real user flows, GUI forms, console/network errors, visual layouts, and 4-viewport screenshot evidence using deterministic Playwright execution.
+description: "Use when a web UI or user flow changed and needs proof it works in a real browser: runs the user journeys with Playwright, checks console and network errors, and saves screenshots at four screen widths."
 ---
 
 # Black-Box Browser Verification & Visual Testing Skill

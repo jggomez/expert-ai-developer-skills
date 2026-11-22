@@ -39,9 +39,18 @@ _PARALLEL = "several `Agent` calls in one message"
 
 def sanitize_claude_content(text: str) -> str:
     """Translates Antigravity tool names and syntax into Claude Code equivalents."""
+    # Antigravity-only advice. Translating its tool names would leave lines such as
+    # "**Google Antigravity**: Use `Bash`", wrong for both hosts, so drop it before translating.
+    # A whole Antigravity bullet goes only when the text also has Claude Code guidance to keep.
+    if "**Claude Code**" in text:
+        text = re.sub(r"(?m)^[ \t]*[-*][ \t]+(?:In[ \t]+)?\*\*(?:Google[ \t]+)?Antigravity\*\*:?.*\n", "", text)
+    agy_tool = "|".join(t for t in FORBIDDEN_CLAUDE_TOKENS if re.fullmatch(r"\w+", t))
+    text = re.sub(rf";\s*`(?:{agy_tool})[^`]*`\s+in\s+(?:Google\s+)?Antigravity\b", "", text)
+    text = re.sub(rf"(\bAntigravity(?: CLI)?)\s+\(`(?:{agy_tool})[^`]*`\)", r"\1", text)
+
     # Subagent invocation syntax
-    text = re.sub(r'invoke_subagent\(name="([^"]+)",\s*prompt="([^"]+)"\)', r'Agent(agent="\1", prompt="\2")', text)
-    text = re.sub(r'invoke_subagent\(name="([^"]+)"\)', r'Agent(agent="\1")', text)
+    text = re.sub(r'invoke_subagent\(name="([^"]+)",\s*prompt="([^"]+)"\)', r'Agent(subagent_type="\1", prompt="\2")', text)
+    text = re.sub(r'invoke_subagent\(name="([^"]+)"\)', r'Agent(subagent_type="\1")', text)
     text = re.sub(r"`invoke_subagent\(Subagents=\[\.\.\.\]\)`", _PARALLEL, text)
     text = re.sub(r"`Agent\(Subagents=\[\.\.\.\]\)`", _PARALLEL, text)
     text = re.sub(r"`Subagents=\[\.\.\.\]`", _PARALLEL, text)

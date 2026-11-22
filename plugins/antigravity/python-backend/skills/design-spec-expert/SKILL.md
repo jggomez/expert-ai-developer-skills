@@ -1,6 +1,6 @@
 ---
 name: design-spec-expert
-description: Drafts concise Backend / API Design Specifications and Software Design Documents (docs/<feature-name>/api-spec.md or SDD <= 70 lines) before coding when introducing new endpoints, schemas, or services.
+description: "Use before coding a new endpoint, schema or service: drafts a short API or software design spec (docs/FEATURE/api-spec.md, at most 70 lines)."
 ---
 
 # Design Spec Expert Skill

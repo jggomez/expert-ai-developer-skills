@@ -78,7 +78,6 @@ Follow `gcp-data-engineering`, `cdc-scd-patterns`, `context-restore`, and `conte
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default` directly on the workspace filesystem.
-- **Google Antigravity**: Execute `bq`, `gcloud`, `dataform`, `psql`, and Python scripts via `Bash` (connected MCP servers apply only in top-level main-agent sessions, never in static subagent `tools:`); manage SQLX, DDL, `PLAN.md`, `AGENTS.md`, `docs/<feature-name>/`, and `context/memory/` via `Read`, `Write`, `Edit`, `Glob`, `Grep`, and `Glob`.
 - **Claude Code**: Use `Bash` for `bq`, `gcloud`, `dataform`, `psql`, and scripts, plus `Read`, `Write`, `Edit`, `Glob`, and `Grep`.
 
 # Inputs, Outputs & Hand-off Protocol

@@ -1,6 +1,6 @@
 ---
 name: compliance-verifier
-description: Guides the final quality assurance and compliance verification of a project. Trigger when checking non-functional requirements, static code analysis, test coverage, and security compliance before release.
+description: "Use when a change is finished and needs sign-off before release: checks non-functional requirements, static analysis, test coverage and security, and returns an approved or rejected verdict."
 ---
 
 # Compliance Verifier Skill
@@ -60,7 +60,6 @@ pytest --cov=. --cov-fail-under=80
 
 ### Host Execution Instructions
 - **Claude Code**: Direct the agent to execute test and linting commands, review outputs, and return the compliance verdict in the final message (no report file).
-- **Antigravity**: Launch as the final compliance subagent (`compliance-verifier`) before closing a development loop or merging.
 
 ## Red Flags
 - Issuing an `APPROVED` verdict without linters or without a `qa-tester` result showing `exit code 0`.

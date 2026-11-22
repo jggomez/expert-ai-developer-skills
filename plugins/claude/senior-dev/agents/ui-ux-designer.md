@@ -44,7 +44,6 @@ Follow the `ui-ux-designer` skill across all design work:
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default` directly on the workspace filesystem.
 - **Tool Mapping**:
-  - **Google Antigravity**: Use `Read`, `Glob`, `Grep`, and `Glob` for inspection, `AskUserQuestion` for design alignment, `Write` / `Edit` to maintain `DESIGN.md` and `## Design` in `docs/<feature-name>/spec.md`, and `Bash` for optional `npx @google/design.md lint DESIGN.md` checks.
   - **Claude Code**: Use `Read` / `Grep` / `Glob` for inspection, `Write` / `Edit` for `DESIGN.md` and `## Design` in `docs/<feature-name>/spec.md`, and `Bash` for linting.
 - **Google Stitch Compatibility**: Keep root `DESIGN.md` ready for `upload_design_md` and `create_design_system_from_design_md`.
 

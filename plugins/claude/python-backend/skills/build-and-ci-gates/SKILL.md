@@ -60,7 +60,6 @@ python3 ./skills/build-and-ci-gates/scripts/pre_commit_quality_gate.py
 
 ### Host Execution Instructions
 - **Claude Code**: Run `run_checks.py` in the workspace terminal before generating pull requests.
-- **Antigravity**: Verify that CI gate checks pass prior to declaring build completion.
 
 ## Red Flags
 - Committing code without running local linter and formatter gates.

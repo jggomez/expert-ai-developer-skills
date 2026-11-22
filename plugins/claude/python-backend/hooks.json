@@ -15,7 +15,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Write|Edit",
+        "matcher": "Write|Edit|NotebookEdit",
         "hooks": [
           {
             "type": "command",
@@ -25,7 +25,7 @@
         ]
       },
       {
-        "matcher": "Bash|mcp__cloudrun__.*|mcp__firebase-mcp-server__.*",
+        "matcher": "Bash|mcp__(plugin_[A-Za-z0-9-]+_)?cloudrun__.*|mcp__(plugin_[A-Za-z0-9-]+_)?firebase-mcp-server__.*",
         "hooks": [
           {
             "type": "command",

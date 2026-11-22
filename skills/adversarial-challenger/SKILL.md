@@ -1,6 +1,6 @@
 ---
 name: adversarial-challenger
-description: Adversarial stress testing, fuzzing, worst-case inputs, failure-path probes, timeout/reconnection simulations, and concurrency/memory stress.
+description: "Use when a change touches auth, payments, concurrency, untrusted input or destructive actions and needs to be attacked before release: stress tests, fuzzing, worst-case inputs, failure paths, timeouts and memory pressure."
 ---
 
 # Adversarial Challenger & Stress Testing Skill

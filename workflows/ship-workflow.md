@@ -1,3 +1,7 @@
+---
+description: Use when a change is ready to release: final checks, changelog and versioning, release and live verification.
+---
+
 # Workflow: Ship to Production (/ship)
 
 **Command**: `/ship`  
@@ -47,7 +51,7 @@ Package, verify, commit, and prepare production-ready changes for deployment wit
         prompt="Perform final release gate audit, verify test proof, and confirm zero policy violations for: <branch>"
     )
     ```
-    *(For Flutter release packaging, use `Agent(agent="flutter-release-engineer", prompt="Build and package flavor build matrix...")`)*
+    *(For Flutter release packaging, use `Agent(subagent_type="senior-dev-flutter:flutter-release-engineer", prompt="Build and package flavor build matrix...")`)*
 - **Primary Skills**: `commit-expert`, `pull-request-expert`, `compliance-verifier`, `flutter-release-engineering`.
 
 ## 4. Quality Gate Checklist

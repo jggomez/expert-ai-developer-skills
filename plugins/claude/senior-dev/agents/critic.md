@@ -61,7 +61,6 @@ Follow the `code-critic`, `code-smells-expert`, and `refactoring-code-expert` sk
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default`. You operate on the workspace filesystem.
 - **Tool Mapping**:
-  - In **Google Antigravity**: Use `Read` and `Grep` to inspect code; use `Bash` to execute complexity/AST analysis tools (`radon`, `eslint`, `dart analyze`); return the review in the final message (no report file).
   - In **Claude Code**: Use `Read` and `Grep` for file inspection; `Bash` for static analysis scripts; return the review in the final message (no report file).
 - Ground all critiques in verifiable code evidence with line numbers.
 

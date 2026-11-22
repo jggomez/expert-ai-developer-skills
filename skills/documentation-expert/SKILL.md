@@ -1,6 +1,6 @@
 ---
 name: documentation-expert
-description: Author and validate Zero-Fluff technical documentation, root AGENTS.md, Google DESIGN.md alignment, Diátaxis guides, and Mermaid diagrams with strict conciseness caps and relative link verification.
+description: "Use when writing or cleaning up technical docs: root AGENTS.md, DESIGN.md alignment, Diátaxis guides and Mermaid diagrams, kept short and with checked relative links."
 ---
 
 # Documentation Expert Skill

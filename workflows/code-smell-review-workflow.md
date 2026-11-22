@@ -1,3 +1,7 @@
+---
+description: Use to audit a module for code smells and SOLID violations and refactor them safely behind tests.
+---
+
 # Workflow: Code Smell Auditing & SOLID Refactoring
 
 **Identifier**: `code-smell-review-workflow`  

@@ -1,6 +1,6 @@
 ---
 name: code-critic
-description: Independent code review inspecting cyclomatic complexity, DRY, SOLID, anti-patterns, maintainability, and interface robustness.
+description: "Use when a large diff or a refactor across modules needs an independent review of complexity, duplication, SOLID, anti-patterns, maintainability and interface robustness, without changing the code."
 ---
 
 # Code Critic & Independent Architectural Review Skill
@@ -163,7 +163,6 @@ dart analyze --fatal-infos
 
 ### Host Execution Instructions
 - **Claude Code**: Invoke as `critic` subagent; inspect files using `Read` and `Grep`; return the review in the final message (no `Write`).
-- **Antigravity**: Launch as the `critic` subagent; inspect code using `Read` and `Grep`; calculate scores and return the review in the final message (no file).
 
 ---
 

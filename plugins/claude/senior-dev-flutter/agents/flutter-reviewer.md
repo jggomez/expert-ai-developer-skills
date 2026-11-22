@@ -36,7 +36,6 @@ Follow `flutter-review-checklist` and `flutter-test-strategy`:
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default` directly on the workspace filesystem.
-- **Google Antigravity**: Use `Bash` for `dart analyze`, `flutter test`, and `flutter_project_audit.py`; `Read` / `Grep` for diffs; no report files (verdict returned in the final message).
 - **Claude Code**: Use `Bash` for analysis/test runs, `Read` / `Grep` for diffs, and return the `<= 50-line` review in the final message (no report file).
 
 # Inputs, Outputs & Hand-off Protocol

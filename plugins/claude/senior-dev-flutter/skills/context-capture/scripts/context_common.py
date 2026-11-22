@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Shared helpers for the shared-context plugin's capture/pack/rollup scripts.
 
-Stdlib only, host-neutral: the same code runs whether invoked by Claude Code
-(`Bash`) or Antigravity CLI (`Bash`). Every script keeps a session's
+Stdlib only, host-neutral: the same code runs from Claude Code or the
+Antigravity CLI shell tool. Every script keeps a session's
 `manifest.json`, `summary.md` and `decisions.md` loose (fast to browse and
 diff in a PR); the heavier detail is packed into `detail.tar.xz`.
 """

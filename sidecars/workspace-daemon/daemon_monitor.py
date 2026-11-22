@@ -1,102 +1,116 @@
 #!/usr/bin/env python3
+"""Workspace daemon sidecar for Google Antigravity.
+
+Polls WORKSPACE_ROOT every 5 seconds and runs `ruff format` and `ruff check --fix` on each Python file whose
+modification time changed. It never runs on files that existed unchanged since it started.
+
+Caveat: it rewrites files on disk, so a save from the agent or editor in the same instant can race with it.
+Use it on projects where automatic formatting is welcome.
+
+Environment:
+  WORKSPACE_ROOT          directory to watch (required; the daemon exits with code 2 without it)
+  WORKSPACE_DAEMON_STATE  where the log is written (default: ~/.cache/workspace-daemon)
+"""
+import logging
 import os
+import subprocess
 import sys
 import time
-import subprocess
-import logging
 
-# Setup logging
-log_file = "workspace_daemon.log"
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.FileHandler(log_file),
-        logging.StreamHandler(sys.stdout)
-    ]
-)
+IGNORED_DIRS = {"node_modules", ".venv", "venv", "dist", "build", "__pycache__"}
+POLL_SECONDS = 5
+RETRY_SECONDS = 10
+
+STATE_DIR = os.environ.get("WORKSPACE_DAEMON_STATE") or os.path.join(os.path.expanduser("~"), ".cache", "workspace-daemon")
+LOG = logging.getLogger("workspace-daemon")
+
+
+def _configure_logging() -> None:
+    os.makedirs(STATE_DIR, exist_ok=True)
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        handlers=[
+            logging.FileHandler(os.path.join(STATE_DIR, "workspace_daemon.log")),
+            logging.StreamHandler(sys.stdout),
+        ],
+    )
+
 
 class WorkspaceWatcher:
-    """Monitors code changes in the active workspace and triggers auto-linting/formatting."""
-    
+    """Watches Python files under a directory and formats/lints the ones that change."""
+
     def __init__(self, watch_dir: str):
         self.watch_dir = os.path.abspath(watch_dir)
-        self.file_registry = {}
-        logging.info(f"Workspace Daemon started. Watching directory: {self.watch_dir}")
-        
-    def scan_files(self):
-        """Recursively scans the workspace for Python and JavaScript files."""
-        for root, dirs, files in os.walk(self.watch_dir):
-            # Ignore hidden files, build artifacts, virtualenvs, and node_modules
-            dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ('node_modules', '.venv', 'venv', 'dist', 'build')]
-            for file in files:
-                if file.endswith(('.py', '.js', '.ts')):
-                    file_path = os.path.join(root, file)
-                    try:
-                        mtime = os.path.getmtime(file_path)
-                        self._check_file_changed(file_path, mtime)
-                    except OSError:
-                        # File might have been deleted mid-scan
-                        pass
+        self.file_registry: dict[str, float] = {}
+        LOG.info("Workspace daemon started. Watching %s", self.watch_dir)
 
-    def _check_file_changed(self, file_path: str, current_mtime: float):
-        """Triggers formatters and linters if the file modification time changed."""
-        if file_path in self.file_registry:
-            last_mtime = self.file_registry[file_path]
-            if current_mtime > last_mtime:
-                logging.info(f"File modification detected: {os.path.basename(file_path)}")
-                self._run_quality_tools(file_path)
-        
-        # Update registry with latest mtime
+    def scan_files(self) -> None:
+        """Walks the workspace once; the first sighting of a file only records its mtime."""
+        for root, dirs, files in os.walk(self.watch_dir):
+            dirs[:] = [d for d in dirs if not d.startswith(".") and d not in IGNORED_DIRS]
+            for name in files:
+                if not name.endswith(".py"):
+                    continue
+                path = os.path.join(root, name)
+                try:
+                    mtime = os.path.getmtime(path)
+                except OSError:
+                    continue  # deleted between listing and stat
+                self._check_file_changed(path, mtime)
+
+    def _check_file_changed(self, file_path: str, current_mtime: float) -> None:
+        last_mtime = self.file_registry.get(file_path)
+        if last_mtime is not None and current_mtime > last_mtime:
+            LOG.info("Change detected: %s", os.path.relpath(file_path, self.watch_dir))
+            self._run_quality_tools(file_path)
+            try:
+                current_mtime = os.path.getmtime(file_path)  # ruff may have rewritten it
+            except OSError:
+                self.file_registry.pop(file_path, None)
+                return
         self.file_registry[file_path] = current_mtime
 
-    def _run_quality_tools(self, file_path: str):
-        """Runs ruff (lint + format) on Python files."""
-        if file_path.endswith('.py'):
-            try:
-                # 1. Run Ruff Formatter
-                subprocess.run(
-                    ["ruff", "format", file_path],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    check=True
-                )
-                # 2. Run Ruff Lint Checker
-                subprocess.run(
-                    ["ruff", "check", "--fix", file_path],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    check=True
-                )
-                logging.info(f"Successfully formatted & linted: {os.path.basename(file_path)}")
-            except subprocess.CalledProcessError as e:
-                logging.warning(f"Quality tools failed for {os.path.basename(file_path)} (Code: {e.returncode})")
-            except FileNotFoundError:
-                # Ruff is not installed in the environment
-                pass
+    def _run_quality_tools(self, file_path: str) -> None:
+        """Formats and auto-fixes one Python file. Lint that ruff cannot fix is reported, not treated as failure."""
+        name = os.path.basename(file_path)
+        try:
+            fmt = subprocess.run(["ruff", "format", file_path], capture_output=True, text=True, check=False)
+            lint = subprocess.run(["ruff", "check", "--fix", file_path], capture_output=True, text=True, check=False)
+        except FileNotFoundError:
+            LOG.warning("ruff is not installed; skipping %s", name)
+            return
+        if fmt.returncode != 0:
+            LOG.warning("ruff format could not parse %s (exit %s)", name, fmt.returncode)
+        elif lint.returncode == 0:
+            LOG.info("Formatted and linted %s", name)
+        elif lint.returncode == 1:
+            LOG.info("Formatted %s; lint issues remain that need a manual fix", name)
+        else:
+            LOG.warning("ruff check stopped on %s (exit %s)", name, lint.returncode)
 
-    def start_loop(self):
-        """Runs the monitoring loop indefinitely."""
+    def start_loop(self) -> None:
         while True:
             try:
                 self.scan_files()
-                time.sleep(5)  # Poll every 5 seconds
+                time.sleep(POLL_SECONDS)
             except KeyboardInterrupt:
-                logging.info("Workspace Daemon shutting down.")
+                LOG.info("Workspace daemon shutting down.")
                 break
-            except Exception as e:
-                logging.error(f"Error in watcher loop: {str(e)}")
-                time.sleep(10)  # Cool down before retrying
+            except OSError as err:
+                LOG.error("Watcher loop error: %s", err)
+                time.sleep(RETRY_SECONDS)
+
+
+def main() -> int:
+    watch_target = os.environ.get("WORKSPACE_ROOT", "")
+    if not watch_target or not os.path.isdir(watch_target):
+        print("workspace-daemon: set WORKSPACE_ROOT to the project directory to watch", file=sys.stderr)
+        return 2
+    _configure_logging()
+    WorkspaceWatcher(watch_target).start_loop()
+    return 0
+
 
 if __name__ == "__main__":
-    # Determine directory to watch:
-    # 1. Check workspace environment variable passed by Antigravity
-    # 2. Default to parent directory of the sidecar folder
-    watch_target = os.environ.get("WORKSPACE_ROOT")
-    if not watch_target or not os.path.exists(watch_target):
-        # Default to parent of sidecar directory (which is where the project lives if installed locally)
-        # Or current working directory
-        watch_target = os.path.abspath(os.path.join(os.getcwd(), ".."))
-    
-    watcher = WorkspaceWatcher(watch_target)
-    watcher.start_loop()
+    sys.exit(main())

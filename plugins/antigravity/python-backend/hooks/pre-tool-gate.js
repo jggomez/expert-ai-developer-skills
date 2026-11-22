@@ -129,7 +129,8 @@ let mcpServer = '';
 let mcpTool = '';
 if (toolName.startsWith('mcp__')) {
   const parts = toolName.split('__');
-  mcpServer = parts[1] || '';
+  // Plugin servers are named mcp__plugin_<plugin>_<server>__<tool> by Claude Code.
+  mcpServer = (parts[1] || '').replace(/^plugin_[A-Za-z0-9-]+_/, '');
   mcpTool = parts.slice(2).join('__');
 } else if (toolName === 'call_mcp_tool') {
   mcpServer = toolInput.ServerName || '';

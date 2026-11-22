@@ -88,7 +88,6 @@ flutter build ipa --release --flavor prod --dart-define-from-file=config/prod.js
 
 ### Host Execution Instructions
 - **Claude Code**: Invoke via `/skill flutter-release-engineering` or prompt for Flutter release/flavor setup.
-- **Google Antigravity**: Run build and signing validation commands via terminal or integrate with release automation pipelines.
 
 ## Red Flags
 - Hard-coding API URLs, backend endpoints, or environment flags in Dart source files.

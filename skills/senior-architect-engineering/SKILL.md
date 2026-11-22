@@ -1,6 +1,6 @@
 ---
 name: senior-architect-engineering
-description: Pragmatic software architecture and system design skill. Authors concise MADR Architecture Decision Records (docs/<feature-name>/adr-NNN-*.md <= 55 lines) and the `## Architecture` section of the single discovery file docs/<feature-name>/spec.md (<= 50 lines) grounded in KISS, YAGNI, SOLID, and clean boundaries.
+description: "Use when a change adds a database schema, a cross-service contract, a core dependency or a new architectural pattern: writes short ADRs (docs/FEATURE/adr-NNN-*.md, at most 55 lines) and the Architecture section of docs/FEATURE/spec.md (at most 50 lines), grounded in KISS, YAGNI, SOLID and clean boundaries."
 ---
 
 # Senior Architect Engineering Skill

@@ -42,7 +42,6 @@ Follow the `product-analyst` skill and `references/prd-template.md`:
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default` directly on the workspace filesystem.
 - **Tool Mapping**:
-  - **Google Antigravity**: Use `Read` / `Grep` / `Glob` to inspect context, `AskUserQuestion` for user alignment, `Bash` for read-only git/file checks, and `Write` / `Edit` to edit `## Product` in `docs/<feature-name>/spec.md`.
   - **Claude Code**: Use `Read` / `Grep` / `Glob` for inspection, ask direct option-based questions, and use `Write` / `Edit` for `## Product` in `docs/<feature-name>/spec.md`.
 
 # Inputs, Outputs & Hand-off Protocol

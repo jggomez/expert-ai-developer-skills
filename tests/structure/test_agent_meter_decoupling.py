@@ -25,6 +25,7 @@ ALLOWED_PREFIXES = (
     "docs/agent-metrics/",
     # The public portal catalogs every component by name, like README.md does.
     "portal/",
+    "docs/dev-kit-portal/",
 )
 ALLOWED_FILES = {
     "PLAN.md",

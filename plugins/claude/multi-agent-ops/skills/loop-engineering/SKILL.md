@@ -1,6 +1,6 @@
 ---
 name: loop-engineering
-description: Implements 3-Tier Adaptive SDLC state machines, capability-gated discovery, target-project AGENTS.md bootstrapping, isolated parallel worker execution (Disjoint Mode A / Git Worktree Mode B), and 3-loop self-correcting review gates.
+description: "Use when planning or coordinating a multi-step coding task across agents: sizes the task into three tiers, calls only the specialists it needs, bootstraps the target AGENTS.md, isolates parallel workers (disjoint files or git worktrees) and caps self-correcting review loops at three."
 ---
 
 # Loop Engineering Skill
@@ -70,7 +70,6 @@ python3 ./skills/loop-engineering/scripts/run_parallel_agents.py tasks.json   # 
 python3 ./skills/loop-engineering/scripts/pr_cron_reviewer.py                # audit worker branches
 ```
 - **Claude Code**: parallel fan-out = several `Agent` calls in one message; Mode B = `isolation: "worktree"` with `worktree.baseRef` set to `"head"`.
-- **Antigravity**: several subagents in one `Agent` call; workspace `inherit` for Mode A, `branch` for Mode B.
 
 ## Red Flags
 - Reusing a previous change's `Invoke / SKIP` row for a new request, or running the full suite once per agent instead of at most once per change.

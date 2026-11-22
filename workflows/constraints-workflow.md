@@ -1,3 +1,7 @@
+---
+description: Use at the start of a feature to agree the quality bar: performance, security, secrets, style and scope limits.
+---
+
 # Workflow: Set the Quality Bar (/constraints)
 
 **Command**: `/constraints`  

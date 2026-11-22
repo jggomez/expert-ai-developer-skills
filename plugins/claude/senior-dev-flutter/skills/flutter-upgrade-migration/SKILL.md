@@ -101,7 +101,6 @@ flutter test
 
 ### Host Execution Instructions
 - **Claude Code**: Invoke via `/skill flutter-upgrade-migration` or prompt for Flutter SDK/dependency migration.
-- **Google Antigravity**: Run upgrade and analysis commands via terminal or coordinate via `flutter-feature-orchestrator`.
 
 ## Red Flags
 - Bundling an SDK upgrade, multiple major dependency bumps, and linter migrations into a single massive PR.
