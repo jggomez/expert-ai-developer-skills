@@ -104,6 +104,25 @@ def test_watcher_reacts_only_when_a_transcript_changes(tmp_path: Path) -> None:
     assert changes == [1]
 
 
+def test_watcher_ignores_a_touch_on_an_antigravity_database(tmp_path: Path) -> None:
+    # Arrange: Antigravity bumps the mtime of its .db files without committing anything
+    db = tmp_path / "conversations" / "c1.db"
+    db.parent.mkdir()
+    db.write_bytes(b"SQLite format 3\x00" + bytes(84) + b"page")
+    changes: list[int] = []
+    watcher = TranscriptWatcher([tmp_path / "conversations"], lambda: changes.append(1))
+    stat = db.stat()
+    # Act
+    os.utime(db, ns=(stat.st_atime_ns, stat.st_mtime_ns + 5_000_000_000))
+    touched = watcher.poll_once()
+    with db.open("ab") as handle:
+        handle.write(b"more data")
+    grown = watcher.poll_once()
+    # Assert
+    assert (touched, grown) == (False, True)
+    assert changes == [1]
+
+
 def test_a_failed_refresh_does_not_stop_the_watcher(tmp_path: Path) -> None:
     folder = tmp_path / "projects"
     folder.mkdir()

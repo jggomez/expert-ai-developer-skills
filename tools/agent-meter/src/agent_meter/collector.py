@@ -123,7 +123,7 @@ class _Ingest:
         try:
             return reader.read_unit(unit, self.options)
         except Exception as exc:  # a reader bug must not abort the whole run (NFR-07)
-            _LOG.warning("reader failed on a unit: %s", type(exc).__name__)
+            _LOG.warning("reader failed on a unit: %s", type(exc).__name__, exc_info=True)
             from agent_meter.readers._common import unit_hash
 
             diagnostic = Diagnostic(

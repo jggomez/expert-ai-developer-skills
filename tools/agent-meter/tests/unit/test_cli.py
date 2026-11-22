@@ -423,10 +423,12 @@ def test_home_option_on_existing_foreign_dir_keeps_its_mode(tmp_path: Path, caps
 def test_verify_reconcile_detects_drift(home: AppHome, capsys: pytest.CaptureFixture[str]) -> None:
     collected(capsys)
 
-    clean = run(capsys, "verify", "--reconcile", "--json")
+    # Fixture calls are dated 2026-10-16; an explicit window keeps the test independent of today's date.
+    window = ("--from", "2026-10-01", "--to", "2026-10-31")
+    clean = run(capsys, "verify", "--reconcile", "--json", *window)
     with Store.open(home, read_only=False, lock_timeout_s=1.0) as st:
         st.execute("UPDATE llm_calls SET output_tokens = output_tokens + 1 WHERE host = 'claude-code'")
-    drift = run(capsys, "verify", "--reconcile")
+    drift = run(capsys, "verify", "--reconcile", *window)
 
     assert clean[0] == 0 and json.loads(clean[1]) == []
     assert drift[0] == 5 and "claude-code" in drift[1]

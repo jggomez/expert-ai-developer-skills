@@ -17,19 +17,19 @@ prompts, code, tool inputs/outputs or file paths.
 
 ## What it looks like
 
-![Live screen](../../docs/agent-metrics/images/live.png)
+![Live screen](docs/images/app-live.png)
 **Live**: today's spend, this month's spend, a month-end forecast, budgets and the sessions running now, with Claude Code and Antigravity side by side.
 
-![History screen](../../docs/agent-metrics/images/history.png)
+![History screen](docs/images/app-history.png)
 **History**: spend, calls, sessions and tasks for any period, day by day.
 
 ![Spending by project](../../docs/agent-metrics/images/history-projects.png)
 **By project**: which project takes your budget, with cost, share, calls, tasks and tokens.
 
-![Insights screen](../../docs/agent-metrics/images/insights.png)
+![Insights screen](docs/images/app-insights.png)
 **Insights**: where to cut, with measured findings and estimated savings, such as a cheaper model for routine work or a subagent that costs several times more than its peers.
 
-![Changes screen](../../docs/agent-metrics/images/changes.png)
+![Changes screen](docs/images/app-changes.png)
 **Changes**: switch the default model or effort of your AI tools. Nothing changes until you confirm a preview, and every change can be undone.
 
 ![Diagnostics](../../docs/agent-metrics/images/diagnostics.png)
@@ -142,6 +142,8 @@ uv tool install --python 3.12 "agent-meter[app] @ git+https://github.com/jggomez
 
 # Same with pipx
 pipx install --python python3.12 "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+# pipx with the desktop app
+pipx install --python python3.12 "agent-meter[app] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 ```
 
 To install a specific release, tag or branch, add `@<ref>` right after the repository URL:
