@@ -59,7 +59,6 @@ python3 ./skills/performance-scalability/scripts/measure_performance.py profile 
 
 ### Host Execution Instructions
 - **Claude Code**: Execute `measure_performance.py` in the shell and evaluate profiling telemetry.
-- **Antigravity**: Run diagnostic performance scans and benchmark code before and after optimizations.
 
 ## Red Flags
 - Optimizing code without empirical baseline profiling or benchmark evidence.

@@ -1,3 +1,7 @@
+---
+description: "Use before any merge for a structured review of correctness, tests, design, security and leaks."
+---
+
 # Workflow: Review Before Merge (/review)
 
 **Command**: `/review`  

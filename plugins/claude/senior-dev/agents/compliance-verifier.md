@@ -54,7 +54,6 @@ Follow the `compliance-verifier`, `build-and-ci-gates`, `code-smells-expert`, an
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default`. You execute directly on the workspace filesystem (no container sandbox).
 - **Tool Mapping**:
-  - In **Google Antigravity**: Use `Bash` to execute audit tools (linters, coverage, security checks, test runners, `wc -l` / byte-size checks); use `Glob` to verify physical `.png` files in `docs/<feature-name>/evidence/`; use `Read` / `Grep` to inspect diffs and artifacts.
   - In **Claude Code**: Use `Bash` for command execution and line/size checks, and `Read` / `Glob` / `Grep` for file and evidence inspection.
 - Every verdict must be backed by executed terminal commands, directory listings, and real output logs.
 

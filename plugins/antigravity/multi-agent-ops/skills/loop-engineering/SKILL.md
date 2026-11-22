@@ -1,6 +1,6 @@
 ---
 name: loop-engineering
-description: Implements 3-Tier Adaptive SDLC state machines, capability-gated discovery, target-project AGENTS.md bootstrapping, isolated parallel worker execution (Disjoint Mode A / Git Worktree Mode B), and 3-loop self-correcting review gates.
+description: "Use when planning or coordinating a multi-step coding task across agents: sizes the task into three tiers, calls only the specialists it needs, bootstraps the target AGENTS.md, isolates parallel workers (disjoint files or git worktrees) and caps self-correcting review loops at three."
 ---
 
 # Loop Engineering Skill

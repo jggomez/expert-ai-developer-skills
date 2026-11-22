@@ -1,6 +1,6 @@
 ---
 name: qa-tester
-description: Designs and executes Unit, Integration, and E2E test suites and authors concise, actionable IEEE/ISTQB QA Test Matrix artifacts (docs/<feature-name>/test-matrix.md <= 80 lines) backed by empirical exit code 0 terminal proof.
+description: "Use when a change needs proof that it works: designs and runs unit, integration and E2E tests and writes a test matrix (docs/FEATURE/test-matrix.md, at most 80 lines) backed by a real exit code 0."
 ---
 
 # QA Automation & E2E Tester Skill
@@ -58,7 +58,6 @@ pytest tests/ -v
 
 ### Host Execution
 - **Claude Code**: Author missing integration/E2E tests via `Write`/`Edit`, execute via `Bash`, and write `docs/<feature-name>/test-matrix.md`.
-- **Antigravity**: Run suites via `Bash` and write `docs/<feature-name>/test-matrix.md` via `Write` / `Edit`.
 - **Return Contract**: Final message `<= 15 lines`: the Completion Proof first, then files changed and next step; no long narratives.
 
 ## Red Flags

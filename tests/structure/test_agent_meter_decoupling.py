@@ -23,6 +23,9 @@ ALLOWED_PREFIXES = (
     "plugins/antigravity/agent-metrics/",
     "skills/agent-metrics/",
     "docs/agent-metrics/",
+    # The public portal catalogs every component by name, like README.md does.
+    "portal/",
+    "docs/dev-kit-portal/",
 )
 ALLOWED_FILES = {
     "PLAN.md",

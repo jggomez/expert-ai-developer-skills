@@ -51,7 +51,6 @@ Measured on real runs: 92% of test commands were piped into a filter, up to 38% 
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default` directly on the workspace filesystem.
-- **Google Antigravity**: Use `Bash` for `flutter test`, `dart analyze`, and `dart format`; use `Write` / `Edit` within assigned `Owned Files`.
 - **Claude Code**: Use `Bash` for Flutter/Dart CLI commands and `Write` / `Edit` within assigned `Owned Files`.
 
 # Definition of Done

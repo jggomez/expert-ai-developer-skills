@@ -1,0 +1,224 @@
+---
+import Glyph from './Glyph.astro';
+import { KINDS, HOST_LABELS, UI, catalogItems, counts, itemText, itemUrl, kindLabel } from '../lib/site.mjs';
+
+interface Props { lang: 'es' | 'en' }
+const { lang } = Astro.props;
+const t = UI[lang];
+const order = new Map(KINDS.map((k, i) => [k, i]));
+const items = [...catalogItems].sort(
+  (a, b) => order.get(a.type) - order.get(b.type) || itemText(lang, a.id).title.localeCompare(itemText(lang, b.id).title, lang),
+);
+const resultsLabels = { one: t.results(1), many: t.results(2).replace('2', '{n}') };
+---
+<section class="section catalog" id="catalogo" aria-labelledby="catalog-title" data-results-one={resultsLabels.one} data-results-many={resultsLabels.many}>
+  <div class="wrap">
+    <div class="section__head">
+      <h2 id="catalog-title">{t.catalogTitle}</h2>
+    </div>
+
+    <div class="tools">
+      <div class="search">
+        <label class="visually-hidden" for="q">{t.searchLabel}</label>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" autocomplete="off" spellcheck="false" placeholder={t.searchPlaceholder} />
+        <kbd title={t.shortcut}>/</kbd>
+      </div>
+      <div class="filters">
+        <div class="chips" role="group" aria-label={lang === 'es' ? 'Tipo' : 'Kind'}>
+          <button type="button" class="chip" data-kind-filter="all" aria-pressed="true">{t.allKinds} <span>{catalogItems.length}</span></button>
+          {KINDS.map((kind) => (
+            <button type="button" class="chip" data-kind-filter={kind} data-kind={kind} aria-pressed="false">
+              <Glyph kind={kind} size={12} />{kindLabel(lang, kind, 2)} <span>{counts[kind]}</span>
+            </button>
+          ))}
+        </div>
+        <label class="host">
+          <span>{t.hostLabel}</span>
+          <select id="host">
+            <option value="all">{t.hostAll}</option>
+            <option value="claude">{HOST_LABELS.claude}</option>
+            <option value="antigravity">{HOST_LABELS.antigravity}</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <p class="count" id="count" aria-live="polite">{t.results(items.length)}</p>
+
+    <ul class="list" id="list">
+      {items.map((item) => {
+        const text = itemText(lang, item.id);
+        const haystack = [item.slug, item.name, text.title, text.summary, text.use, item.description, item.command ?? '']
+          .join(' ')
+          .toLowerCase();
+        return (
+          <li class="row" data-kind={item.type} data-hosts={item.hosts.join(' ')} data-search={haystack}>
+            <a href={itemUrl(lang, item)}>
+              <span class="row__kind"><Glyph kind={item.type} />{kindLabel(lang, item.type)}</span>
+              <span class="row__main">
+                <span class="row__title">{text.title}</span>
+                <span class="row__slug">{item.command ?? item.slug}</span>
+              </span>
+              <span class="row__summary">{text.summary}</span>
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+
+    <div class="empty" id="empty" hidden>
+      <p>{t.empty}</p>
+      <button type="button" class="btn" id="clear">{t.clearFilters}</button>
+    </div>
+  </div>
+</section>
+
+<script>
+  function normalize(value: string) {
+    return value.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  }
+
+  function initCatalog() {
+    const root = document.querySelector<HTMLElement>('.catalog');
+    if (!root || root.dataset.ready) return;
+    root.dataset.ready = '1';
+    const input = root.querySelector<HTMLInputElement>('#q')!;
+    const host = root.querySelector<HTMLSelectElement>('#host')!;
+    const chips = [...root.querySelectorAll<HTMLButtonElement>('[data-kind-filter]')];
+    const rows = [...root.querySelectorAll<HTMLElement>('.row')].map((row) => ({ row, text: normalize(row.dataset.search ?? '') }));
+    const count = root.querySelector<HTMLElement>('#count')!;
+    const empty = root.querySelector<HTMLElement>('#empty')!;
+    const list = root.querySelector<HTMLElement>('#list')!;
+    let kind = 'all';
+
+    const params = new URLSearchParams(location.search);
+    if (params.get('q')) input.value = params.get('q')!;
+    if (params.get('kind')) kind = params.get('kind')!;
+    if (params.get('host')) host.value = params.get('host')!;
+
+    const apply = (syncUrl = true) => {
+      const terms = normalize(input.value.trim()).split(/\s+/).filter(Boolean);
+      let shown = 0;
+      for (const { row, text } of rows) {
+        const okKind = kind === 'all' || row.dataset.kind === kind;
+        const okHost = host.value === 'all' || (row.dataset.hosts ?? '').split(' ').includes(host.value);
+        const okText = terms.every((term) => text.includes(term));
+        const visible = okKind && okHost && okText;
+        row.hidden = !visible;
+        if (visible) shown += 1;
+      }
+      chips.forEach((chip) => chip.setAttribute('aria-pressed', String(chip.dataset.kindFilter === kind)));
+      count.textContent = shown === 1 ? root.dataset.resultsOne! : root.dataset.resultsMany!.replace('{n}', String(shown));
+      empty.hidden = shown > 0;
+      list.hidden = shown === 0;
+      if (syncUrl) {
+        const next = new URLSearchParams();
+        if (input.value.trim()) next.set('q', input.value.trim());
+        if (kind !== 'all') next.set('kind', kind);
+        if (host.value !== 'all') next.set('host', host.value);
+        const query = next.toString();
+        history.replaceState(history.state, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
+      }
+    };
+
+    input.addEventListener('input', () => apply());
+    host.addEventListener('change', () => apply());
+    chips.forEach((chip) => chip.addEventListener('click', () => { kind = chip.dataset.kindFilter ?? 'all'; apply(); }));
+    root.querySelector('#clear')!.addEventListener('click', () => {
+      input.value = '';
+      host.value = 'all';
+      kind = 'all';
+      apply();
+      input.focus();
+    });
+    document.querySelectorAll<HTMLAnchorElement>('[data-set-kind]').forEach((link) =>
+      link.addEventListener('click', () => { kind = link.dataset.setKind ?? 'all'; apply(); }),
+    );
+    document.addEventListener('keydown', (event) => {
+      const target = event.target as HTMLElement;
+      const typing = target.matches('input, textarea, select, [contenteditable]');
+      if (!typing && (event.key === '/' || ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k'))) {
+        event.preventDefault();
+        input.focus();
+        input.select();
+      }
+    });
+    apply(false);
+  }
+  initCatalog();
+  document.addEventListener('astro:page-load', initCatalog);
+</script>
+
+<style>
+  .tools { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding-block: 4px 12px; }
+  .filters > * { min-width: 0; }
+  .chips { max-width: 100%; }
+  .search {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r-md);
+    padding: 0 12px 0 14px; color: var(--muted);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .search input {
+    flex: 1; min-width: 0; height: 52px; border: 0; outline: 0; background: transparent;
+    font: 400 var(--step-1)/1 var(--font); color: var(--ink-strong);
+  }
+  .search input::placeholder { color: #8994a8; }
+  .search kbd {
+    font-size: 0.75rem; border: 1px solid var(--line-strong); border-radius: 5px;
+    padding: 2px 7px; color: var(--muted); background: var(--bg);
+  }
+  .filters { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px;
+    border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface);
+    font: 500 var(--step--1)/1 var(--font); color: var(--ink); cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .chip span { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .chip:hover { border-color: var(--ink); }
+  .chip[aria-pressed='true'] { background: var(--ink-strong); border-color: var(--ink-strong); color: #fff; }
+  .chip[aria-pressed='true'] span { color: #b8c2d8; }
+  .chip[aria-pressed='true'] :global(.glyph) { color: #fff; }
+  .host { display: inline-flex; align-items: center; gap: 8px; font-size: var(--step--1); color: var(--muted); }
+  .host select {
+    min-height: 36px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface);
+    padding: 0 30px 0 12px; font: 500 var(--step--1)/1 var(--font); color: var(--ink); cursor: pointer;
+  }
+  .count { color: var(--muted); font-size: var(--step--1); margin: 8px 0 4px; font-variant-numeric: tabular-nums; }
+
+  .list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  .row[hidden] { display: none; }
+  .row a {
+    display: grid; grid-template-columns: 150px minmax(0, 15rem) minmax(0, 1fr); gap: 6px 28px; align-items: baseline;
+    padding: 18px 12px; border-bottom: 1px solid var(--line); border-radius: var(--r-sm);
+    text-decoration: none; color: inherit; position: relative;
+    transition: background .15s;
+  }
+  .row a::before {
+    content: ''; position: absolute; left: -2px; top: 14px; bottom: 14px; width: 3px; border-radius: 3px;
+    background: var(--kind); opacity: 0; transition: opacity .15s;
+  }
+  .row a:hover { background: var(--surface); }
+  .row a:hover::before, .row a:focus-visible::before { opacity: 1; }
+  .row__kind { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: var(--step--1); }
+  .row__main { display: grid; gap: 2px; }
+  .row__title { font-weight: 600; color: var(--ink-strong); font-size: var(--step-1); letter-spacing: -0.01em; }
+  .row__slug { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); overflow-wrap: anywhere; }
+  .row__summary { color: var(--ink); max-width: 68ch; }
+
+  .empty { padding: 48px 0; display: grid; justify-items: start; gap: 16px; color: var(--ink); font-size: var(--step-1); }
+
+  @media (max-width: 900px) {
+    .row a { grid-template-columns: 1fr; gap: 6px; }
+    .row__summary { font-size: 0.95rem; color: var(--muted); }
+  }
+  @media (max-width: 560px) {
+    .chips { flex-wrap: nowrap; overflow-x: auto; margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter); scrollbar-width: none; }
+    .chip { flex: none; }
+    .search kbd { display: none; }
+  }
+</style>

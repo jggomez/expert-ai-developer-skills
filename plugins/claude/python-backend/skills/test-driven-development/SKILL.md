@@ -125,7 +125,6 @@ python3 ./skills/test-driven-development/scripts/verify_tests.py
 
 ### Host Execution Instructions
 - **Claude Code**: Execute `verify_tests.py` or the project's native test runner via shell commands between TDD phases.
-- **Antigravity**: Maintain a tight Red-Green-Refactor loop, verifying test suite execution before reporting completion.
 
 ## Red Flags
 - Writing production code before writing the failing test.

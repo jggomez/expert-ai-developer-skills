@@ -22,7 +22,15 @@ __all__ = ["Insight", "InsightsReport", "Thresholds", "build_insights", "insight
 
 ZERO: Final = Decimal(0)
 OVERLAP_NOTE: Final = "Savings are estimates, and rules can overlap, so do not add them together."
-_WHAT_IF_MODELS: Final = (("claude-opus-5-5", "claude-sonnet-5-5"),)
+
+
+def _what_if_models() -> tuple[tuple[str, str], ...]:
+    """Newest Opus priced as the newest Sonnet; both come from the pricing table, not from code."""
+    from agent_meter.pricing import latest_claude_model
+
+    opus, sonnet = latest_claude_model("opus"), latest_claude_model("sonnet")
+    return ((opus, sonnet),) if opus and sonnet else ()
+
 
 _LONG_SESSIONS_SQL: Final = """
 WITH numbered AS (
@@ -342,7 +350,7 @@ def _outlier_tasks(store: ViewSource, scope: _Scope, limits: Thresholds) -> list
 def _model_what_if(store: ViewSource, scope: _Scope, _limits: Thresholds) -> list[Insight]:
     found: list[Insight] = []
     sql = _MODEL_TOKENS_SQL.format(scope=scope.where())
-    for source, target in _WHAT_IF_MODELS:
+    for source, target in _what_if_models():
         usage = store.query(sql, [*scope.params, source])[0]
         price = store.query(_TARGET_PRICE_SQL, [target, scope.date_to])
         if not usage["calls"] or not price:

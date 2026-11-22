@@ -1,3 +1,7 @@
+---
+description: "Use when something is slow; measure first, find the real bottleneck, fix it and prove the gain."
+---
+
 # Workflow: Audit Performance (/perf, /webperf)
 
 **Command**: `/perf` (or `/webperf`)  
@@ -42,7 +46,7 @@ Diagnose, benchmark, and remediate runtime performance bottlenecks, frame drops 
         prompt="Profile execution plan and optimize slow queries for: <query-target>"
     )
     ```
-    *(For Flutter performance, use `Agent(agent="flutter-implementer", prompt="Profile DevTools timeline and eliminate jank...")`)*
+    *(For Flutter performance, use `Agent(subagent_type="senior-dev-flutter:flutter-implementer", prompt="Profile DevTools timeline and eliminate jank...")`)*
 - **Primary Skills**: `performance-scalability`, `sql-query-optimization`, `bigquery-query-optimization`, `flutter-performance-profiling`.
 
 ## 4. Quality Gate Checklist

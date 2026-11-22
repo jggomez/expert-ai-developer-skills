@@ -8,7 +8,8 @@ Unlike **Rules** (which enforce constraints and passive checks) or **Skills** (w
 
 ## 1. The Core 9-Stage Command Framework
 
-These 9 core playbooks align directly with user slash commands and engineering principles:
+These 9 core playbooks align directly with user slash commands and engineering principles. The command name is
+the file name, so to get `/spec` copy `spec-workflow.md` as `spec.md` (see section 3); kept as is, it is `/spec-workflow`.
 
 | What you're doing | Command | Key Principle | Playbook File | Primary Focus |
 | :--- | :--- | :--- | :--- | :--- |
@@ -71,4 +72,11 @@ To enable these playbooks as active slash commands in your own project workspace
    cp workflows/feature-development-workflow.md .agents/workflows/
    ```
 3. Open a new conversation session. The Antigravity agent will automatically index the workflow, allowing you to trigger it directly in the chat panel by typing `/feature-development-workflow`.
+
+The slash command is the file name. To use the short commands from the table, rename while copying:
+
+```bash
+cp workflows/spec-workflow.md .agents/workflows/spec.md       # /spec in Antigravity
+cp workflows/spec-workflow.md .claude/commands/spec.md        # /spec in Claude Code
+```
 

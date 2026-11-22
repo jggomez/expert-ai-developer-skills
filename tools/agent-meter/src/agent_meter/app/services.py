@@ -193,7 +193,8 @@ class AppApi:
         return localized
 
     def settings(self) -> dict[str, Any]:
-        from agent_meter.cli import Ctx, _doctor_checks
+        from agent_meter.cli import Ctx
+        from agent_meter.cli_commands.doctor import _doctor_checks
 
         cfg = self._config()
         values = dict(config_items(cfg))

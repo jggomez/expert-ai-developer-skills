@@ -1,0 +1,2454 @@
+{
+  "repo": "jggomez/expert-ai-developer-skills",
+  "marketplace": "expert-ai-developer-skills",
+  "counts": {
+    "plugin": 10,
+    "skill": 40,
+    "agent": 19,
+    "hook": 19,
+    "rule": 11,
+    "workflow": 16,
+    "sidecar": 3,
+    "tool": 2
+  },
+  "items": [
+    {
+      "id": "plugin/agent-metrics",
+      "type": "plugin",
+      "slug": "agent-metrics",
+      "name": "agent-metrics",
+      "description": "Optional: token, cost and latency metrics per project, task and subagent via the standalone agent-meter CLI.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/plugins/claude/agent-metrics",
+      "contains": {
+        "agent": [],
+        "skill": [
+          "agent-metrics"
+        ],
+        "hook": [
+          "agent-meter-hook"
+        ]
+      },
+      "mcp": false,
+      "install": {
+        "claude": "claude plugin install agent-metrics@expert-ai-developer-skills",
+        "antigravity": "agy plugin install ./plugins/antigravity/agent-metrics"
+      }
+    },
+    {
+      "id": "plugin/docs-and-quality",
+      "type": "plugin",
+      "slug": "docs-and-quality",
+      "name": "docs-and-quality",
+      "description": "Documentation standards, test-driven development, and Karpathy guidelines.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/plugins/claude/docs-and-quality",
+      "contains": {
+        "agent": [],
+        "skill": [
+          "documentation-expert",
+          "guidelines-karpathy",
+          "testing-expert"
+        ],
+        "hook": [
+          "anti-lazy-code-gate"
+        ]
+      },
+      "mcp": false,
+      "install": {
+        "claude": "claude plugin install docs-and-quality@expert-ai-developer-skills",
+        "antigravity": "agy plugin install ./plugins/antigravity/docs-and-quality"
+      }
+    },
+    {
+      "id": "plugin/git-workflow",
+      "type": "plugin",
+      "slug": "git-workflow",
+      "name": "git-workflow",
+      "description": "Gitflow workflow branch safety and conventional pull request verification.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/plugins/claude/git-workflow",
+      "contains": {
+        "agent": [],
+        "skill": [
+          "commit-expert",
+          "pull-request-expert"
+        ],
+        "hook": [
+          "git-clean-stop-gate",
+          "gitflow-branch-gate"
+        ]
+      },
+      "mcp": false,
+      "install": {
+        "claude": "claude plugin install git-workflow@expert-ai-developer-skills",
+        "antigravity": "agy plugin install ./plugins/antigravity/git-workflow"
+      }
+    },
+    {
+      "id": "plugin/multi-agent-ops",
+      "type": "plugin",
+      "slug": "multi-agent-ops",
+      "name": "multi-agent-ops",
+      "description": "Self-correcting loop engineering and automated codebase research.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/plugins/claude/multi-agent-ops",
+      "contains": {
+        "agent": [],
+        "skill": [
+          "loop-engineering",
+          "repo-research"
+        ],
+        "hook": [
+          "context-guard-gate"
+        ]
+      },
+      "mcp": false,
+      "install": {
+        "claude": "claude plugin install multi-agent-ops@expert-ai-developer-skills",
+        "antigravity": "agy plugin install ./plugins/antigravity/multi-agent-ops"
+      }
+    },
+    {
+      "id": "plugin/python-backend",
+      "type": "plugin",
+      "slug": "python-backend",
+      "name": "python-backend",
+      "description": "Production Python backend engineering skills: FastAPI, TDD, migrations, CI/CD, and performance.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/plugins/claude/python-backend",
+      "contains": {
+        "agent": [
+          "architect-engineer",
+          "challenger",
+          "code-implementer",
+          "compliance-verifier",
+          "critic",
+          "e2e-blackbox-tester",
+          "product-analyst",
+          "python-backend-orchestrator",
+          "qa-tester",
+          "ui-ux-designer"
+        ],
+        "skill": [
+          "adversarial-challenger",
+          "blackbox-tester",
+          "build-and-ci-gates",
+          "code-critic",
+          "code-implementer",
+          "code-smells-expert",
+          "compliance-verifier",
+          "context-capture",
+          "context-restore",
+          "database-migration-expert",
+          "design-spec-expert",
+          "loop-engineering",
+          "performance-scalability",
+          "product-analyst",
+          "pull-request-expert",
+          "python-expert",
+          "qa-tester",
+          "refactoring-code-expert",
+          "security-audit",
+          "senior-architect-engineering",
+          "test-driven-development",
+          "ui-ux-designer"
+        ],
+        "hook": [
+          "pre-tool-gate",
+          "python-backend-activate",
+          "stop-gate"
+        ]
+      },
+      "mcp": true,
+      "install": {
+        "claude": "claude plugin install python-backend@expert-ai-developer-skills",
+        "antigravity": "agy plugin install ./plugins/antigravity/python-backend"
+      }
+    },
+    {
+      "id": "plugin/senior-data-engineer",
+      "type": "plugin",
+      "slug": "senior-data-engineer",
+      "name": "senior-data-engineer",
+      "description": "Google Cloud data engineering subagent with BigQuery, Datastream, Dataform, and Pub/Sub MCP access.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/plugins/claude/senior-data-engineer",
+      "contains": {
+        "agent": [
+          "senior-data-engineer"
+        ],
+        "skill": [
+          "cdc-scd-patterns",
+          "context-capture",
+          "context-restore",
+          "gcp-data-engineering"
+        ],
+        "hook": [
+          "data-quality-gate",
+          "data-safety-gate"
+        ]
+      },
+      "mcp": true,
+      "install": {
+        "claude": "claude plugin install senior-data-engineer@expert-ai-developer-skills",
+        "antigravity": "agy plugin install ./plugins/antigravity/senior-data-engineer"
+      }
+    },
+    {
+      "id": "plugin/senior-dev",
+      "type": "plugin",
+      "slug": "senior-dev",
+      "name": "senior-dev",
+      "description": "Senior Developer Orchestrator and specialized subagents for SDLC execution using TDD, clean code, and automated verification.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/plugins/claude/senior-dev",
+      "contains": {
+        "agent": [
+          "architect-engineer",
+          "challenger",
+          "code-implementer",
+          "compliance-verifier",
+          "critic",
+          "e2e-blackbox-tester",
+          "product-analyst",
+          "qa-tester",
+          "senior-dev-orchestrator",
+          "ui-ux-designer"
+        ],
+        "skill": [
+          "adversarial-challenger",
+          "blackbox-tester",
+          "code-critic",
+          "code-implementer",
+          "code-smells-expert",
+          "compliance-verifier",
+          "context-capture",
+          "context-restore",
+          "loop-engineering",
+          "product-analyst",
+          "qa-tester",
+          "refactoring-code-expert",
+          "senior-architect-engineering",
+          "senior-dev-orchestrator",
+          "ui-ux-designer"
+        ],
+        "hook": [
+          "e2e-evidence-gate",
+          "orchestrator-role-gate",
+          "universal-quality-gate"
+        ]
+      },
+      "mcp": true,
+      "install": {
+        "claude": "claude plugin install senior-dev@expert-ai-developer-skills",
+        "antigravity": "agy plugin install ./plugins/antigravity/senior-dev"
+      }
+    },
+    {
+      "id": "plugin/senior-dev-flutter",
+      "type": "plugin",
+      "slug": "senior-dev-flutter",
+      "name": "senior-dev-flutter",
+      "description": "Senior Flutter orchestrator, architecture decisions, profiling, and release engineering.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/plugins/claude/senior-dev-flutter",
+      "contains": {
+        "agent": [
+          "challenger",
+          "critic",
+          "e2e-blackbox-tester",
+          "flutter-architect",
+          "flutter-feature-orchestrator",
+          "flutter-implementer",
+          "flutter-release-engineer",
+          "flutter-reviewer",
+          "product-analyst",
+          "qa-tester",
+          "ui-ux-designer"
+        ],
+        "skill": [
+          "adversarial-challenger",
+          "blackbox-tester",
+          "code-critic",
+          "code-smells-expert",
+          "compliance-verifier",
+          "context-capture",
+          "context-restore",
+          "flutter-architecture-decisions",
+          "flutter-performance-profiling",
+          "flutter-release-engineering",
+          "flutter-review-checklist",
+          "flutter-senior-orchestration",
+          "flutter-test-strategy",
+          "flutter-upgrade-migration",
+          "loop-engineering",
+          "product-analyst",
+          "qa-tester",
+          "refactoring-code-expert",
+          "test-driven-development",
+          "ui-ux-designer"
+        ],
+        "hook": [
+          "flutter-pre-tool-gate",
+          "flutter-stop-gate"
+        ]
+      },
+      "mcp": true,
+      "install": {
+        "claude": "claude plugin install senior-dev-flutter@expert-ai-developer-skills",
+        "antigravity": "agy plugin install ./plugins/antigravity/senior-dev-flutter"
+      }
+    },
+    {
+      "id": "plugin/shared-context",
+      "type": "plugin",
+      "slug": "shared-context",
+      "name": "shared-context",
+      "description": "Cross-agent working memory: captures and restores architecture decisions across AI sessions.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/plugins/claude/shared-context",
+      "contains": {
+        "agent": [
+          "context-keeper"
+        ],
+        "skill": [
+          "context-capture",
+          "context-restore"
+        ],
+        "hook": [
+          "post-tool-autosave",
+          "session-start-context",
+          "stop-flush"
+        ]
+      },
+      "mcp": true,
+      "install": {
+        "claude": "claude plugin install shared-context@expert-ai-developer-skills",
+        "antigravity": "agy plugin install ./plugins/antigravity/shared-context"
+      }
+    },
+    {
+      "id": "plugin/sql-query-optimizer",
+      "type": "plugin",
+      "slug": "sql-query-optimizer",
+      "name": "sql-query-optimizer",
+      "description": "Diagnoses and rewrites slow BigQuery and relational SQL queries using real execution plans.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/plugins/claude/sql-query-optimizer",
+      "contains": {
+        "agent": [
+          "sql-query-optimizer"
+        ],
+        "skill": [
+          "bigquery-query-optimization",
+          "context-capture",
+          "context-restore",
+          "sql-query-optimization"
+        ],
+        "hook": [
+          "sql-safety-gate"
+        ]
+      },
+      "mcp": true,
+      "install": {
+        "claude": "claude plugin install sql-query-optimizer@expert-ai-developer-skills",
+        "antigravity": "agy plugin install ./plugins/antigravity/sql-query-optimizer"
+      }
+    },
+    {
+      "id": "skill/adversarial-challenger",
+      "type": "skill",
+      "slug": "adversarial-challenger",
+      "name": "adversarial-challenger",
+      "title": "Adversarial Challenger & Stress Testing Skill",
+      "description": "Use when a change touches auth, payments, concurrency, untrusted input or destructive actions and needs to be attacked before release: stress tests, fuzzing, worst-case inputs, failure paths, timeouts and memory pressure.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/adversarial-challenger",
+      "includedIn": [
+        "python-backend",
+        "senior-dev",
+        "senior-dev-flutter"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill adversarial-challenger"
+      }
+    },
+    {
+      "id": "skill/agent-metrics",
+      "type": "skill",
+      "slug": "agent-metrics",
+      "name": "agent-metrics",
+      "title": "AI Coding Metrics Skill (`agent-metrics`)",
+      "description": "Use when the user wants to install, set up, check or remove agent-meter (token, API-equivalent cost and latency metrics for Claude Code and Antigravity per project, client, task and subagent), asks \"how much did this task / project / client cost\", \"why is my agent slow or expensive\", wants a local report or a BigQuery + Looker Studio dashboard, needs to fix unpriced models with \"agent-meter pricing\", or wants ad-hoc DuckDB / BigQuery queries over the collected metrics.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/agent-metrics",
+      "includedIn": [
+        "agent-metrics"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill agent-metrics"
+      }
+    },
+    {
+      "id": "skill/bigquery-query-optimization",
+      "type": "skill",
+      "slug": "bigquery-query-optimization",
+      "name": "bigquery-query-optimization",
+      "title": "BigQuery Query Optimization Skill",
+      "description": "Diagnoses and rewrites slow BigQuery SQL using the query plan (stages, shuffle, workers) — partitioning/clustering pruning, JOIN ordering and broadcast vs. shuffle joins, skewed JOINs, WHERE clause selectivity, and approximate/SQL-vs-JS function choices. Use when a BigQuery query is slow, expensive, or hitting Resources Exceeded, or when reviewing a query plan.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/bigquery-query-optimization",
+      "includedIn": [
+        "sql-query-optimizer"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill bigquery-query-optimization"
+      }
+    },
+    {
+      "id": "skill/blackbox-tester",
+      "type": "skill",
+      "slug": "blackbox-tester",
+      "name": "blackbox-tester",
+      "title": "Black-Box Browser Verification & Visual Testing Skill",
+      "description": "Use when a web UI or user flow changed and needs proof it works in a real browser: runs the user journeys with Playwright, checks console and network errors, and saves screenshots at four screen widths.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/blackbox-tester",
+      "includedIn": [
+        "python-backend",
+        "senior-dev",
+        "senior-dev-flutter"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill blackbox-tester"
+      }
+    },
+    {
+      "id": "skill/build-and-ci-gates",
+      "type": "skill",
+      "slug": "build-and-ci-gates",
+      "name": "build-and-ci-gates",
+      "title": "Build and CI Gates Skill",
+      "description": "Implements linters, code formatters, and automated build pipelines (CI/CD) to prevent syntax errors, enforce style consistency, and prevent failing builds from being merged. Use this skill when asked to add linters, configure docker builds, or set up GitHub Actions workflows.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/build-and-ci-gates",
+      "includedIn": [
+        "python-backend"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill build-and-ci-gates"
+      }
+    },
+    {
+      "id": "skill/cdc-scd-patterns",
+      "type": "skill",
+      "slug": "cdc-scd-patterns",
+      "name": "cdc-scd-patterns",
+      "title": "CDC & SCD Patterns Skill",
+      "description": "Guides Change Data Capture (CDC) ingestion via Datastream and Slowly Changing Dimension (SCD) modeling in BigQuery/Dataform. Use when replicating an operational database, designing history-tracking dimension tables, or implementing SCD Type 1/2 merge logic.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/cdc-scd-patterns",
+      "includedIn": [
+        "senior-data-engineer"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill cdc-scd-patterns"
+      }
+    },
+    {
+      "id": "skill/code-critic",
+      "type": "skill",
+      "slug": "code-critic",
+      "name": "code-critic",
+      "title": "Code Critic & Independent Architectural Review Skill",
+      "description": "Use when a large diff or a refactor across modules needs an independent review of complexity, duplication, SOLID, anti-patterns, maintainability and interface robustness, without changing the code.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/code-critic",
+      "includedIn": [
+        "python-backend",
+        "senior-dev",
+        "senior-dev-flutter"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill code-critic"
+      }
+    },
+    {
+      "id": "skill/code-implementer",
+      "type": "skill",
+      "slug": "code-implementer",
+      "name": "code-implementer",
+      "title": "Code Implementer Skill",
+      "description": "Use when implementing a feature, fixing a bug or refactoring: writes production code with test-driven development and clean code principles.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/code-implementer",
+      "includedIn": [
+        "python-backend",
+        "senior-dev"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill code-implementer"
+      }
+    },
+    {
+      "id": "skill/code-smells-expert",
+      "type": "skill",
+      "slug": "code-smells-expert",
+      "name": "code-smells-expert",
+      "title": "Code Smells Expert Skill",
+      "description": "Analyzes source code to identify, classify, and diagnose architectural design flaws known as \"Code Smells\" and technical debt. Use this skill when requested to perform a technical audit, evaluate code quality, look for SOLID violations (especially SRP and OCP), or identify reasons why code is difficult to maintain or test. It applies the perspective of a critical Senior Software Architect using standard industry taxonomy (Fowler/Beck).",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/code-smells-expert",
+      "includedIn": [
+        "python-backend",
+        "senior-dev",
+        "senior-dev-flutter"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill code-smells-expert"
+      }
+    },
+    {
+      "id": "skill/commit-expert",
+      "type": "skill",
+      "slug": "commit-expert",
+      "name": "commit-expert",
+      "title": "Commit Expert Skill",
+      "description": "Use when writing commit messages or setting up commit checks: Conventional Commits rules, validator scripts and local git commit hooks.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/commit-expert",
+      "includedIn": [
+        "git-workflow"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill commit-expert"
+      }
+    },
+    {
+      "id": "skill/compliance-verifier",
+      "type": "skill",
+      "slug": "compliance-verifier",
+      "name": "compliance-verifier",
+      "title": "Compliance Verifier Skill",
+      "description": "Use when a change is finished and needs sign-off before release: checks non-functional requirements, static analysis, test coverage and security, and returns an approved or rejected verdict.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/compliance-verifier",
+      "includedIn": [
+        "python-backend",
+        "senior-dev",
+        "senior-dev-flutter"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill compliance-verifier"
+      }
+    },
+    {
+      "id": "skill/context-capture",
+      "type": "skill",
+      "slug": "context-capture",
+      "name": "context-capture",
+      "title": "Context Capture Skill",
+      "description": "Use when finishing a task, or when asked to \"save context\", \"guarda contexto\", \"record decisions\" or \"hand off\": writes compact memory to context/memory/ and keeps the root AGENTS.md (at most 90 lines) linked to DESIGN.md and MEMORY.md for Claude Code and Google Antigravity.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/context-capture",
+      "includedIn": [
+        "python-backend",
+        "senior-data-engineer",
+        "senior-dev",
+        "senior-dev-flutter",
+        "shared-context",
+        "sql-query-optimizer"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill context-capture"
+      }
+    },
+    {
+      "id": "skill/context-restore",
+      "type": "skill",
+      "slug": "context-restore",
+      "name": "context-restore",
+      "title": "Context Restore Skill",
+      "description": "Use at session start (State 0) or when asked to \"load context\", \"catch up\", or \"what was done before\" — prioritizes LLM Wiki Progressive Disclosure (context/memory/MEMORY.md) across Claude Code and Google Antigravity while supporting user-confirmed restore for scripted sessions (context/sessions/).",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/context-restore",
+      "includedIn": [
+        "python-backend",
+        "senior-data-engineer",
+        "senior-dev",
+        "senior-dev-flutter",
+        "shared-context",
+        "sql-query-optimizer"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill context-restore"
+      }
+    },
+    {
+      "id": "skill/database-migration-expert",
+      "type": "skill",
+      "slug": "database-migration-expert",
+      "name": "database-migration-expert",
+      "title": "Database Migration Expert Skill",
+      "description": "Manages database schema migrations, seed data scripts, and table versioning in Python backends (Alembic, SQL). Use this skill when asked to change DB schemas, write migrations, or write seeding scripts.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/database-migration-expert",
+      "includedIn": [
+        "python-backend"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill database-migration-expert"
+      }
+    },
+    {
+      "id": "skill/design-spec-expert",
+      "type": "skill",
+      "slug": "design-spec-expert",
+      "name": "design-spec-expert",
+      "title": "Design Spec Expert Skill",
+      "description": "Use before coding a new endpoint, schema or service: drafts a short API or software design spec (docs/FEATURE/api-spec.md, at most 70 lines).",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/design-spec-expert",
+      "includedIn": [
+        "python-backend"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill design-spec-expert"
+      }
+    },
+    {
+      "id": "skill/documentation-expert",
+      "type": "skill",
+      "slug": "documentation-expert",
+      "name": "documentation-expert",
+      "title": "Documentation Expert Skill",
+      "description": "Use when writing or cleaning up technical docs: root AGENTS.md, DESIGN.md alignment, Diátaxis guides and Mermaid diagrams, kept short and with checked relative links.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/documentation-expert",
+      "includedIn": [
+        "docs-and-quality"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill documentation-expert"
+      }
+    },
+    {
+      "id": "skill/flutter-architecture-decisions",
+      "type": "skill",
+      "slug": "flutter-architecture-decisions",
+      "name": "flutter-architecture-decisions",
+      "title": "Flutter Architecture Decisions",
+      "description": "Use when choosing state management for a Flutter app (Riverpod, Bloc, signals or setState), drawing package and module boundaries, deciding what belongs in the UI, logic and data layers, or recording a short Flutter ADR (at most 55 lines). Complements the official flutter-apply-architecture-best-practices skill.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/flutter-architecture-decisions",
+      "includedIn": [
+        "senior-dev-flutter"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill flutter-architecture-decisions"
+      }
+    },
+    {
+      "id": "skill/flutter-performance-profiling",
+      "type": "skill",
+      "slug": "flutter-performance-profiling",
+      "name": "flutter-performance-profiling",
+      "title": "Flutter Performance Profiling",
+      "description": "Use when a Flutter app janks, drops frames, is slow to start, or feels heavy — diagnose with DevTools timeline, profile mode, the raster vs UI thread split, shader jank, and startup tracing, then fix the specific cause. Goes beyond the official flutter-fix-layout-issues (which resolves overflow/constraint errors) to runtime performance the analyzer cannot see.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/flutter-performance-profiling",
+      "includedIn": [
+        "senior-dev-flutter"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill flutter-performance-profiling"
+      }
+    },
+    {
+      "id": "skill/flutter-release-engineering",
+      "type": "skill",
+      "slug": "flutter-release-engineering",
+      "name": "flutter-release-engineering",
+      "title": "Flutter Release Engineering",
+      "description": "Use when setting up or reviewing how a Flutter app ships — build flavors and environment config (--dart-define-from-file), app signing, the flutter build matrix per platform, version/build-number strategy, store metadata, and whether to use an over-the-air update service (Shorebird). Covers release concerns the official Flutter/Dart skills do not.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/flutter-release-engineering",
+      "includedIn": [
+        "senior-dev-flutter"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill flutter-release-engineering"
+      }
+    },
+    {
+      "id": "skill/flutter-review-checklist",
+      "type": "skill",
+      "slug": "flutter-review-checklist",
+      "name": "flutter-review-checklist",
+      "title": "Flutter Review Checklist",
+      "description": "Use when reviewing a Flutter or Dart pull request or auditing code quality: rebuild scope, const, keys, dispose and leaks, async BuildContext, DESIGN.md and ADR conformance, with an honest verdict of at most 50 lines.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/flutter-review-checklist",
+      "includedIn": [
+        "senior-dev-flutter"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill flutter-review-checklist"
+      }
+    },
+    {
+      "id": "skill/flutter-senior-orchestration",
+      "type": "skill",
+      "slug": "flutter-senior-orchestration",
+      "name": "flutter-senior-orchestration",
+      "title": "Flutter Senior Orchestration",
+      "description": "Use to run a Flutter feature or fix end to end: restores shared context (context/memory/), bootstraps the root AGENTS.md, sizes the task, plans it in docs/FEATURE/PLAN.md, orders the official flutter-* and dart-* skills, and dispatches ui-ux-designer, flutter-architect, flutter-implementer, flutter-reviewer, flutter-release-engineer and qa-tester.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/flutter-senior-orchestration",
+      "includedIn": [
+        "senior-dev-flutter"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill flutter-senior-orchestration"
+      }
+    },
+    {
+      "id": "skill/flutter-test-strategy",
+      "type": "skill",
+      "slug": "flutter-test-strategy",
+      "name": "flutter-test-strategy",
+      "title": "Flutter Test Strategy",
+      "description": "Use when deciding what to test in a Flutter or Dart codebase across unit, widget, golden and integration layers, writing a short test matrix (at most 80 lines), and enforcing honest coverage gates.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/flutter-test-strategy",
+      "includedIn": [
+        "senior-dev-flutter"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill flutter-test-strategy"
+      }
+    },
+    {
+      "id": "skill/flutter-upgrade-migration",
+      "type": "skill",
+      "slug": "flutter-upgrade-migration",
+      "name": "flutter-upgrade-migration",
+      "title": "Flutter Upgrade & Migration",
+      "description": "Use when upgrading the Flutter/Dart SDK, bumping dependencies across major versions, or clearing deprecation warnings across a codebase. Covers project-scale framework migration — the ordered upgrade sweep, deprecation triage, and dependency major-bump strategy — that the official dart fix / dart-resolve-package-conflicts skills do not, while deferring pub-conflict resolution to them.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/flutter-upgrade-migration",
+      "includedIn": [
+        "senior-dev-flutter"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill flutter-upgrade-migration"
+      }
+    },
+    {
+      "id": "skill/gcp-data-engineering",
+      "type": "skill",
+      "slug": "gcp-data-engineering",
+      "name": "gcp-data-engineering",
+      "title": "GCP Data Engineering Skill",
+      "description": "Guides architecture decisions for data pipelines on Google Cloud — lake/warehouse/lakehouse design, batch vs. streaming, orchestration tool selection (Dataform, Cloud Composer/Airflow, Dataflow/Beam), and BigQuery cost/performance tuning (partitioning, clustering, slots). Use when designing a new pipeline, choosing a GCP data service, or optimizing BigQuery cost/performance.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/gcp-data-engineering",
+      "includedIn": [
+        "senior-data-engineer"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill gcp-data-engineering"
+      }
+    },
+    {
+      "id": "skill/guidelines-karpathy",
+      "type": "skill",
+      "slug": "guidelines-karpathy",
+      "name": "guidelines-karpathy",
+      "title": "Karpathy Guidelines Skill",
+      "description": "Behavioral guidelines to reduce common LLM coding mistakes. Use when writing, reviewing, or refactoring code to avoid overcomplication, make surgical changes, surface assumptions, and define verifiable success criteria.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/guidelines-karpathy",
+      "includedIn": [
+        "docs-and-quality"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill guidelines-karpathy"
+      }
+    },
+    {
+      "id": "skill/loop-engineering",
+      "type": "skill",
+      "slug": "loop-engineering",
+      "name": "loop-engineering",
+      "title": "Loop Engineering Skill",
+      "description": "Use when planning or coordinating a multi-step coding task across agents: sizes the task into three tiers, calls only the specialists it needs, bootstraps the target AGENTS.md, isolates parallel workers (disjoint files or git worktrees) and caps self-correcting review loops at three.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/loop-engineering",
+      "includedIn": [
+        "multi-agent-ops",
+        "python-backend",
+        "senior-dev",
+        "senior-dev-flutter"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill loop-engineering"
+      }
+    },
+    {
+      "id": "skill/performance-scalability",
+      "type": "skill",
+      "slug": "performance-scalability",
+      "name": "performance-scalability",
+      "title": "Performance and Scalability Skill",
+      "description": "Identifies, diagnoses, and remediates performance bottlenecks, memory leaks, and architectural scaling limitations. Use this skill when asked to optimize slow queries, configure caching mechanisms, design asynchronous worker systems, or perform load profiling.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/performance-scalability",
+      "includedIn": [
+        "python-backend"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill performance-scalability"
+      }
+    },
+    {
+      "id": "skill/product-analyst",
+      "type": "skill",
+      "slug": "product-analyst",
+      "name": "product-analyst",
+      "title": "Product Analyst Skill",
+      "description": "Use when a feature request is vague or its business rules are unclear: writes the Product section of docs/FEATURE/spec.md (at most 50 lines) with user stories (US-XX) and testable acceptance criteria (AC-XX).",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/product-analyst",
+      "includedIn": [
+        "python-backend",
+        "senior-dev",
+        "senior-dev-flutter"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill product-analyst"
+      }
+    },
+    {
+      "id": "skill/pull-request-expert",
+      "type": "skill",
+      "slug": "pull-request-expert",
+      "name": "pull-request-expert",
+      "title": "Pull Request Expert Skill",
+      "description": "Use when opening or auditing a pull request: a short (at most 40 lines), honest description with Conventional Commits checks, a link to docs/FEATURE/test-matrix.md and any BLOCKED or SKIPPED gate stated openly.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/pull-request-expert",
+      "includedIn": [
+        "git-workflow",
+        "python-backend"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill pull-request-expert"
+      }
+    },
+    {
+      "id": "skill/python-expert",
+      "type": "skill",
+      "slug": "python-expert",
+      "name": "python-expert",
+      "title": "Python Expert Skill",
+      "description": "Guides PEP 8 compliance, modern static type hinting (Python 3.10+ PEP 604, Protocols), generator pipelines, memory optimization (slots, dataclasses), structured concurrency (asyncio TaskGroup), and production error handling in Python applications. Use when writing pure Python modules, utility functions, algorithms, or optimizing memory and execution speed.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/python-expert",
+      "includedIn": [
+        "python-backend"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill python-expert"
+      }
+    },
+    {
+      "id": "skill/qa-tester",
+      "type": "skill",
+      "slug": "qa-tester",
+      "name": "qa-tester",
+      "title": "QA Automation & E2E Tester Skill",
+      "description": "Use when a change needs proof that it works: designs and runs unit, integration and E2E tests and writes a test matrix (docs/FEATURE/test-matrix.md, at most 80 lines) backed by a real exit code 0.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/qa-tester",
+      "includedIn": [
+        "python-backend",
+        "senior-dev",
+        "senior-dev-flutter"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill qa-tester"
+      }
+    },
+    {
+      "id": "skill/refactoring-code-expert",
+      "type": "skill",
+      "slug": "refactoring-code-expert",
+      "name": "refactoring-code-expert",
+      "title": "Refactoring Code Expert Skill",
+      "description": "Executes structural improvements on existing code to increase maintainability, readability, and extensibility without altering external behavior. Use this skill to address technical debt, fix \"Code Smells\", apply design patterns, or improve adherence to SOLID principles.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/refactoring-code-expert",
+      "includedIn": [
+        "python-backend",
+        "senior-dev",
+        "senior-dev-flutter"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill refactoring-code-expert"
+      }
+    },
+    {
+      "id": "skill/repo-research",
+      "type": "skill",
+      "slug": "repo-research",
+      "name": "repo-research",
+      "title": "Repository Research Skill",
+      "description": "Use when opening a codebase you do not know yet: maps its structure, stack, commands and invariants into a codebase map (.agents/rules/project-context.md, at most 80 lines) and bootstraps the root AGENTS.md and context/memory/MEMORY.md.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/repo-research",
+      "includedIn": [
+        "multi-agent-ops"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill repo-research"
+      }
+    },
+    {
+      "id": "skill/security-audit",
+      "type": "skill",
+      "slug": "security-audit",
+      "name": "security-audit",
+      "title": "Security Audit Skill",
+      "description": "Conducts comprehensive security reviews on source code, infrastructure as code (IaC), and architectural designs. It identifies vulnerabilities such as injection flaws, broken access control, and exposure of sensitive data. Use this skill when asked to perform a security audit, a pentest review, check for OWASP Top 10 violations, or ensure compliance with security best practices.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/security-audit",
+      "includedIn": [
+        "python-backend"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill security-audit"
+      }
+    },
+    {
+      "id": "skill/senior-architect-engineering",
+      "type": "skill",
+      "slug": "senior-architect-engineering",
+      "name": "senior-architect-engineering",
+      "title": "Senior Architect Engineering Skill",
+      "description": "Use when a change adds a database schema, a cross-service contract, a core dependency or a new architectural pattern: writes short ADRs (docs/FEATURE/adr-NNN-*.md, at most 55 lines) and the Architecture section of docs/FEATURE/spec.md (at most 50 lines), grounded in KISS, YAGNI, SOLID and clean boundaries.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/senior-architect-engineering",
+      "includedIn": [
+        "python-backend",
+        "senior-dev"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill senior-architect-engineering"
+      }
+    },
+    {
+      "id": "skill/senior-dev-orchestrator",
+      "type": "skill",
+      "slug": "senior-dev-orchestrator",
+      "name": "senior-dev-orchestrator",
+      "title": "Senior Software Developer Orchestrator",
+      "description": "Use when running a software task through the full agent team: restores memory, bootstraps AGENTS.md, sizes the task into three tiers, dispatches specialists by capability and risk, runs TDD implementation in parallel with file or worktree isolation, verifies honestly and saves the milestone to memory.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/senior-dev-orchestrator",
+      "includedIn": [
+        "senior-dev"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill senior-dev-orchestrator"
+      }
+    },
+    {
+      "id": "skill/sql-query-optimization",
+      "type": "skill",
+      "slug": "sql-query-optimization",
+      "name": "sql-query-optimization",
+      "title": "SQL Query Optimization Skill",
+      "description": "Diagnoses and rewrites slow SQL on traditional engines (Postgres, MySQL, SQL Server, etc.) using EXPLAIN/EXPLAIN ANALYZE — indexing strategy, WHERE clause selectivity, avoiding functions on indexed columns, JOIN vs. subquery vs. CTE tradeoffs, and pagination. Use for any query slowness outside BigQuery, or when a query needs an index.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/sql-query-optimization",
+      "includedIn": [
+        "sql-query-optimizer"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill sql-query-optimization"
+      }
+    },
+    {
+      "id": "skill/test-driven-development",
+      "type": "skill",
+      "slug": "test-driven-development",
+      "name": "test-driven-development",
+      "title": "Test-Driven Development (TDD) Skill",
+      "description": "Guides the implementation of software using Red-Green-Refactor testing cycles, ensuring high coverage, robust mocks, and testable system designs. Use this skill when asked to write new features, add testing suites, or verify coverage.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/test-driven-development",
+      "includedIn": [
+        "python-backend",
+        "senior-dev-flutter"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill test-driven-development"
+      }
+    },
+    {
+      "id": "skill/testing-expert",
+      "type": "skill",
+      "slug": "testing-expert",
+      "name": "testing-expert",
+      "title": "Testing Expert Skill",
+      "description": "Use when designing automated tests in any language: test cases (TC-XX), hermetic Arrange-Act-Assert suites, Gherkin BDD scenarios and honest reporting of what actually ran.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/testing-expert",
+      "includedIn": [
+        "docs-and-quality"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill testing-expert"
+      }
+    },
+    {
+      "id": "skill/ui-ux-designer",
+      "type": "skill",
+      "slug": "ui-ux-designer",
+      "name": "ui-ux-designer",
+      "title": "UI/UX Designer & Design Systems Skill",
+      "description": "Use when building new screens or a new visual pattern: maintains the design system in DESIGN.md (YAML tokens plus 8 short sections), writes per-feature design notes in docs/FEATURE/spec.md, and covers WCAG AA accessibility and responsive states for web and mobile.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/skills/ui-ux-designer",
+      "includedIn": [
+        "python-backend",
+        "senior-dev",
+        "senior-dev-flutter"
+      ],
+      "install": {
+        "skills": "npx skills add jggomez/expert-ai-developer-skills --skill ui-ux-designer"
+      }
+    },
+    {
+      "id": "agent/architect-engineer",
+      "type": "agent",
+      "slug": "architect-engineer",
+      "name": "architect-engineer",
+      "description": "Specialized subagent for pragmatic software architecture, clean module boundaries, API/DB contracts, concise MADR records (docs/<feature-name>/adr-NNN-*.md <= 55 lines), and the `## Architecture` section of docs/<feature-name>/spec.md (<= 50 lines).",
+      "model": "inherit",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev/agents/architect-engineer.md",
+      "includedIn": [
+        "python-backend",
+        "senior-dev"
+      ],
+      "homePlugin": "senior-dev",
+      "install": {}
+    },
+    {
+      "id": "agent/challenger",
+      "type": "agent",
+      "slug": "challenger",
+      "name": "challenger",
+      "description": "Specialized adversarial subagent executing stress tests, fuzzing campaigns, worst-case boundary inputs, failure-path probes, and concurrency/timeout simulations to expose brittle implementations and unhandled exceptions.",
+      "model": "inherit",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev/agents/challenger.md",
+      "includedIn": [
+        "python-backend",
+        "senior-dev",
+        "senior-dev-flutter"
+      ],
+      "homePlugin": "senior-dev",
+      "install": {}
+    },
+    {
+      "id": "agent/code-implementer",
+      "type": "agent",
+      "slug": "code-implementer",
+      "name": "code-implementer",
+      "description": "Specialized subagent for writing production-grade code using Test-Driven Development (TDD). Use when implementing user stories, generating unit tests, refactoring clean code, and fixing bug reports.",
+      "model": "inherit",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev/agents/code-implementer.md",
+      "includedIn": [
+        "python-backend",
+        "senior-dev"
+      ],
+      "homePlugin": "senior-dev",
+      "install": {}
+    },
+    {
+      "id": "agent/compliance-verifier",
+      "type": "agent",
+      "slug": "compliance-verifier",
+      "name": "compliance-verifier",
+      "description": "Specialized subagent for final technical verification, quality attribute auditing, security scanning, and compliance approval. Use when evaluating a finished implementation against non-functional requirements, performing static analysis, checking code coverage thresholds, and issuing final release readiness verdicts.",
+      "model": "sonnet",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev/agents/compliance-verifier.md",
+      "includedIn": [
+        "python-backend",
+        "senior-dev"
+      ],
+      "homePlugin": "senior-dev",
+      "install": {}
+    },
+    {
+      "id": "agent/context-keeper",
+      "type": "agent",
+      "slug": "context-keeper",
+      "name": "context-keeper",
+      "description": "Dedicated maintainer of the shared AI context store. Manages the Cross-AI LLM Wiki at context/memory/ (MEMORY.md, architecture.md, conventions.md, log/) and scripted session store (context/sessions/) while synchronizing pointers with root AGENTS.md and DESIGN.md across Claude Code and Google Antigravity.",
+      "model": "haiku",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/shared-context/agents/context-keeper.md",
+      "includedIn": [
+        "shared-context"
+      ],
+      "homePlugin": "shared-context",
+      "install": {}
+    },
+    {
+      "id": "agent/critic",
+      "type": "agent",
+      "slug": "critic",
+      "name": "critic",
+      "description": "Specialized adversarial subagent performing independent, uncompromising code reviews. Inspects cyclomatic complexity, DRY, SOLID compliance, architectural anti-patterns, maintainability, and interface robustness without writing production fixes.",
+      "model": "inherit",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev/agents/critic.md",
+      "includedIn": [
+        "python-backend",
+        "senior-dev",
+        "senior-dev-flutter"
+      ],
+      "homePlugin": "senior-dev",
+      "install": {}
+    },
+    {
+      "id": "agent/e2e-blackbox-tester",
+      "type": "agent",
+      "slug": "e2e-blackbox-tester",
+      "name": "e2e-blackbox-tester",
+      "description": "Specialized black-box browser verification subagent validating live web UI user journeys, interactive GUI forms, responsive viewports, console/network errors, and physical screenshot evidence via deterministic Playwright execution.",
+      "model": "sonnet",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev/agents/e2e-blackbox-tester.md",
+      "includedIn": [
+        "python-backend",
+        "senior-dev",
+        "senior-dev-flutter"
+      ],
+      "homePlugin": "senior-dev",
+      "install": {}
+    },
+    {
+      "id": "agent/flutter-architect",
+      "type": "agent",
+      "slug": "flutter-architect",
+      "name": "flutter-architect",
+      "description": "Specialized subagent for Flutter architecture decisions — choosing state management (Riverpod/Bloc/signals/setState), drawing package/module boundaries, deciding what belongs in the UI/logic/data layers, and recording concise MADR ADRs (<= 55 lines).",
+      "model": "inherit",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev-flutter/agents/flutter-architect.md",
+      "includedIn": [
+        "senior-dev-flutter"
+      ],
+      "homePlugin": "senior-dev-flutter",
+      "install": {}
+    },
+    {
+      "id": "agent/flutter-feature-orchestrator",
+      "type": "agent",
+      "slug": "flutter-feature-orchestrator",
+      "name": "flutter-feature-orchestrator",
+      "description": "Senior Flutter orchestrator. Understands a Flutter feature or fix request, sizes it, sequences the official flutter-*/dart-* how-to skills in the right order, and delegates phases to the flutter-architect, flutter-implementer, flutter-reviewer, flutter-release-engineer, and qa-tester subagents. Decides and routes; never restates the official procedures.",
+      "model": "inherit",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev-flutter/agents/flutter-feature-orchestrator.md",
+      "includedIn": [
+        "senior-dev-flutter"
+      ],
+      "homePlugin": "senior-dev-flutter",
+      "install": {
+        "claude": "claude --agent senior-dev-flutter:flutter-feature-orchestrator"
+      }
+    },
+    {
+      "id": "agent/flutter-implementer",
+      "type": "agent",
+      "slug": "flutter-implementer",
+      "name": "flutter-implementer",
+      "description": "Specialized subagent for implementing Flutter/Dart changes with TDD, official flutter-*/dart-* skills, Google DESIGN.md token fidelity, and fail-honest test verification.",
+      "model": "inherit",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev-flutter/agents/flutter-implementer.md",
+      "includedIn": [
+        "senior-dev-flutter"
+      ],
+      "homePlugin": "senior-dev-flutter",
+      "install": {}
+    },
+    {
+      "id": "agent/flutter-release-engineer",
+      "type": "agent",
+      "slug": "flutter-release-engineer",
+      "name": "flutter-release-engineer",
+      "description": "Specialized subagent for shipping and maintaining Flutter apps — flavors, --dart-define-from-file config, signing, flutter build matrices, versioning, Shorebird OTA, SDK/package upgrades, and fail-honest release verification.",
+      "model": "sonnet",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev-flutter/agents/flutter-release-engineer.md",
+      "includedIn": [
+        "senior-dev-flutter"
+      ],
+      "homePlugin": "senior-dev-flutter",
+      "install": {}
+    },
+    {
+      "id": "agent/flutter-reviewer",
+      "type": "agent",
+      "slug": "flutter-reviewer",
+      "name": "flutter-reviewer",
+      "description": "Specialized subagent for reviewing Flutter/Dart PRs and code — rebuild scope, const, keys, dispose/leaks, async BuildContext, DESIGN.md & ADR conformance, IEEE/ISTQB test-matrix adequacy, and fail-honest <= 50-line audits.",
+      "model": "inherit",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev-flutter/agents/flutter-reviewer.md",
+      "includedIn": [
+        "senior-dev-flutter"
+      ],
+      "homePlugin": "senior-dev-flutter",
+      "install": {}
+    },
+    {
+      "id": "agent/product-analyst",
+      "type": "agent",
+      "slug": "product-analyst",
+      "name": "product-analyst",
+      "description": "Specialized subagent for product discovery, business rule disambiguation, and authoring the concise `## Product` section of docs/<feature-name>/spec.md (<= 50 lines) with US-XX stories and AC-XX acceptance criteria.",
+      "model": "sonnet",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev/agents/product-analyst.md",
+      "includedIn": [
+        "python-backend",
+        "senior-dev",
+        "senior-dev-flutter"
+      ],
+      "homePlugin": "senior-dev",
+      "install": {}
+    },
+    {
+      "id": "agent/python-backend-orchestrator",
+      "type": "agent",
+      "slug": "python-backend-orchestrator",
+      "name": "python-backend-orchestrator",
+      "description": "Senior Python Backend Orchestrator that plans, designs, and governs the lifecycle of production Python backend applications (FastAPI, Django, Flask) using Graph Engineering, TDD, Alembic migrations, and security gates.",
+      "model": "inherit",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/python-backend/agents/python-backend-orchestrator.md",
+      "includedIn": [
+        "python-backend"
+      ],
+      "homePlugin": "python-backend",
+      "install": {
+        "claude": "claude --agent python-backend:python-backend-orchestrator"
+      }
+    },
+    {
+      "id": "agent/qa-tester",
+      "type": "agent",
+      "slug": "qa-tester",
+      "name": "qa-tester",
+      "description": "Specialized subagent for Integration and E2E test execution, boundary verification, and authoring concise IEEE/ISTQB QA Test Matrix artifacts (docs/<feature-name>/test-matrix.md <= 80 lines) with empirical exit code 0 proof.",
+      "model": "sonnet",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev/agents/qa-tester.md",
+      "includedIn": [
+        "python-backend",
+        "senior-dev",
+        "senior-dev-flutter"
+      ],
+      "homePlugin": "senior-dev",
+      "install": {}
+    },
+    {
+      "id": "agent/senior-data-engineer",
+      "type": "agent",
+      "slug": "senior-data-engineer",
+      "name": "senior-data-engineer",
+      "description": "Specialized agent for designing and building data pipelines on Google Cloud — lake/warehouse architecture, CDC via Datastream, SCD modeling in BigQuery/Dataform, and orchestration. Use when designing a new pipeline, replicating an operational database, modeling dimension history, or auditing cost/performance.",
+      "model": "inherit",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-data-engineer/agents/senior-data-engineer.md",
+      "includedIn": [
+        "senior-data-engineer"
+      ],
+      "homePlugin": "senior-data-engineer",
+      "install": {}
+    },
+    {
+      "id": "agent/senior-dev-orchestrator",
+      "type": "agent",
+      "slug": "senior-dev-orchestrator",
+      "name": "senior-dev-orchestrator",
+      "description": "Senior Developer Orchestrator that understands business requirements, asks clarifying questions, designs architectures, plans execution, and orchestrates specialized subagents to implement, test, and verify production-grade software using TDD and best practices.",
+      "model": "inherit",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev/agents/senior-dev-orchestrator.md",
+      "includedIn": [
+        "senior-dev"
+      ],
+      "homePlugin": "senior-dev",
+      "install": {
+        "claude": "claude --agent senior-dev:senior-dev-orchestrator"
+      }
+    },
+    {
+      "id": "agent/sql-query-optimizer",
+      "type": "agent",
+      "slug": "sql-query-optimizer",
+      "name": "sql-query-optimizer",
+      "description": "Specialized subagent for finding and optimizing slow SQL — scans directories of .sql files and SQL embedded in application code, diagnoses BigQuery query plans (shuffle, skew, partition pruning) or traditional EXPLAIN plans, and rewrites queries with the reasoning behind each change. Use when asked to optimize a query, audit a codebase's SQL, or investigate why a query is slow/expensive.",
+      "model": "inherit",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/sql-query-optimizer/agents/sql-query-optimizer.md",
+      "includedIn": [
+        "sql-query-optimizer"
+      ],
+      "homePlugin": "sql-query-optimizer",
+      "install": {}
+    },
+    {
+      "id": "agent/ui-ux-designer",
+      "type": "agent",
+      "slug": "ui-ux-designer",
+      "name": "ui-ux-designer",
+      "description": "Specialized subagent for UI/UX design systems, official Google 2-layer DESIGN.md contracts, concise feature UI deltas (`## Design` section of docs/<feature-name>/spec.md), responsive layouts, and WCAG AA accessibility.",
+      "model": "sonnet",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev/agents/ui-ux-designer.md",
+      "includedIn": [
+        "python-backend",
+        "senior-dev",
+        "senior-dev-flutter"
+      ],
+      "homePlugin": "senior-dev",
+      "install": {}
+    },
+    {
+      "id": "hook/agent-meter-hook",
+      "type": "hook",
+      "slug": "agent-meter-hook",
+      "name": "agent-meter-hook",
+      "description": "",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/agent-metrics/hooks/agent-meter-hook.js",
+      "includedIn": [
+        "agent-metrics"
+      ],
+      "install": {}
+    },
+    {
+      "id": "hook/anti-lazy-code-gate",
+      "type": "hook",
+      "slug": "anti-lazy-code-gate",
+      "name": "anti-lazy-code-gate",
+      "description": "",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/docs-and-quality/hooks/anti-lazy-code-gate.js",
+      "includedIn": [
+        "docs-and-quality"
+      ],
+      "install": {}
+    },
+    {
+      "id": "hook/context-guard-gate",
+      "type": "hook",
+      "slug": "context-guard-gate",
+      "name": "context-guard-gate",
+      "description": "",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/multi-agent-ops/hooks/context-guard-gate.js",
+      "includedIn": [
+        "multi-agent-ops"
+      ],
+      "install": {}
+    },
+    {
+      "id": "hook/data-quality-gate",
+      "type": "hook",
+      "slug": "data-quality-gate",
+      "name": "data-quality-gate",
+      "description": "",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-data-engineer/hooks/data-quality-gate.js",
+      "includedIn": [
+        "senior-data-engineer"
+      ],
+      "install": {}
+    },
+    {
+      "id": "hook/data-safety-gate",
+      "type": "hook",
+      "slug": "data-safety-gate",
+      "name": "data-safety-gate",
+      "description": "",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-data-engineer/hooks/data-safety-gate.js",
+      "includedIn": [
+        "senior-data-engineer"
+      ],
+      "install": {}
+    },
+    {
+      "id": "hook/e2e-evidence-gate",
+      "type": "hook",
+      "slug": "e2e-evidence-gate",
+      "name": "e2e-evidence-gate",
+      "description": "",
+      "hosts": [
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev/hooks/e2e-evidence-gate.js",
+      "includedIn": [
+        "senior-dev"
+      ],
+      "install": {}
+    },
+    {
+      "id": "hook/flutter-pre-tool-gate",
+      "type": "hook",
+      "slug": "flutter-pre-tool-gate",
+      "name": "flutter-pre-tool-gate",
+      "description": "",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev-flutter/hooks/flutter-pre-tool-gate.js",
+      "includedIn": [
+        "senior-dev-flutter"
+      ],
+      "install": {}
+    },
+    {
+      "id": "hook/flutter-stop-gate",
+      "type": "hook",
+      "slug": "flutter-stop-gate",
+      "name": "flutter-stop-gate",
+      "description": "",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev-flutter/hooks/flutter-stop-gate.js",
+      "includedIn": [
+        "senior-dev-flutter"
+      ],
+      "install": {}
+    },
+    {
+      "id": "hook/git-clean-stop-gate",
+      "type": "hook",
+      "slug": "git-clean-stop-gate",
+      "name": "git-clean-stop-gate",
+      "description": "",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/git-workflow/hooks/git-clean-stop-gate.js",
+      "includedIn": [
+        "git-workflow"
+      ],
+      "install": {}
+    },
+    {
+      "id": "hook/gitflow-branch-gate",
+      "type": "hook",
+      "slug": "gitflow-branch-gate",
+      "name": "gitflow-branch-gate",
+      "description": "",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/git-workflow/hooks/gitflow-branch-gate.js",
+      "includedIn": [
+        "git-workflow"
+      ],
+      "install": {}
+    },
+    {
+      "id": "hook/orchestrator-role-gate",
+      "type": "hook",
+      "slug": "orchestrator-role-gate",
+      "name": "orchestrator-role-gate",
+      "description": "",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev/hooks/orchestrator-role-gate.js",
+      "includedIn": [
+        "senior-dev"
+      ],
+      "install": {}
+    },
+    {
+      "id": "hook/post-tool-autosave",
+      "type": "hook",
+      "slug": "post-tool-autosave",
+      "name": "post-tool-autosave",
+      "description": "",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/shared-context/hooks/post-tool-autosave.js",
+      "includedIn": [
+        "shared-context"
+      ],
+      "install": {}
+    },
+    {
+      "id": "hook/pre-tool-gate",
+      "type": "hook",
+      "slug": "pre-tool-gate",
+      "name": "pre-tool-gate",
+      "description": "",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/python-backend/hooks/pre-tool-gate.js",
+      "includedIn": [
+        "python-backend"
+      ],
+      "install": {}
+    },
+    {
+      "id": "hook/python-backend-activate",
+      "type": "hook",
+      "slug": "python-backend-activate",
+      "name": "python-backend-activate",
+      "description": "",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/python-backend/hooks/python-backend-activate.js",
+      "includedIn": [
+        "python-backend"
+      ],
+      "install": {}
+    },
+    {
+      "id": "hook/session-start-context",
+      "type": "hook",
+      "slug": "session-start-context",
+      "name": "session-start-context",
+      "description": "",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/shared-context/hooks/session-start-context.js",
+      "includedIn": [
+        "shared-context"
+      ],
+      "install": {}
+    },
+    {
+      "id": "hook/sql-safety-gate",
+      "type": "hook",
+      "slug": "sql-safety-gate",
+      "name": "sql-safety-gate",
+      "description": "",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/sql-query-optimizer/hooks/sql-safety-gate.js",
+      "includedIn": [
+        "sql-query-optimizer"
+      ],
+      "install": {}
+    },
+    {
+      "id": "hook/stop-flush",
+      "type": "hook",
+      "slug": "stop-flush",
+      "name": "stop-flush",
+      "description": "",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/shared-context/hooks/stop-flush.js",
+      "includedIn": [
+        "shared-context"
+      ],
+      "install": {}
+    },
+    {
+      "id": "hook/stop-gate",
+      "type": "hook",
+      "slug": "stop-gate",
+      "name": "stop-gate",
+      "description": "",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/python-backend/hooks/stop-gate.js",
+      "includedIn": [
+        "python-backend"
+      ],
+      "install": {}
+    },
+    {
+      "id": "hook/universal-quality-gate",
+      "type": "hook",
+      "slug": "universal-quality-gate",
+      "name": "universal-quality-gate",
+      "description": "",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev/hooks/universal-quality-gate.js",
+      "includedIn": [
+        "senior-dev"
+      ],
+      "install": {}
+    },
+    {
+      "id": "rule/clean-code-and-principles",
+      "type": "rule",
+      "slug": "clean-code-and-principles",
+      "name": "clean-code-and-principles",
+      "title": "Clean Code, SOLID Principles & Code Smells",
+      "description": "Mandatory SOLID, DRY, KISS, and YAGNI architectural rules and negative anti-hallucination constraints.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/rules/clean-code-and-principles.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "rule/context-and-token-optimization",
+      "type": "rule",
+      "slug": "context-and-token-optimization",
+      "name": "context-and-token-optimization",
+      "title": "Context & Token Optimization",
+      "description": "Optimize context window, prevent token bloat, leverage local processing scripts, and minimize unnecessary file reading.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/rules/context-and-token-optimization.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "rule/conventional-commits",
+      "type": "rule",
+      "slug": "conventional-commits",
+      "name": "conventional-commits",
+      "title": "Conventional Commits & Git Branching Constraints",
+      "description": "Enforce structured semantic conventional commits, atomic commits, branch naming rules, and git safety gates.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/rules/conventional-commits.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "rule/deployment-restrictions",
+      "type": "rule",
+      "slug": "deployment-restrictions",
+      "name": "deployment-restrictions",
+      "title": "Deployment Restrictions & Production Safety",
+      "description": "Restrict production builds and deployments, enforce build safety gates, and prevent accidental deployments.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/rules/deployment-restrictions.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "rule/documentation-and-diagrams",
+      "type": "rule",
+      "slug": "documentation-and-diagrams",
+      "name": "documentation-and-diagrams",
+      "title": "Documentation & Diagram Integrity",
+      "description": "Enforce documentation standards for code comments, docstrings, README files, project context, and Mermaid architecture diagrams.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/rules/documentation-and-diagrams.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "rule/loop-engineering-workflow",
+      "type": "rule",
+      "slug": "loop-engineering-workflow",
+      "name": "loop-engineering-workflow",
+      "title": "Engineering Execution Workflow",
+      "description": "Apply when planning or coordinating a multi-step coding task, splitting work across subagents, or deciding how much process (plan, review, QA) a change needs.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/rules/loop-engineering-workflow.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "rule/pull-requests",
+      "type": "rule",
+      "slug": "pull-requests",
+      "name": "pull-requests",
+      "title": "Pull Request Standards & AI Agent Self-Audit",
+      "description": "Guidelines and quality gates for Pull Request creation, line-change thresholds, and self-review checklists.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/rules/pull-requests.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "rule/secure-coding-and-secrets",
+      "type": "rule",
+      "slug": "secure-coding-and-secrets",
+      "name": "secure-coding-and-secrets",
+      "title": "Secure Coding & Secrets Prevention",
+      "description": "Protect credentials, prevent hardcoded secrets, validate input parameters, and adhere to OWASP security standards.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/rules/secure-coding-and-secrets.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "rule/skills-and-mcp-awareness",
+      "type": "rule",
+      "slug": "skills-and-mcp-awareness",
+      "name": "skills-and-mcp-awareness",
+      "title": "Skills Catalog & MCP Tool Awareness",
+      "description": "Rules for discovering, registering, and integrating local skills and Model Context Protocol (MCP) servers.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/rules/skills-and-mcp-awareness.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "rule/tdd-best-practices",
+      "type": "rule",
+      "slug": "tdd-best-practices",
+      "name": "tdd-best-practices",
+      "title": "Test-Driven Development (TDD) Best Practices",
+      "description": "Enforcement rule requiring Test-Driven Development (TDD) best practices, Red-Green-Refactor cycles, unit/integration testing strategies, mock boundaries, and verification standards for any coding agent (Claude Code, Google Antigravity and others).",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/rules/tdd-best-practices.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "rule/testing-after-changes",
+      "type": "rule",
+      "slug": "testing-after-changes",
+      "name": "testing-after-changes",
+      "title": "Testing After Code Changes & Verification Gates",
+      "description": "Enforcement rule requiring mandatory automated testing and verification after code generation, feature additions, or modifications.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/rules/testing-after-changes.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "workflow/build-workflow",
+      "type": "workflow",
+      "slug": "build-workflow",
+      "name": "build-workflow",
+      "title": "Build Incrementally",
+      "command": "/build",
+      "description": "Use after a plan is approved to build it in small, tested vertical slices, one step at a time with TDD.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/workflows/build-workflow.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "workflow/code-simplify-workflow",
+      "type": "workflow",
+      "slug": "code-simplify-workflow",
+      "name": "code-simplify-workflow",
+      "title": "Simplify the Code",
+      "command": "/code-simplify",
+      "description": "Use when working code has become hard to read; removes dead code, duplication and needless complexity without changing behavior.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/workflows/code-simplify-workflow.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "workflow/code-smell-review-workflow",
+      "type": "workflow",
+      "slug": "code-smell-review-workflow",
+      "name": "code-smell-review-workflow",
+      "title": "Code Smell Auditing & SOLID Refactoring",
+      "command": null,
+      "description": "Use to audit a module for code smells and SOLID violations and refactor them safely behind tests.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/workflows/code-smell-review-workflow.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "workflow/commit-workflow",
+      "type": "workflow",
+      "slug": "commit-workflow",
+      "name": "commit-workflow",
+      "title": "Staging, Committing & Pushing Code",
+      "command": null,
+      "description": "Use when work is ready to commit: selective staging, a Conventional Commit message, git safety checks and a safe push.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/workflows/commit-workflow.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "workflow/constraints-workflow",
+      "type": "workflow",
+      "slug": "constraints-workflow",
+      "name": "constraints-workflow",
+      "title": "Set the Quality Bar",
+      "command": "/constraints",
+      "description": "Use at the start of a feature to agree the quality bar: performance, security, secrets, style and scope limits.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/workflows/constraints-workflow.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "workflow/feature-development-workflow",
+      "type": "workflow",
+      "slug": "feature-development-workflow",
+      "name": "feature-development-workflow",
+      "title": "End-to-End Feature Development Cycle",
+      "command": null,
+      "description": "Use for any new feature: the full path from request to merged change through spec, plan, build, test, review and ship.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/workflows/feature-development-workflow.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "workflow/grill-me-alignment-workflow",
+      "type": "workflow",
+      "slug": "grill-me-alignment-workflow",
+      "name": "grill-me-alignment-workflow",
+      "title": "Interactive Design Review & Requirements Gathering",
+      "command": null,
+      "description": "Use when an idea is still fuzzy; the agent interviews you about design and requirements until nothing important is open.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/workflows/grill-me-alignment-workflow.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "workflow/perf-workflow",
+      "type": "workflow",
+      "slug": "perf-workflow",
+      "name": "perf-workflow",
+      "title": "Audit Performance",
+      "command": "/perf, /webperf",
+      "description": "Use when something is slow; measure first, find the real bottleneck, fix it and prove the gain.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/workflows/perf-workflow.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "workflow/plan-workflow",
+      "type": "workflow",
+      "slug": "plan-workflow",
+      "name": "plan-workflow",
+      "title": "Plan How to Build It",
+      "command": "/plan",
+      "description": "Use after the spec and before code to break the work into tracks, phases and checks in PLAN.md.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/workflows/plan-workflow.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "workflow/pull-request-workflow",
+      "type": "workflow",
+      "slug": "pull-request-workflow",
+      "name": "pull-request-workflow",
+      "title": "Pull Request Preparation & Submission",
+      "command": null,
+      "description": "Use when a branch is ready for review: self-review, a short honest description, linked tests and submission.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/workflows/pull-request-workflow.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "workflow/review-workflow",
+      "type": "workflow",
+      "slug": "review-workflow",
+      "name": "review-workflow",
+      "title": "Review Before Merge",
+      "command": "/review",
+      "description": "Use before any merge for a structured review of correctness, tests, design, security and leaks.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/workflows/review-workflow.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "workflow/secure-code-review-workflow",
+      "type": "workflow",
+      "slug": "secure-code-review-workflow",
+      "name": "secure-code-review-workflow",
+      "title": "Secure Code Review & Secrets Auditing",
+      "command": null,
+      "description": "Use before release or after touching sensitive code: OWASP review, input validation and leaked-secret scan.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/workflows/secure-code-review-workflow.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "workflow/ship-workflow",
+      "type": "workflow",
+      "slug": "ship-workflow",
+      "name": "ship-workflow",
+      "title": "Ship to Production",
+      "command": "/ship",
+      "description": "Use when a change is ready to release: final checks, changelog and versioning, release and live verification.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/workflows/ship-workflow.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "workflow/spec-workflow",
+      "type": "workflow",
+      "slug": "spec-workflow",
+      "name": "spec-workflow",
+      "title": "Define What to Build",
+      "command": "/spec",
+      "description": "Use at the start of a feature to write the spec: goal, scope, user stories, acceptance criteria and boundaries.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/workflows/spec-workflow.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "workflow/test-execution-workflow",
+      "type": "workflow",
+      "slug": "test-execution-workflow",
+      "name": "test-execution-workflow",
+      "title": "Test Suite Execution & Coverage Verification",
+      "command": null,
+      "description": "Use when you need test proof: locate and run the suite, check coverage and report real exit codes.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/workflows/test-execution-workflow.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "workflow/test-workflow",
+      "type": "workflow",
+      "slug": "test-workflow",
+      "name": "test-workflow",
+      "title": "Prove It Works",
+      "command": "/test",
+      "description": "Use after building a change to write and run the tests that show it does what it should.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/workflows/test-workflow.md",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "sidecar/incoming-reviews-alert",
+      "type": "sidecar",
+      "slug": "incoming-reviews-alert",
+      "name": "incoming-reviews-alert",
+      "title": "Incoming Review Requests Alert",
+      "description": "Checks for pending review requests assigned to the active developer or agent every 30 minutes.",
+      "schedule": "*/30 * * * *",
+      "hosts": [
+        "antigravity"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/sidecars/incoming-reviews-alert",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "sidecar/pr-reviewer-cron",
+      "type": "sidecar",
+      "slug": "pr-reviewer-cron",
+      "name": "pr-reviewer-cron",
+      "title": "PR Review Auditor Cron",
+      "description": "Orchestrates an hourly review of open pull requests for styling issues, security leaks, and untested branches.",
+      "schedule": "0 * * * *",
+      "hosts": [
+        "antigravity"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/sidecars/pr-reviewer-cron",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "sidecar/workspace-daemon",
+      "type": "sidecar",
+      "slug": "workspace-daemon",
+      "name": "workspace-daemon",
+      "title": "Workspace Daemon Monitor",
+      "description": "Background file watcher daemon that automatically lints and formats changed code files.",
+      "schedule": null,
+      "hosts": [
+        "antigravity"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/sidecars/workspace-daemon",
+      "includedIn": [],
+      "install": {}
+    },
+    {
+      "id": "tool/agent-meter",
+      "type": "tool",
+      "slug": "agent-meter",
+      "name": "agent-meter",
+      "description": "`agent-meter` answers that for **Claude Code** and **Antigravity** (CLI, IDE and the \"Antigravity 2.0\" app). It reads the transcripts and databases those tools already write on your machine, and turns them into:",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/tools/agent-meter",
+      "includedIn": [],
+      "media": [
+        {
+          "src": "/media/agent-meter/app-changes-es.png",
+          "screen": "app-changes",
+          "lang": "es",
+          "w": 1100,
+          "h": 1657
+        },
+        {
+          "src": "/media/agent-meter/app-changes.png",
+          "screen": "app-changes",
+          "lang": "en",
+          "w": 1100,
+          "h": 1657
+        },
+        {
+          "src": "/media/agent-meter/app-history-es.png",
+          "screen": "app-history",
+          "lang": "es",
+          "w": 1100,
+          "h": 1640
+        },
+        {
+          "src": "/media/agent-meter/app-history.png",
+          "screen": "app-history",
+          "lang": "en",
+          "w": 1100,
+          "h": 1640
+        },
+        {
+          "src": "/media/agent-meter/app-insights-es.png",
+          "screen": "app-insights",
+          "lang": "es",
+          "w": 1100,
+          "h": 760
+        },
+        {
+          "src": "/media/agent-meter/app-insights.png",
+          "screen": "app-insights",
+          "lang": "en",
+          "w": 1100,
+          "h": 760
+        },
+        {
+          "src": "/media/agent-meter/app-live-es.png",
+          "screen": "app-live",
+          "lang": "es",
+          "w": 1100,
+          "h": 760
+        },
+        {
+          "src": "/media/agent-meter/app-live.png",
+          "screen": "app-live",
+          "lang": "en",
+          "w": 1100,
+          "h": 760
+        },
+        {
+          "src": "/media/agent-meter/app-projects-es.png",
+          "screen": "app-projects",
+          "lang": "es",
+          "w": 1100,
+          "h": 1176
+        },
+        {
+          "src": "/media/agent-meter/app-projects.png",
+          "screen": "app-projects",
+          "lang": "en",
+          "w": 1100,
+          "h": 1176
+        },
+        {
+          "src": "/media/agent-meter/app-settings-es.png",
+          "screen": "app-settings",
+          "lang": "es",
+          "w": 1100,
+          "h": 760
+        },
+        {
+          "src": "/media/agent-meter/app-settings.png",
+          "screen": "app-settings",
+          "lang": "en",
+          "w": 1100,
+          "h": 760
+        }
+      ],
+      "install": {}
+    },
+    {
+      "id": "tool/pr-reviewer",
+      "type": "tool",
+      "slug": "pr-reviewer",
+      "name": "pr-reviewer",
+      "description": "An AI code reviewer for your pull requests. It runs on GitHub Actions, comments on security, performance, scalability, design, best practices and cost, and never blocks a merge.",
+      "hosts": [
+        "antigravity",
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/tree/main/tools/pr-reviewer",
+      "includedIn": [],
+      "media": [
+        {
+          "src": "/media/pr-reviewer/inline-comment-command-injection.png",
+          "screen": "inline-comment-command-injection",
+          "lang": "en",
+          "w": 894,
+          "h": 553
+        },
+        {
+          "src": "/media/pr-reviewer/inline-comment-sql-injection.png",
+          "screen": "inline-comment-sql-injection",
+          "lang": "en",
+          "w": 959,
+          "h": 588
+        },
+        {
+          "src": "/media/pr-reviewer/summary-comment.png",
+          "screen": "summary-comment",
+          "lang": "en",
+          "w": 948,
+          "h": 548
+        }
+      ],
+      "install": {}
+    }
+  ]
+}

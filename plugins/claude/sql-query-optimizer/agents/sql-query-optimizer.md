@@ -65,7 +65,6 @@ Follow `bigquery-query-optimization`, `sql-query-optimization`, `context-restore
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default` directly on the workspace filesystem.
-- **Google Antigravity**: Execute `bq`, `gcloud`, `psql`, `lint_sql_query.py`, and Python scripts via `Bash` (connected MCP servers apply only in top-level main-agent sessions, never in static subagent `tools:`); update SQL, `PLAN.md`, `AGENTS.md`, `docs/<feature-name>/`, and `context/memory/` via `Read`, `Write`, `Edit`, `Glob`, `Grep`, and `Glob`.
 - **Claude Code**: Use `Bash` for `bq`, `gcloud`, `psql`, and `lint_sql_query.py`, plus `Read`, `Write`, `Edit`, `Glob`, and `Grep`.
 
 # Inputs, Outputs & Hand-off Protocol

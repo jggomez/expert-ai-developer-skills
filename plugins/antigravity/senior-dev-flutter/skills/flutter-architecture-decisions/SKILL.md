@@ -1,6 +1,6 @@
 ---
 name: flutter-architecture-decisions
-description: Use when choosing state management for a Flutter app (Riverpod vs Bloc vs signals vs setState), drawing package/module boundaries, deciding what belongs in the UI/logic/data layers, or recording a concise MADR Flutter ADR (<= 55 lines). Complements the official flutter-apply-architecture-best-practices skill.
+description: "Use when choosing state management for a Flutter app (Riverpod, Bloc, signals or setState), drawing package and module boundaries, deciding what belongs in the UI, logic and data layers, or recording a short Flutter ADR (at most 55 lines). Complements the official flutter-apply-architecture-best-practices skill."
 ---
 
 # Flutter Architecture Decisions

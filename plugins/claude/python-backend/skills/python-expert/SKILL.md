@@ -63,7 +63,6 @@ ruff format --check src/
 
 ### Host Execution Instructions
 - **Claude Code**: Execute `mypy` and `ruff` in the workspace shell to verify type safety.
-- **Antigravity**: Apply Pythonic guidelines during code generation and run validation checks via workspace tools.
 
 ## Red Flags
 - Mutable default parameters (`def add_item(target=[])`).

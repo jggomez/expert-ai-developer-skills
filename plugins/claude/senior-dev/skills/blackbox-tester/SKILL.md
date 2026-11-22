@@ -1,6 +1,6 @@
 ---
 name: blackbox-tester
-description: Black-box browser verification validating real user flows, GUI forms, console/network errors, visual layouts, and 4-viewport screenshot evidence using deterministic Playwright execution.
+description: "Use when a web UI or user flow changed and needs proof it works in a real browser: runs the user journeys with Playwright, checks console and network errors, and saves screenshots at four screen widths."
 ---
 
 # Black-Box Browser Verification & Visual Testing Skill
@@ -145,7 +145,6 @@ uv run pytest tests/e2e/ --browser chromium --headed
 
 ### Host Execution Instructions
 - **Claude Code**: Bootstrap and run Playwright in `tests/e2e/` via `Bash`; author tests via `Write`/`Edit`; return the report in the final message; verify `.png` evidence via `Glob`.
-- **Antigravity**: Launch as `e2e-blackbox-tester`; bootstrap and execute Playwright suites via `Bash`; verify physical `.png` files in `docs/<feature-name>/evidence/` via `Glob`; return the concise report in the final message (no report file).
 
 ---
 

@@ -24,6 +24,8 @@ downloads/
 eggs/
 .eggs/
 lib/
+# The portal keeps shared JS in src/lib (not a Python build dir).
+!portal/src/lib/
 lib64/
 parts/
 sdist/

@@ -47,7 +47,7 @@ bq query --use_legacy_sql=false --dry_run "SELECT id, created_at FROM \`my_proje
 dataform compile --actions silver_orders
 dataform compile
 ```
-- **Host Execution**: Run `bq` and `dataform` via shell (`Bash` in Claude Code; `Bash` in Antigravity) and persist contracts/SLAs to `context/memory/MEMORY.md`.
+- **Host Execution**: Run `bq` and `dataform` via shell (`Bash` in Claude Code) and persist contracts/SLAs to `context/memory/MEMORY.md`.
 
 ## Red Flags
 - Fabricating `bq query --dry_run` byte counts or pretending `dataform compile` ran when CLI/ADC credentials fail instead of reporting `BLOCKED: Not executed — <exact CLI error>`.

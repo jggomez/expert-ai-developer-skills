@@ -8,6 +8,7 @@ Skipped when `node` is unavailable.
 import json
 import os
 import shutil
+import re
 import subprocess
 
 import pytest
@@ -219,3 +220,84 @@ def test_flutter_stop_gate_antigravity_non_flutter_allows(tmp_path):
     assert r.returncode == 0
     out = json.loads(r.stdout.strip())
     assert out == {"decision": "allow"}
+
+
+# ==============================================================================
+# 5. MCP deploy guard with plugin-provided servers (Claude names them mcp__plugin_<plugin>_<server>__<tool>)
+# ==============================================================================
+
+CLAUDE_PYTHON_PRE_GATE = os.path.join(REPO_ROOT, "plugins", "claude", "python-backend", "hooks", "pre-tool-gate.js")
+CLAUDE_PYTHON_HOOKS_JSON = os.path.join(REPO_ROOT, "plugins", "claude", "python-backend", "hooks.json")
+
+
+@pytest.mark.parametrize("script", [PYTHON_PRE_GATE, CLAUDE_PYTHON_PRE_GATE])
+@pytest.mark.parametrize(
+    "tool_name, reason",
+    [
+        ("mcp__plugin_senior-dev_cloudrun__deploy_local_folder", "Cloud Run deployment via MCP"),
+        ("mcp__plugin_senior-dev_firebase-mcp-server__firestore_update_document", "Firestore mutation via MCP"),
+        ("mcp__cloudrun__deploy_container_image", "Cloud Run deployment via MCP"),
+    ],
+)
+def test_python_pre_gate_claude_asks_on_plugin_mcp_writes(tmp_path, script, tool_name, reason):
+    # Arrange
+    payload = {"tool_name": tool_name, "tool_input": {}, "cwd": str(tmp_path)}
+    # Act
+    r = run_hook(script, payload, env_extra={"CLAUDE_PLUGIN_ROOT": "x"}, cwd=str(tmp_path))
+    # Assert
+    assert r.returncode == 0
+    out = json.loads(r.stdout.strip())
+    assert out["hookSpecificOutput"]["permissionDecision"] == "ask"
+    assert reason in out["hookSpecificOutput"]["permissionDecisionReason"]
+
+
+@pytest.mark.parametrize("script", [PYTHON_PRE_GATE, CLAUDE_PYTHON_PRE_GATE])
+def test_python_pre_gate_allows_plugin_mcp_reads(tmp_path, script):
+    payload = {"tool_name": "mcp__plugin_senior-dev_cloudrun__list_services", "tool_input": {}, "cwd": str(tmp_path)}
+    r = run_hook(script, payload, env_extra={"CLAUDE_PLUGIN_ROOT": "x"}, cwd=str(tmp_path))
+    # Allow = exit 0 with no ask/deny decision printed.
+    assert r.returncode == 0
+    assert '"ask"' not in r.stdout and '"deny"' not in r.stdout
+
+
+def test_python_backend_hooks_json_matcher_reaches_plugin_mcp_tools():
+    # Claude Code only calls the hook when the matcher regex matches the full tool name.
+    with open(CLAUDE_PYTHON_HOOKS_JSON, encoding="utf-8") as fh:
+        hooks = json.load(fh)["hooks"]["PreToolUse"]
+    matchers = [h["matcher"] for h in hooks if "pre-tool-gate.js" in json.dumps(h)]
+    names = [
+        "mcp__plugin_senior-dev_cloudrun__deploy_local_folder",
+        "mcp__plugin_senior-dev_firebase-mcp-server__firestore_add_document",
+        "mcp__cloudrun__deploy_container_image",
+    ]
+    for name in names:
+        assert any(re.fullmatch(m, name) for m in matchers), name
+
+
+# ==============================================================================
+# 6. Plan-first gates also cover Jupyter notebooks edited with NotebookEdit
+# ==============================================================================
+
+CLAUDE_ORCH_GATE = os.path.join(REPO_ROOT, "plugins", "claude", "senior-dev", "hooks", "orchestrator-role-gate.js")
+
+
+def test_python_pre_gate_denies_notebook_edit_without_plan(tmp_path):
+    # Arrange: a project with no PLAN.md, editing a notebook cell
+    notebook = tmp_path / "analysis.ipynb"
+    payload = {"tool_name": "NotebookEdit", "tool_input": {"notebook_path": str(notebook), "new_source": "x = 1"}, "cwd": str(tmp_path)}
+    # Act
+    r = run_hook(CLAUDE_PYTHON_PRE_GATE, payload, env_extra={"CLAUDE_PLUGIN_ROOT": "x"}, cwd=str(tmp_path))
+    # Assert
+    out = json.loads(r.stdout.strip())
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert "PLAN-FIRST" in out["hookSpecificOutput"]["permissionDecisionReason"]
+
+
+@pytest.mark.parametrize("hooks_json", [
+    CLAUDE_PYTHON_HOOKS_JSON,
+    os.path.join(REPO_ROOT, "plugins", "claude", "senior-dev", "hooks.json"),
+])
+def test_plan_gate_matchers_include_notebook_edit(hooks_json):
+    with open(hooks_json, encoding="utf-8") as fh:
+        matchers = [h["matcher"] for h in json.load(fh)["hooks"]["PreToolUse"]]
+    assert any(re.fullmatch(m, "NotebookEdit") for m in matchers)

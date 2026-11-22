@@ -1,0 +1,132 @@
+/* Senior AI Dev Kit portal — tokens and base styles. */
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --ink: #1b2a4a;
+  --ink-strong: #0f1a33;
+  --muted: #56627a;
+  --line: #dbe1ea;
+  --line-strong: #c3ccd9;
+  --accent: #2f4fe0;
+  --accent-soft: #e6ebfd;
+  --focus: #2f4fe0;
+
+  --k-plugin: #2f4fe0;
+  --k-agent: #0d8576;
+  --k-skill: #b26b00;
+  --k-hook: #7443c9;
+  --k-rule: #c02a5c;
+  --k-workflow: #4b7a12;
+  --k-sidecar: #0b6fa4;
+  --k-tool: #4a5468;
+
+  --font: 'Schibsted Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --step--1: 0.875rem;
+  --step-0: 1rem;
+  --step-1: 1.1875rem;
+  --step-2: 1.5rem;
+  --step-3: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem);
+  --step-4: clamp(2.4rem, 1.4rem + 4.2vw, 5rem);
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --page: 1180px;
+  --gutter: clamp(16px, 4vw, 40px);
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 88px; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: var(--step-0);
+  line-height: 1.55;
+  font-feature-settings: 'ss01', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img, svg { display: block; max-width: 100%; }
+h1, h2, h3 { color: var(--ink-strong); margin: 0; line-height: 1.08; letter-spacing: -0.025em; }
+p { margin: 0; }
+a { color: inherit; }
+code, kbd, pre { font-family: var(--mono); }
+
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
+
+.wrap { width: 100%; max-width: var(--page); margin-inline: auto; padding-inline: var(--gutter); }
+
+.skip-link {
+  position: absolute; left: 12px; top: -48px; z-index: 100;
+  background: var(--ink-strong); color: #fff; padding: 10px 14px; border-radius: var(--r-sm);
+  text-decoration: none; transition: top .15s;
+}
+.skip-link:focus { top: 12px; }
+
+.visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; margin: -1px; padding: 0; border: 0;
+}
+
+/* Kind glyph: color comes from the kind, shape from the SVG. */
+.glyph { width: 14px; height: 14px; flex: none; color: var(--kind, var(--muted)); }
+[data-kind='plugin'] { --kind: var(--k-plugin); }
+[data-kind='agent'] { --kind: var(--k-agent); }
+[data-kind='skill'] { --kind: var(--k-skill); }
+[data-kind='hook'] { --kind: var(--k-hook); }
+[data-kind='rule'] { --kind: var(--k-rule); }
+[data-kind='workflow'] { --kind: var(--k-workflow); }
+[data-kind='sidecar'] { --kind: var(--k-sidecar); }
+[data-kind='tool'] { --kind: var(--k-tool); }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 44px; padding: 0 18px; border-radius: 999px;
+  font: 600 var(--step--1)/1 var(--font); text-decoration: none; cursor: pointer;
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-strong);
+  transition: background .15s, border-color .15s, color .15s;
+}
+.btn:hover { border-color: var(--ink); }
+.btn--primary { background: var(--ink-strong); border-color: var(--ink-strong); color: #fff; }
+.btn--primary:hover { background: var(--accent); border-color: var(--accent); }
+
+/* Command line with copy button */
+.cmd {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--ink-strong); color: #e8ecf6; border-radius: var(--r-md);
+  padding: 6px 6px 6px 14px; min-width: 0;
+}
+.cmd code {
+  flex: 1; min-width: 0; font-size: 0.8125rem; line-height: 1.5;
+  white-space: pre-wrap; overflow-wrap: anywhere; padding: 8px 0;
+}
+.cmd code::before { content: '$ '; color: #7f8db0; }
+.cmd--long code { white-space: nowrap; overflow-x: auto; overflow-wrap: normal; scrollbar-width: thin; scrollbar-color: #3a4a70 transparent; }
+.cmd button {
+  flex: none; min-height: 36px; padding: 0 12px; border-radius: 7px; cursor: pointer;
+  border: 1px solid #3a4a70; background: transparent; color: #e8ecf6;
+  font: 500 0.8125rem/1 var(--font);
+  transition: background .15s;
+}
+.cmd button:hover { background: #2a3a60; }
+.cmd button[data-done] { background: #e8ecf6; color: var(--ink-strong); border-color: #e8ecf6; }
+
+.section { padding-block: clamp(56px, 8vw, 104px); }
+.section__head { max-width: 640px; margin-bottom: 32px; }
+.section__head h2 { font-size: var(--step-3); font-weight: 700; }
+.section__head p { color: var(--muted); margin-top: 12px; font-size: var(--step-1); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/**
+ * python-backend SessionStart hook.
+ * Injects rules/python-backend-rules.md (branch safety, TDD, static checks, migrations, deploy and
+ * secret guards) as session context, in the output shape each host expects. Injects nothing if the
+ * file is missing.
+ */
 const fs = require('fs');
 const path = require('path');
 

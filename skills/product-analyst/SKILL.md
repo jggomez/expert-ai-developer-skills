@@ -1,6 +1,6 @@
 ---
 name: product-analyst
-description: Analyzes ambiguous feature requests, clarifies business rules, and authors the ultra-concise `## Product` section of the single discovery file docs/<feature-name>/spec.md (<= 50 lines) with standard User Stories (US-XX) and testable Acceptance Criteria (AC-XX).
+description: "Use when a feature request is vague or its business rules are unclear: writes the Product section of docs/FEATURE/spec.md (at most 50 lines) with user stories (US-XX) and testable acceptance criteria (AC-XX)."
 ---
 
 # Product Analyst Skill

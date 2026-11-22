@@ -1,6 +1,6 @@
 ---
 trigger: model_decision
-description: Enforcement rule requiring Test-Driven Development (TDD) best practices, Red-Green-Refactor cycles, unit/integration testing strategies, mock boundaries, and agent verification standards for Google Antigravity.
+description: Enforcement rule requiring Test-Driven Development (TDD) best practices, Red-Green-Refactor cycles, unit/integration testing strategies, mock boundaries, and verification standards for any coding agent (Claude Code, Google Antigravity and others).
 ---
 
 # Rule: Test-Driven Development (TDD) Best Practices

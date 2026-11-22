@@ -63,7 +63,6 @@ python3 ./skills/security-audit/scripts/secret_scanner.py src/
 
 ### Host Execution Instructions
 - **Claude Code**: Run `secret_scanner.py` via bash, then audit diffs manually against the OWASP checklist.
-- **Antigravity**: Launch security audits before merging code changes or declaring a feature release-ready.
 
 ## Red Flags
 - Hardcoded passwords, API keys, JWT secrets, or private keys committed to the repository.

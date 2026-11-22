@@ -259,3 +259,13 @@ def test_update_check_failure_is_reported_not_raised() -> None:
 
 def test_only_release_pages_can_be_opened(api: AppApi) -> None:
     assert api.open_release("https://example.com/") == {"ok": False}
+
+
+def test_a_source_checkout_is_never_told_to_update() -> None:
+    # Arrange: running from a git checkout reports version 0.0.0+source
+    releases = [_release("agent-meter-v0.1.0")]
+    # Act
+    result = check_for_update("0.0.0+source", lambda: releases)
+    # Assert
+    assert result["ok"] is True
+    assert result["newer"] is False

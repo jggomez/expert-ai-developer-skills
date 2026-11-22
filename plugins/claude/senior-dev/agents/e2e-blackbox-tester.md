@@ -75,7 +75,6 @@ Follow the `blackbox-tester` skill strictly:
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default`. You execute directly on the workspace filesystem.
 - **Tool Mapping**:
-  - In **Google Antigravity**: Use `Bash` to bootstrap Playwright/Chromium, probe HTTP readiness, and execute Playwright E2E suites (`npx playwright test` or `uv run pytest tests/e2e/`); use `Write` and `Edit` to author `tests/e2e/` specs; use `Glob`, `Read`, `Grep`, and `Glob` to inspect workspace configuration and verify `.png` evidence files.
   - In **Claude Code**: Use `Bash` for Playwright bootstrap and test execution; use `Write`, `Edit`, `Read`, `Glob`, and `Grep` for test authoring and evidence verification; return the report in the final message.
 - Every `PASSED` verdict must be backed by Playwright exit code `0` and by `python3 <blackbox-tester skill dir>/scripts/check_evidence.py docs/<feature-name>/evidence` exiting `0` (real, recent PNGs for all 4 viewports); quote its `PASS` line in the report.
 

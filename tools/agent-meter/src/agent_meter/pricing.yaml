@@ -72,6 +72,13 @@ models:
         tiers:
           - {min_prompt_tokens: 0, input: "0.10", cache_write_5m: "0.125", cache_write_1h: "0.20", cache_read: "0.01", output: "0.50"}
           - {min_prompt_tokens: 100001, input: "0.50", cache_write_5m: "0.625", cache_write_1h: "1.00", cache_read: "0.05", output: "2.50"}
+  claude-fable-5-2:
+    source_url: https://platform.claude.com/docs/en/about-claude/pricing
+    fetched_at: 2026-11-22
+    windows:
+      - effective_from: 2000-01-01
+        tiers:
+          - {min_prompt_tokens: 0, input: "8.00", cache_write_5m: "10.00", cache_write_1h: "16.00", cache_read: "0.20", output: "40.00"}
   claude-fable-5-1:
     source_url: https://platform.claude.com/docs/en/about-claude/pricing
     fetched_at: 2026-11-05

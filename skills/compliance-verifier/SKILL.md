@@ -1,6 +1,6 @@
 ---
 name: compliance-verifier
-description: Guides the final quality assurance and compliance verification of a project. Trigger when checking non-functional requirements, static code analysis, test coverage, and security compliance before release.
+description: "Use when a change is finished and needs sign-off before release: checks non-functional requirements, static analysis, test coverage and security, and returns an approved or rejected verdict."
 ---
 
 # Compliance Verifier Skill

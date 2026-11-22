@@ -1,6 +1,6 @@
 ---
 name: code-implementer
-description: Guides the implementation of code using Test-Driven Development (TDD) and clean code principles. Trigger when implementing new features, fixing bugs, or refactoring existing code.
+description: "Use when implementing a feature, fixing a bug or refactoring: writes production code with test-driven development and clean code principles."
 ---
 
 # Code Implementer Skill

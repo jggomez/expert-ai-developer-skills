@@ -8,6 +8,7 @@ per alias name. ``resolve_price`` + ``cost_usd`` are the Python oracle that the 
 from __future__ import annotations
 
 import os
+import re
 import tempfile
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
@@ -28,6 +29,7 @@ __all__ = [
     "add_local_alias",
     "add_local_price",
     "cost_usd",
+    "latest_claude_model",
     "load_pricing",
     "remove_local",
     "resolve_price",
@@ -419,6 +421,17 @@ def load_pricing(local: Path | None, shipped: Path | None = None) -> PricingTabl
     if errors:
         raise PricingError(errors)
     return table
+
+
+def latest_claude_model(family: str, table: PricingTable | None = None) -> str | None:
+    """Newest priced ``claude-<family>-<major>-<minor>`` id, so a new model only needs a pricing row."""
+    pattern = re.compile(rf"claude-{re.escape(family)}-(\d+)(?:-(\d+))?")
+    found: list[tuple[tuple[int, int], str]] = []
+    for row in (table or load_pricing(None)).rows:
+        match = pattern.fullmatch(row.model)
+        if match:
+            found.append(((int(match.group(1)), int(match.group(2) or 0)), row.model))
+    return max(found)[1] if found else None
 
 
 def validate_file(path: Path) -> list[str]:

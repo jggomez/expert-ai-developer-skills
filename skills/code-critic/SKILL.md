@@ -1,6 +1,6 @@
 ---
 name: code-critic
-description: Independent code review inspecting cyclomatic complexity, DRY, SOLID, anti-patterns, maintainability, and interface robustness.
+description: "Use when a large diff or a refactor across modules needs an independent review of complexity, duplication, SOLID, anti-patterns, maintainability and interface robustness, without changing the code."
 ---
 
 # Code Critic & Independent Architectural Review Skill

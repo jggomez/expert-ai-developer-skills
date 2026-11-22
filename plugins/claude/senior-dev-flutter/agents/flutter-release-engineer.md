@@ -35,7 +35,6 @@ Follow `flutter-release-engineering` and `flutter-upgrade-migration`:
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default` directly on the workspace filesystem.
-- **Google Antigravity**: Use `Bash` for `flutter build`, `flutter pub`, `dart fix`, and `flutter test`; `Write` / `Edit` for `pubspec.yaml`, `config/*.json`, native flavor files, and root `AGENTS.md` build runbooks.
 - **Claude Code**: Use `Bash` for build/upgrade commands and `Write` / `Edit` for configuration and CI files.
 
 # Inputs, Outputs & Hand-off Protocol

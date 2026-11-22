@@ -17,19 +17,19 @@ guarda prompts, código, entradas o salidas de herramientas ni rutas de archivos
 
 ## Cómo se ve
 
-![Pantalla En vivo](../../docs/agent-metrics/images/live.png)
+![Pantalla En vivo](docs/images/app-live-es.png)
 **En vivo**: el gasto de hoy y del mes, una proyección a fin de mes, los presupuestos y las sesiones activas, con Claude Code y Antigravity lado a lado.
 
-![Pantalla Historial](../../docs/agent-metrics/images/history.png)
+![Pantalla Historial](docs/images/app-history-es.png)
 **Historial**: gasto, llamadas, sesiones y tareas de cualquier periodo, día por día.
 
 ![Gasto por proyecto](../../docs/agent-metrics/images/history-projects.png)
 **Por proyecto**: qué proyecto se lleva tu presupuesto, con costo, porcentaje, llamadas, tareas y tokens.
 
-![Pantalla Insights](../../docs/agent-metrics/images/insights.png)
+![Pantalla Insights](docs/images/app-insights-es.png)
 **Insights**: dónde recortar, con hallazgos medidos y ahorros estimados, como usar un modelo más barato en el trabajo rutinario o detectar un subagente que cuesta varias veces más que los demás.
 
-![Pantalla Cambios](../../docs/agent-metrics/images/changes.png)
+![Pantalla Cambios](docs/images/app-changes-es.png)
 **Cambios**: cambia el modelo o el esfuerzo por defecto de tus herramientas de IA. Nada cambia hasta que confirmas una vista previa, y todo se puede deshacer.
 
 ![Diagnóstico](../../docs/agent-metrics/images/diagnostics.png)
@@ -81,7 +81,7 @@ momento (`agent-meter sync --full-reload`).
 
 ```bash
 # 1) Instalar (necesitas uv: https://docs.astral.sh/uv/)
-uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+uv tool install --python 3.12 "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 
 # 2) Configurar una sola vez: detecta Claude Code / Antigravity e importa tu historial
 agent-meter setup --local
@@ -125,38 +125,40 @@ quieras números frescos.
 
 ## 4. Instalación
 
-**Requisitos:** macOS, Linux o Windows (PowerShell/CMD o WSL2), Python ≥ 3.11 (`uv` lo instala por ti) y `uv` o `pipx`.
+**Requisitos:** macOS, Linux o Windows (PowerShell/CMD o WSL2), Python ≥ 3.11 y `uv` o `pipx`. Deja `--python 3.12` en los comandos de abajo: sin él, `uv` usa el primer Python que encuentra y uno viejo (como el 3.10 de macOS) hace fallar la instalación. Con él, `uv` descarga 3.12 si no lo tienes.
 
 ### 4.1 Desde GitHub (recomendado)
 
 ```bash
 # Solo modo local
-uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+uv tool install --python 3.12 "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 
 # Local + soporte para BigQuery (opción B)
-uv tool install "agent-meter[bigquery] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+uv tool install --python 3.12 "agent-meter[bigquery] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 
 # Con la app de escritorio (agent-meter app)
-uv tool install "agent-meter[app] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+uv tool install --python 3.12 "agent-meter[app] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 
 # Lo mismo con pipx
 pipx install --python python3.12 "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+# pipx con la app de escritorio
+pipx install --python python3.12 "agent-meter[app] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 ```
 
-Para instalar desde una rama específica (por ejemplo, antes de unirla a `main`), agrega `@<rama>` justo después de la URL
+Para instalar una versión, tag o rama concreta, agrega `@<ref>` justo después de la URL
 del repositorio:
 
 ```bash
-uv tool install "agent-meter[bigquery] @ git+https://github.com/jggomez/expert-ai-developer-skills@feature/agent-metrics#subdirectory=tools/agent-meter"
+uv tool install --python 3.12 "agent-meter[bigquery] @ git+https://github.com/jggomez/expert-ai-developer-skills@agent-meter-v0.1.0#subdirectory=tools/agent-meter"
 ```
 
 ### 4.2 Desde una copia local del repositorio
 
 ```bash
 cd /ruta/a/expert-ai-developer-skills
-uv tool install "./tools/agent-meter"               # modo local
-uv tool install "./tools/agent-meter[bigquery]"     # con soporte para BigQuery
-uv tool install "./tools/agent-meter[app]"          # con la app de escritorio (agent-meter app)
+uv tool install --python 3.12 "./tools/agent-meter"               # modo local
+uv tool install --python 3.12 "./tools/agent-meter[bigquery]"     # con soporte para BigQuery
+uv tool install --python 3.12 "./tools/agent-meter[app]"          # con la app de escritorio (agent-meter app)
 ```
 
 ### 4.3 Verificar, actualizar o quitar el programa
@@ -695,3 +697,30 @@ El dataset de BigQuery **no** se borra solo. Si quieres eliminarlo:
 
 Documentos de diseño (en inglés): [`docs/agent-metrics/`](../../docs/agent-metrics/) — PRD, ADR-001, contratos, fuentes de
 precios, guía de Looker Studio y reporte de cumplimiento.
+
+
+## 17. Desarrollo
+
+```bash
+cd tools/agent-meter
+uv run --python 3.11 --extra dev pytest -q                    # unitarias + contrato + integración (sin red)
+AGENT_METER_TEST_GCP_PROJECT=<PROJECT_ID> \
+  uv run --python 3.11 --extra dev --extra bigquery pytest -m bigquery tests/cloud -q   # BigQuery real (dataset temporal, se borra solo)
+uv run --python 3.11 --extra dev ruff check .
+uv run --python 3.11 --extra dev mypy --strict src
+uv run --python 3.12 --extra dev --extra ui playwright install chromium
+uv run --python 3.12 --extra dev --extra ui pytest tests/ui -q   # interfaz de la app en Chromium sin ventana
+```
+
+Documentos de diseño: [`docs/agent-metrics/`](../../docs/agent-metrics/): PRD, ADR-001, contratos de interfaz, fuentes de
+precios, guía de Looker Studio y el informe de cumplimiento.
+
+Notas de implementación:
+
+- `verify --reconcile` compara el almacén con una relectura independiente en memoria de los transcripts que todavía
+  existen. Funciona sin red (no llama a `npx ccusage`). Los transcripts que la herramienta ya borró aparecen como
+  diferencias solo del almacén.
+- Las marcas de fin de sesión (`SessionEnd`, `Stop` de Antigravity con `fullyIdle`) se guardan en el almacén, así las
+  relecturas completas posteriores mantienen la última tarea como `done`.
+- Las subidas a BigQuery usan solo trabajos de carga por lotes (sin inserciones en streaming ni DML); las vistas de
+  deduplicación exponen la última fila por clave.

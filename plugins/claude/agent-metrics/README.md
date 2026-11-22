@@ -20,7 +20,7 @@ plugin depends on it. Overview and privacy: [docs/agent-metrics/README.md](../..
 1. Install the CLI:
 
    ```bash
-   uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+   uv tool install --python 3.12 "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
    ```
 
 2. Install the plugin:

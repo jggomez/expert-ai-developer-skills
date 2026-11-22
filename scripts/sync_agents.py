@@ -216,6 +216,9 @@ def sync_bundled_antigravity_agents() -> None:
         print(f"✅ Bundled {len(agent_files)} {source_plugin} agents into Antigravity plugin: {plugin_name}")
 
 
+RULE_REF = re.compile(r"""['\"]rules['\"]\s*,\s*['\"]([\w.-]+\.md)['\"]""")
+
+
 def sync_claude_plugins() -> None:
     PLUGINS_CLAUDE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -282,6 +285,17 @@ def sync_claude_plugins() -> None:
                 dest_hook_file = dest_hooks_dir / hook_file.name
                 if hook_file.is_file() and not dest_hook_file.exists():
                     shutil.copy2(hook_file, dest_hook_file)
+
+        # 4b. rules/ that a Claude hook injects (e.g. python-backend-activate.js reads
+        #     rules/python-backend-rules.md); without the file the hook silently injects nothing.
+        dest_hooks_dir = dest_plugin / "hooks"
+        if dest_hooks_dir.is_dir():
+            for script in dest_hooks_dir.glob("*.js"):
+                for rule_name in RULE_REF.findall(script.read_text(encoding="utf-8")):
+                    src_rule = src_plugin / "rules" / rule_name
+                    if src_rule.is_file():
+                        (dest_plugin / "rules").mkdir(exist_ok=True)
+                        shutil.copy2(src_rule, dest_plugin / "rules" / rule_name)
 
         if plugin_name in GATED_PLUGINS:
             # The shared hook library is host-aware: same file for Claude Code and Antigravity.

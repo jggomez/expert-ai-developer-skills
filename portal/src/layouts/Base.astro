@@ -1,0 +1,124 @@
+---
+import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
+import { UI, REPO_URL, SITE_URL, swapLangPath } from '../lib/site.mjs';
+
+interface Props { lang: 'es' | 'en'; title?: string; description?: string; path: string }
+const { lang, title, description, path } = Astro.props;
+const t = UI[lang];
+const pageTitle = title ? `${title} · Senior AI Dev Kit` : t.htmlTitle;
+const otherLang = lang === 'es' ? 'en' : 'es';
+const otherPath = swapLangPath(path, lang);
+const esPath = lang === 'es' ? path : otherPath;
+const enPath = lang === 'en' ? path : otherPath;
+---
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description ?? t.metaDescription} />
+    <link rel="canonical" href={new URL(path, SITE_URL).href} />
+    <link rel="alternate" hreflang="es" href={new URL(esPath, SITE_URL).href} />
+    <link rel="alternate" hreflang="en" href={new URL(enPath, SITE_URL).href} />
+    <link rel="alternate" hreflang="x-default" href={new URL(esPath, SITE_URL).href} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description ?? t.metaDescription} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#f4f6f9" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Schibsted+Grotesk:wght@400..800&display=swap" rel="stylesheet" />
+    <ClientRouter />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{lang === 'es' ? 'Saltar al contenido' : 'Skip to content'}</a>
+    <header class="top">
+      <div class="wrap top__in">
+        <a class="brand" href={`/${lang}/`}>
+          <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#1B2A4A"/><circle cx="10" cy="16" r="3.2" fill="#F4F6F9"/><circle cx="22" cy="10" r="3.2" fill="#F4F6F9"/><circle cx="22" cy="22" r="3.2" fill="#5B7BFF"/><path d="M12.6 14.6 19.4 11.4M12.6 17.4l6.8 3.2" stroke="#F4F6F9" stroke-width="1.6"/></svg>
+          <span>Senior AI Dev Kit</span>
+        </a>
+        <nav class="top__nav" aria-label={lang === 'es' ? 'Principal' : 'Main'}>
+          <a href={`/${lang}/#herramientas`}>{t.nav.tools}</a>
+          <a href={`/${lang}/#flujo`}>{t.nav.flow}</a>
+          <a href={`/${lang}/#catalogo`}>{t.nav.catalog}</a>
+          <a href={`/${lang}/#instalar`}>{t.nav.install}</a>
+        </nav>
+        <div class="top__end">
+          <a class="lang" href={otherPath} hreflang={otherLang} lang={otherLang} data-astro-reload>{t.switchTo}</a>
+          <a class="gh" href={REPO_URL} rel="noopener" aria-label={t.nav.source}>
+            <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+          </a>
+        </div>
+      </div>
+    </header>
+    <main id="main">
+      <slot />
+    </main>
+    <footer class="foot">
+      <div class="wrap foot__in">
+        <p>Senior AI Dev Kit. {t.footer}</p>
+        <p><a href={REPO_URL} rel="noopener">github.com/jggomez/expert-ai-developer-skills</a></p>
+      </div>
+    </footer>
+    <script>
+      // One delegated listener for every copy button, rebound after view transitions.
+      function bindCopy() {
+        if ((document as any).__copyBound) return;
+        (document as any).__copyBound = true;
+        document.addEventListener('click', async (event) => {
+          const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-copy]');
+          if (!button) return;
+          const text = button.dataset.copy ?? '';
+          try {
+            await navigator.clipboard.writeText(text);
+          } catch {
+            const area = document.createElement('textarea');
+            area.value = text;
+            document.body.append(area);
+            area.select();
+            document.execCommand('copy');
+            area.remove();
+          }
+          button.textContent = button.dataset.doneLabel ?? 'Copied';
+          button.setAttribute('data-done', '');
+          window.setTimeout(() => {
+            button.textContent = button.dataset.label ?? 'Copy';
+            button.removeAttribute('data-done');
+          }, 1600);
+        });
+      }
+      bindCopy();
+    </script>
+    <style>
+      .top {
+        position: sticky; top: 0; z-index: 20;
+        background: color-mix(in srgb, var(--bg) 88%, transparent);
+        backdrop-filter: saturate(1.4) blur(10px);
+        border-bottom: 1px solid var(--line);
+      }
+      .top__in { display: flex; align-items: center; gap: 24px; min-height: 64px; }
+      .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 700; color: var(--ink-strong); letter-spacing: -0.01em; }
+      .top__nav { display: flex; gap: 4px; margin-left: 8px; }
+      .top__nav a, .lang {
+        text-decoration: none; color: var(--muted); font-size: var(--step--1); font-weight: 500;
+        padding: 8px 12px; border-radius: 999px; transition: color .15s, background .15s;
+      }
+      .top__nav a:hover, .lang:hover { color: var(--ink-strong); background: var(--surface); }
+      .top__end { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+      .lang { border: 1px solid var(--line-strong); color: var(--ink); }
+      .gh { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 999px; color: var(--ink); }
+      .gh:hover { background: var(--surface); }
+      .foot { border-top: 1px solid var(--line); margin-top: 40px; }
+      .foot__in { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; padding-block: 28px; color: var(--muted); font-size: var(--step--1); }
+      .foot a { color: var(--ink); }
+      @media (max-width: 720px) {
+        .top__nav { display: none; }
+        .brand span { font-size: 0.95rem; }
+      }
+    </style>
+  </body>
+</html>

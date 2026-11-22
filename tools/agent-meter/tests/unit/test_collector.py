@@ -279,3 +279,47 @@ def test_snapshot_and_meta_written(env: tuple[AppHome, dict[Host, Path]]) -> Non
     with Store.open(home, read_only=True, lock_timeout_s=1.0) as st:
         assert st.get_meta("last_collect_at") == NOW.isoformat()
         assert st.query("SELECT value FROM settings WHERE key = 'timezone'") == [{"value": "America/Bogota"}]
+
+
+class _LockProbeReader:
+    """Wraps a real reader and records whether another process could read the store while it parses."""
+
+    def __init__(self, inner: HostReader, home: AppHome, seen: list[bool]) -> None:
+        self._inner = inner
+        self._home = home
+        self._seen = seen
+        self.host = inner.host
+        self.root = inner.root
+
+    def discover(self) -> Iterator[SessionUnit]:
+        return iter(self._inner.discover())
+
+    def find_unit(self, session_or_conversation_id: str) -> SessionUnit | None:
+        return self._inner.find_unit(session_or_conversation_id)
+
+    def read_unit(self, unit: SessionUnit, options: ReaderOptions) -> UnitBatch:
+        try:
+            with store_lock(self._home.lock, exclusive=False, timeout_s=0.05):
+                self._seen.append(True)
+        except Exception:  # LockTimeout: the collector holds the exclusive lock while parsing
+            self._seen.append(False)
+        return self._inner.read_unit(unit, options)
+
+    def untracked(self) -> list[UntrackedRecord]:
+        return self._inner.untracked()
+
+    def earliest_available(self) -> object:
+        return self._inner.earliest_available()
+
+
+def test_transcripts_are_parsed_without_the_exclusive_lock(env: tuple[AppHome, dict[Host, Path]]) -> None:
+    # Arrange: readers that try to take a shared lock (as the app or a hook would) while parsing
+    home, roots = env
+    seen: list[bool] = []
+    readers: list[HostReader] = [_LockProbeReader(r, home, seen) for r in available_readers(roots)]  # type: ignore[misc]
+    # Act
+    result = collect(home, cfg_for(roots), now=NOW, readers=readers)
+    # Assert: parsing never blocked readers, and the data still landed
+    assert result.status == "ok"
+    assert seen and all(seen)
+    assert counts(home)["llm_calls"] > 0

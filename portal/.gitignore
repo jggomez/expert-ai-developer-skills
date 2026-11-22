@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.astro/
+.firebase/
+test-results/
+playwright-report/
+public/media/

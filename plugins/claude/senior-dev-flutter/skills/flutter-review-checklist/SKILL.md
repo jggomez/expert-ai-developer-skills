@@ -1,6 +1,6 @@
 ---
 name: flutter-review-checklist
-description: Use when reviewing a Flutter/Dart pull request or auditing code quality — rebuild scope, const, keys, dispose/leak safety, async BuildContext, DESIGN.md & ADR conformance, and fail-honest <= 50-line verdicts.
+description: "Use when reviewing a Flutter or Dart pull request or auditing code quality: rebuild scope, const, keys, dispose and leaks, async BuildContext, DESIGN.md and ADR conformance, with an honest verdict of at most 50 lines."
 ---
 
 # Flutter Review Checklist

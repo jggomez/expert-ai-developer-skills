@@ -31,11 +31,11 @@ This skill guides the user through installing and configuring the CLI, reading i
 ## Process
 ### Phase 1: Install the CLI (Python ≥ 3.11; `uv` provisions it)
 ```bash
-uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+uv tool install --python 3.12 "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 # or
 pipx install --python python3.12 "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 # Option B also needs the BigQuery extra:
-uv tool install --force "agent-meter[bigquery] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+uv tool install --force --python 3.12 "agent-meter[bigquery] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 agent-meter --help
 ```
 If `agent-meter` is not found afterwards, the tool bin directory (usually `~/.local/bin`) is missing from `PATH`: run `uv tool update-shell` and open a new terminal.

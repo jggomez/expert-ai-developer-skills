@@ -46,7 +46,7 @@ The CLI is the product. Both plugins are optional ways to register its hooks.
 
 ```bash
 # macOS, Linux or Windows (PowerShell/CMD or WSL2, %USERPROFILE%\.local\bin) — Python ≥ 3.11 (uv installs a managed interpreter for you)
-uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+uv tool install --python 3.12 "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 # or
 pipx install --python python3.12 "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 

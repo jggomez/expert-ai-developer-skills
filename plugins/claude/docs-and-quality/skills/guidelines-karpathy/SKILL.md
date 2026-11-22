@@ -61,7 +61,6 @@ This skill enforces behavioral and architectural restraint to prevent common LLM
 
 ### Host Execution Instructions
 - **Claude Code**: Keep changes atomic and surgical. The plugin's Stop hook (`anti-lazy-code-gate.js`) automatically guarantees no lazy placeholder stubs are committed.
-- **Antigravity**: Apply Karpathy principles during the PLAN and BUILD phases, verified by `anti-lazy-code-gate.js` before task completion.
 
 ## Red Flags
 - Leaving `TODO: implement later` or placeholder comments instead of writing full implementations.

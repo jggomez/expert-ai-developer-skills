@@ -43,11 +43,11 @@ try {
 // Extract tool and arguments (Claude Code schema: tool_name, tool_input, cwd)
 const toolName = payload.tool_name || '';
 const toolInput = payload.tool_input || {};
-const targetFile = toolInput.file_path || toolInput.path || '';
+const targetFile = toolInput.file_path || toolInput.notebook_path || toolInput.path || '';
 const workspaceRoot = payload.cwd || (payload.workspacePaths && payload.workspacePaths[0]) || process.cwd();
 
-// Only inspect file-writing tools: Write, Edit
-const isFileModTool = /^(Write|Edit)$/i.test(toolName);
+// Only inspect file-writing tools: Write, Edit, NotebookEdit
+const isFileModTool = /^(Write|Edit|NotebookEdit)$/i.test(toolName);
 if (!isFileModTool || !targetFile) {
   allow();
 }

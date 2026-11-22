@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import textwrap
+from dataclasses import replace
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -579,3 +580,48 @@ def test_remove_local_refuses_to_leave_dangling_alias(tmp_path: Path) -> None:
 
 def test_remove_local_on_missing_file_is_zero(tmp_path: Path) -> None:
     assert remove_local(tmp_path / "nope.yaml", model="x") == 0
+
+
+CURRENT_CLAUDE_MODELS = {
+    # Prices per MTok from https://platform.claude.com/docs/en/about-claude/pricing (read 2026-11-22).
+    "claude-fable-5-2": ("8.00", "40.00"),
+    "claude-fable-5-1": ("10.00", "50.00"),
+    "claude-opus-5-5": ("4.00", "20.00"),
+    "claude-sonnet-5-5": ("2.00", "10.00"),
+    "claude-haiku-5-5": ("0.10", "0.50"),
+}
+
+
+@pytest.mark.parametrize("model", sorted(CURRENT_CLAUDE_MODELS))
+def test_every_current_claude_model_has_a_shipped_price(model: str) -> None:
+    # Arrange
+    table = load_pricing(None)
+    # Act
+    resolution = resolve_price(table, model, date(2026, 11, 22), 1_000)
+    # Assert
+    assert resolution.row is not None, f"{model} has no price; its cost would show as unknown"
+    assert not resolution.estimated
+    expected_input, expected_output = CURRENT_CLAUDE_MODELS[model]
+    assert resolution.row.input == Decimal(expected_input)
+    assert resolution.row.output == Decimal(expected_output)
+
+
+def test_latest_claude_model_follows_the_shipped_table() -> None:
+    from agent_meter.pricing import latest_claude_model
+
+    table = load_pricing(None)
+
+    assert latest_claude_model("opus", table) == "claude-opus-5-5"
+    assert latest_claude_model("sonnet", table) == "claude-sonnet-5-5"
+    assert latest_claude_model("fable", table) == "claude-fable-5-2"
+    assert latest_claude_model("unknown-family", table) is None
+
+
+def test_latest_claude_model_picks_a_newer_row_when_one_is_added() -> None:
+    from agent_meter.pricing import latest_claude_model
+
+    table = load_pricing(None)
+    row = next(r for r in table.rows if r.model == "claude-opus-5-5")
+    newer = PricingTable(rows=(*table.rows, replace(row, model="claude-opus-5-10")), aliases=table.aliases)
+
+    assert latest_claude_model("opus", newer) == "claude-opus-5-10"

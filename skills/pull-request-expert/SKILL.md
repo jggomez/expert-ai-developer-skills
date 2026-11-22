@@ -1,6 +1,6 @@
 ---
 name: pull-request-expert
-description: Prepare, audit, and author concise (<= 40 lines), Fail-Honest Pull Requests with Conventional Commits validation, docs/<feature-name>/test-matrix.md links, and transparent BLOCKED/SKIPPED gate disclosure.
+description: "Use when opening or auditing a pull request: a short (at most 40 lines), honest description with Conventional Commits checks, a link to docs/FEATURE/test-matrix.md and any BLOCKED or SKIPPED gate stated openly."
 ---
 
 # Pull Request Expert Skill

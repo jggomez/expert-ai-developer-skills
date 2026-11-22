@@ -1,0 +1,49 @@
+---
+/** Home section that puts the two standalone tools up front, with their real screenshots and install path. */
+import Glyph from './Glyph.astro';
+import ScreenViewer from './ScreenViewer.astro';
+import ToolInstall from './ToolInstall.astro';
+import { TOOLS, UI, getItem, itemUrl } from '../lib/site.mjs';
+
+interface Props { lang: 'es' | 'en' }
+const { lang } = Astro.props;
+const t = UI[lang];
+const tools = Object.keys(TOOLS).map((slug) => getItem(`tool/${slug}`)).filter(Boolean);
+---
+<section class="section tools" id="herramientas" aria-labelledby="tools-title">
+  <div class="wrap">
+    <div class="section__head">
+      <h2 id="tools-title">{t.toolsTitle}</h2>
+      <p>{t.toolsLead}</p>
+    </div>
+    {tools.map((item: any, i: number) => (
+      <article class="tool" class:list={[{ 'tool--flip': i % 2 === 1 }]} data-kind="tool" id={`tool-${item.slug}`}>
+        <div class="tool__copy">
+          <h3><Glyph kind="tool" size={14} />{item.name}</h3>
+          <p class="tool__tagline">{TOOLS[item.slug].tagline[lang]}</p>
+          <ToolInstall lang={lang} slug={item.slug} compact />
+          <a class="btn tool__more" href={itemUrl(lang, item)}>{t.moreAbout}</a>
+        </div>
+        <ScreenViewer lang={lang} item={item} eager={i === 0} />
+      </article>
+    ))}
+  </div>
+</section>
+
+<style>
+  .tools { padding-top: clamp(32px, 5vw, 64px); }
+  .tool {
+    display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 56px; align-items: start;
+    padding-block: 48px; border-top: 1px solid var(--line);
+  }
+  .tool--flip { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+  .tool--flip .tool__copy { order: 2; }
+  .tool__copy { display: grid; gap: 20px; align-content: start; min-width: 0; }
+  .tool h3 { display: inline-flex; align-items: center; gap: 12px; font-size: var(--step-3); font-weight: 750; letter-spacing: -0.03em; font-family: var(--mono); }
+  .tool__tagline { font-size: var(--step-1); color: var(--ink); max-width: 38ch; }
+  .tool__more { justify-self: start; }
+  @media (max-width: 960px) {
+    .tool, .tool--flip { grid-template-columns: 1fr; gap: 32px; }
+    .tool--flip .tool__copy { order: 0; }
+  }
+</style>

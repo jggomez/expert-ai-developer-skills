@@ -83,7 +83,6 @@ flutter drive --profile --target=test_driver/perf.dart
 
 ### Host Execution Instructions
 - **Claude Code**: Invoke via `/skill flutter-performance-profiling` or request runtime performance diagnosis.
-- **Google Antigravity**: Execute profiling commands via terminal and capture trace metrics for analysis.
 
 ## Red Flags
 - Profiling performance in Debug mode where assertions, debug banners, and JIT compilation skew frame metrics.

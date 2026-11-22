@@ -1,6 +1,6 @@
 ---
 name: senior-dev-orchestrator
-description: Orchestrates the software development lifecycle (LLM Wiki memory restoration, target AGENTS.md bootstrap, 3-tier dynamic routing, capability and risk-gated subagent dispatch, parallel TDD implementation with disjoint file or git worktree isolation, fail-honest E2E and adversarial verification, and milestone memory persistence) using a Graph Engineering DAG.
+description: "Use when running a software task through the full agent team: restores memory, bootstraps AGENTS.md, sizes the task into three tiers, dispatches specialists by capability and risk, runs TDD implementation in parallel with file or worktree isolation, verifies honestly and saves the milestone to memory."
 ---
 
 # Senior Software Developer Orchestrator
@@ -98,8 +98,7 @@ These apply in every Tier when a task creates or changes UI:
 - Mark tasks complete in `PLAN.md`, sync root `AGENTS.md` (`<= 90 lines`) if needed, and update `context/memory/` (`MEMORY.md <= 80-100 lines`, topic pages if changed, `5-8 line` log entry in `context/memory/log/YYYY-MM-DD.md`). Never write checkpoints on intermediate turns.
 
 ## Usage
-- **Antigravity**: Dispatch subagents via `Agent` (several `Agent` calls in one message for parallel fan-out), follow up via `SendMessage` / `Agent`, and gate alignment/scope drift via `AskUserQuestion`.
-- **Claude Code**: Emit single or parallel `Agent(agent="...", prompt="...")` calls (using `loop-engineering` worktrees for Mode B).
+- **Claude Code**: Emit single or parallel `Agent(subagent_type="senior-dev:...", prompt="...")` calls (using `loop-engineering` worktrees for Mode B).
 
 ## Red Flags
 - Reusing a previous change's `Invoke / SKIP` row for a new request, or running the full suite once per agent instead of at most once per change.

@@ -17,19 +17,19 @@ prompts, code, tool inputs/outputs or file paths.
 
 ## What it looks like
 
-![Live screen](../../docs/agent-metrics/images/live.png)
+![Live screen](docs/images/app-live.png)
 **Live**: today's spend, this month's spend, a month-end forecast, budgets and the sessions running now, with Claude Code and Antigravity side by side.
 
-![History screen](../../docs/agent-metrics/images/history.png)
+![History screen](docs/images/app-history.png)
 **History**: spend, calls, sessions and tasks for any period, day by day.
 
 ![Spending by project](../../docs/agent-metrics/images/history-projects.png)
 **By project**: which project takes your budget, with cost, share, calls, tasks and tokens.
 
-![Insights screen](../../docs/agent-metrics/images/insights.png)
+![Insights screen](docs/images/app-insights.png)
 **Insights**: where to cut, with measured findings and estimated savings, such as a cheaper model for routine work or a subagent that costs several times more than its peers.
 
-![Changes screen](../../docs/agent-metrics/images/changes.png)
+![Changes screen](docs/images/app-changes.png)
 **Changes**: switch the default model or effort of your AI tools. Nothing changes until you confirm a preview, and every change can be undone.
 
 ![Diagnostics](../../docs/agent-metrics/images/diagnostics.png)
@@ -82,7 +82,7 @@ from it at any time (`agent-meter sync --full-reload`).
 
 ```bash
 # 1) Install (needs uv: https://docs.astral.sh/uv/)
-uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+uv tool install --python 3.12 "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 
 # 2) Configure once: detects Claude Code / Antigravity, imports your history
 agent-meter setup --local
@@ -126,37 +126,39 @@ That's it. If you chose hooks or the scheduler during `setup`, new activity is r
 
 ## 4. Install
 
-**Requirements:** macOS, Linux or Windows (PowerShell/CMD or WSL2), Python ≥ 3.11 (installed for you by `uv`), and `uv` or `pipx`.
+**Requirements:** macOS, Linux or Windows (PowerShell/CMD or WSL2), Python ≥ 3.11, and `uv` or `pipx`. Keep `--python 3.12` in the commands below: without it `uv` uses the first Python it finds, and an older one (such as macOS's 3.10) makes the install fail. With it, `uv` downloads 3.12 if you do not have it.
 
 ### 4.1 From GitHub (recommended)
 
 ```bash
 # Local mode only
-uv tool install "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+uv tool install --python 3.12 "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 
 # Local + BigQuery support (Option B)
-uv tool install "agent-meter[bigquery] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+uv tool install --python 3.12 "agent-meter[bigquery] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 
 # With the desktop app (agent-meter app)
-uv tool install "agent-meter[app] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+uv tool install --python 3.12 "agent-meter[app] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 
 # Same with pipx
 pipx install --python python3.12 "git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
+# pipx with the desktop app
+pipx install --python python3.12 "agent-meter[app] @ git+https://github.com/jggomez/expert-ai-developer-skills#subdirectory=tools/agent-meter"
 ```
 
-To install from a specific branch (e.g. before it is merged into `main`), add `@<branch>` right after the repository URL:
+To install a specific release, tag or branch, add `@<ref>` right after the repository URL:
 
 ```bash
-uv tool install "agent-meter[bigquery] @ git+https://github.com/jggomez/expert-ai-developer-skills@feature/agent-metrics#subdirectory=tools/agent-meter"
+uv tool install --python 3.12 "agent-meter[bigquery] @ git+https://github.com/jggomez/expert-ai-developer-skills@agent-meter-v0.1.0#subdirectory=tools/agent-meter"
 ```
 
 ### 4.2 From a local clone of this repository
 
 ```bash
 cd /path/to/expert-ai-developer-skills
-uv tool install "./tools/agent-meter"               # local mode
-uv tool install "./tools/agent-meter[bigquery]"     # with BigQuery support
-uv tool install "./tools/agent-meter[app]"          # with the desktop app (agent-meter app)
+uv tool install --python 3.12 "./tools/agent-meter"               # local mode
+uv tool install --python 3.12 "./tools/agent-meter[bigquery]"     # with BigQuery support
+uv tool install --python 3.12 "./tools/agent-meter[app]"          # with the desktop app (agent-meter app)
 ```
 
 ### 4.3 Check, update, remove the tool
@@ -695,6 +697,8 @@ AGENT_METER_TEST_GCP_PROJECT=<PROJECT_ID> \
   uv run --python 3.11 --extra dev --extra bigquery pytest -m bigquery tests/cloud -q   # live BigQuery (temporary dataset, auto-deleted)
 uv run --python 3.11 --extra dev ruff check .
 uv run --python 3.11 --extra dev mypy --strict src
+uv run --python 3.12 --extra dev --extra ui playwright install chromium
+uv run --python 3.12 --extra dev --extra ui pytest tests/ui -q   # desktop app UI in headless Chromium
 ```
 
 Design documents: [`docs/agent-metrics/`](../../docs/agent-metrics/) — PRD, ADR-001, interface contracts, pricing sources,

@@ -1,6 +1,6 @@
 ---
 name: flutter-senior-orchestration
-description: Use to run a Flutter feature or fix end to end — restoring cross-AI context (context/memory/), bootstrapping root AGENTS.md, 3-tier dynamic routing, capability and risk-gated subagent dispatch via docs/<feature-name>/PLAN.md, sequencing official flutter-*/dart-* skills, and dispatching parallel or sequential subagents (ui-ux-designer, flutter-architect, flutter-implementer, flutter-reviewer, flutter-release-engineer, qa-tester).
+description: "Use to run a Flutter feature or fix end to end: restores shared context (context/memory/), bootstraps the root AGENTS.md, sizes the task, plans it in docs/FEATURE/PLAN.md, orders the official flutter-* and dart-* skills, and dispatches ui-ux-designer, flutter-architect, flutter-implementer, flutter-reviewer, flutter-release-engineer and qa-tester."
 ---
 
 # Flutter Senior Orchestration
@@ -98,7 +98,6 @@ These apply in every Tier when a task creates or changes UI on a project with a 
 
 ## Usage
 - **Claude Code**: Invoke via `/skill flutter-senior-orchestration` or `flutter-feature-orchestrator`, dispatching parallel `Agent` calls.
-- **Google Antigravity**: Dispatch subagents via `Agent`, gate alignment via `AskUserQuestion`, and verify with `flutter analyze` and `flutter test`.
 
 ## Red Flags
 - Reusing a previous change's `Invoke / SKIP` row for a new request, or running the full suite once per agent instead of at most once per change.

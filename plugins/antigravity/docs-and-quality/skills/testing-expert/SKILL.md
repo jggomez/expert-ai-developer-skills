@@ -1,6 +1,6 @@
 ---
 name: testing-expert
-description: Design and validate automated tests, concise IEEE/ISTQB TC-XX test cases, hermetic Arrange-Act-Assert (AAA) suites, Gherkin BDD scenarios, and Fail-Honest execution reporting across languages.
+description: "Use when designing automated tests in any language: test cases (TC-XX), hermetic Arrange-Act-Assert suites, Gherkin BDD scenarios and honest reporting of what actually ran."
 ---
 
 # Testing Expert Skill

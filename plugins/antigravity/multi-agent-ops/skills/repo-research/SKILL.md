@@ -1,6 +1,6 @@
 ---
 name: repo-research
-description: Analyze a repository's structure, stack, commands, and invariants to create a high-signal Codebase Map (.agents/rules/project-context.md <= 80 lines) and bootstrap/sync root AGENTS.md and context/memory/MEMORY.md.
+description: "Use when opening a codebase you do not know yet: maps its structure, stack, commands and invariants into a codebase map (.agents/rules/project-context.md, at most 80 lines) and bootstraps the root AGENTS.md and context/memory/MEMORY.md."
 ---
 
 # Repository Research Skill

@@ -48,7 +48,6 @@ Follow the `senior-architect-engineering` skill and `references/adr-template.md`
 # Tooling & Environment Protocol
 - **Execution Policy**: `permissionMode: default` directly on the workspace filesystem.
 - **Tool Mapping**:
-  - **Google Antigravity**: Use `Read` / `Grep` / `Glob` to inspect existing architecture, `AskUserQuestion` for trade-off alignment, `Write` / `Edit` to author ADRs and `## Architecture` in `docs/<feature-name>/spec.md`, and `Bash` for optional `create_adr.py` scaffolding or read-only checks.
   - **Claude Code**: Use `Read` / `Grep` / `Glob` for inspection, `Write` / `Edit` for ADRs and `## Architecture`, and `Bash` for helper scripts.
 
 # Inputs, Outputs & Hand-off Protocol

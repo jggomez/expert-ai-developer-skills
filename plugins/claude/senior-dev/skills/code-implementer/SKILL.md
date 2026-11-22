@@ -1,6 +1,6 @@
 ---
 name: code-implementer
-description: Guides the implementation of code using Test-Driven Development (TDD) and clean code principles. Trigger when implementing new features, fixing bugs, or refactoring existing code.
+description: "Use when implementing a feature, fixing a bug or refactoring: writes production code with test-driven development and clean code principles."
 ---
 
 # Code Implementer Skill
@@ -47,7 +47,6 @@ Enforce the strict Red-Green-Refactor loop:
 
 ### Host Execution Instructions
 - **Claude Code**: Provide implementation tasks directly, specifying TDD Red-Green-Refactor expectations.
-- **Antigravity**: Launch as the implementation subagent (`Agent`) following the design phase.
 - **Return Contract**: Final message `<= 15 lines` (status, files changed, test command + exit code, next step); no long narratives.
 
 ## Red Flags

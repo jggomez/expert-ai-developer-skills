@@ -45,6 +45,8 @@ def _fetch() -> list[dict[str, Any]]:
 
 
 def check_for_update(current: str, fetch: Callable[[], list[dict[str, Any]]] = _fetch) -> dict[str, Any]:
+    if current.endswith("+source"):  # a git checkout, not a release: there is nothing to update to
+        return {"ok": True, "newer": False, "current": current}
     try:
         latest = newest_release(fetch())
     except (OSError, ValueError, urllib.error.URLError) as exc:

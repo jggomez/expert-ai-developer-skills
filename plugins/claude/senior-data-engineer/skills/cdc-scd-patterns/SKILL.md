@@ -57,7 +57,6 @@ python3 ./skills/cdc-scd-patterns/scripts/scaffold_scd2_dataform.py dim_customer
 
 ### Host Execution Instructions
 - **Claude Code**: Run `scaffold_scd2_dataform.py` in the workspace shell to generate SQLX models.
-- **Antigravity**: Generate Dataform pipelines and compile with Dataform CLI to verify SQL syntax.
 
 ## Red Flags
 - Comparing nullable columns with `=` instead of `IS DISTINCT FROM` (treating `NULL = NULL` as `NULL`, missing changes).

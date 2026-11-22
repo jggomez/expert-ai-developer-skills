@@ -1,0 +1,31 @@
+---
+// Root: send visitors to their language. Spanish is the default; no-JS visitors get the meta refresh.
+---
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Senior AI Dev Kit</title>
+    <link rel="canonical" href="https://senior-ai-dev-kit.web.app/es/" />
+    <link rel="alternate" hreflang="es" href="https://senior-ai-dev-kit.web.app/es/" />
+    <link rel="alternate" hreflang="en" href="https://senior-ai-dev-kit.web.app/en/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script is:inline>
+      (function () {
+        var langs = (navigator.languages || [navigator.language || 'es']).map(function (l) { return String(l).toLowerCase(); });
+        var target = '/es/';
+        for (var i = 0; i < langs.length; i++) {
+          if (langs[i].indexOf('es') === 0) { target = '/es/'; break; }
+          if (langs[i].indexOf('en') === 0) { target = '/en/'; break; }
+        }
+        location.replace(target + location.search + location.hash);
+      })();
+    </script>
+    <meta http-equiv="refresh" content="0; url=/es/" />
+    <style>body{margin:0;background:#f4f6f9;color:#1b2a4a;font:16px system-ui,sans-serif;display:grid;place-items:center;min-height:100vh}</style>
+  </head>
+  <body>
+    <p><a href="/es/">Español</a> · <a href="/en/">English</a></p>
+  </body>
+</html>

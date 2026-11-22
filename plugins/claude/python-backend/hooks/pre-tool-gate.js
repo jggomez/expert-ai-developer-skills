@@ -60,9 +60,9 @@ const toolInput = payload.tool_input || {};
 const cwd = payload.cwd || (payload.workspacePaths && payload.workspacePaths[0]) || process.cwd();
 
 // --- 1. Plan-First Enforcement for Write | Edit on Python files ---
-const isFileModTool = /^(write_to_file|replace_file_content|Write|Edit)$/i.test(toolName);
+const isFileModTool = /^(write_to_file|replace_file_content|Write|Edit|NotebookEdit)$/i.test(toolName);
 if (isFileModTool) {
-  const targetFile = toolInput.file_path || toolInput.path || toolInput.TargetFile || '';
+  const targetFile = toolInput.file_path || toolInput.notebook_path || toolInput.path || toolInput.TargetFile || '';
   const basename = path.basename(targetFile);
   const ext = path.extname(targetFile).toLowerCase();
 
@@ -75,7 +75,7 @@ if (isFileModTool) {
     ext === '.md' ||
     ext === '.txt';
 
-  if (!isDoc && targetFile.endsWith('.py')) {
+  if (!isDoc && (targetFile.endsWith('.py') || targetFile.endsWith('.ipynb'))) {
     let branch = '';
     try {
       branch = execSync('git symbolic-ref --short HEAD', { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
@@ -128,12 +128,21 @@ if (toolName === 'Bash' && commandLine) {
 }
 
 // --- 4. MCP Tools Guardrail (Cloud Run & Firebase writes) ---
-if (toolName.startsWith('mcp__cloudrun__') && /^deploy_/.test(toolName.replace('mcp__cloudrun__', ''))) {
+// Matches user servers (mcp__cloudrun__deploy_x) and plugin servers, which Claude Code names
+// mcp__plugin_<plugin>_<server>__<tool> (e.g. mcp__plugin_senior-dev_cloudrun__deploy_local_folder).
+const mcpTool = (server) => {
+  const match = toolName.match(new RegExp(`^mcp__(?:plugin_[A-Za-z0-9-]+_)?${server}__(.+)$`));
+  return match ? match[1] : null;
+};
+
+const cloudRunTool = mcpTool('cloudrun');
+if (cloudRunTool && /^deploy_/.test(cloudRunTool)) {
   ask(`Cloud Run deployment via MCP detected: "${toolName}". Deployment operations require explicit user approval.`);
 }
 
 const firestoreWriteRegex = /(add|update|delete|set|create_database)/i;
-if (toolName.startsWith('mcp__firebase-mcp-server__') && firestoreWriteRegex.test(toolName.replace('mcp__firebase-mcp-server__', ''))) {
+const firebaseTool = mcpTool('firebase-mcp-server');
+if (firebaseTool && firestoreWriteRegex.test(firebaseTool)) {
   ask(`Firestore mutation via MCP detected: "${toolName}". Data modification operations require explicit user approval.`);
 }
 

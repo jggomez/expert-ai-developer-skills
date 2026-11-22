@@ -1,0 +1,206 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Cmd from '../../../components/Cmd.astro';
+import Glyph from '../../../components/Glyph.astro';
+import ScreenViewer from '../../../components/ScreenViewer.astro';
+import ToolInstall from '../../../components/ToolInstall.astro';
+import { HOST_LABELS, LANGS, TOOLS, UI, catalogItems, getItem, itemText, itemUrl, kindLabel } from '../../../lib/site.mjs';
+
+export function getStaticPaths() {
+  return LANGS.flatMap((lang) =>
+    catalogItems.map((item) => ({ params: { lang, type: item.type, slug: item.slug }, props: { id: item.id } })),
+  );
+}
+
+const lang = Astro.params.lang as 'es' | 'en';
+const { id } = Astro.props as { id: string };
+const t = UI[lang];
+const item = getItem(id);
+const text = itemText(lang, id);
+const path = itemUrl(lang, item);
+
+const parents = (item.includedIn ?? []).map((name: string) => getItem(`plugin/${name}`)).filter(Boolean);
+const children = item.type === 'plugin'
+  ? (['agent', 'skill', 'hook'] as const)
+      .map((kind) => ({ kind, entries: (item.contains[kind] ?? []).map((slug: string) => getItem(`${kind}/${slug}`)).filter(Boolean) }))
+      .filter((group) => group.entries.length > 0)
+  : [];
+
+const commands: { label: string; command: string }[] = [];
+if (item.type === 'plugin') {
+  if (item.install.claude) {
+    commands.push({ label: HOST_LABELS.claude, command: `claude plugin marketplace add jggomez/expert-ai-developer-skills` });
+    commands.push({ label: '', command: item.install.claude });
+  }
+  if (item.install.antigravity) commands.push({ label: HOST_LABELS.antigravity, command: item.install.antigravity });
+}
+if (item.type === 'skill') commands.push({ label: 'Agent Skills CLI', command: item.install.skills });
+if (item.type === 'agent' && item.install.claude) commands.push({ label: HOST_LABELS.claude, command: item.install.claude });
+const firstParent = item.homePlugin ? getItem(`plugin/${item.homePlugin}`) : parents[0];
+const isTool = item.type === 'tool' && Boolean(TOOLS[item.slug]);
+---
+<Base lang={lang} path={path} title={text.title} description={text.summary}>
+  <article class="wrap detail" data-kind={item.type}>
+    <a class="back" href={`/${lang}/#catalogo`}>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>
+      {t.backToCatalog}
+    </a>
+
+    <header class="detail__head">
+      <p class="detail__kind"><Glyph kind={item.type} size={16} />{kindLabel(lang, item.type)}</p>
+      <h1 transition:name={`title-${item.type}-${item.slug}`}>{text.title}</h1>
+      <p class="detail__slug"><code>{item.command ?? item.slug}</code></p>
+      <p class="detail__summary">{text.summary}</p>
+    </header>
+
+    <div class="detail__grid">
+      <div class="detail__main">
+        <section>
+          <h2>{t.whenToUse}</h2>
+          <p>{text.use}</p>
+        </section>
+
+        {isTool && (
+          <section>
+            <h2>{t.screens}</h2>
+            <ScreenViewer lang={lang} item={item} eager />
+          </section>
+        )}
+
+        {children.map((group) => (
+          <section>
+            <h2>{t.contains}: {group.entries.length} {kindLabel(lang, group.kind, group.entries.length)}</h2>
+            <ul class="links">
+              {group.entries.map((child) => (
+                <li>
+                  <a href={itemUrl(lang, child)} data-kind={child.type}>
+                    <Glyph kind={child.type} />
+                    <span class="links__title">{itemText(lang, child.id).title}</span>
+                    <span class="links__summary">{itemText(lang, child.id).summary}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+
+        {item.description && (
+          <section class="original">
+            <h2>{t.original}</h2>
+            <p lang="en">{item.description}</p>
+          </section>
+        )}
+      </div>
+
+      <aside class="detail__side">
+        <div class="side__block">
+          <h2>{t.howToGet}</h2>
+          {isTool ? (
+            <ToolInstall lang={lang} slug={item.slug} />
+          ) : commands.length > 0 ? (
+            <div class="side__cmds">
+              {commands.map((c) => (
+                <>
+                  {c.label && <p class="side__label">{c.label}</p>}
+                  <Cmd command={c.command} copy={t.copy} copied={t.copied} />
+                </>
+              ))}
+              {item.type === 'agent' && firstParent && <p class="side__note">{t.viaPlugin(firstParent.name)}</p>}
+            </div>
+          ) : firstParent ? (
+            <p class="side__note">{t.viaPlugin(firstParent.name)}</p>
+          ) : (
+            <p class="side__note">{t.copyFile}</p>
+          )}
+        </div>
+
+        <dl class="side__facts">
+          <div>
+            <dt>{t.hosts}</dt>
+            <dd>{item.hosts.map((h: string) => HOST_LABELS[h]).join(', ')}</dd>
+          </div>
+          {item.type === 'agent' && item.model && (
+            <div><dt>{t.model}</dt><dd>{item.model}</dd></div>
+          )}
+          {item.schedule && (
+            <div><dt>{t.schedule}</dt><dd><code>{item.schedule}</code></dd></div>
+          )}
+          {item.command && (
+            <div><dt>{t.command}</dt><dd><code>{item.command}</code></dd></div>
+          )}
+        </dl>
+
+        {parents.length > 0 && (
+          <div class="side__block">
+            <h2>{t.includedIn}</h2>
+            <ul class="pills">
+              {parents.map((p) => (
+                <li><a href={itemUrl(lang, p)} data-kind="plugin"><Glyph kind="plugin" />{p.name}</a></li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <a class="btn source" href={item.source} rel="noopener">
+          {t.viewSource}
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3h7v7M13 3 4 12"/></svg>
+        </a>
+      </aside>
+    </div>
+  </article>
+</Base>
+
+<style>
+  .detail { padding-block: 32px 64px; }
+  .back {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 40px;
+    color: var(--muted); text-decoration: none; font-size: var(--step--1); font-weight: 500;
+  }
+  .back:hover { color: var(--ink-strong); }
+  .detail__head { padding-block: 28px 40px; border-bottom: 1px solid var(--line); max-width: 860px; }
+  .detail__kind { display: inline-flex; align-items: center; gap: 8px; color: var(--kind); font-weight: 600; font-size: var(--step--1); }
+  .detail h1 { font-size: clamp(2.2rem, 1.5rem + 3vw, 4rem); font-weight: 750; letter-spacing: -0.035em; margin-top: 14px; text-wrap: balance; }
+  .detail__slug { margin-top: 12px; }
+  .detail__slug code { font-size: 0.8125rem; color: var(--muted); overflow-wrap: anywhere; }
+  .detail__summary { margin-top: 24px; font-size: var(--step-2); line-height: 1.4; color: var(--ink); max-width: 40ch; letter-spacing: -0.01em; }
+
+  .detail__grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 64px; padding-top: 40px; }
+  .detail__main { display: grid; gap: 40px; align-content: start; min-width: 0; }
+  .detail__main h2, .side__block h2 { font-size: var(--step-0); font-weight: 650; color: var(--ink-strong); margin-bottom: 12px; letter-spacing: -0.005em; }
+  .detail__main > section > p { font-size: var(--step-1); max-width: 62ch; }
+  .original p { color: var(--muted); max-width: 70ch; }
+
+  .links { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  .links a {
+    display: grid; grid-template-columns: 14px minmax(0, 13rem) minmax(0, 1fr); gap: 4px 14px; align-items: baseline;
+    padding: 14px 0; border-bottom: 1px solid var(--line); text-decoration: none;
+  }
+  .links a :global(.glyph) { transform: translateY(2px); }
+  .links__title { font-weight: 600; color: var(--ink-strong); }
+  .links__summary { color: var(--muted); font-size: 0.9375rem; }
+  .links a:hover .links__title { color: var(--kind); }
+
+  .detail__side { display: grid; gap: 28px; align-content: start; position: sticky; top: 88px; min-width: 0; }
+  .side__cmds { display: grid; gap: 8px; }
+  .side__label { font-size: var(--step--1); color: var(--muted); margin-top: 4px; }
+  .side__note { color: var(--muted); font-size: 0.9375rem; }
+  .side__facts { margin: 0; display: grid; gap: 0; border-top: 1px solid var(--line); }
+  .side__facts div { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: var(--step--1); }
+  .side__facts dt { color: var(--muted); }
+  .side__facts dd { margin: 0; color: var(--ink-strong); font-weight: 500; text-align: right; }
+  .side__facts code { font-size: 0.8125rem; }
+  .pills { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .pills a {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px; border-radius: 999px;
+    border: 1px solid var(--line-strong); background: var(--surface); text-decoration: none; font-size: var(--step--1); font-weight: 500;
+  }
+  .pills a:hover { border-color: var(--k-plugin); }
+  .source { justify-self: start; }
+
+  @media (max-width: 900px) {
+    .detail__grid { grid-template-columns: 1fr; gap: 48px; }
+    .detail__side { position: static; }
+    .links a { grid-template-columns: 14px minmax(0, 1fr); }
+    .links__summary { grid-column: 2; }
+  }
+</style>

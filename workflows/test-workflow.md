@@ -1,3 +1,7 @@
+---
+description: "Use after building a change to write and run the tests that show it does what it should."
+---
+
 # Workflow: Prove It Works (/test)
 
 **Command**: `/test`  

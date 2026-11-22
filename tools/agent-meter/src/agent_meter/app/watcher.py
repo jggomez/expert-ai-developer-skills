@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Final
 
 from agent_meter.model import Host
+from agent_meter.readers._common import sqlite_change_stamp
 from agent_meter.readers.antigravity import TRANSCRIPT_REL
 from agent_meter.readers.base import default_roots
 
@@ -20,6 +21,7 @@ __all__ = ["MIN_COLLECT_GAP_S", "TranscriptWatcher", "signature", "watched_folde
 POLL_INTERVAL_S: Final = 1.0
 MIN_COLLECT_GAP_S: Final = 30.0  # an active session writes constantly, and each collect locks out hooks and the CLI
 _SUFFIXES: Final = (".jsonl", ".db", ".db-wal", ".pb")
+_SQLITE_KINDS: Final = {".db": "agy_db", ".db-wal": "agy_wal"}
 _LOG = logging.getLogger(__name__)
 
 
@@ -32,10 +34,28 @@ def watched_folders(roots: dict[Host, Path] | None = None) -> list[Path]:
     return folders
 
 
-def signature(folders: Iterable[Path]) -> tuple[int, int]:
-    """File count and newest modification time: cheap, and either one changes on new activity."""
-    stamps = [stamp for path in _candidates(folders) if (stamp := _modified_ns(path)) is not None]
-    return len(stamps), max(stamps, default=0)
+def signature(folders: Iterable[Path]) -> tuple[int, int, int]:
+    """File count, newest transcript modification time, and a fingerprint of the SQLite files.
+
+    Antigravity touches its ``.db`` files without writing, so for those the fingerprint uses SQLite's own
+    change marker plus the size instead of the modification time; a bare touch then starts no collect.
+    """
+    count = 0
+    newest = 0
+    sqlite_parts: list[tuple[str, int, int]] = []
+    for path in _candidates(folders):
+        try:
+            stat = os.stat(path)
+        except OSError:  # missing, or removed since it was listed; the next pass sees it
+            continue
+        count += 1
+        kind = _SQLITE_KINDS.get(os.path.splitext(path)[1])
+        if kind is None:
+            newest = max(newest, stat.st_mtime_ns)
+            continue
+        stamp = sqlite_change_stamp(Path(path), kind)
+        sqlite_parts.append((path, stat.st_size, stat.st_mtime_ns if stamp is None else stamp))
+    return count, newest, hash(tuple(sorted(sqlite_parts)))
 
 
 def _candidates(folders: Iterable[Path]) -> Iterator[str]:
@@ -47,13 +67,6 @@ def _candidates(folders: Iterable[Path]) -> Iterator[str]:
             continue
         for current, _dirs, names in os.walk(folder):
             yield from (os.path.join(current, name) for name in names if name.endswith(_SUFFIXES))
-
-
-def _modified_ns(path: str) -> int | None:
-    try:
-        return os.stat(path).st_mtime_ns
-    except OSError:  # missing, or removed since it was listed; the next pass sees it
-        return None
 
 
 class TranscriptWatcher(threading.Thread):

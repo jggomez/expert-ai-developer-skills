@@ -1,6 +1,6 @@
 ---
 name: testing-expert
-description: Design and validate automated tests, concise IEEE/ISTQB TC-XX test cases, hermetic Arrange-Act-Assert (AAA) suites, Gherkin BDD scenarios, and Fail-Honest execution reporting across languages.
+description: "Use when designing automated tests in any language: test cases (TC-XX), hermetic Arrange-Act-Assert suites, Gherkin BDD scenarios and honest reporting of what actually ran."
 ---
 
 # Testing Expert Skill
@@ -48,7 +48,6 @@ python3 ./skills/testing-expert/scripts/validate_gherkin.py
 
 ### Host Execution Instructions
 - **Claude Code**: Run `validate_gherkin.py` via Bash and execute targeted test runners with empirical exit-code checks.
-- **Antigravity**: Validate `.feature` syntax via `Bash` and record honest `PASSED`/`FAILED`/`BLOCKED`/`SKIPPED` statuses.
 
 ## Red Flags
 - Claiming `PASSED` when the runner, server, or browser was unavailable instead of reporting `BLOCKED` or `SKIPPED`.

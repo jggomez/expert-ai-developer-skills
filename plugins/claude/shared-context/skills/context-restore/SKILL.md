@@ -45,7 +45,6 @@ python3 ./skills/context-restore/scripts/context_list.py
 
 ### Host Execution Instructions
 - **Claude Code**: Read `context/memory/MEMORY.md` silently in State 0; in standalone mode, run `context_list.py --json` via Bash and ask (`Full / Light / Just list / Skip`).
-- **Antigravity**: Read `context/memory/MEMORY.md` silently in State 0; in standalone mode, use `context-keeper` or `context_list.py --json` with user confirmation.
 
 ## Red Flags
 - Eager-reading all `context/memory/log/` files or unpacking archives upfront instead of reading **only `MEMORY.md`** first.

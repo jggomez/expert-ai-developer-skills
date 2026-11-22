@@ -60,7 +60,6 @@ alembic upgrade head
 
 ### Host Execution Instructions
 - **Claude Code**: Generate and edit Alembic scripts, then run migrations against local dev databases via bash.
-- **Antigravity**: Audit migration files and verify both upgrade and downgrade paths execute cleanly.
 
 ## Red Flags
 - Adding a `NOT NULL` column without a default to a populated table in production.

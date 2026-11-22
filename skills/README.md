@@ -17,8 +17,8 @@ All 9 plugins across both runtime ecosystems bundle physical copies of the skill
 
 ### Bundled Skills per Plugin (9 Plugins)
 1. **`senior-dev`** (15 skills): `senior-dev-orchestrator`, `product-analyst`, `ui-ux-designer`, `senior-architect-engineering`, `code-implementer`, `code-smells-expert`, `refactoring-code-expert`, `qa-tester`, `compliance-verifier`, `code-critic`, `adversarial-challenger`, `blackbox-tester`, `context-capture`, `context-restore`, `loop-engineering`.
-2. **`senior-dev-flutter`** (10 skills): `flutter-senior-orchestration`, `flutter-architecture-decisions`, `flutter-review-checklist`, `flutter-test-strategy`, `flutter-performance-profiling`, `flutter-release-engineering`, `flutter-upgrade-migration`, `context-capture`, `context-restore`, `loop-engineering`.
-3. **`python-backend`** (14 skills): `python-expert`, `test-driven-development`, `pull-request-expert`, `code-smells-expert`, `refactoring-code-expert`, `security-audit`, `performance-scalability`, `database-migration-expert`, `senior-architect-engineering`, `design-spec-expert`, `build-and-ci-gates`, `context-capture`, `context-restore`, `loop-engineering`.
+2. **`senior-dev-flutter`** (10 skills; the Antigravity copy also bundles `senior-dev`'s, 20 in total, because Antigravity has no plugin dependencies): `flutter-senior-orchestration`, `flutter-architecture-decisions`, `flutter-review-checklist`, `flutter-test-strategy`, `flutter-performance-profiling`, `flutter-release-engineering`, `flutter-upgrade-migration`, `context-capture`, `context-restore`, `loop-engineering`.
+3. **`python-backend`** (11 skills; `code-smells-expert`, `refactoring-code-expert` and `senior-architect-engineering` come from its `senior-dev` dependency, and the Antigravity copy bundles all of `senior-dev`'s, 22 in total): `python-expert`, `test-driven-development`, `pull-request-expert`, `security-audit`, `performance-scalability`, `database-migration-expert`, `design-spec-expert`, `build-and-ci-gates`, `context-capture`, `context-restore`, `loop-engineering`.
 4. **`senior-data-engineer`** (4 skills): `gcp-data-engineering`, `cdc-scd-patterns`, `context-capture`, `context-restore`.
 5. **`sql-query-optimizer`** (4 skills): `bigquery-query-optimization`, `sql-query-optimization`, `context-capture`, `context-restore`.
 6. **`shared-context`** (2 skills): `context-capture`, `context-restore`.
@@ -30,7 +30,7 @@ All 9 plugins across both runtime ecosystems bundle physical copies of the skill
 **`agent-metrics`** guides the standalone `agent-meter` CLI ([`tools/agent-meter`](../tools/agent-meter/README.md)): `agent-meter setup` (local DuckDB or BigQuery + Looker Studio, billing vs sandbox), reading token / cost / latency metrics per project, task and subagent, `agent-meter pricing`, `agent-meter doctor`, and ad-hoc DuckDB / BigQuery queries. It is opt-in and bundled **only** into the optional `agent-metrics` plugin; no other plugin or skill references it. Docs: [`docs/agent-metrics/README.md`](../docs/agent-metrics/README.md).
 
 ### Synchronization Command
-Canonical skills are authored and edited in `/skills/`. Run the synchronization script to propagate edits to all 18 plugin locations across both ecosystems:
+Canonical skills are authored and edited in `/skills/`. Run the synchronization script to propagate edits to all 20 plugin locations (10 plugins × 2 hosts) across both ecosystems:
 
 ```bash
 python3 scripts/sync_plugin_skills.py
@@ -40,13 +40,13 @@ python3 scripts/sync_plugin_skills.py
 
 ## 2. Quick Installation & Setup via Skills CLI
 
-These skills fully comply with the [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, you can install any of these 39 skills out-of-the-box using Vercel's official, standard `skills` CLI.
+These skills fully comply with the [**Open Agent Skills Standard** (`agentskills.io`)](https://agentskills.io). Therefore, you can install any of these skills (39 core plus the `agent-metrics` add-on) out-of-the-box using Vercel's official, standard `skills` CLI.
 
 ### Option A: Standard Installation (Recommended)
 This is the simplest way to discover, add, and manage these skills:
 
 ```bash
-# List all 39 skills available in our repository
+# List all 40 skills available in our repository (39 core + agent-metrics)
 npx skills add jggomez/expert-ai-developer-skills --list
 
 # Install a specific skill (e.g. python-expert) in the active project (.agents/skills)
@@ -55,7 +55,7 @@ npx skills add jggomez/expert-ai-developer-skills --skill python-expert
 # Install a specific skill globally on your system
 npx skills add jggomez/expert-ai-developer-skills --skill python-expert -g
 
-# Install ALL 39 skills in the active project
+# Install ALL 40 skills in the active project
 npx skills add jggomez/expert-ai-developer-skills
 ```
 
