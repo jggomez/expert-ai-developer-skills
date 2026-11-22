@@ -12,6 +12,7 @@ from typing import Any
 import pytest
 
 from agent_meter import cli
+from agent_meter.cli_commands import doctor
 from agent_meter.locking import store_lock
 from agent_meter.paths import AppHome
 from agent_meter.store import Store
@@ -468,6 +469,6 @@ def test_doctor_warns_when_the_loaded_scheduler_never_succeeds(
 def test_doctor_warns_when_scheduled_collects_stopped() -> None:
     now = datetime(2026, 11, 5, 12, 0, tzinfo=UTC)
 
-    check = cli._scheduler_check("loaded", (now - timedelta(hours=3)).isoformat(), now)
+    check = doctor._scheduler_check("loaded", (now - timedelta(hours=3)).isoformat(), now)
 
     assert check["status"] == "WARN"

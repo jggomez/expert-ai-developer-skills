@@ -32,6 +32,12 @@ jobs:
       - run: uv run mypy src
         if: runner.os == 'Linux'
       - run: uv run pytest tests -q --junitxml=test-results.xml
+      - name: Desktop app UI in a real browser
+        if: runner.os == 'Linux'
+        run: |
+          uv sync --python 3.12 --extra dev --extra ui
+          uv run playwright install --with-deps chromium
+          uv run pytest tests/ui -q
       - name: Show failures without signing in to GitHub
         if: failure()
         run: python packaging/report_test_failures.py test-results.xml

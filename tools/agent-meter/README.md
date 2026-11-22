@@ -697,6 +697,8 @@ AGENT_METER_TEST_GCP_PROJECT=<PROJECT_ID> \
   uv run --python 3.11 --extra dev --extra bigquery pytest -m bigquery tests/cloud -q   # live BigQuery (temporary dataset, auto-deleted)
 uv run --python 3.11 --extra dev ruff check .
 uv run --python 3.11 --extra dev mypy --strict src
+uv run --python 3.12 --extra dev --extra ui playwright install chromium
+uv run --python 3.12 --extra dev --extra ui pytest tests/ui -q   # desktop app UI in headless Chromium
 ```
 
 Design documents: [`docs/agent-metrics/`](../../docs/agent-metrics/) — PRD, ADR-001, interface contracts, pricing sources,

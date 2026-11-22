@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import textwrap
+from dataclasses import replace
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -603,3 +604,24 @@ def test_every_current_claude_model_has_a_shipped_price(model: str) -> None:
     expected_input, expected_output = CURRENT_CLAUDE_MODELS[model]
     assert resolution.row.input == Decimal(expected_input)
     assert resolution.row.output == Decimal(expected_output)
+
+
+def test_latest_claude_model_follows_the_shipped_table() -> None:
+    from agent_meter.pricing import latest_claude_model
+
+    table = load_pricing(None)
+
+    assert latest_claude_model("opus", table) == "claude-opus-5-5"
+    assert latest_claude_model("sonnet", table) == "claude-sonnet-5-5"
+    assert latest_claude_model("fable", table) == "claude-fable-5-2"
+    assert latest_claude_model("unknown-family", table) is None
+
+
+def test_latest_claude_model_picks_a_newer_row_when_one_is_added() -> None:
+    from agent_meter.pricing import latest_claude_model
+
+    table = load_pricing(None)
+    row = next(r for r in table.rows if r.model == "claude-opus-5-5")
+    newer = PricingTable(rows=(*table.rows, replace(row, model="claude-opus-5-10")), aliases=table.aliases)
+
+    assert latest_claude_model("opus", newer) == "claude-opus-5-10"

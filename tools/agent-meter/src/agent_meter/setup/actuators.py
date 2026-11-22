@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any, Final
 
 from agent_meter.paths import AppHome, atomic_write_text
+from agent_meter.pricing import latest_claude_model
 from agent_meter.setup import hosts, settings_merge
 from agent_meter.setup._files import atomic_write, sha256_hex
 
@@ -55,13 +56,17 @@ class Action:
     command_object: bool = False  # stored as {"type": "command", "command": value}
 
 
+# The newest Opus and Sonnet in the pricing table; a new model release only needs a pricing row.
+_OPUS: Final = latest_claude_model("opus") or "claude-opus-5-5"
+_SONNET: Final = latest_claude_model("sonnet") or "claude-sonnet-5-5"
+
 ACTIONS: Final[dict[str, Action]] = {
     action.id: action
     for action in (
         Action("claude.model", "claude", ("model",), ("opus", "sonnet", "haiku")),
-        # The top-level effortLevel does not count for Opus 5.5, so effort is set per model.
-        Action("claude.effort.opus", "claude", ("modelSettings", "claude-opus-5-5", "effortLevel"), _EFFORTS),
-        Action("claude.effort.sonnet", "claude", ("modelSettings", "claude-sonnet-5-5", "effortLevel"), _EFFORTS),
+        # The top-level effortLevel does not count for Opus 5.5 and later, so effort is set per model.
+        Action("claude.effort.opus", "claude", ("modelSettings", _OPUS, "effortLevel"), _EFFORTS),
+        Action("claude.effort.sonnet", "claude", ("modelSettings", _SONNET, "effortLevel"), _EFFORTS),
         Action("claude.autocompact", "claude", ("env", "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE"), ("60", "70", "80")),
         Action("claude.statusline", "claude", ("statusLine",), (), command_object=True),
         Action("antigravity.model", "antigravity", ("model",), ()),

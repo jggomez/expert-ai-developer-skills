@@ -105,11 +105,12 @@ def _marker_key(kind: Signal, host: Host, session_id: str) -> str:
 
 
 class _Ingest:
-    """One collect run against an open, exclusively locked store."""
+    """One collect run. Parsing needs no store; ``bind`` attaches the store locked for the current batch."""
 
-    def __init__(self, store: Store, resolver: ProjectResolver, options: ReaderOptions, cfg: Config) -> None:
-        self.store = store
-        self.resolver = resolver
+    def __init__(self, store: Store | None, projects: ProjectsConfig, options: ReaderOptions, cfg: Config) -> None:
+        self._store = store
+        self._projects = projects
+        self._resolver: ProjectResolver | None = None
         self.options = options
         self.cfg = cfg
         self.refs: dict[str, ProjectRef] = {}
@@ -118,6 +119,22 @@ class _Ingest:
         self.diagnostics: list[Diagnostic] = []
         self.skipped = 0
         self.known_formats: dict[Host, frozenset[str]] = {}
+
+    def bind(self, store: Store) -> None:
+        self._store = store
+        self._resolver = _resolver(store, self._projects)
+
+    @property
+    def store(self) -> Store:
+        if self._store is None:
+            raise RuntimeError("no store bound: call bind() inside the locked section")
+        return self._store
+
+    @property
+    def resolver(self) -> ProjectResolver:
+        if self._resolver is None:
+            raise RuntimeError("no store bound: call bind() inside the locked section")
+        return self._resolver
 
     def read(self, reader: HostReader, unit: SessionUnit) -> UnitBatch:
         try:
@@ -185,12 +202,10 @@ class _Ingest:
                 tasks[last] = replace(task, status=TaskStatus.DONE)
         return replace(batch, sessions=tuple(sessions), tasks=tuple(tasks))
 
-    def add(self, reader: HostReader, unit: SessionUnit) -> None:
-        batch = self.apply_signals(self.attach_projects(self.read(reader, unit)))
+    def add(self, parsed: UnitBatch) -> None:
+        batch = self.apply_signals(self.attach_projects(parsed))
         self.diagnostics.extend(batch.diagnostics)
         self.pending.append(batch)
-        if len(self.pending) >= BATCH_UNITS:
-            self.flush()
 
     def flush(self) -> None:
         if not self.pending:
@@ -245,7 +260,12 @@ def collect(
     now: datetime | None = None,
     signal: Signal | None = None,
 ) -> CollectResult:
-    """Ingest every enabled host (or one unit with ``only``); returns ``locked`` if the store is busy."""
+    """Ingest every enabled host (or one unit with ``only``); returns ``locked`` if the store is busy.
+
+    Transcripts are parsed without the store lock. The exclusive lock is taken only to write: once for setup,
+    once per batch of ``BATCH_UNITS`` units and once to finish, so the app, hooks and the CLI can read the
+    store between batches instead of waiting for the whole run.
+    """
     started = time.monotonic()
     moment = now or datetime.now(UTC)
     try:
@@ -256,35 +276,61 @@ def collect(
     pricing, pricing_error = _load_pricing(home)
     selected = _select_readers(cfg, readers, hosts)
     since_ns = int(datetime.combine(since, dtime.min, tzinfo=UTC).timestamp() * 1e9) if since else None
-    try:
-        store = Store.open(home, read_only=False, lock_timeout_s=lock_timeout_s)
-    except LockTimeout:
+    work = [(reader, unit) for reader in selected for unit in _units(reader, only)]
+    ingest = _Ingest(None, projects, _options(cfg, moment, salt), cfg)
+    ingest.known_formats = {r.host: _known_formats(r.host) for r in selected}
+
+    def locked() -> CollectResult:
         return CollectResult("locked", None, _elapsed_ms(started), (), 0)
-    with store:
-        store.migrate()
-        ingest = _Ingest(store, _resolver(store, projects), _options(cfg, moment, salt), cfg)
-        ingest.known_formats = {r.host: _known_formats(r.host) for r in selected}
-        for reader in selected:
-            for unit in _units(reader, only):
-                if signal is not None and only is not None and unit.unit_id == only[1]:
-                    store.set_meta(_marker_key(signal, unit.host, unit.unit_id), moment.isoformat())
+
+    try:
+        with _open(home, lock_timeout_s, read_only=False) as store:
+            store.migrate()
+            if signal is not None and only is not None:
+                for _reader, unit in work:
+                    if unit.unit_id == only[1]:
+                        store.set_meta(_marker_key(signal, unit.host, unit.unit_id), moment.isoformat())
+            todo = []
+            for reader, unit in work:
                 if since_ns is not None and _latest_mtime_ns(unit) < since_ns:
                     continue
                 if not full and signal is None and store.unit_fingerprint(unit.host, unit.unit_id) == unit.fingerprint:
                     ingest.skipped += 1
                     continue
-                ingest.add(reader, unit)
+                todo.append((reader, unit))
+    except LockTimeout:
+        return locked()
+
+    for first in range(0, len(todo), BATCH_UNITS):
+        parsed = [ingest.read(reader, unit) for reader, unit in todo[first:first + BATCH_UNITS]]
+        try:
+            with _open(home, lock_timeout_s, read_only=False) as store:
+                ingest.bind(store)
+                for batch in parsed:
+                    ingest.add(batch)
+                ingest.flush()
+        except LockTimeout:
+            return locked()
+
+    try:
+        with _open(home, lock_timeout_s, read_only=False) as store:
             if only is None:
-                store.record_untracked(reader.untracked())
-        ingest.flush()
-        _finish(store, home, cfg, projects, pricing, pricing_error, list(ingest.refs.values()), moment)
-        if scheduled:
-            store.set_meta("last_scheduled_collect_at", moment.isoformat())
-        alerts = due_alerts(store, cfg, moment) if cfg.budget.active else ()
+                for reader in selected:
+                    store.record_untracked(reader.untracked())
+            _finish(store, home, cfg, projects, pricing, pricing_error, list(ingest.refs.values()), moment)
+            if scheduled:
+                store.set_meta("last_scheduled_collect_at", moment.isoformat())
+            alerts = due_alerts(store, cfg, moment) if cfg.budget.active else ()
+    except LockTimeout:
+        return locked()
     send_alerts(alerts, cfg)
     return CollectResult(
         "ok", ingest.stats, _elapsed_ms(started), tuple(ingest.diagnostics), ingest.skipped
     )
+
+
+def _open(home: AppHome, lock_timeout_s: float, *, read_only: bool) -> Store:
+    return Store.open(home, read_only=read_only, lock_timeout_s=lock_timeout_s)
 
 
 def _resolver(store: Store, projects: ProjectsConfig) -> ProjectResolver:
