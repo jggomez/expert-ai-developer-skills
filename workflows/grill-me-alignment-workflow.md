@@ -1,5 +1,5 @@
 ---
-description: Use when an idea is still fuzzy; the agent interviews you about design and requirements until nothing important is open.
+description: "Use when an idea is still fuzzy; the agent interviews you about design and requirements until nothing important is open."
 ---
 
 # Workflow: Interactive Design Review & Requirements Gathering (Grill-Me Playbook)

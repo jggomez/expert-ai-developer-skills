@@ -1,5 +1,5 @@
 ---
-description: Use when a change is ready to release: final checks, changelog and versioning, release and live verification.
+description: "Use when a change is ready to release: final checks, changelog and versioning, release and live verification."
 ---
 
 # Workflow: Ship to Production (/ship)

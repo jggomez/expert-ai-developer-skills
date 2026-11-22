@@ -1,5 +1,5 @@
 ---
-description: Use at the start of a feature to write the spec: goal, scope, user stories, acceptance criteria and boundaries.
+description: "Use at the start of a feature to write the spec: goal, scope, user stories, acceptance criteria and boundaries."
 ---
 
 # Workflow: Define What to Build (/spec)

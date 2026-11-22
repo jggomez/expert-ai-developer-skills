@@ -1,5 +1,5 @@
 ---
-description: Use when you need test proof: locate and run the suite, check coverage and report real exit codes.
+description: "Use when you need test proof: locate and run the suite, check coverage and report real exit codes."
 ---
 
 # Workflow: Test Suite Execution & Coverage Verification

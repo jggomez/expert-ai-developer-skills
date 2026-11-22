@@ -1,5 +1,5 @@
 ---
-description: Use when something is slow; measure first, find the real bottleneck, fix it and prove the gain.
+description: "Use when something is slow; measure first, find the real bottleneck, fix it and prove the gain."
 ---
 
 # Workflow: Audit Performance (/perf, /webperf)

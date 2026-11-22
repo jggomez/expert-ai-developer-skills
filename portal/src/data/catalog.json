@@ -392,7 +392,7 @@
       "slug": "adversarial-challenger",
       "name": "adversarial-challenger",
       "title": "Adversarial Challenger & Stress Testing Skill",
-      "description": "Adversarial stress testing, fuzzing, worst-case inputs, failure-path probes, timeout/reconnection simulations, and concurrency/memory stress.",
+      "description": "Use when a change touches auth, payments, concurrency, untrusted input or destructive actions and needs to be attacked before release: stress tests, fuzzing, worst-case inputs, failure paths, timeouts and memory pressure.",
       "hosts": [
         "antigravity",
         "claude"
@@ -451,7 +451,7 @@
       "slug": "blackbox-tester",
       "name": "blackbox-tester",
       "title": "Black-Box Browser Verification & Visual Testing Skill",
-      "description": "Black-box browser verification validating real user flows, GUI forms, console/network errors, visual layouts, and 4-viewport screenshot evidence using deterministic Playwright execution.",
+      "description": "Use when a web UI or user flow changed and needs proof it works in a real browser: runs the user journeys with Playwright, checks console and network errors, and saves screenshots at four screen widths.",
       "hosts": [
         "antigravity",
         "claude"
@@ -510,7 +510,7 @@
       "slug": "code-critic",
       "name": "code-critic",
       "title": "Code Critic & Independent Architectural Review Skill",
-      "description": "Independent code review inspecting cyclomatic complexity, DRY, SOLID, anti-patterns, maintainability, and interface robustness.",
+      "description": "Use when a large diff or a refactor across modules needs an independent review of complexity, duplication, SOLID, anti-patterns, maintainability and interface robustness, without changing the code.",
       "hosts": [
         "antigravity",
         "claude"
@@ -531,7 +531,7 @@
       "slug": "code-implementer",
       "name": "code-implementer",
       "title": "Code Implementer Skill",
-      "description": "Guides the implementation of code using Test-Driven Development (TDD) and clean code principles. Trigger when implementing new features, fixing bugs, or refactoring existing code.",
+      "description": "Use when implementing a feature, fixing a bug or refactoring: writes production code with test-driven development and clean code principles.",
       "hosts": [
         "antigravity",
         "claude"
@@ -572,7 +572,7 @@
       "slug": "commit-expert",
       "name": "commit-expert",
       "title": "Commit Expert Skill",
-      "description": "Guidelines, best practices, and script validators to verify commit message formats and configure local git commit hooks.",
+      "description": "Use when writing commit messages or setting up commit checks: Conventional Commits rules, validator scripts and local git commit hooks.",
       "hosts": [
         "antigravity",
         "claude"
@@ -591,7 +591,7 @@
       "slug": "compliance-verifier",
       "name": "compliance-verifier",
       "title": "Compliance Verifier Skill",
-      "description": "Guides the final quality assurance and compliance verification of a project. Trigger when checking non-functional requirements, static code analysis, test coverage, and security compliance before release.",
+      "description": "Use when a change is finished and needs sign-off before release: checks non-functional requirements, static analysis, test coverage and security, and returns an approved or rejected verdict.",
       "hosts": [
         "antigravity",
         "claude"
@@ -612,7 +612,7 @@
       "slug": "context-capture",
       "name": "context-capture",
       "title": "Context Capture Skill",
-      "description": "Use when finishing a task at State 5 (Ship & Finish) or when the user explicitly asks to \"save context\", \"guarda contexto\", \"record decisions\", or \"hand off\" — writes ultra-compact persistent memory to context/memory/ and ensures target-project root AGENTS.md (<= 90 lines) stays wired to DESIGN.md and MEMORY.md across Claude Code and Google Antigravity.",
+      "description": "Use when finishing a task, or when asked to \"save context\", \"guarda contexto\", \"record decisions\" or \"hand off\": writes compact memory to context/memory/ and keeps the root AGENTS.md (at most 90 lines) linked to DESIGN.md and MEMORY.md for Claude Code and Google Antigravity.",
       "hosts": [
         "antigravity",
         "claude"
@@ -679,7 +679,7 @@
       "slug": "design-spec-expert",
       "name": "design-spec-expert",
       "title": "Design Spec Expert Skill",
-      "description": "Drafts concise Backend / API Design Specifications and Software Design Documents (docs/<feature-name>/api-spec.md or SDD <= 70 lines) before coding when introducing new endpoints, schemas, or services.",
+      "description": "Use before coding a new endpoint, schema or service: drafts a short API or software design spec (docs/FEATURE/api-spec.md, at most 70 lines).",
       "hosts": [
         "antigravity",
         "claude"
@@ -698,7 +698,7 @@
       "slug": "documentation-expert",
       "name": "documentation-expert",
       "title": "Documentation Expert Skill",
-      "description": "Author and validate Zero-Fluff technical documentation, root AGENTS.md, Google DESIGN.md alignment, Diátaxis guides, and Mermaid diagrams with strict conciseness caps and relative link verification.",
+      "description": "Use when writing or cleaning up technical docs: root AGENTS.md, DESIGN.md alignment, Diátaxis guides and Mermaid diagrams, kept short and with checked relative links.",
       "hosts": [
         "antigravity",
         "claude"
@@ -717,7 +717,7 @@
       "slug": "flutter-architecture-decisions",
       "name": "flutter-architecture-decisions",
       "title": "Flutter Architecture Decisions",
-      "description": "Use when choosing state management for a Flutter app (Riverpod vs Bloc vs signals vs setState), drawing package/module boundaries, deciding what belongs in the UI/logic/data layers, or recording a concise MADR Flutter ADR (<= 55 lines). Complements the official flutter-apply-architecture-best-practices skill.",
+      "description": "Use when choosing state management for a Flutter app (Riverpod, Bloc, signals or setState), drawing package and module boundaries, deciding what belongs in the UI, logic and data layers, or recording a short Flutter ADR (at most 55 lines). Complements the official flutter-apply-architecture-best-practices skill.",
       "hosts": [
         "antigravity",
         "claude"
@@ -774,7 +774,7 @@
       "slug": "flutter-review-checklist",
       "name": "flutter-review-checklist",
       "title": "Flutter Review Checklist",
-      "description": "Use when reviewing a Flutter/Dart pull request or auditing code quality — rebuild scope, const, keys, dispose/leak safety, async BuildContext, DESIGN.md & ADR conformance, and fail-honest <= 50-line verdicts.",
+      "description": "Use when reviewing a Flutter or Dart pull request or auditing code quality: rebuild scope, const, keys, dispose and leaks, async BuildContext, DESIGN.md and ADR conformance, with an honest verdict of at most 50 lines.",
       "hosts": [
         "antigravity",
         "claude"
@@ -793,7 +793,7 @@
       "slug": "flutter-senior-orchestration",
       "name": "flutter-senior-orchestration",
       "title": "Flutter Senior Orchestration",
-      "description": "Use to run a Flutter feature or fix end to end — restoring cross-AI context (context/memory/), bootstrapping root AGENTS.md, 3-tier dynamic routing, capability and risk-gated subagent dispatch via docs/<feature-name>/PLAN.md, sequencing official flutter-*/dart-* skills, and dispatching parallel or sequential subagents (ui-ux-designer, flutter-architect, flutter-implementer, flutter-reviewer, flutter-release-engineer, qa-tester).",
+      "description": "Use to run a Flutter feature or fix end to end: restores shared context (context/memory/), bootstraps the root AGENTS.md, sizes the task, plans it in docs/FEATURE/PLAN.md, orders the official flutter-* and dart-* skills, and dispatches ui-ux-designer, flutter-architect, flutter-implementer, flutter-reviewer, flutter-release-engineer and qa-tester.",
       "hosts": [
         "antigravity",
         "claude"
@@ -812,7 +812,7 @@
       "slug": "flutter-test-strategy",
       "name": "flutter-test-strategy",
       "title": "Flutter Test Strategy",
-      "description": "Use when deciding what to test in a Flutter/Dart codebase across unit, widget, golden, and integration layers, authoring concise IEEE/ISTQB test-matrix.md (<= 80 lines), and enforcing fail-honest coverage gates.",
+      "description": "Use when deciding what to test in a Flutter or Dart codebase across unit, widget, golden and integration layers, writing a short test matrix (at most 80 lines), and enforcing honest coverage gates.",
       "hosts": [
         "antigravity",
         "claude"
@@ -888,7 +888,7 @@
       "slug": "loop-engineering",
       "name": "loop-engineering",
       "title": "Loop Engineering Skill",
-      "description": "Implements 3-Tier Adaptive SDLC state machines, capability-gated discovery, target-project AGENTS.md bootstrapping, isolated parallel worker execution (Disjoint Mode A / Git Worktree Mode B), and 3-loop self-correcting review gates.",
+      "description": "Use when planning or coordinating a multi-step coding task across agents: sizes the task into three tiers, calls only the specialists it needs, bootstraps the target AGENTS.md, isolates parallel workers (disjoint files or git worktrees) and caps self-correcting review loops at three.",
       "hosts": [
         "antigravity",
         "claude"
@@ -929,7 +929,7 @@
       "slug": "product-analyst",
       "name": "product-analyst",
       "title": "Product Analyst Skill",
-      "description": "Analyzes ambiguous feature requests, clarifies business rules, and authors the ultra-concise `## Product` section of the single discovery file docs/<feature-name>/spec.md (<= 50 lines) with standard User Stories (US-XX) and testable Acceptance Criteria (AC-XX).",
+      "description": "Use when a feature request is vague or its business rules are unclear: writes the Product section of docs/FEATURE/spec.md (at most 50 lines) with user stories (US-XX) and testable acceptance criteria (AC-XX).",
       "hosts": [
         "antigravity",
         "claude"
@@ -950,7 +950,7 @@
       "slug": "pull-request-expert",
       "name": "pull-request-expert",
       "title": "Pull Request Expert Skill",
-      "description": "Prepare, audit, and author concise (<= 40 lines), Fail-Honest Pull Requests with Conventional Commits validation, docs/<feature-name>/test-matrix.md links, and transparent BLOCKED/SKIPPED gate disclosure.",
+      "description": "Use when opening or auditing a pull request: a short (at most 40 lines), honest description with Conventional Commits checks, a link to docs/FEATURE/test-matrix.md and any BLOCKED or SKIPPED gate stated openly.",
       "hosts": [
         "antigravity",
         "claude"
@@ -989,7 +989,7 @@
       "slug": "qa-tester",
       "name": "qa-tester",
       "title": "QA Automation & E2E Tester Skill",
-      "description": "Designs and executes Unit, Integration, and E2E test suites and authors concise, actionable IEEE/ISTQB QA Test Matrix artifacts (docs/<feature-name>/test-matrix.md <= 80 lines) backed by empirical exit code 0 terminal proof.",
+      "description": "Use when a change needs proof that it works: designs and runs unit, integration and E2E tests and writes a test matrix (docs/FEATURE/test-matrix.md, at most 80 lines) backed by a real exit code 0.",
       "hosts": [
         "antigravity",
         "claude"
@@ -1031,7 +1031,7 @@
       "slug": "repo-research",
       "name": "repo-research",
       "title": "Repository Research Skill",
-      "description": "Analyze a repository's structure, stack, commands, and invariants to create a high-signal Codebase Map (.agents/rules/project-context.md <= 80 lines) and bootstrap/sync root AGENTS.md and context/memory/MEMORY.md.",
+      "description": "Use when opening a codebase you do not know yet: maps its structure, stack, commands and invariants into a codebase map (.agents/rules/project-context.md, at most 80 lines) and bootstraps the root AGENTS.md and context/memory/MEMORY.md.",
       "hosts": [
         "antigravity",
         "claude"
@@ -1069,7 +1069,7 @@
       "slug": "senior-architect-engineering",
       "name": "senior-architect-engineering",
       "title": "Senior Architect Engineering Skill",
-      "description": "Pragmatic software architecture and system design skill. Authors concise MADR Architecture Decision Records (docs/<feature-name>/adr-NNN-*.md <= 55 lines) and the `## Architecture` section of the single discovery file docs/<feature-name>/spec.md (<= 50 lines) grounded in KISS, YAGNI, SOLID, and clean boundaries.",
+      "description": "Use when a change adds a database schema, a cross-service contract, a core dependency or a new architectural pattern: writes short ADRs (docs/FEATURE/adr-NNN-*.md, at most 55 lines) and the Architecture section of docs/FEATURE/spec.md (at most 50 lines), grounded in KISS, YAGNI, SOLID and clean boundaries.",
       "hosts": [
         "antigravity",
         "claude"
@@ -1089,7 +1089,7 @@
       "slug": "senior-dev-orchestrator",
       "name": "senior-dev-orchestrator",
       "title": "Senior Software Developer Orchestrator",
-      "description": "Orchestrates the software development lifecycle (LLM Wiki memory restoration, target AGENTS.md bootstrap, 3-tier dynamic routing, capability and risk-gated subagent dispatch, parallel TDD implementation with disjoint file or git worktree isolation, fail-honest E2E and adversarial verification, and milestone memory persistence) using a Graph Engineering DAG.",
+      "description": "Use when running a software task through the full agent team: restores memory, bootstraps AGENTS.md, sizes the task into three tiers, dispatches specialists by capability and risk, runs TDD implementation in parallel with file or worktree isolation, verifies honestly and saves the milestone to memory.",
       "hosts": [
         "antigravity",
         "claude"
@@ -1147,7 +1147,7 @@
       "slug": "testing-expert",
       "name": "testing-expert",
       "title": "Testing Expert Skill",
-      "description": "Design and validate automated tests, concise IEEE/ISTQB TC-XX test cases, hermetic Arrange-Act-Assert (AAA) suites, Gherkin BDD scenarios, and Fail-Honest execution reporting across languages.",
+      "description": "Use when designing automated tests in any language: test cases (TC-XX), hermetic Arrange-Act-Assert suites, Gherkin BDD scenarios and honest reporting of what actually ran.",
       "hosts": [
         "antigravity",
         "claude"
@@ -1166,7 +1166,7 @@
       "slug": "ui-ux-designer",
       "name": "ui-ux-designer",
       "title": "UI/UX Designer & Design Systems Skill",
-      "description": "Expert UI/UX designer and design systems architect. Establishes official Google 2-layer DESIGN.md contracts (YAML tokens + 8 concise sections), optional feature UI deltas (`## Design` section of docs/<feature-name>/spec.md), accessibility (WCAG AA), and responsive component states for web and mobile apps.",
+      "description": "Use when building new screens or a new visual pattern: maintains the design system in DESIGN.md (YAML tokens plus 8 short sections), writes per-feature design notes in docs/FEATURE/spec.md, and covers WCAG AA accessibility and responsive states for web and mobile.",
       "hosts": [
         "antigravity",
         "claude"
@@ -1988,7 +1988,7 @@
       "slug": "tdd-best-practices",
       "name": "tdd-best-practices",
       "title": "Test-Driven Development (TDD) Best Practices",
-      "description": "Enforcement rule requiring Test-Driven Development (TDD) best practices, Red-Green-Refactor cycles, unit/integration testing strategies, mock boundaries, and agent verification standards for Google Antigravity.",
+      "description": "Enforcement rule requiring Test-Driven Development (TDD) best practices, Red-Green-Refactor cycles, unit/integration testing strategies, mock boundaries, and verification standards for any coding agent (Claude Code, Google Antigravity and others).",
       "hosts": [
         "antigravity",
         "claude"
@@ -2019,7 +2019,7 @@
       "name": "build-workflow",
       "title": "Build Incrementally",
       "command": "/build",
-      "description": "",
+      "description": "Use after a plan is approved to build it in small, tested vertical slices, one step at a time with TDD.",
       "hosts": [
         "antigravity",
         "claude"
@@ -2035,7 +2035,7 @@
       "name": "code-simplify-workflow",
       "title": "Simplify the Code",
       "command": "/code-simplify",
-      "description": "",
+      "description": "Use when working code has become hard to read; removes dead code, duplication and needless complexity without changing behavior.",
       "hosts": [
         "antigravity",
         "claude"
@@ -2051,7 +2051,7 @@
       "name": "code-smell-review-workflow",
       "title": "Code Smell Auditing & SOLID Refactoring",
       "command": null,
-      "description": "Before finalizing the refactor, verify: - [ ] No changes have been made to public API contracts or external class interfaces. - [ ] Linter reports 0 errors and code formatter is applied. - [ ] 100% of tests pass, confirming 0 behavioral regressions. - [ ] Zero lazy placeholders or stub comments introduced.",
+      "description": "Use to audit a module for code smells and SOLID violations and refactor them safely behind tests.",
       "hosts": [
         "antigravity",
         "claude"
@@ -2067,7 +2067,7 @@
       "name": "commit-workflow",
       "title": "Staging, Committing & Pushing Code",
       "command": null,
-      "description": "Before executing `git push`, verify: - [ ] No local configuration files (e.g. `.env`, keys) are listed in `git status` under \"Changes to be committed\". - [ ] The commit message starts with a standard type: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`. - [ ] Commit message conforms to `^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)...`. - [ ] Pre-commit hooks run successfully and return exit code `0`.",
+      "description": "Use when work is ready to commit: selective staging, a Conventional Commit message, git safety checks and a safe push.",
       "hosts": [
         "antigravity",
         "claude"
@@ -2083,7 +2083,7 @@
       "name": "constraints-workflow",
       "title": "Set the Quality Bar",
       "command": "/constraints",
-      "description": "",
+      "description": "Use at the start of a feature to agree the quality bar: performance, security, secrets, style and scope limits.",
       "hosts": [
         "antigravity",
         "claude"
@@ -2099,7 +2099,7 @@
       "name": "feature-development-workflow",
       "title": "End-to-End Feature Development Cycle",
       "command": null,
-      "description": "Across all SDLC phases, strict role boundaries are enforced: - **Lead Orchestrators (`senior-dev-orchestrator`, `flutter-feature-orchestrator`)**: * Author and maintain `PLAN.md` and the Graph Engineering execution state machine. * **Strictly prohibited from writing or editing production application code directly.** * Must delegate implementation, testing, and audits to specialized worker subagents. - **Subagent Delegation Syntax**: * **Google Antigravity Runner**: ```python invoke_subagent(name=\"<agent-name>\", prompt=\"<explicit-task-prompt>\") ``` * **Anthropic Claude Code Runner**: ```python Agent(agent=\"<agent-name>\", prompt=\"<explicit-task-prompt>\") ```",
+      "description": "Use for any new feature: the full path from request to merged change through spec, plan, build, test, review and ship.",
       "hosts": [
         "antigravity",
         "claude"
@@ -2115,7 +2115,7 @@
       "name": "grill-me-alignment-workflow",
       "title": "Interactive Design Review & Requirements Gathering",
       "command": null,
-      "description": "When a task requires architectural design choices or has underspecified requirements, the agent must not proceed with assumptions. Instead, run a structured design interview following these rules: * **Research First**: Seek answers in the codebase and local documentation. Do not ask the user questions that can be answered by reading the files. * **One at a Time**: Ask design questions sequentially, one by one. Never present a long list of questions that causes developer fatigue. * **Recommend Solutions**: Never ask open-ended questions without guidance. Always propose a recommended approach with a clear rationale as the first option. * **Interactive Tooling**: Use standard selection patterns where choices represent direct user responses.",
+      "description": "Use when an idea is still fuzzy; the agent interviews you about design and requirements until nothing important is open.",
       "hosts": [
         "antigravity",
         "claude"
@@ -2131,7 +2131,7 @@
       "name": "perf-workflow",
       "title": "Audit Performance",
       "command": "/perf, /webperf",
-      "description": "",
+      "description": "Use when something is slow; measure first, find the real bottleneck, fix it and prove the gain.",
       "hosts": [
         "antigravity",
         "claude"
@@ -2147,7 +2147,7 @@
       "name": "plan-workflow",
       "title": "Plan How to Build It",
       "command": "/plan",
-      "description": "3. **Analyze Trade-offs & Architecture (`State 1`)**: - When triggered by the Triage Matrix, invoke `product-analyst` and/or `architect-engineer` (sequentially or in parallel fan-out) **before** delegating to `code-implementer`. - Evaluate architecture patterns (Hexagonal, Clean, Layered) and record trade-offs in an ADR under `doc/adr/` (or `docs/adr/`). 4. **Author `PLAN.md` with Parallel Track & Isolation Mode Classification**: - The Orchestrator authors `PLAN.md` directly, establishing the Graph Engineering DAG, the `## Discovery & Architecture Triage` table, and atomic task checklists. - Break implementation into small tasks (each touching 1-3 files where possible) sequenced bottom-up: Interfaces/Contracts -> Core Domain -> Data Layer -> Presentation/UI. - Classify parallel tracks by **Workspace Isolation Mode**: * **Mode A — Disjoint File Partitioning (`Disjoint Files` / `Workspace: 'inherit'`) [DEFAULT]**: Parallel `code-implementer` tracks modify strictly non-overlapping files/directories. Each track declares an explicit `Exclusive Owned Files` list. Zero `git merge` overhead upon Fan-In. * **Mode B — Git Worktree Isolation (`Git Worktree` / `Workspace: 'branch'` or `Workspace: 'share'`)**: Parallel `code-implementer` tracks must touch shared files (e.g., `package.json`, shared routers, DI containers) or run conflicting builds. Each track runs in an isolated git branch/worktree and merges cleanly at Fan-In.",
+      "description": "Use after the spec and before code to break the work into tracks, phases and checks in PLAN.md.",
       "hosts": [
         "antigravity",
         "claude"
@@ -2163,7 +2163,7 @@
       "name": "pull-request-workflow",
       "title": "Pull Request Preparation & Submission",
       "command": null,
-      "description": "Before requesting review from team members, verify: - [ ] Linter returns 0 warnings/errors. - [ ] 100% of unit/integration tests pass. - [ ] Git branch name matches `feature/*`, `bugfix/*`, or `hotfix/*`. - [ ] PR description explicitly defines the test execution commands run to verify the code.",
+      "description": "Use when a branch is ready for review: self-review, a short honest description, linked tests and submission.",
       "hosts": [
         "antigravity",
         "claude"
@@ -2179,7 +2179,7 @@
       "name": "review-workflow",
       "title": "Review Before Merge",
       "command": "/review",
-      "description": "",
+      "description": "Use before any merge for a structured review of correctness, tests, design, security and leaks.",
       "hosts": [
         "antigravity",
         "claude"
@@ -2195,7 +2195,7 @@
       "name": "secure-code-review-workflow",
       "title": "Secure Code Review & Secrets Auditing",
       "command": null,
-      "description": "The secure code workflow is complete when: - [ ] Secrets scanner returns 0 findings on staged commit files. - [ ] SAST analyzer (e.g. Bandit) returns 0 High/Medium severity alerts. - [ ] All database access points use parameterized queries. - [ ] Package vulnerability scanner reports 0 critical vulnerabilities. - [ ] Explicit compliance audit verdict issued.",
+      "description": "Use before release or after touching sensitive code: OWASP review, input validation and leaked-secret scan.",
       "hosts": [
         "antigravity",
         "claude"
@@ -2211,7 +2211,7 @@
       "name": "ship-workflow",
       "title": "Ship to Production",
       "command": "/ship",
-      "description": "",
+      "description": "Use when a change is ready to release: final checks, changelog and versioning, release and live verification.",
       "hosts": [
         "antigravity",
         "claude"
@@ -2227,7 +2227,7 @@
       "name": "spec-workflow",
       "title": "Define What to Build",
       "command": "/spec",
-      "description": "",
+      "description": "Use at the start of a feature to write the spec: goal, scope, user stories, acceptance criteria and boundaries.",
       "hosts": [
         "antigravity",
         "claude"
@@ -2243,7 +2243,7 @@
       "name": "test-execution-workflow",
       "title": "Test Suite Execution & Coverage Verification",
       "command": null,
-      "description": "The testing workflow is considered successful only when: - [ ] 100% of tests pass (0 failures, 0 errors, 0 pending regressions). - [ ] Code coverage threshold is met and verified. - [ ] Test execution logs are outputted with empirical proof (`exit code 0`). - [ ] Stop lifecycle hook (`stop-gate.js` / `verify_tests.py`) passes cleanly.",
+      "description": "Use when you need test proof: locate and run the suite, check coverage and report real exit codes.",
       "hosts": [
         "antigravity",
         "claude"
@@ -2259,7 +2259,7 @@
       "name": "test-workflow",
       "title": "Prove It Works",
       "command": "/test",
-      "description": "",
+      "description": "Use after building a change to write and run the tests that show it does what it should.",
       "hosts": [
         "antigravity",
         "claude"

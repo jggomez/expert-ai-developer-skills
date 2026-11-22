@@ -1,5 +1,5 @@
 ---
-description: Use when work is ready to commit: selective staging, a Conventional Commit message, git safety checks and a safe push.
+description: "Use when work is ready to commit: selective staging, a Conventional Commit message, git safety checks and a safe push."
 ---
 
 # Workflow: Staging, Committing & Pushing Code

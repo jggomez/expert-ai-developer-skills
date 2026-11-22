@@ -1,5 +1,5 @@
 ---
-description: Use when working code has become hard to read; removes dead code, duplication and needless complexity without changing behavior.
+description: "Use when working code has become hard to read; removes dead code, duplication and needless complexity without changing behavior."
 ---
 
 # Workflow: Simplify the Code (/code-simplify)

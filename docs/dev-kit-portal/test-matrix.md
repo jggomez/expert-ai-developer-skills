@@ -17,3 +17,5 @@ Commands (from `portal/`): `npm test` (vitest), `npm run build && npx playwright
 | TC-10 | Detail, copy, language switch | `/es/plugin/senior-dev/`, copy, switch | Command in clipboard, "Copiado"; `/en/plugin/senior-dev/` | `portal.spec.mjs` |
 | TC-11 | 404 | Open unknown path | HTTP 404, bilingual page | `portal.spec.mjs` |
 | TC-12 | Responsive, no console errors | 375/768/1280/1920 on home and detail | No horizontal scroll; screenshots in `evidence/` | `portal.spec.mjs` |
+| TC-13 | Tools showcase | Home ES/EN, switch screens, open tool page | Spanish images on /es/, release download links, all steps shown | `portal.spec.mjs` |
+| TC-14 | Install commands work | Run each command in an isolated HOME | Exit 0 for 10+10 plugins, skills CLI, agent-meter, pr-reviewer | `install-check.md` |

@@ -1,5 +1,5 @@
 ---
-description: Use before release or after touching sensitive code: OWASP review, input validation and leaked-secret scan.
+description: "Use before release or after touching sensitive code: OWASP review, input validation and leaked-secret scan."
 ---
 
 # Workflow: Secure Code Review & Secrets Auditing

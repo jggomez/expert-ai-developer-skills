@@ -1,5 +1,5 @@
 ---
-description: Use for any new feature: the full path from request to merged change through spec, plan, build, test, review and ship.
+description: "Use for any new feature: the full path from request to merged change through spec, plan, build, test, review and ship."
 ---
 
 # Workflow: End-to-End Feature Development Cycle
