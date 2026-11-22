@@ -20,3 +20,17 @@ Every install command shown on the portal, run for real in a throwaway `HOME` (C
 All agent-meter install commands now use `uv tool install --python 3.12 …` (tool READMEs EN/ES, root README,
 `docs/agent-metrics/`, both plugin READMEs, the `agent-metrics` skill and its copies, the CLI hint in `cli.py`, and
 the structure test). The stale `@feature/agent-metrics` example now points to the `agent-meter-v0.1.0` tag.
+
+## Re-run after the merge — GitHub `main` at `116779d`
+
+Same isolated setup, every command copied from the live portal.
+
+| Path | Result |
+| :-- | :-- |
+| Claude Code marketplace + all 10 plugins | exit 0 ×10; installed `python-backend` has the new deploy-guard matcher and `rules/python-backend-rules.md`; orchestrator agent present |
+| Antigravity, all 10 plugins from a fresh clone | exit 0 ×10 |
+| Skills CLI (`--skill python-expert -y`) | exit 0; `.agents/skills/python-expert/SKILL.md` written |
+| agent-meter `uv tool install --python 3.12 "agent-meter[app] @ git+…"` | exit 0; `agent-meter 0.1.0`; `doctor` and `pricing list` (moved to `cli_commands/`) work; `claude-fable-5-2` priced |
+| agent-meter installers (`.dmg`, `.exe`) | HTTP 200 both |
+| pr-reviewer quick start | exit 0; pinned to `116779d`, no `<commit-sha>` left, valid YAML |
+| CI on `116779d` | agent-meter CI green on Linux, macOS and Windows (UI tests 9/9 on Linux); desktop build and self-test green on Windows and macOS |
