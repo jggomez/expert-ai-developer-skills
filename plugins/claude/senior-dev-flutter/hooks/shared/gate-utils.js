@@ -266,6 +266,18 @@ function fingerprintOf(cwd, files) {
   return hash.digest('hex');
 }
 
+/** False only when the lock names a PID that is certainly gone (ESRCH); unreadable locks count as alive. */
+function ownerAlive(lockFile) {
+  const pid = Number.parseInt(fs.readFileSync(lockFile, 'utf8').trim(), 10);
+  if (!Number.isInteger(pid) || pid <= 0) return true;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (err) {
+    return err.code !== 'ESRCH';
+  }
+}
+
 function sleep(ms) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
@@ -293,11 +305,14 @@ function saveJson(file, data) {
  * @param {string} opts.gateId   Shared id for identical verifications across plugins (e.g. 'python-tests').
  * @param {object} opts.payload  Parsed hook stdin.
  * @param {number} [opts.maxBlocks]
+ * @param {number} [opts.maxBlockedTurns]  After this many turns of one session were blocked without a
+ *   green run, sessionLimitReached() turns true: the caller reports a notice instead of blocking again,
+ *   until a green run or a new session resets it.
  * @param {(file: string) => boolean} [opts.fileFilter]  Keeps only the changed code files this gate
  *   cares about (e.g. UI files): the fingerprint, the "no code changes" skip and isRepeat() then
  *   ignore every other change.
  */
-function createStopGate({ gateId, payload, maxBlocks = MAX_BLOCKS, fileFilter = null }) {
+function createStopGate({ gateId, payload, maxBlocks = MAX_BLOCKS, maxBlockedTurns = Infinity, fileFilter = null }) {
   const cwd = workspaceOf(payload);
   const gitDir = resolveGitDir(cwd);
   const stateDir = gitDir || os.tmpdir();
@@ -310,6 +325,8 @@ function createStopGate({ gateId, payload, maxBlocks = MAX_BLOCKS, fileFilter = 
     ? crypto.createHash('sha1').update(`${payload.conversationId || ''}\0${payload.lastUserInput || ''}`).digest('hex')
     : null;
   const isContinuing = (gate) => (turnKey ? gate.turn === turnKey : payload.stop_hook_active === true);
+  const sessionKey = String(payload.session_id || payload.conversationId || '');
+  const blockedTurnsOf = (gate) => (sessionKey && gate.session === sessionKey ? gate.blockedTurns || 0 : 0);
   const startedAt = Date.now();
 
   let files = null;
@@ -359,7 +376,11 @@ function createStopGate({ gateId, payload, maxBlocks = MAX_BLOCKS, fileFilter = 
       } catch (err) {
         if (err.code !== 'EEXIST') return true; // cannot lock (read-only dir) -> just run
         try {
-          if (Date.now() - fs.statSync(lockFile).mtimeMs > LOCK_STALE_MS) fs.unlinkSync(lockFile);
+          // A hook killed at its host timeout leaves its lock behind: drop it at once when its
+          // owner no longer runs, instead of waiting LOCK_STALE_MS for it to age out.
+          if (Date.now() - fs.statSync(lockFile).mtimeMs > LOCK_STALE_MS || !ownerAlive(lockFile)) {
+            fs.unlinkSync(lockFile);
+          }
         } catch (statErr) {
           // lock vanished between calls; retry immediately
         }
@@ -436,8 +457,16 @@ function createStopGate({ gateId, payload, maxBlocks = MAX_BLOCKS, fileFilter = 
       return repeat;
     },
 
+    /**
+     * True when this session already ended `maxBlockedTurns` turns blocked by this gate with no green
+     * run since: blocking once more would repeat a verdict the agent keeps receiving.
+     */
+    sessionLimitReached() {
+      return blockedTurnsOf(readGateState().gate) >= maxBlockedTurns;
+    },
+
     markPass() {
-      writeGateState({ green: fingerprint, greenAt: Date.now(), red: null, redAt: null, blocks: 0 });
+      writeGateState({ green: fingerprint, greenAt: Date.now(), red: null, redAt: null, blocks: 0, blockedTurns: 0 });
       releaseLock();
     },
 
@@ -459,7 +488,10 @@ function createStopGate({ gateId, payload, maxBlocks = MAX_BLOCKS, fileFilter = 
         return reason;
       }
       const blocks = (isContinuing(gate) ? gate.blocks || 0 : 0) + 1;
-      writeGateState({ red: fingerprint || 'unknown', redAt: Date.now(), greenAt: null, blocks, turn: turnKey });
+      // The first block of a turn counts that turn against the session's limit.
+      const blockedTurns = blockedTurnsOf(gate) + (blocks === 1 ? 1 : 0);
+      writeGateState({ red: fingerprint || 'unknown', redAt: Date.now(), greenAt: null, blocks, turn: turnKey,
+        session: sessionKey, blockedTurns });
       releaseLock();
       return `${reason}\n\n[stop gate ${gateId}: block ${blocks}/${maxBlocks} this turn]`;
     },
