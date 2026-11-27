@@ -27,10 +27,33 @@ class Finding(BaseModel):
     proposed_fix: str = Field(default="", description="Concrete change to make, as code when possible.")
 
 
+class AreaChange(BaseModel):
+    """What changed in one part of the pull request."""
+
+    path: str = Field(description="A changed file or folder, exactly as shown in the diff.")
+    what: str = Field(description="One short line on what changed there.")
+
+
+class AreaLink(BaseModel):
+    """One part of the change calls or uses another."""
+
+    source: str = Field(description="Changed file or folder that calls or uses `target`.")
+    target: str = Field(description="Changed file or folder that is called or used.")
+
+
+class PullRequestSummary(BaseModel):
+    """Technical summary of the whole change, for the summary comment and its change map."""
+
+    overview: str = Field(default="", description="Two or three sentences on what the change does technically.")
+    changes: list[AreaChange] = Field(default_factory=list, description="Up to 8 parts of the change.")
+    links: list[AreaLink] = Field(default_factory=list, description="Up to 8 calls or uses between changed parts.")
+
+
 class ReviewResult(BaseModel):
     """Structured answer every provider must return."""
 
     findings: list[Finding] = Field(default_factory=list)
+    summary: PullRequestSummary | None = Field(default=None, description="Technical summary of the change.")
 
 
 class ReviewUsage(BaseModel):
@@ -80,3 +103,4 @@ class ReviewReport(BaseModel):
     usage: ReviewUsage = Field(default_factory=ReviewUsage)
     error: str = ""
     unreviewed: list[str] = Field(default_factory=list, description="Files of the groups that failed.")
+    summary: PullRequestSummary | None = None

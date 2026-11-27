@@ -176,7 +176,7 @@ class ClaudeManagedProvider:
                     "type": "agent_with_overrides",
                     "id": self._agent_id,
                     "model": {"id": model, "effort": DEFAULT_EFFORT},
-                    "system": system_instructions(request.rubric),
+                    "system": system_instructions(request.rubric, request.summary_language),
                     "tools": session_tools(),
                 },
                 environment_id=self._environment_id,

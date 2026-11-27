@@ -150,6 +150,8 @@ usan el valor por defecto. Para conectar otro input, añade una línea como
 | `max-diff-chars` | `PR_REVIEW_MAX_DIFF_CHARS` | Límite interno | Tamaño máximo del diff |
 | `rubric-file` | `PR_REVIEW_RUBRIC_FILE` | | Archivo que sustituye los criterios |
 | `instructions` | `PR_REVIEW_INSTRUCTIONS` | | Texto que se añade a los criterios |
+| `language` | `PR_REVIEW_LANGUAGE` | `en` | Código de idioma del resumen técnico |
+| `summary` | `PR_REVIEW_SUMMARY` | `true` | `false` omite el resumen y su mapa de cambios |
 | `claude-code-oauth-token` | `CLAUDE_CODE_OAUTH_TOKEN` | | Token para `provider: claude-code` |
 | `claude-agent-id` | `CLAUDE_AGENT_ID` | | Lo da `setup-claude` |
 | `claude-environment-id` | `CLAUDE_ENVIRONMENT_ID` | | Lo da `setup-claude` |

@@ -28,6 +28,7 @@ class ReviewRequest:
     budget_usd: str = DEFAULT_BUDGET_USD
     rubric: str | None = None
     fallback_model: str | None = None
+    summary_language: str | None = "en"
 
 
 @dataclass(frozen=True)

@@ -70,6 +70,26 @@ A single summary comment lists the findings by severity, with the model, tokens 
 
 ![Summary comment with a table of findings, and the model, tokens and cost of the review](docs/images/summary-comment.png)
 
+Before the findings, the summary explains the change in **What changed**: a short technical overview and a change
+map that GitHub draws from Mermaid. Each box is an area of the pull request with its added and removed lines, arrows
+show which part calls which, and color marks the most severe finding in that area:
+
+```mermaid
+flowchart LR
+  a1["api/ · +42 -3<br/>new /clients endpoint"]
+  a2["services/ · +30 -0<br/>reads clients from Firestore"]
+  a3["web/ · +65 -10<br/>Clients to Review page"]
+  a3 --> a1
+  a1 --> a2
+  classDef high fill:#fff1e5,stroke:#bc4c00,color:#1f2328
+  classDef clean fill:#f6f8fa,stroke:#8c959f,color:#1f2328
+  class a1 clean
+  class a2 high
+  class a3 clean
+```
+
+Set `language` to write the summary in another language, or `summary: false` to skip it.
+
 ## What it reviews
 
 | Axis | Examples |
@@ -136,6 +156,8 @@ change the model without editing a file.
 | `max-diff-chars` | Built-in limit | Largest diff to review |
 | `rubric-file` | | Markdown file that replaces the review criteria, read from the base commit. See [Change the prompt](docs/guide.md#change-the-prompt) |
 | `instructions` | | Text added to the review criteria |
+| `language` | `en` | Language code of the technical summary, such as `es` or `pt-BR` |
+| `summary` | `true` | `false` skips the technical summary and its change map |
 | `github-token` | `github.token` | Token that reads the pull request and posts comments. Keep the default: repeated runs recognize earlier comments by their bot author |
 
 ## Cost
@@ -152,6 +174,8 @@ with the size of the pull request. The Gemini reviews we measured cost $0.04 to 
   files, reviewed in parallel, and merged. This costs more than one agent. If a group fails, the rest is published
   and the summary lists the files that were not reviewed.
 - The Antigravity SDK is at version 0.1.x, so the version is pinned and may need updating.
+- The change map covers only the reviewed files, grouped into at most 8 areas. Areas and line counts come from the
+  diff; the descriptions and arrows come from the model, so read them as a guide, not as proof.
 
 ## Project status
 

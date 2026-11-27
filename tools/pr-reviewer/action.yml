@@ -58,6 +58,12 @@ inputs:
   instructions:
     description: Text added to the review criteria, such as project conventions.
     default: ""
+  language:
+    description: Language code of the technical summary, such as en, es or pt-BR. Empty means en.
+    default: ""
+  summary:
+    description: Set to false to skip the technical summary and its change map. Empty means true.
+    default: ""
 
 runs:
   using: composite
@@ -127,6 +133,8 @@ runs:
         PR_REVIEW_MODEL: ${{ inputs.model || env.PR_REVIEW_MODEL }}
         PR_REVIEW_RUBRIC_FILE: ${{ inputs.rubric-file || env.PR_REVIEW_RUBRIC_FILE }}
         PR_REVIEW_INSTRUCTIONS: ${{ inputs.instructions || env.PR_REVIEW_INSTRUCTIONS }}
+        PR_REVIEW_LANGUAGE: ${{ inputs.language || env.PR_REVIEW_LANGUAGE }}
+        PR_REVIEW_SUMMARY: ${{ inputs.summary || env.PR_REVIEW_SUMMARY }}
       run: |
         uv run --frozen --project "$GITHUB_ACTION_PATH" pr-reviewer prepare-claude-code \
           --repo "$GITHUB_WORKSPACE/.pr-reviewer/pr" \
@@ -180,6 +188,8 @@ runs:
         PR_REVIEW_BUDGET_USD: ${{ inputs.budget-usd || env.PR_REVIEW_BUDGET_USD }}
         PR_REVIEW_RUBRIC_FILE: ${{ inputs.rubric-file || env.PR_REVIEW_RUBRIC_FILE }}
         PR_REVIEW_INSTRUCTIONS: ${{ inputs.instructions || env.PR_REVIEW_INSTRUCTIONS }}
+        PR_REVIEW_LANGUAGE: ${{ inputs.language || env.PR_REVIEW_LANGUAGE }}
+        PR_REVIEW_SUMMARY: ${{ inputs.summary || env.PR_REVIEW_SUMMARY }}
       run: |
         extra=()
         case "$PROVIDER" in

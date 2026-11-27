@@ -150,6 +150,8 @@ use the default. To set another input from a variable, add a line such as
 | `max-diff-chars` | `PR_REVIEW_MAX_DIFF_CHARS` | Built-in limit | Largest diff to review |
 | `rubric-file` | `PR_REVIEW_RUBRIC_FILE` | | File that replaces the criteria |
 | `instructions` | `PR_REVIEW_INSTRUCTIONS` | | Text added to the criteria |
+| `language` | `PR_REVIEW_LANGUAGE` | `en` | Language code of the technical summary |
+| `summary` | `PR_REVIEW_SUMMARY` | `true` | `false` skips the summary and its change map |
 | `claude-code-oauth-token` | `CLAUDE_CODE_OAUTH_TOKEN` | | Token for `provider: claude-code` |
 | `claude-agent-id` | `CLAUDE_AGENT_ID` | | From `setup-claude` |
 | `claude-environment-id` | `CLAUDE_ENVIRONMENT_ID` | | From `setup-claude` |

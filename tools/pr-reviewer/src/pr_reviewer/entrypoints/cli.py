@@ -23,7 +23,7 @@ from pr_reviewer.adapters.providers.claude_code import (
 )
 from pr_reviewer.application.ports import DEFAULT_BUDGET_USD, DEFAULT_MAX_TOKENS
 from pr_reviewer.application.prepare_diff import prepare_diff
-from pr_reviewer.application.prompt import compose_rubric
+from pr_reviewer.application.prompt import compose_rubric, summary_language
 from pr_reviewer.application.publish_review import publish_review
 from pr_reviewer.application.run_review import ReviewSettings, merge_reports, run_review
 from pr_reviewer.domain.file_selection import DEFAULT_MAX_CHARS
@@ -102,6 +102,7 @@ def run_review_command(args: argparse.Namespace) -> int:
         max_tokens=args.max_tokens,
         budget_usd=args.budget_usd,
         fallback_model=args.fallback_model or None,
+        summary_language=summary_language(args.language, args.summary),
     )
     shards = split_into_shards(bundle, args.max_shards)
     if len(shards) > 1:
@@ -155,6 +156,7 @@ def run_prepare_claude_code(args: argparse.Namespace) -> int:
         repo_path=str(args.relative_dir / "repo"),
         model=args.model,
         rubric=rubric,
+        summary_language=summary_language(args.language, args.summary),
     )
     _write_multiline_outputs({"prompt": prepared.prompt, "claude_args": prepared.claude_args, "ready": "true"})
     return 0
@@ -227,6 +229,8 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument("--base", default="", help="trusted commit to read --rubric-file from")
     review.add_argument("--rubric-file", default=_setting("RUBRIC_FILE"), help="repository path that replaces the rubric")
     review.add_argument("--instructions", default=_setting("INSTRUCTIONS"), help="text added to the rubric")
+    review.add_argument("--language", default=_setting("LANGUAGE"), help="language code of the summary (default en)")
+    review.add_argument("--summary", default=_setting("SUMMARY"), help="false skips the summary and its change map")
     review.set_defaults(func=run_review_command)
 
     prepare = commands.add_parser("prepare-claude-code", help="prepare the input of the official Claude Code Action")
@@ -238,6 +242,8 @@ def build_parser() -> argparse.ArgumentParser:
     prepare.add_argument("--model", default=_setting("MODEL"))
     prepare.add_argument("--rubric-file", default=_setting("RUBRIC_FILE"))
     prepare.add_argument("--instructions", default=_setting("INSTRUCTIONS"))
+    prepare.add_argument("--language", default=_setting("LANGUAGE"))
+    prepare.add_argument("--summary", default=_setting("SUMMARY"))
     prepare.set_defaults(func=run_prepare_claude_code)
 
     collect = commands.add_parser("collect-claude-code", help="turn the Claude Code output into a report")
