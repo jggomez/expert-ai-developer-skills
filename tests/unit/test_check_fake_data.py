@@ -295,3 +295,94 @@ def test_allows_records_holding_call_results(repo):
     result = _run(repo)
     # Assert
     assert result.returncode == 0, result.stdout
+
+
+# C-02: a literal is a fallback or status response when its function reads a real source.
+@pytest.mark.parametrize("rel,text", [
+    ("app/services/clients.py",
+     "def get_client(db, client_id):\n"
+     "    snap = db.collection('clients').document(client_id).get()\n"
+     "    if not snap.exists:\n"
+     "        return {'error': 'not found', 'missing': True}\n"
+     "    return snap.to_dict()\n"),
+    ("src/api/orders.ts",
+     "export async function loadOrders(userId: string) {\n"
+     "  const res = await fetch(`/api/orders/${userId}`);\n"
+     "  if (!res.ok) {\n"
+     "    return [{ status: 'error' }];\n"
+     "  }\n"
+     "  return res.json();\n"
+     "}\n"),
+    ("lib/data/profile_repository.dart",
+     "  Future<Map<String, dynamic>> profile(String id) async {\n"
+     "    final doc = await _firestore.collection('profiles').doc(id).get();\n"
+     "    if (!doc.exists) return {'missing': true};\n"
+     "    return doc.data()!;\n"
+     "  }\n"),
+    ("internal/api/users_client.go",
+     "func (c *Client) Users() ([]User, error) {\n"
+     "\trows, err := c.db.Query(\"SELECT id FROM users\")\n"
+     "\tif err != nil {\n"
+     "\t\treturn []User{{ID: 0}}, err\n"
+     "\t}\n"
+     "\treturn scan(rows), nil\n"
+     "}\n"),
+])
+def test_allows_literal_fallbacks_in_functions_that_read_a_real_source(repo, rel, text):
+    # Arrange
+    _write(repo, rel, text)
+    # Act
+    result = _run(repo)
+    # Assert
+    assert result.returncode == 0, result.stdout
+
+
+def test_rejects_a_literal_in_a_function_that_reads_nothing_even_next_to_a_real_one(repo):
+    # Arrange
+    _write(repo, "app/services/clients.py",
+           "def real(db):\n"
+           "    return db.collection('clients').get()\n"
+           "\n"
+           "def invented():\n"
+           "    return [{'id': 1, 'name': 'Latte'}]\n")
+    # Act
+    result = _run(repo)
+    # Assert
+    assert result.returncode == 1, result.stdout
+    assert "app/services/clients.py:5" in result.stdout
+
+
+def _cherry_pick_with_conflict(repo, incoming):
+    _write(repo, "app/notes.txt", "base\n")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-qm", "notes")
+    _git(repo, "checkout", "-qb", "other")
+    _write(repo, "app/services/clients.py", incoming)
+    _write(repo, "app/notes.txt", "theirs\n")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-qm", "other")
+    _git(repo, "checkout", "-q", "-")
+    _write(repo, "app/notes.txt", "ours\n")
+    _git(repo, "commit", "-qam", "ours")
+    subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t.co", "cherry-pick", "other"], cwd=repo,
+                   capture_output=True)
+
+
+def test_ignores_lines_a_cherry_pick_brings_in_unchanged(repo):
+    # Arrange
+    _cherry_pick_with_conflict(repo, "def get():\n    return [{'id': 1, 'name': 'Latte'}]\n")
+    # Act
+    result = _run(repo)
+    # Assert
+    assert result.returncode == 0, result.stdout
+
+
+def test_a_source_named_only_in_the_signature_is_not_a_read(repo):
+    # Arrange
+    _write(repo, "app/services/clients.py",
+           "def invented(db, session):\n"
+           "    return [{'id': 1, 'name': 'Latte'}]\n")
+    # Act
+    result = _run(repo)
+    # Assert
+    assert result.returncode == 1, result.stdout

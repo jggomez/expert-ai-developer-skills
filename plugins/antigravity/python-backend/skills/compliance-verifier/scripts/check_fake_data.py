@@ -9,11 +9,15 @@ vendored dependencies (their own comments legitimately talk about "mock" and "fa
 
 Fakes also hide below the screen, so the scan covers data layers and backends too: stand-in
 classes (`InMemory...`), comments that promise a real source later, and fixed records returned from
-repositories, services, API clients and data sources. A record counts as fixed only when every
-value in it is a literal: `return {"id": doc.id, "missing": True}` is built from a real read.
+repositories, services, API clients and data sources. A returned record is judged by where its
+data comes from, not by its shape:
+  - a value read at run time (`doc.id`, `client_id`, `new_id()`) makes it real;
+  - a literal-only record (`{"error": "not found"}`, `{"missing": True}`) is a fallback or status
+    response when its enclosing function reads a real source (database, Firestore, HTTP, SQL, file);
+  - only a literal record in a function that reads nothing is reported as fixed data.
 
-During a merge (`MERGE_HEAD`), lines that arrive unchanged from the other branch are skipped: they
-were checked where they were written, and only what this change adds is judged.
+While git replays other commits (merge, cherry-pick, rebase), lines that arrive unchanged from them
+are skipped: they were checked where they were written, and only what this change adds is judged.
 
 It is a heuristic: it can flag a false positive, and it cannot see invented data with believable
 names. Running the real app (`check_evidence.py`) is what proves the data is real.
@@ -85,6 +89,26 @@ COMPREHENSION = re.compile(r"\sfor\s+\w+(?:\s*,\s*\w+)*\s+in\s")  # built from r
 DELAY = re.compile(r"Future\.delayed\(|setTimeout\(|\bsleep\(")
 LITERAL_RETURN = re.compile(r"\breturn\s+(?:const\s+)?(?:<[^>]+>\s*)?[\[{]|\bresolve\(\s*[\[{]")
 DELAY_WINDOW = 6
+# A function signature in the scanned languages: def/function/func/fun, arrow bodies and typed methods.
+FUNCTION_HEADER = re.compile(
+    r"^\s*(?:@\w+\s*)?(?:(?:async|export|default|public|private|protected|internal|static|override|suspend|final)"
+    r"\s+)*(?:def|function|func|fun)\b"
+    r"|=>\s*\{?\s*$"
+    r"|^(?!\s*(?:if|for|while|switch|catch|else|try|with|do|return|when)\b)\s*[\w<>\[\]?,.\s]+\([^;]*\)\s*"
+    r"(?:async\*?|throws\s+\w+)?\s*(?:->\s*[^{:]+|:\s*[\w<>\[\]?.]+)?\s*\{\s*$"
+)
+# Reading from outside the process: DB/Firestore/HTTP clients, query builders, SQL, files, decoded payloads.
+SOURCE_READ = re.compile(
+    r"\b(?:fetch|axios|requests|httpx|http|urllib|firestore|firebase|supabase|prisma|db|database|cursor|session"
+    r"|conn(?:ection)?|bigquery|redis|mongo\w*|dynamo\w*|s3|knex|sequelize|gorm|sqlx?)\b"
+    r"|\.(?:get|collection|doc|document|query|execute|select|find\w*|where|from|stream|snapshots|once|load"
+    r"|read\w*|list|scan|fetch\w*|aggregate|rpc|invoke|request|call)\s*\("
+    r"|\bSELECT\b|\bjson\.loads?\b|\bjsonDecode\b|\.json\(\)|\bopen\(",
+    re.IGNORECASE,
+)
+MAX_FUNCTION_LINES = 150
+# Refs git leaves while it replays other commits into the working tree.
+REPLAY_HEADS = ("MERGE_HEAD", "CHERRY_PICK_HEAD", "REBASE_HEAD")
 
 
 def git(repo: Path, *args: str) -> str:
@@ -117,23 +141,58 @@ def added_lines(repo: Path, base: str) -> dict[str, list[tuple[int, str]]]:
     return added
 
 
-def merge_incoming_lines(repo: Path) -> dict[str, set[str]] | None:
-    """An empty per-file cache for `incoming_lines` during a merge, or None when no merge is in progress."""
-    try:
-        git(repo, "rev-parse", "-q", "--verify", "MERGE_HEAD")
-    except RuntimeError:
-        return None
-    return {}
-
-
-def incoming_lines(repo: Path, rel: str, cache: dict[str, set[str]]) -> set[str]:
-    """The lines of `rel` on the branch being merged in (empty when that branch lacks the file)."""
-    if rel not in cache:
+def replayed_heads(repo: Path) -> list[str]:
+    """The commits git is replaying right now (merge, cherry-pick, rebase); empty otherwise."""
+    heads = []
+    for head in REPLAY_HEADS:
         try:
-            cache[rel] = set(git(repo, "show", f"MERGE_HEAD:{rel}").splitlines())
+            git(repo, "rev-parse", "-q", "--verify", head)
         except RuntimeError:
-            cache[rel] = set()
-    return cache[rel]
+            continue
+        heads.append(head)
+    return heads
+
+
+def incoming_lines(repo: Path, rel: str, heads: list[str]) -> set[str]:
+    """Every line of `rel` in the replayed commits (empty when they lack the file)."""
+    lines: set[str] = set()
+    for head in heads:
+        try:
+            lines.update(git(repo, "show", f"{head}:{rel}").splitlines())
+        except RuntimeError:
+            continue
+    return lines
+
+
+def indent(line: str) -> int:
+    expanded = line.expandtabs(4)
+    return len(expanded) - len(expanded.lstrip())
+
+
+def enclosing_function(source: list[str], index: int) -> list[str]:
+    """The body of the function holding `source[index]`, from below its signature down to that line.
+
+    The signature is left out so a parameter named `db` or `client` does not count as a read."""
+    level = indent(source[index])
+    start = max(0, index - MAX_FUNCTION_LINES)
+    for i in range(index - 1, start - 1, -1):
+        line = source[i]
+        if not line.strip():
+            continue
+        current = indent(line)
+        if current < level:
+            if FUNCTION_HEADER.search(line):
+                return source[i + 1:index + 1]
+            level = current
+    return source[start:index + 1]
+
+
+def reads_real_source(source: list[str], number: int) -> bool:
+    """True when the function around line `number` (1-based) reads data from outside the process."""
+    if not 1 <= number <= len(source):
+        return False
+    body = [STRING_LITERAL.sub('""', line) for line in enclosing_function(source, number - 1)]
+    return any(SOURCE_READ.search(line) for line in body)
 
 
 def built_from_literals(text: str) -> bool:
@@ -169,14 +228,16 @@ def approved_demo(repo: Path, rel: str) -> bool:
     return False
 
 
-def findings_for(rel: str, lines: list[tuple[int, str]]) -> list[str]:
+def findings_for(rel: str, lines: list[tuple[int, str]], source: list[str] | None = None) -> list[str]:
+    """Findings on the added `lines` of `rel`; `source` is the whole current file, for function context."""
+    source = source if source is not None else []
     findings: list[str] = []
     for index, (number, text) in enumerate(lines):
         reason = next((label for label, pattern in PATTERNS if pattern.search(text)), None)
         if reason is None and EXAMPLE_ADDRESS.search(text) and not INPUT_HINT.search(text):
             reason = "placeholder address"
         if reason is None and DATA_LAYER.search(rel) and built_from_literals(text) \
-                and not COMPREHENSION.search(text):
+                and not COMPREHENSION.search(text) and not reads_real_source(source, number):
             reason = "fixed records returned from the data layer"
         if reason is None and DELAY.search(text):
             window = lines[index:index + DELAY_WINDOW]
@@ -189,14 +250,18 @@ def findings_for(rel: str, lines: list[tuple[int, str]]) -> list[str]:
 
 def check(repo: Path, base: str) -> list[str]:
     findings: list[str] = []
-    merging = merge_incoming_lines(repo)
+    heads = replayed_heads(repo)
     for rel, lines in sorted(added_lines(repo, base).items()):
         if not is_scanned(rel) or approved_demo(repo, rel):
             continue
-        if merging is not None:
-            theirs = incoming_lines(repo, rel, merging)
+        if heads:
+            theirs = incoming_lines(repo, rel, heads)
             lines = [(number, text) for number, text in lines if text not in theirs]
-        findings.extend(findings_for(rel, lines))
+        try:
+            source = (repo / rel).read_text(encoding="utf-8").splitlines()
+        except (OSError, UnicodeDecodeError):
+            source = []
+        findings.extend(findings_for(rel, lines, source))
     return findings
 
 
