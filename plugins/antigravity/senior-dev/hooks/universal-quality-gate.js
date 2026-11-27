@@ -134,6 +134,7 @@ const SUITES = [
       changedUiFiles().length > 0,
     files: isUiFile, // only UI changes count as "changed" for this gate
     noticeOnRepeat: true, // a turn that left the UI untouched is told, not blocked
+    maxBlockedTurns: 3, // after 3 blocked turns in a session with no real run, notices only
     command: uiRealityCommand,
     message: `[UI REALITY GATE]: This UI was not proven against real data in the running app.\n` +
       `Delegate to e2e-blackbox-tester: start the app and backend, use it, and record the run. If it cannot run, ` +
@@ -141,6 +142,8 @@ const SUITES = [
     limitNotice: '[UI reality gate] UI NOT verified in the real app after 3 attempts: treat this task as unfinished.',
     repeatNotice: '[UI reality gate] The changed UI is still NOT verified in the real app (unchanged since it was ' +
       'last reported). Run it with e2e-blackbox-tester, or tell the user it stays unverified.',
+    sessionNotice: '[UI reality gate] The UI is still NOT verified in the real app: this session was blocked for it ' +
+      'in 3 turns already. Tell the user it stays unverified, or run e2e-blackbox-tester once the UI work is done.',
   },
 ];
 
@@ -154,13 +157,15 @@ if (fake && fake.notice) notices.push(fake.notice);
 for (const suite of SUITES) {
   if (!suite.applies()) continue;
 
-  const gate = g.createStopGate({ gateId: suite.gateId, payload, fileFilter: suite.files });
+  const gate = g.createStopGate({ gateId: suite.gateId, payload, fileFilter: suite.files,
+    maxBlockedTurns: suite.maxBlockedTurns });
   if (gate.retryLimitReached()) {
     notices.push(suite.limitNotice || g.retryLimitNotice(suite.gateId));
     continue;
   }
   if (gate.begin()) continue; // no code change, already green, or verified by a parallel gate
   const repeat = Boolean(suite.noticeOnRepeat) && gate.isRepeat();
+  const sessionLimit = !repeat && Boolean(suite.maxBlockedTurns) && gate.sessionLimitReached();
 
   const timeout = budget.timeout(120000);
   if (timeout < 10000) {
@@ -179,6 +184,11 @@ for (const suite of SUITES) {
       // 3 blocks) in the turn that changed them. Record it and let this turn end with a notice.
       gate.markFail(suite.message, { blocking: false });
       notices.push(suite.repeatNotice || suite.message);
+      continue;
+    }
+    if (sessionLimit) {
+      gate.markFail(suite.message, { blocking: false });
+      notices.push(suite.sessionNotice || suite.message);
       continue;
     }
     g.exitBlock(gate.markFail(`${suite.message}\n\nOutput:\n${out.slice(0, 3000)}`));

@@ -2,8 +2,10 @@
 """Deterministic proof behind an E2E `PASSED` verdict.
 
 Checks that an evidence directory (normally `docs/<feature-name>/evidence/`) holds real PNG
-screenshots, written recently, covering every required viewport width. A text file renamed to
-`.png`, a stale screenshot from an earlier run, or a missing viewport fails the check.
+screenshots, written after the last change, covering every required viewport width. A text file
+renamed to `.png`, a stale screenshot from an earlier run, or a missing viewport fails the check.
+With `--min-mtime` (the time of the last UI change, as the Stop gate passes it) evidence stays valid
+however old it is until the UI changes again; without it, `--max-age-minutes` is the fallback clock.
 
 It also needs proof that the app used real data: `run-*.json` manifests written by the
 `e2e_recorder` helpers must show a data request answered by a server, a value compared with its
@@ -188,7 +190,8 @@ def check(evidence_dir: Path, viewports: tuple[int, ...], max_age_minutes: float
 
     problems: list[str] = []
     widths: list[int] = []
-    oldest_allowed = time.time() - max_age_minutes * 60 if max_age_minutes > 0 else None
+    # The last change is the real expiry; the clock is only a fallback when it is unknown.
+    oldest_allowed = time.time() - max_age_minutes * 60 if max_age_minutes > 0 and not min_mtime else None
     for png in pngs:
         width = png_width(png)
         if width is None:
@@ -219,7 +222,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--viewports", default=",".join(map(str, DEFAULT_VIEWPORT_WIDTHS)),
                         help="comma-separated viewport widths (default: %(default)s)")
     parser.add_argument("--max-age-minutes", type=float, default=DEFAULT_MAX_AGE_MINUTES,
-                        help="reject screenshots older than this; 0 disables (default: %(default)s)")
+                        help="without --min-mtime, reject screenshots older than this; 0 disables (default: %(default)s)")
     args = parser.parse_args(argv)
 
     try:

@@ -362,3 +362,17 @@ def test_python_gates_run_pytest_through_uv_when_the_project_uses_it(repo, hook)
     # Assert
     assert result.returncode == 0, result.stdout + result.stderr
     assert "uv run pytest -q" in calls.read_text()
+
+
+def test_a_lock_left_by_a_killed_hook_does_not_make_the_next_one_wait(repo):
+    # Arrange: a hook killed at its host timeout left its lock behind (its PID no longer runs)
+    (repo / "app.py").write_text("x = 2\n")
+    dead = subprocess.Popen(["true"])
+    dead.wait()
+    (repo / ".git" / "claude-stop-gate-harness-repo.lock").write_text(str(dead.pid))
+    # Act
+    started = time.time()
+    result = _run_harness(repo, "true")
+    # Assert
+    assert "RAN:pass" in result.stdout, result.stdout + result.stderr
+    assert time.time() - started < 10

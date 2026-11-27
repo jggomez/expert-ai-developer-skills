@@ -129,6 +129,13 @@ aliases:
   agy-demo-medium: {model: gemini-3.8-flash, estimated: true}
   gemini-4-argon-trial: {model: gemini-4-argon, estimated: true}
   gemini-4-argon-c: {model: gemini-4-argon, estimated: true}
+  # Gemini 4 codenames Antigravity shows as "Gemini 4 Hydrogen/Carbon/Neon" and "Orchestrator (Neon/Carbon)".
+  gemini-4-hydrogen: {model: gemini-4-argon, estimated: true}
+  gemini-4-hydrogen-tiered-high: {model: gemini-4-argon, estimated: true}
+  gemini-4-carbon: {model: gemini-4-argon, estimated: true}
+  gemini-4-neon: {model: gemini-4-argon, estimated: true}
+  gemini-pro-orchestrator: {model: gemini-4-argon, estimated: true}
+  gemini-pro-orchestrator-neon: {model: gemini-4-argon, estimated: true}
   claude-opus-5-5-high: {model: claude-opus-5-5, estimated: true}
   claude-opus-5-5-medium: {model: claude-opus-5-5, estimated: true}
   gemini-3-flash-a: {model: gemini-3.8-flash, estimated: true}

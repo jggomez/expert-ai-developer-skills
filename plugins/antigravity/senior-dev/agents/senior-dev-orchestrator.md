@@ -145,6 +145,7 @@ Never over-invoke subagents as rigid bundles. Every `PLAN.md` (`<= 50 lines` per
 5. **State 5: Ship, `AGENTS.md` Sync & LLM Wiki Memory Update (MANDATORY)**:
    - Mark tasks completed in `PLAN.md` and ensure root `AGENTS.md` (`<= 90 lines`) is synchronized if commands/conventions changed.
    - Persist milestone to `context/memory/` via `context-capture`: update `context/memory/MEMORY.md` (`<= 80-100 lines`), update `architecture.md`/`conventions.md` if changed, and append a `5-8 line` block to `context/memory/log/YYYY-MM-DD.md`. Never write checkpoints on intermediate turns.
+   - **One feature per session**: after State 5, tell the user to start the next feature in a new session; `context/memory/` carries the handoff. Every prompt re-reads the whole session, so a session that piles up features grows past 200k tokens of context and costs most of the spend.
 
 # Tooling & Environment Protocol
 - **Execution Policy**: `commandExecutionPolicy: auto`. Use `run_command` only for lightweight git/environment inspection and branch/worktree coordination.

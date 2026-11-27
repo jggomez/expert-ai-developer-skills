@@ -56,8 +56,8 @@ def _evidence(repo):
     return evidence
 
 
-def _run(repo, hook=HOOKS[0], active=False):
-    payload = {"hook_event_name": "Stop", "cwd": str(repo), "session_id": "s1", "stop_hook_active": active}
+def _run(repo, hook=HOOKS[0], active=False, session="s1"):
+    payload = {"hook_event_name": "Stop", "cwd": str(repo), "session_id": session, "stop_hook_active": active}
     env = dict(os.environ, TMPDIR=str(repo.parent))
     return subprocess.run(["node", hook], input=json.dumps(payload), capture_output=True, text=True, timeout=60,
                           env=env)
@@ -228,3 +228,65 @@ def test_a_folder_that_is_not_a_git_repository_is_not_gated(tmp_path, hook):
     # Assert: a clean allow, no crash trace
     assert result.returncode == 0, result.stdout + result.stderr
     assert "Command failed" not in result.stderr and "UI REALITY GATE" not in result.stdout + result.stderr
+
+
+def test_evidence_older_than_two_hours_but_newer_than_the_ui_change_is_allowed(repo):
+    # Arrange: the UI was last touched 4 h ago and the app was run 3 h ago
+    _write(repo, "src/Items.tsx", "export const Items = () => null;\n")
+    four_hours = time.time() - 4 * 3600
+    os.utime(repo / "src" / "Items.tsx", (four_hours, four_hours))
+    three_hours = time.time() - 3 * 3600
+    for item in _evidence(repo).iterdir():
+        os.utime(item, (three_hours, three_hours))
+    # Act
+    result = _run(repo)
+    # Assert
+    assert not _blocked(result), result.stdout + result.stderr
+
+
+def _unverified_turn(repo, n, session="s1"):
+    """A turn that edits the UI, gets blocked to the turn limit and ends unverified."""
+    _write(repo, "src/Items.tsx", f"export const Items = () => {n};\n")
+    first = _run(repo, active=False, session=session)
+    for _ in range(3):
+        _run(repo, active=True, session=session)
+    return first
+
+
+@pytest.mark.parametrize("hook", HOOKS)
+def test_after_three_unverified_turns_the_session_gets_notices_not_blocks(repo, hook):
+    # Arrange
+    for n in range(3):
+        assert _blocked(_unverified_turn(repo, n))
+    # Act: a fourth turn edits the UI again
+    _write(repo, "src/Items.tsx", "export const Items = () => 99;\n")
+    result = _run(repo, hook, active=False)
+    # Assert
+    assert not _blocked(result), result.stdout + result.stderr
+    assert "NOT verified" in result.stdout + result.stderr
+
+
+def test_a_new_session_is_gated_again(repo):
+    # Arrange
+    for n in range(3):
+        _unverified_turn(repo, n)
+    # Act
+    _write(repo, "src/Items.tsx", "export const Items = () => 99;\n")
+    result = _run(repo, active=False, session="s2")
+    # Assert
+    assert _blocked(result), result.stdout + result.stderr
+
+
+def test_fresh_evidence_resets_the_session_limit(repo):
+    # Arrange: three unverified turns, then a real run that passes
+    for n in range(3):
+        _unverified_turn(repo, n)
+    old = time.time() - 30
+    os.utime(repo / "src" / "Items.tsx", (old, old))
+    _evidence(repo)
+    assert not _blocked(_run(repo, active=False))
+    # Act: the next UI change has no proof
+    _write(repo, "src/Items.tsx", "export const Items = () => 100;\n")
+    result = _run(repo, active=False)
+    # Assert
+    assert _blocked(result), result.stdout + result.stderr
