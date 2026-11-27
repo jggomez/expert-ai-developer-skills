@@ -388,7 +388,7 @@ def test_a_source_named_only_in_the_signature_is_not_a_read(repo):
     assert result.returncode == 1, result.stdout
 
 
-# C-04: false-positive families seen in real blocks (agent-meter / transcript replay, 2026-11).
+# C-03: false-positive families seen in real blocks (transcript replay, 2026-11).
 @pytest.mark.parametrize("rel,line", [
     ("agent/scripts/export_surfaces.py", "flow = SellingFlow(FakeJev(), FakeWriter())"),
     ("backend/src/scripts/fake-cloudbeds.ts", "export function startFakeCloudbeds(options: FakeOptions) {"),
