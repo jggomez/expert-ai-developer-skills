@@ -33,8 +33,8 @@ def _summary_request(language: str | None) -> str:
         return "Leave `summary` empty."
     return (
         "Also return `summary`, a technical summary of the whole change for the reviewers: `overview` in two or three "
-        "sentences, up to 8 `changes` (a changed file or folder exactly as in the diff, and one short line on what "
-        "changed there), and up to 8 `links` (a changed part that calls or uses another changed part). Describe only "
+        "sentences, up to 8 `changes` (a changed file or folder exactly as in the diff, and what changed there "
+        "in at most six words), and up to 8 `links` (a changed part that calls or uses another changed part). Describe only "
         f"what the diff shows. Write `overview` and every `what` in the language code `{language}`; keep paths as they are."
     )
 

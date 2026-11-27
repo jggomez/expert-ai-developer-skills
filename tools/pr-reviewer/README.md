@@ -76,9 +76,9 @@ show which part calls which, and color marks the most severe finding in that are
 
 ```mermaid
 flowchart LR
-  a1["api/ · +42 -3<br/>new /clients endpoint"]
-  a2["services/ · +30 -0<br/>reads clients from Firestore"]
-  a3["web/ · +65 -10<br/>Clients to Review page"]
+  a1["<b>api/</b><br/>+42 -3<br/>new /clients endpoint"]
+  a2["<b>services/</b><br/>+30 -0<br/>reads clients from Firestore"]
+  a3["<b>web/</b><br/>+65 -10<br/>Clients to Review page"]
   a3 --> a1
   a1 --> a2
   classDef high fill:#fff1e5,stroke:#bc4c00,color:#1f2328
