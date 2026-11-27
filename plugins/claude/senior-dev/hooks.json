@@ -1,5 +1,5 @@
 {
-  "description": "Senior Dev Quality Gates for Claude Code: Enforces Plan-First, blocks orchestrator from direct code implementation, and runs polyglot quality gates before stopping.",
+  "description": "Senior Dev Quality Gates for Claude Code: Enforces Plan-First, blocks orchestrator from direct code implementation, and runs polyglot quality gates before stopping, and warns when a session's context grows past 200k tokens.",
   "hooks": {
     "PreToolUse": [
       {
@@ -31,6 +31,17 @@
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/e2e-evidence-gate.js\"",
             "timeout": 15
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/context-budget.js\"",
+            "timeout": 10
           }
         ]
       }
