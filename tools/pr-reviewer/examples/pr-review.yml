@@ -35,6 +35,9 @@ jobs:
           exclude: ${{ vars.PR_REVIEW_EXCLUDE }}
           rubric-file: ${{ vars.PR_REVIEW_RUBRIC_FILE }}
           instructions: ${{ vars.PR_REVIEW_INSTRUCTIONS }}
+          # Technical summary and change map: language code (en, es, pt-BR) and false to skip it.
+          language: ${{ vars.PR_REVIEW_LANGUAGE }}
+          summary: ${{ vars.PR_REVIEW_SUMMARY }}
           # With a Claude Pro or Max plan, set PR_REVIEW_PROVIDER to claude-code and add this secret.
           claude-code-oauth-token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           claude-agent-id: ${{ vars.CLAUDE_AGENT_ID }}

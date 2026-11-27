@@ -15,7 +15,15 @@ from pr_reviewer.application.ports import (
     ReviewRequest,
 )
 from pr_reviewer.domain.findings import fingerprint
-from pr_reviewer.domain.models import DiffBundle, Finding, ReviewReport, ReviewUsage
+from pr_reviewer.domain.models import (
+    AreaChange,
+    AreaLink,
+    DiffBundle,
+    Finding,
+    PullRequestSummary,
+    ReviewReport,
+    ReviewUsage,
+)
 from pr_reviewer.domain.pricing import estimate_cost
 
 logger = logging.getLogger(__name__)
@@ -30,6 +38,7 @@ class ReviewSettings:
     max_tokens: int = DEFAULT_MAX_TOKENS
     budget_usd: str = DEFAULT_BUDGET_USD
     fallback_model: str | None = None
+    summary_language: str | None = "en"
 
 
 def run_review(
@@ -57,6 +66,7 @@ def run_review(
             budget_usd=settings.budget_usd,
             rubric=load_rubric(),
             fallback_model=settings.fallback_model,
+            summary_language=settings.summary_language,
         )
         output = provider.review(request)
     except ProviderError as error:
@@ -81,6 +91,7 @@ def run_review(
         model=output.model,
         findings=output.result.findings,
         usage=output.usage,
+        summary=output.result.summary if settings.summary_language else None,
     )
 
 
@@ -112,4 +123,24 @@ def merge_reports(reports: list[ReviewReport], shards: list[DiffBundle]) -> Revi
         usage=usage,
         error=failed[0][0].error if failed else "",
         unreviewed=[file.path for _, shard in failed for file in shard.files],
+        summary=merge_summaries([r.summary for r in reports]),
+    )
+
+
+def merge_summaries(summaries: list[PullRequestSummary | None]) -> PullRequestSummary | None:
+    """One summary for the whole pull request: overviews in group order, parts and links without repeats."""
+    present = [s for s in summaries if s is not None]
+    if not present:
+        return None
+    changes: dict[str, AreaChange] = {}
+    links: dict[tuple[str, str], AreaLink] = {}
+    for summary in present:
+        for change in summary.changes:
+            changes.setdefault(change.path, change)
+        for link in summary.links:
+            links.setdefault((link.source, link.target), link)
+    return PullRequestSummary(
+        overview=" ".join(s.overview.strip() for s in present if s.overview.strip()),
+        changes=list(changes.values()),
+        links=list(links.values()),
     )

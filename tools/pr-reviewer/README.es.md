@@ -70,6 +70,26 @@ Un único comentario de resumen lista los hallazgos por severidad, con el modelo
 
 ![Comentario de resumen con una tabla de hallazgos y el modelo, los tokens y el costo de la revisión](docs/images/summary-comment.png)
 
+Antes de los hallazgos, el resumen explica el cambio en **What changed**: un resumen técnico corto y un mapa de cambios
+que GitHub dibuja con Mermaid. Cada caja es un área del pull request con sus líneas añadidas y eliminadas, las flechas
+muestran qué parte llama a cuál, y el color marca el hallazgo más grave de esa área:
+
+```mermaid
+flowchart LR
+  a1["api/ · +42 -3<br/>nuevo endpoint /clients"]
+  a2["services/ · +30 -0<br/>lee los clientes de Firestore"]
+  a3["web/ · +65 -10<br/>página Clients to Review"]
+  a3 --> a1
+  a1 --> a2
+  classDef high fill:#fff1e5,stroke:#bc4c00,color:#1f2328
+  classDef clean fill:#f6f8fa,stroke:#8c959f,color:#1f2328
+  class a1 clean
+  class a2 high
+  class a3 clean
+```
+
+Usa `language: es` para escribir el resumen en español, o `summary: false` para omitirlo.
+
 ## Qué revisa
 
 | Eje | Ejemplos |
@@ -137,6 +157,8 @@ puedes cambiar el modelo sin editar ningún archivo.
 | `max-diff-chars` | Límite interno | Tamaño máximo del diff |
 | `rubric-file` | | Archivo Markdown que sustituye los criterios, leído del commit base. Consulta [Cambiar el prompt](docs/guide.es.md#cambiar-el-prompt) |
 | `instructions` | | Texto que se añade a los criterios |
+| `language` | `en` | Código de idioma del resumen técnico, como `es` o `pt-BR` |
+| `summary` | `true` | `false` omite el resumen técnico y su mapa de cambios |
 | `github-token` | `github.token` | Token que lee el PR y publica comentarios. Mantén el valor por defecto: las ejecuciones repetidas reconocen los comentarios anteriores por su autor bot |
 
 ## Coste
@@ -154,6 +176,8 @@ entre $0.04 y $0.14.
   cercanos, se revisan en paralelo y se unen. Cuesta más que un solo agente. Si un grupo falla, se publica el resto
   y el resumen lista los archivos que no se revisaron.
 - El SDK de Antigravity está en la versión 0.1.x, así que la versión está fijada y puede necesitar actualización.
+- El mapa de cambios cubre solo los archivos revisados, agrupados en 8 áreas como máximo. Las áreas y las líneas salen
+  del diff; las descripciones y las flechas las escribe el modelo, así que tómalas como guía, no como prueba.
 
 ## Estado del proyecto
 

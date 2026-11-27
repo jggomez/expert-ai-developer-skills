@@ -53,7 +53,7 @@ def build_config(request: ReviewRequest, *, model: str) -> LocalAgentConfig:
     return LocalAgentConfig(
         model=model,
         api_key=os.environ.get("GEMINI_API_KEY"),
-        system_instructions=system_instructions(request.rubric),
+        system_instructions=system_instructions(request.rubric, request.summary_language),
         response_schema=ReviewResult,
         workspaces=[str(request.workspace)],
         capabilities=CapabilitiesConfig(enable_subagents=False, enabled_tools=list(READ_ONLY_TOOLS)),

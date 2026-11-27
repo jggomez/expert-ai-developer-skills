@@ -12,7 +12,10 @@ from pr_reviewer.application.run_review import (
     run_review,
 )
 from pr_reviewer.domain.models import (
+    AreaChange,
+    AreaLink,
     DiffBundle,
+    PullRequestSummary,
     ReviewReport,
     ReviewResult,
     ReviewUsage,
@@ -146,3 +149,29 @@ def test_when_every_group_fails_the_review_failed():
 
     # Assert
     assert merged.status == "failed"
+
+
+def test_merge_combines_the_summaries_of_every_group():
+    # Arrange
+    first = report_for().model_copy(update={"summary": PullRequestSummary(
+        overview="Adds the API.", changes=[AreaChange(path="api", what="new endpoint")],
+        links=[AreaLink(source="web", target="api")])})
+    second = report_for().model_copy(update={"summary": PullRequestSummary(
+        overview="Adds the page.", changes=[AreaChange(path="web", what="new page")],
+        links=[AreaLink(source="web", target="api")])})
+
+    # Act
+    merged = merge_reports([first, second], [bundle(), bundle()])
+
+    # Assert
+    assert merged.summary.overview == "Adds the API. Adds the page."
+    assert [c.path for c in merged.summary.changes] == ["api", "web"]
+    assert len(merged.summary.links) == 1
+
+
+def test_merge_without_summaries_has_none():
+    # Act
+    merged = merge_reports([report_for(), report_for()], [bundle(), bundle()])
+
+    # Assert
+    assert merged.summary is None

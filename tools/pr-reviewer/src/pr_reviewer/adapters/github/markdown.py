@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 
 from pr_reviewer.application.ports import ReviewOutcome
+from pr_reviewer.domain.change_map import ChangeMap, build_change_map
 from pr_reviewer.domain.findings import fingerprint
 from pr_reviewer.domain.models import DiffBundle, Finding, ReviewReport
 from pr_reviewer.domain.pricing import estimate_cost
@@ -35,6 +36,18 @@ _SECRETS = (
 _MENTION = re.compile(r"(?<!\w)@(?=[A-Za-z0-9])")
 _CONTROL = re.compile(r"[\x00-\x1f\x7f]")
 _BADGE = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🔵"}
+MAX_OVERVIEW_CHARS = 1_000
+MAX_LABEL_CHARS = 60
+# Diagram labels keep only letters, digits and plain punctuation: no quotes, brackets, `;`, `%`, `#`,
+# `&` or `<`, so model text can neither close a label nor start a Mermaid directive.
+_LABEL_UNSAFE = re.compile(r"[^\w .,:/()+\-·]")
+_CLASS_STYLES = {
+    "critical": "fill:#fde2e1,stroke:#cf222e,color:#1f2328",
+    "high": "fill:#fff1e5,stroke:#bc4c00,color:#1f2328",
+    "medium": "fill:#fff8c5,stroke:#9a6700,color:#1f2328",
+    "low": "fill:#ddf4ff,stroke:#0969da,color:#1f2328",
+    "clean": "fill:#f6f8fa,stroke:#8c959f,color:#1f2328",
+}
 
 
 def redact_secrets(text: str) -> str:
@@ -129,9 +142,45 @@ def _omitted_section(bundle: DiffBundle) -> list[str]:
     ]
 
 
+def _label(text: str) -> str:
+    flat = " ".join(_LABEL_UNSAFE.sub(" ", redact_secrets(text).replace("@", " ")).split())
+    return _clip(flat, MAX_LABEL_CHARS)
+
+
+def _diagram(change_map: ChangeMap) -> list[str]:
+    """A Mermaid flowchart written by this tool; only sanitized label text comes from the model."""
+    lines = ["```mermaid", "flowchart LR"]
+    for number, area in enumerate(change_map.areas, start=1):
+        title = f"{_label(area.name)}/ · +{area.added} -{area.deleted}"
+        what = _label(area.what)
+        lines.append(f'  a{number}["{title}<br/>{what}"]' if what else f'  a{number}["{title}"]')
+    lines += [f"  a{source + 1} --> a{target + 1}" for source, target in change_map.links]
+    used = {area.severity or "clean" for area in change_map.areas}
+    lines += [f"  classDef {name} {style}" for name, style in _CLASS_STYLES.items() if name in used]
+    for number, area in enumerate(change_map.areas, start=1):
+        lines.append(f"  class a{number} {area.severity or 'clean'}")
+    return [*lines, "```"]
+
+
+def _what_changed(outcome: ReviewOutcome) -> list[str]:
+    report = outcome.report
+    if report.status == "failed" or report.summary is None:
+        return []
+    change_map = build_change_map(outcome.bundle, report.summary, outcome.selection.kept)
+    overview = _clip(" ".join(sanitize(change_map.overview).replace("`", "'").split()), MAX_OVERVIEW_CHARS)
+    lines = ["### What changed", ""]
+    if overview:
+        lines += [overview, ""]
+    if len(change_map.areas) > 1:
+        lines += [*_diagram(change_map), "", "<sub>Areas colored by their most severe finding.</sub>", ""]
+    return lines if len(lines) > 2 else []
+
+
 def format_summary(outcome: ReviewOutcome) -> str:
     report, bundle, selection = outcome.report, outcome.bundle, outcome.selection
-    lines = [SUMMARY_MARKER, "## AI review", ""]
+    lines = [SUMMARY_MARKER, "## AI review", "", *_what_changed(outcome)]
+    if len(lines) > 3:
+        lines += ["### Findings", ""]
 
     if report.status == "partial":
         reason = _one_line(report.error) or "unknown error"
