@@ -74,6 +74,7 @@
 
     "hook/agent-meter-hook": { "title": "Agent meter hook", "summary": "Sends each session and task event to agent-meter so cost and latency are recorded automatically.", "use": "Runs on session and tool events." },
     "hook/anti-lazy-code-gate": { "title": "Anti-lazy code gate", "summary": "Looks at the git diff before the agent stops and blocks placeholders such as TODO stubs or omitted code.", "use": "Runs when the agent tries to stop." },
+    "hook/context-budget": { "title": "Context budget", "summary": "Warns you and the agent the first time a session's context passes 200k and 300k tokens: save context and continue in a new session. Never blocks.", "use": "Runs when you send a prompt (Claude Code)." },
     "hook/context-guard-gate": { "title": "Context guard", "summary": "Stops the agent from reading very large or binary files in one go, so the context window stays useful.", "use": "Runs before every file read." },
     "hook/data-quality-gate": { "title": "Data quality gate", "summary": "Compiles Dataform or dbt before the agent stops and blocks it if the project does not compile.", "use": "Runs when the agent tries to stop." },
     "hook/data-safety-gate": { "title": "Data safety gate", "summary": "Blocks destructive commands such as DROP TABLE, TRUNCATE or DELETE without WHERE.", "use": "Runs before every shell command." },
@@ -86,6 +87,7 @@
     "hook/post-tool-autosave": { "title": "Context autosave", "summary": "Counts tool calls and time, and reminds the agent to save a memory checkpoint when enough work has piled up.", "use": "Runs after tool calls." },
     "hook/pre-tool-gate": { "title": "Python plan-first gate", "summary": "Requires an active PLAN.md before Python files are written.", "use": "Runs before every file edit." },
     "hook/python-backend-activate": { "title": "Python backend activation", "summary": "Detects a Python backend project and turns on the backend gates for it.", "use": "Runs at the start of a session." },
+    "hook/red-test-brake": { "title": "Red-test brake", "summary": "After 3 failing test runs in a row, tells the agent to stop, report the failing test and what blocks it. A passing run resets the count.", "use": "Runs after every shell command (Claude Code)." },
     "hook/session-start-context": { "title": "Session start context", "summary": "Tells the agent to read the shared memory at the start of the session.", "use": "Runs at the start of a session." },
     "hook/sql-safety-gate": { "title": "SQL safety gate", "summary": "Blocks destructive DDL and DML and forces --dry_run on every bq query.", "use": "Runs before every shell command." },
     "hook/stop-flush": { "title": "Context flush", "summary": "Saves a final memory note when a session that did work ends.", "use": "Runs when the session ends." },

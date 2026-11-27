@@ -5,7 +5,7 @@
     "plugin": 10,
     "skill": 40,
     "agent": 19,
-    "hook": 19,
+    "hook": 21,
     "rule": 11,
     "workflow": 16,
     "sidecar": 3,
@@ -255,8 +255,10 @@
           "ui-ux-designer"
         ],
         "hook": [
+          "context-budget",
           "e2e-evidence-gate",
           "orchestrator-role-gate",
+          "red-test-brake",
           "universal-quality-gate"
         ]
       },
@@ -1577,6 +1579,21 @@
       "install": {}
     },
     {
+      "id": "hook/context-budget",
+      "type": "hook",
+      "slug": "context-budget",
+      "name": "context-budget",
+      "description": "",
+      "hosts": [
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev/hooks/context-budget.js",
+      "includedIn": [
+        "senior-dev"
+      ],
+      "install": {}
+    },
+    {
       "id": "hook/context-guard-gate",
       "type": "hook",
       "slug": "context-guard-gate",
@@ -1764,6 +1781,21 @@
       "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/python-backend/hooks/python-backend-activate.js",
       "includedIn": [
         "python-backend"
+      ],
+      "install": {}
+    },
+    {
+      "id": "hook/red-test-brake",
+      "type": "hook",
+      "slug": "red-test-brake",
+      "name": "red-test-brake",
+      "description": "",
+      "hosts": [
+        "claude"
+      ],
+      "source": "https://github.com/jggomez/expert-ai-developer-skills/blob/main/plugins/claude/senior-dev/hooks/red-test-brake.js",
+      "includedIn": [
+        "senior-dev"
       ],
       "install": {}
     },
