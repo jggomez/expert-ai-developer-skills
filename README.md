@@ -46,6 +46,7 @@ Senior AI Dev Kit ships the same engineering workflow for two hosts, **Claude Co
 - **Incremental testing.** The QA matrix grows with each change, only affected tests run, and the full suite runs at most once per change.
 - **Specialist subagents.** Orchestrators delegate to product analyst, UI/UX designer, architect, implementer, QA tester, critic, challenger, E2E black-box tester and compliance verifier.
 - **Enforced guardrails.** Hooks block code edits without a `PLAN.md`, block commits to protected branches, and run the test suite before a turn can end.
+- **Cost-aware sessions.** In Claude Code, a hook warns when a session's context passes 200k tokens (save context, start a new session), and an agent whose tests fail 3 times in a row is told to stop and report the blocker.
 - **Honest verification.** The E2E tester starts the app and uses it in a real browser, against the real backend. Hooks reject fake data, network stubs and any `PASSED` verdict without fresh proof. Flutter web is included; mobile-only apps are not run.
 - **Shared memory.** A `context/memory/` directory lets Claude Code and Antigravity sessions hand work to each other.
 - **Portable skills.** 40 skills follow the open [Agent Skills](https://agentskills.io) format and install on their own in any project.
