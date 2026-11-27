@@ -71,22 +71,10 @@ Un único comentario de resumen lista los hallazgos por severidad, con el modelo
 ![Comentario de resumen con una tabla de hallazgos y el modelo, los tokens y el costo de la revisión](docs/images/summary-comment.png)
 
 Antes de los hallazgos, el resumen explica el cambio en **What changed**: un resumen técnico corto y un mapa de cambios
-que GitHub dibuja con Mermaid. Cada caja es un área del pull request con sus líneas añadidas y eliminadas, las flechas
+que GitHub dibuja con Mermaid, sin imágenes ni servicios externos. Cada caja es un área del pull request con sus líneas añadidas y eliminadas, las flechas
 muestran qué parte llama a cuál, y el color marca el hallazgo más grave de esa área:
 
-```mermaid
-flowchart LR
-  a1["<b>api/</b><br/>+42 -3<br/>nuevo endpoint /clients"]
-  a2["<b>services/</b><br/>+30 -0<br/>lee los clientes de Firestore"]
-  a3["<b>web/</b><br/>+65 -10<br/>página Clients to Review"]
-  a3 --> a1
-  a1 --> a2
-  classDef high fill:#fff1e5,stroke:#bc4c00,color:#1f2328
-  classDef clean fill:#f6f8fa,stroke:#8c959f,color:#1f2328
-  class a1 clean
-  class a2 high
-  class a3 clean
-```
+![Comentario de resumen con la sección What changed: un resumen corto y un mapa de cambios de las áreas web, api y services, coloreadas por su hallazgo más grave](docs/images/summary-change-map.png)
 
 Usa `language: es` para escribir el resumen en español, o `summary: false` para omitirlo.
 
