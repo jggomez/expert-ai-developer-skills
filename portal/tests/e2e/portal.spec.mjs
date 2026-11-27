@@ -123,7 +123,7 @@ test('tools showcase: Spanish screenshots, screen switcher, full-size view and r
   await expect(meter.locator('dialog')).toBeHidden();
   await expect(meter.getByRole('link', { name: /Descargar para Mac/ })).toHaveAttribute('href', /agent-meter-v0\.1\.0\/agent-meter-0\.1\.0-mac-arm64\.dmg$/);
   await expect(meter.getByRole('link', { name: /Descargar para Windows/ })).toHaveAttribute('href', /windows-x64\.exe$/);
-  await expect(page.locator('#tool-pr-reviewer img:visible')).toHaveAttribute('src', '/media/pr-reviewer/inline-comment-sql-injection.png');
+  await expect(page.locator('#tool-pr-reviewer img:visible')).toHaveAttribute('src', '/media/pr-reviewer/summary-change-map.png');
   expect(errors).toEqual([]);
 });
 
