@@ -9,7 +9,11 @@ vendored dependencies (their own comments legitimately talk about "mock" and "fa
 
 Fakes also hide below the screen, so the scan covers data layers and backends too: stand-in
 classes (`InMemory...`), comments that promise a real source later, and fixed records returned from
-repositories, services, API clients and data sources.
+repositories, services, API clients and data sources. A record counts as fixed only when every
+value in it is a literal: `return {"id": doc.id, "missing": True}` is built from a real read.
+
+During a merge (`MERGE_HEAD`), lines that arrive unchanged from the other branch are skipped: they
+were checked where they were written, and only what this change adds is judged.
 
 It is a heuristic: it can flag a false positive, and it cannot see invented data with believable
 names. Running the real app (`check_evidence.py`) is what proves the data is real.
@@ -69,6 +73,13 @@ DATA_LAYER = re.compile(
 LITERAL_RECORDS = re.compile(
     r"\breturn\s+(?:const\s+)?(?:<[^>]+>\s*)?(?:\[\][A-Za-z_]\w*\s*)?[\[{]\s*(?:[{\['\"0-9]|[A-Z]\w*\s*[({])"
 )
+STRING_LITERAL = re.compile(r'"(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\'|`[^`]*`')
+TRAILING_COMMENT = re.compile(r"(?://|#).*$")
+# Keys and named arguments (`id:`) and type constructors (`Order(`, `Order{`) shape a record, they hold no value.
+NOT_A_VALUE = re.compile(r"\b[A-Za-z_]\w*\s*(?=:)|\b[A-Z]\w*\s*(?=[({]|<[^>]*>\s*[({])")
+LITERAL_WORDS = {"return", "const", "new", "true", "false", "True", "False", "None", "null", "nil",
+                 "undefined", "nullptr"}
+IDENTIFIER = re.compile(r"(?<![\w.])[A-Za-z_]\w*")
 EXAMPLE_ADDRESS = re.compile(r"[\w.+-]*@?example\.(?:com|org|net)")
 COMPREHENSION = re.compile(r"\sfor\s+\w+(?:\s*,\s*\w+)*\s+in\s")  # built from real rows
 DELAY = re.compile(r"Future\.delayed\(|setTimeout\(|\bsleep\(")
@@ -106,6 +117,37 @@ def added_lines(repo: Path, base: str) -> dict[str, list[tuple[int, str]]]:
     return added
 
 
+def merge_incoming_lines(repo: Path) -> dict[str, set[str]] | None:
+    """An empty per-file cache for `incoming_lines` during a merge, or None when no merge is in progress."""
+    try:
+        git(repo, "rev-parse", "-q", "--verify", "MERGE_HEAD")
+    except RuntimeError:
+        return None
+    return {}
+
+
+def incoming_lines(repo: Path, rel: str, cache: dict[str, set[str]]) -> set[str]:
+    """The lines of `rel` on the branch being merged in (empty when that branch lacks the file)."""
+    if rel not in cache:
+        try:
+            cache[rel] = set(git(repo, "show", f"MERGE_HEAD:{rel}").splitlines())
+        except RuntimeError:
+            cache[rel] = set()
+    return cache[rel]
+
+
+def built_from_literals(text: str) -> bool:
+    """True when the returned record holds only literal values (no variable, field or call result)."""
+    match = LITERAL_RECORDS.search(text)
+    if match is None:
+        return False
+    body = STRING_LITERAL.sub('""', text[match.start():])
+    body = TRAILING_COMMENT.sub("", body)
+    body = NOT_A_VALUE.sub("", body)
+    body = re.sub(r"\[\][A-Za-z_]\w*", "", body)  # Go slice types such as []Order
+    return all(word in LITERAL_WORDS for word in IDENTIFIER.findall(body))
+
+
 def is_scanned(rel: str) -> bool:
     return Path(rel).suffix.lower() in SCANNED_SUFFIXES and not IGNORED_PATH.search(rel)
 
@@ -133,7 +175,7 @@ def findings_for(rel: str, lines: list[tuple[int, str]]) -> list[str]:
         reason = next((label for label, pattern in PATTERNS if pattern.search(text)), None)
         if reason is None and EXAMPLE_ADDRESS.search(text) and not INPUT_HINT.search(text):
             reason = "placeholder address"
-        if reason is None and DATA_LAYER.search(rel) and LITERAL_RECORDS.search(text) \
+        if reason is None and DATA_LAYER.search(rel) and built_from_literals(text) \
                 and not COMPREHENSION.search(text):
             reason = "fixed records returned from the data layer"
         if reason is None and DELAY.search(text):
@@ -147,9 +189,14 @@ def findings_for(rel: str, lines: list[tuple[int, str]]) -> list[str]:
 
 def check(repo: Path, base: str) -> list[str]:
     findings: list[str] = []
+    merging = merge_incoming_lines(repo)
     for rel, lines in sorted(added_lines(repo, base).items()):
-        if is_scanned(rel) and not approved_demo(repo, rel):
-            findings.extend(findings_for(rel, lines))
+        if not is_scanned(rel) or approved_demo(repo, rel):
+            continue
+        if merging is not None:
+            theirs = incoming_lines(repo, rel, merging)
+            lines = [(number, text) for number, text in lines if text not in theirs]
+        findings.extend(findings_for(rel, lines))
     return findings
 
 

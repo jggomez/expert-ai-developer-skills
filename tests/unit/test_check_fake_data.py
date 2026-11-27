@@ -219,3 +219,79 @@ def test_allows_real_data_layers_and_test_doubles_in_tests(repo, rel, line):
     result = _run(repo)
     # Assert
     assert result.returncode == 0, result.stdout
+
+
+# A record built from values read at run time (Firestore, a request, a row) is real data.
+@pytest.mark.parametrize("rel,line", [
+    ("app/services/clients.py", '        return {"id": doc.id, "missing": True}'),
+    ("app/services/clients.py", '    return {"id": client_id, "missing": True}  # not in Firestore'),
+    ("app/api/reviews.py", "    return [{'id': snap.id, **snap.to_dict()}]"),
+    ("lib/data/clients_repository.dart", "    return {'id': doc.id, 'missing': true};"),
+    ("internal/api/clients_client.go", "\treturn []Client{{ID: id, Missing: true}}, nil"),
+])
+def test_allows_records_built_from_runtime_values(repo, rel, line):
+    # Arrange
+    _write(repo, rel, f"{line}\n")
+    # Act
+    result = _run(repo)
+    # Assert
+    assert result.returncode == 0, result.stdout
+
+
+@pytest.mark.parametrize("line", [
+    '    return {"id": "c-1", "missing": True}',
+    "    return [{'id': 1, 'active': False, 'note': None}]  # doc.id later",
+])
+def test_rejects_records_made_only_of_literals(repo, line):
+    # Arrange
+    _write(repo, "app/services/clients.py", f"{line}\n")
+    # Act
+    result = _run(repo)
+    # Assert
+    assert result.returncode == 1, result.stdout
+
+
+def _conflicted_merge(repo, incoming):
+    """Starts a merge of a branch that adds `incoming` to app/services/clients.py, left with a conflict."""
+    _write(repo, "app/notes.txt", "base\n")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-qm", "notes")
+    _git(repo, "checkout", "-qb", "other")
+    _write(repo, "app/services/clients.py", incoming)
+    _write(repo, "app/notes.txt", "theirs\n")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-qm", "other")
+    _git(repo, "checkout", "-q", "-")
+    _write(repo, "app/notes.txt", "ours\n")
+    _git(repo, "commit", "-qam", "ours")
+    subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t.co", "merge", "other"], cwd=repo,
+                   capture_output=True)
+
+
+def test_ignores_lines_a_merge_brings_in_unchanged(repo):
+    # Arrange
+    _conflicted_merge(repo, "def get():\n    return [{'id': 1, 'name': 'Latte'}]\n")
+    # Act
+    result = _run(repo)
+    # Assert
+    assert result.returncode == 0, result.stdout
+
+
+def test_still_checks_lines_added_during_a_merge(repo):
+    # Arrange
+    _conflicted_merge(repo, "def get():\n    return rows\n")
+    _write(repo, "app/services/clients.py", "def get():\n    return [{'id': 1, 'name': 'Latte'}]\n")
+    # Act
+    result = _run(repo)
+    # Assert
+    assert result.returncode == 1, result.stdout
+    assert "app/services/clients.py:2" in result.stdout
+
+
+def test_allows_records_holding_call_results(repo):
+    # Arrange
+    _write(repo, "app/services/clients.py", '    return {"id": new_id(), "missing": True}\n')
+    # Act
+    result = _run(repo)
+    # Assert
+    assert result.returncode == 0, result.stdout
