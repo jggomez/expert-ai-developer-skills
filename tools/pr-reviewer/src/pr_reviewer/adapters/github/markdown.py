@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 
 from pr_reviewer.application.ports import ReviewOutcome
-from pr_reviewer.domain.change_map import ChangeMap, build_change_map
+from pr_reviewer.domain.change_map import OTHER, ROOT, ChangeMap, build_change_map
 from pr_reviewer.domain.findings import fingerprint
 from pr_reviewer.domain.models import DiffBundle, Finding, ReviewReport
 from pr_reviewer.domain.pricing import estimate_cost
@@ -38,6 +38,8 @@ _CONTROL = re.compile(r"[\x00-\x1f\x7f]")
 _BADGE = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🔵"}
 MAX_OVERVIEW_CHARS = 1_000
 MAX_LABEL_CHARS = 60
+MAX_WHAT_CHARS = 40
+MAX_SIDE_BY_SIDE = 4
 # Diagram labels keep only letters, digits and plain punctuation: no quotes, brackets, `;`, `%`, `#`,
 # `&` or `<`, so model text can neither close a label nor start a Mermaid directive.
 _LABEL_UNSAFE = re.compile(r"[^\w .,:/()+\-·]")
@@ -147,13 +149,40 @@ def _label(text: str) -> str:
     return _clip(flat, MAX_LABEL_CHARS)
 
 
-def _diagram(change_map: ChangeMap) -> list[str]:
+def _cut_at_word(text: str, limit: int) -> str:
+    if len(text) <= limit:
+        return text
+    head = text[: limit - 1]
+    return (head.rsplit(" ", 1)[0] if " " in head else head).rstrip(" ,.:") + "…"
+
+
+def common_folder(names: list[str]) -> str:
+    """The folders every area shares, leaving each area at least one folder of its own."""
+    if len(names) < 2 or ROOT in names or OTHER in names:
+        return ""
+    parts = [name.split("/") for name in names]
+    shared: list[str] = []
+    for column in zip(*parts, strict=False):
+        if len(set(column)) != 1 or any(len(p) <= len(shared) + 1 for p in parts):
+            break
+        shared.append(column[0])
+    return "/".join(shared)
+
+
+def _area_title(name: str, prefix: str) -> str:
+    if name in (ROOT, OTHER):
+        return name
+    return f"{_label(name[len(prefix) + 1:] if prefix else name)}/"
+
+
+def _diagram(change_map: ChangeMap, prefix: str) -> list[str]:
     """A Mermaid flowchart written by this tool; only sanitized label text comes from the model."""
-    lines = ["```mermaid", "flowchart LR"]
+    direction = "LR" if len(change_map.areas) <= MAX_SIDE_BY_SIDE else "TD"
+    lines = ["```mermaid", f"flowchart {direction}"]
     for number, area in enumerate(change_map.areas, start=1):
-        title = f"{_label(area.name)}/ · +{area.added} -{area.deleted}"
-        what = _label(area.what)
-        lines.append(f'  a{number}["{title}<br/>{what}"]' if what else f'  a{number}["{title}"]')
+        label = f"<b>{_area_title(area.name, prefix)}</b><br/>+{area.added} -{area.deleted}"
+        what = _cut_at_word(_label(area.what), MAX_WHAT_CHARS)
+        lines.append(f'  a{number}["{label}<br/>{what}"]' if what else f'  a{number}["{label}"]')
     lines += [f"  a{source + 1} --> a{target + 1}" for source, target in change_map.links]
     used = {area.severity or "clean" for area in change_map.areas}
     lines += [f"  classDef {name} {style}" for name, style in _CLASS_STYLES.items() if name in used]
@@ -172,7 +201,10 @@ def _what_changed(outcome: ReviewOutcome) -> list[str]:
     if overview:
         lines += [overview, ""]
     if len(change_map.areas) > 1:
-        lines += [*_diagram(change_map), "", "<sub>Areas colored by their most severe finding.</sub>", ""]
+        prefix = common_folder([area.name for area in change_map.areas])
+        where = f" under `{_label(prefix)}/`" if prefix else ""
+        note = f"<sub>Changed areas{where}, colored by their most severe finding.</sub>"
+        lines += [*_diagram(change_map, prefix), "", note, ""]
     return lines if len(lines) > 2 else []
 
 

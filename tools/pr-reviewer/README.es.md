@@ -76,9 +76,9 @@ muestran qué parte llama a cuál, y el color marca el hallazgo más grave de es
 
 ```mermaid
 flowchart LR
-  a1["api/ · +42 -3<br/>nuevo endpoint /clients"]
-  a2["services/ · +30 -0<br/>lee los clientes de Firestore"]
-  a3["web/ · +65 -10<br/>página Clients to Review"]
+  a1["<b>api/</b><br/>+42 -3<br/>nuevo endpoint /clients"]
+  a2["<b>services/</b><br/>+30 -0<br/>lee los clientes de Firestore"]
+  a3["<b>web/</b><br/>+65 -10<br/>página Clients to Review"]
   a3 --> a1
   a1 --> a2
   classDef high fill:#fff1e5,stroke:#bc4c00,color:#1f2328
