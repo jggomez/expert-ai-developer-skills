@@ -71,22 +71,10 @@ A single summary comment lists the findings by severity, with the model, tokens 
 ![Summary comment with a table of findings, and the model, tokens and cost of the review](docs/images/summary-comment.png)
 
 Before the findings, the summary explains the change in **What changed**: a short technical overview and a change
-map that GitHub draws from Mermaid. Each box is an area of the pull request with its added and removed lines, arrows
+map that GitHub draws from Mermaid, with no image or external service. Each box is an area of the pull request with its added and removed lines, arrows
 show which part calls which, and color marks the most severe finding in that area:
 
-```mermaid
-flowchart LR
-  a1["<b>api/</b><br/>+42 -3<br/>new /clients endpoint"]
-  a2["<b>services/</b><br/>+30 -0<br/>reads clients from Firestore"]
-  a3["<b>web/</b><br/>+65 -10<br/>Clients to Review page"]
-  a3 --> a1
-  a1 --> a2
-  classDef high fill:#fff1e5,stroke:#bc4c00,color:#1f2328
-  classDef clean fill:#f6f8fa,stroke:#8c959f,color:#1f2328
-  class a1 clean
-  class a2 high
-  class a3 clean
-```
+![Summary comment with a What changed section: a short overview and a change map of the web, api and services areas, colored by their worst finding](docs/images/summary-change-map.png)
 
 Set `language` to write the summary in another language, or `summary: false` to skip it.
 

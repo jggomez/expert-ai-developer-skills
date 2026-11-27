@@ -2473,6 +2473,13 @@
           "h": 588
         },
         {
+          "src": "/media/pr-reviewer/summary-change-map.png",
+          "screen": "summary-change-map",
+          "lang": "en",
+          "w": 903,
+          "h": 795
+        },
+        {
           "src": "/media/pr-reviewer/summary-comment.png",
           "screen": "summary-comment",
           "lang": "en",

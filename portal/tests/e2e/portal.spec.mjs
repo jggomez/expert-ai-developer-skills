@@ -34,9 +34,9 @@ test('search and kind filter narrow the catalog', async ({ page }) => {
   const errors = trackErrors(page);
   await page.goto('/es/');
   const rows = page.locator('#list .row:visible');
-  await expect(rows).toHaveCount(120);
+  await expect(rows).toHaveCount(122);
   await page.getByRole('button', { name: /^hooks/ }).click();
-  await expect(rows).toHaveCount(19);
+  await expect(rows).toHaveCount(21);
   await page.getByRole('button', { name: /^Todo/ }).click();
   await page.locator('#q').fill('flutter');
   const flutterCount = await rows.count();
@@ -49,7 +49,7 @@ test('search and kind filter narrow the catalog', async ({ page }) => {
   await page.locator('#q').fill('zzzz-no-match');
   await expect(page.locator('#empty')).toBeVisible();
   await page.getByRole('button', { name: 'Quitar filtros' }).click();
-  await expect(rows).toHaveCount(120);
+  await expect(rows).toHaveCount(122);
   expect(errors).toEqual([]);
 });
 

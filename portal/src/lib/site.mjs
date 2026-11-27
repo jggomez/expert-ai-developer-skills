@@ -304,6 +304,7 @@ export const TOOLS = {
     screens: [
       { id: 'inline-comment-sql-injection', name: { es: 'Comentario en línea', en: 'Inline comment' }, caption: { es: 'Encuentra una inyección SQL y propone el código corregido en la misma línea.', en: 'Finds a SQL injection and proposes the fixed code on that line.' } },
       { id: 'summary-comment', name: { es: 'Resumen', en: 'Summary' }, caption: { es: 'Un resumen del pull request con los hallazgos ordenados por gravedad.', en: 'A pull request summary with findings sorted by severity.' } },
+      { id: 'summary-change-map', name: { es: 'Mapa de cambios', en: 'Change map' }, caption: { es: 'Un resumen técnico del cambio y un diagrama de las áreas tocadas, coloreadas por su hallazgo más grave.', en: 'A technical summary of the change and a diagram of the areas it touches, colored by their worst finding.' } },
       { id: 'inline-comment-command-injection', name: { es: 'Inyección de comandos', en: 'Command injection' }, caption: { es: 'Detecta comandos de shell armados con datos no confiables.', en: 'Flags shell commands built from untrusted input.' } },
     ],
     downloads: [],
