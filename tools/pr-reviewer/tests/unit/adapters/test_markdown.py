@@ -125,7 +125,7 @@ def test_the_summary_shows_the_overview_and_a_change_map():
     assert "Adds the Clients to Review page backed by Firestore." in text
     graph = _mermaid(text)
     assert graph.startswith("flowchart LR")
-    assert 'a1["api/ · +2 -1<br/>new /clients endpoint"]' in graph
+    assert 'a1["<b>api/</b><br/>+2 -1<br/>new /clients endpoint"]' in graph
     assert "a2 --> a1" in graph
     assert "class a1 high" in graph
     assert text.index("### What changed") < text.index("| Severity |")
@@ -189,3 +189,47 @@ def test_a_single_area_still_gets_the_overview_but_no_diagram():
     # Assert
     assert "Fixes a typo." in text
     assert "```mermaid" not in text
+
+
+def test_the_common_folder_is_shown_once_under_the_diagram():
+    # Arrange
+    from pr_reviewer.domain.models import PullRequestSummary
+
+    files = ("tools/pr/demo/api/routes.py", "tools/pr/demo/web/page.js")
+
+    # Act
+    text = format_summary(_summary_outcome(PullRequestSummary(overview="x"), files=files))
+
+    # Assert
+    graph = _mermaid(text)
+    assert "<b>api/</b>" in graph and "<b>web/</b>" in graph
+    assert "tools/pr/demo" not in graph
+    assert "under `tools/pr/demo/`" in text
+
+
+def test_long_descriptions_are_cut_at_a_word():
+    # Arrange
+    from pr_reviewer.domain.models import AreaChange, PullRequestSummary
+
+    what = "Fetches the clients list and renders it into the DOM via innerHTML"
+    summary = PullRequestSummary(overview="x", changes=[AreaChange(path="web", what=what)])
+
+    # Act
+    graph = _mermaid(format_summary(_summary_outcome(summary)))
+
+    # Assert
+    label = next(line for line in graph.splitlines() if "<b>web/</b>" in line)
+    assert "Fetches the clients list and renders…" in label
+
+
+def test_many_areas_are_drawn_top_down():
+    # Arrange
+    from pr_reviewer.domain.models import PullRequestSummary
+
+    files = tuple(f"m{i}/f.py" for i in range(6))
+
+    # Act
+    graph = _mermaid(format_summary(_summary_outcome(PullRequestSummary(overview="x"), files=files)))
+
+    # Assert
+    assert graph.startswith("flowchart TD")
